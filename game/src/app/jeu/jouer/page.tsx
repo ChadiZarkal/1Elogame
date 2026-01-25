@@ -7,6 +7,7 @@ import { DuelInterface } from '@/components/game/DuelInterface';
 import { ResultDisplay } from '@/components/game/ResultDisplay';
 import { StreakDisplay } from '@/components/game/StreakDisplay';
 import { AllDuelsExhausted } from '@/components/game/AllDuelsExhausted';
+import { GameModeMenu } from '@/components/game/GameModeMenu';
 import { FullPageLoading } from '@/components/ui/Loading';
 
 export default function JouerPage() {
@@ -23,6 +24,7 @@ export default function JouerPage() {
     allDuelsExhausted,
     isLoadingDuel,
     error,
+    gameMode,
     initializeFromStorage,
     fetchNextDuel,
     submitVote,
@@ -30,6 +32,7 @@ export default function JouerPage() {
     showNextDuel,
     resetGame,
     clearError,
+    setGameMode,
   } = useGameStore();
   
   // Initialize from storage and fetch first duel
@@ -52,7 +55,10 @@ export default function JouerPage() {
   // Fetch first duel when profile is loaded
   useEffect(() => {
     if (hasProfile && !currentDuel && !isLoadingDuel && !allDuelsExhausted) {
-      fetchNextDuel();
+      // Charger le premier duel et preload le suivant
+      fetchNextDuel().then(() => {
+        fetchNextDuel();
+      });
     }
   }, [hasProfile, currentDuel, isLoadingDuel, allDuelsExhausted, fetchNextDuel]);
   
@@ -156,14 +162,13 @@ export default function JouerPage() {
         />
       )}
       
-      {/* Reset button */}
-      <button
-        onClick={handleReset}
-        className="absolute top-4 right-4 z-20 p-2 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20 transition-colors"
-        title="Nouvelle partie"
-      >
-        🔄
-      </button>
+      {/* Game Mode Menu - remplace le bouton refresh */}
+      <div className="absolute top-4 right-4 z-20">
+        <GameModeMenu
+          currentSelection={gameMode}
+          onSelectionChange={setGameMode}
+        />
+      </div>
     </div>
   );
 }

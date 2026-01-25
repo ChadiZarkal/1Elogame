@@ -12,6 +12,19 @@ import {
   getStreakEmoji,
 } from '@/lib/session';
 
+// Types pour le mode de jeu
+export type GameMode = 'default' | 'thematique';
+
+export interface GameModeSelection {
+  mode: GameMode;
+  category: string | null; // null = toutes catégories (default mode)
+}
+
+export const DEFAULT_GAME_MODE: GameModeSelection = {
+  mode: 'default',
+  category: null,
+};
+
 interface GameState {
   // Profile state
   profile: PlayerProfile | null;
@@ -21,6 +34,9 @@ interface GameState {
   currentDuel: Duel | null;
   nextDuel: Duel | null;  // Preloaded for instant transition
   isLoadingDuel: boolean;
+  
+  // Game mode state
+  gameMode: GameModeSelection;
   
   // Result state
   lastResult: VoteResult | null;
@@ -49,6 +65,9 @@ interface GameState {
   showNextDuel: () => void;
   resetGame: () => void;
   clearError: () => void;
+  
+  // Game mode actions
+  setGameMode: (selection: GameModeSelection) => void;
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -65,6 +84,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   duelCount: 0,
   allDuelsExhausted: false,
   error: null,
+  gameMode: DEFAULT_GAME_MODE,
   
   // Initialize from LocalStorage
   initializeFromStorage: () => {
@@ -111,7 +131,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   
   // Fetch the next duel from API
   fetchNextDuel: async () => {
-    const { isLoadingDuel, allDuelsExhausted } = get();
+    const { isLoadingDuel, allDuelsExhausted, gameMode } = get();
     
     if (isLoadingDuel || allDuelsExhausted) return;
     
@@ -119,9 +139,20 @@ export const useGameStore = create<GameState>((set, get) => ({
     
     try {
       const seenDuels = getSeenDuelsString();
-      const params = seenDuels ? `?seenDuels=${encodeURIComponent(seenDuels)}` : '';
       
-      const response = await fetch(`/api/duel${params}`);
+      // Construire les paramètres avec le mode de jeu
+      const params = new URLSearchParams();
+      if (seenDuels) {
+        params.set('seenDuels', seenDuels);
+      }
+      if (gameMode.mode === 'thematique' && gameMode.category) {
+        params.set('category', gameMode.category);
+      }
+      
+      const queryString = params.toString();
+      const url = queryString ? `/api/duel?${queryString}` : '/api/duel';
+      
+      const response = await fetch(url);
       const data = await response.json();
       
       if (!response.ok) {
@@ -137,8 +168,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (!currentDuel) {
         // First duel - set as current
         set({ currentDuel: data.data, isLoadingDuel: false });
-        // Immediately start preloading next
-        get().fetchNextDuel();
       } else {
         // Preload as next duel
         set({ nextDuel: data.data, isLoadingDuel: false });
@@ -262,9 +291,33 @@ export const useGameStore = create<GameState>((set, get) => ({
       duelCount: 0,
       allDuelsExhausted: false,
       error: null,
+      gameMode: DEFAULT_GAME_MODE,
     });
   },
   
   // Clear error
   clearError: () => set({ error: null }),
+  
+  // Set game mode and reload duels
+  setGameMode: async (selection: GameModeSelection) => {
+    const { gameMode } = get();
+    
+    // Si le mode n'a pas changé, ne rien faire
+    if (gameMode.mode === selection.mode && gameMode.category === selection.category) {
+      return;
+    }
+    
+    // Mettre à jour le mode et réinitialiser pour charger de nouveaux duels
+    set({
+      gameMode: selection,
+      currentDuel: null,
+      nextDuel: null,
+      allDuelsExhausted: false,
+      isLoadingDuel: false,
+    });
+    
+    // Charger deux duels avec le nouveau mode (current + preload)
+    await get().fetchNextDuel(); // Premier duel (current)
+    await get().fetchNextDuel(); // Deuxième duel (next)
+  },
 }));

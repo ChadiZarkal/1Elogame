@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const seenDuelsParam = searchParams.get('seenDuels') || '';
+    const categoryParam = searchParams.get('category') || null; // Nouveau: filtre par catégorie
     
     // Parse seen duels into a Set
     const seenDuels = new Set<string>(
@@ -24,18 +25,32 @@ export async function GET(request: NextRequest) {
     if (isMockMode) {
       // Use mock data
       const { getMockElements } = await import('@/lib/mockData');
-      elements = getMockElements();
+      let mockElements = getMockElements();
+      
+      // Filtrer par catégorie si spécifié
+      if (categoryParam) {
+        mockElements = mockElements.filter(e => e.categorie === categoryParam);
+      }
+      
+      elements = mockElements;
       starredPairs = undefined;
     } else {
       // Use Supabase
       const { createServerClient } = await import('@/lib/supabase');
       const supabase = createServerClient();
       
-      // Fetch all active elements
-      const { data: elementsData, error: elementsError } = await supabase
+      // Construire la requête de base
+      let query = supabase
         .from('elements')
         .select('*')
         .eq('actif', true);
+      
+      // Filtrer par catégorie si spécifié (mode thématique)
+      if (categoryParam) {
+        query = query.eq('categorie', categoryParam);
+      }
+      
+      const { data: elementsData, error: elementsError } = await query;
       
       if (elementsError) {
         console.error('Error fetching elements:', elementsError);
