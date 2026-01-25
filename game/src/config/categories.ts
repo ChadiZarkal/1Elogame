@@ -1,0 +1,94 @@
+/**
+ * Configuration des catégories
+ * 
+ * Ce fichier permet d'ajouter facilement de nouvelles catégories.
+ * Pour ajouter une catégorie :
+ * 1. Ajouter une entrée dans CATEGORIES_CONFIG
+ * 2. Ajouter la valeur dans le type Categorie (types/database.ts)
+ * 3. Ajouter dans la base de données si nécessaire
+ */
+
+export interface CategoryConfig {
+  id: string;
+  label: string;
+  labelFr: string;
+  color: string; // Tailwind bg color
+  textColor: string; // Tailwind text color
+  emoji?: string;
+}
+
+/**
+ * CATÉGORIES DISPONIBLES
+ * 
+ * Ajoutez vos nouvelles catégories ici !
+ * Exemple pour ajouter "lifestyle":
+ * 
+ * lifestyle: {
+ *   id: 'lifestyle',
+ *   label: 'Lifestyle',
+ *   labelFr: 'Style de vie',
+ *   color: 'bg-[#8B5CF6]/20',
+ *   textColor: 'text-[#A78BFA]',
+ *   emoji: '🌟'
+ * }
+ */
+export const CATEGORIES_CONFIG: Record<string, CategoryConfig> = {
+  comportement: {
+    id: 'comportement',
+    label: 'Comportement',
+    labelFr: 'Comportement',
+    color: 'bg-[#DC2626]/20',
+    textColor: 'text-[#FCA5A5]',
+    emoji: '😈'
+  },
+  trait: {
+    id: 'trait',
+    label: 'Trait',
+    labelFr: 'Trait de personnalité',
+    color: 'bg-[#7C3AED]/20',
+    textColor: 'text-[#C4B5FD]',
+    emoji: '🧠'
+  },
+  metier: {
+    id: 'metier',
+    label: 'Métier',
+    labelFr: 'Métier',
+    color: 'bg-[#1E3A5F]/50',
+    textColor: 'text-[#60A5FA]',
+    emoji: '💼'
+  },
+  preference: {
+    id: 'preference',
+    label: 'Préférence',
+    labelFr: 'Préférence',
+    color: 'bg-[#DB2777]/20',
+    textColor: 'text-[#F9A8D4]',
+    emoji: '💖'
+  },
+  absurde: {
+    id: 'absurde',
+    label: 'Absurde',
+    labelFr: 'Absurde',
+    color: 'bg-[#059669]/20',
+    textColor: 'text-[#6EE7B7]',
+    emoji: '🤪'
+  },
+};
+
+// Liste des catégories pour les dropdowns
+export const CATEGORIES_LIST = Object.values(CATEGORIES_CONFIG);
+
+// IDs de catégories pour le type
+export const CATEGORY_IDS = Object.keys(CATEGORIES_CONFIG);
+
+// Fonction pour obtenir une catégorie
+export function getCategory(id: string): CategoryConfig | undefined {
+  return CATEGORIES_CONFIG[id];
+}
+
+// Fonction pour obtenir les classes CSS d'une catégorie
+export function getCategoryClasses(id: string): string {
+  const category = CATEGORIES_CONFIG[id];
+  if (!category) return 'bg-gray-500/20 text-gray-400';
+  return `${category.color} ${category.textColor}`;
+}
