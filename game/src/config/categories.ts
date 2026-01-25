@@ -20,58 +20,44 @@ export interface CategoryConfig {
 /**
  * CATÉGORIES DISPONIBLES
  * 
- * Ajoutez vos nouvelles catégories ici !
- * Exemple pour ajouter "lifestyle":
- * 
- * lifestyle: {
- *   id: 'lifestyle',
- *   label: 'Lifestyle',
- *   labelFr: 'Style de vie',
- *   color: 'bg-[#8B5CF6]/20',
- *   textColor: 'text-[#A78BFA]',
- *   emoji: '🌟'
- * }
+ * Les 4 catégories principales du jeu :
+ * - Sexe & Kinks : relations, dating, intimité
+ * - Lifestyle : hobbies, passions, sport, activités
+ * - Quotidien : comportements et habitudes du quotidien
+ * - Bureau : comportements et attitudes au travail
  */
 export const CATEGORIES_CONFIG: Record<string, CategoryConfig> = {
-  comportement: {
-    id: 'comportement',
-    label: 'Comportement',
-    labelFr: 'Comportement',
+  sexe: {
+    id: 'sexe',
+    label: 'Sexe & Kinks',
+    labelFr: 'Sexe & Kinks',
     color: 'bg-[#DC2626]/20',
     textColor: 'text-[#FCA5A5]',
-    emoji: '😈'
+    emoji: '�'
   },
-  trait: {
-    id: 'trait',
-    label: 'Trait',
-    labelFr: 'Trait de personnalité',
+  lifestyle: {
+    id: 'lifestyle',
+    label: 'Lifestyle',
+    labelFr: 'Lifestyle',
     color: 'bg-[#7C3AED]/20',
     textColor: 'text-[#C4B5FD]',
-    emoji: '🧠'
+    emoji: '🎯'
   },
-  metier: {
-    id: 'metier',
-    label: 'Métier',
-    labelFr: 'Métier',
+  quotidien: {
+    id: 'quotidien',
+    label: 'Quotidien',
+    labelFr: 'Quotidien',
+    color: 'bg-[#059669]/20',
+    textColor: 'text-[#6EE7B7]',
+    emoji: '🤷'
+  },
+  bureau: {
+    id: 'bureau',
+    label: 'Bureau',
+    labelFr: 'Bureau',
     color: 'bg-[#1E3A5F]/50',
     textColor: 'text-[#60A5FA]',
     emoji: '💼'
-  },
-  preference: {
-    id: 'preference',
-    label: 'Préférence',
-    labelFr: 'Préférence',
-    color: 'bg-[#DB2777]/20',
-    textColor: 'text-[#F9A8D4]',
-    emoji: '💖'
-  },
-  absurde: {
-    id: 'absurde',
-    label: 'Absurde',
-    labelFr: 'Absurde',
-    color: 'bg-[#059669]/20',
-    textColor: 'text-[#6EE7B7]',
-    emoji: '🤪'
   },
 };
 

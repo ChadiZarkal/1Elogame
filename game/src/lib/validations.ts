@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-// Enum schemas
-export const categorieSchema = z.enum(['metier', 'comportement', 'trait', 'preference', 'absurde']);
+// Enum schemas - Nouvelles catégories 2026
+export const categorieSchema = z.enum(['sexe', 'lifestyle', 'quotidien', 'bureau']);
 export const sexeVotantSchema = z.enum(['homme', 'femme', 'nonbinaire', 'autre']);
 export const ageVotantSchema = z.enum(['16-18', '19-22', '23-26', '27+']);
 export const feedbackTypeSchema = z.enum(['star', 'thumbs_up', 'thumbs_down']);
