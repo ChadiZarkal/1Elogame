@@ -449,7 +449,7 @@ function ElementModal({
   onSave: (data: Partial<Element>) => Promise<void>;
 }) {
   const [texte, setTexte] = useState(element?.texte || '');
-  const [categorie, setCategorie] = useState<Categorie>(element?.categorie || 'comportement');
+  const [categorie, setCategorie] = useState<Categorie>(element?.categorie || 'quotidien');
   const [niveauProvocation, setNiveauProvocation] = useState<1 | 2 | 3 | 4>(element?.niveau_provocation || 2);
   const [isSaving, setIsSaving] = useState(false);
 
