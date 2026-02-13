@@ -228,6 +228,32 @@ export default function AdminStatsPage() {
         </div>
       )}
 
+      {/* ELO Distribution Chart */}
+      {rankings.length > 0 && (
+        <div className="max-w-6xl mx-auto mb-6">
+          <h2 className="text-lg font-bold text-[#F5F5F5] mb-3 flex items-center gap-2">
+            📊 Distribution ELO
+            <span className="text-xs font-normal text-[#737373]">— Répartition des éléments par plage ELO</span>
+          </h2>
+          <div className="bg-[#1A1A1A] border border-[#333] rounded-xl p-5">
+            <EloDistributionChart rankings={rankings} />
+          </div>
+        </div>
+      )}
+
+      {/* Participation Activity */}
+      {rankings.length > 0 && (
+        <div className="max-w-6xl mx-auto mb-6">
+          <h2 className="text-lg font-bold text-[#F5F5F5] mb-3 flex items-center gap-2">
+            🎯 Top 10 — Participations
+            <span className="text-xs font-normal text-[#737373]">— Éléments les plus votés</span>
+          </h2>
+          <div className="bg-[#1A1A1A] border border-[#333] rounded-xl p-5">
+            <TopParticipationsChart rankings={rankings} />
+          </div>
+        </div>
+      )}
+
       {marketingInsights.length > 0 && (
         <div className="max-w-6xl mx-auto mb-6">
           <h2 className="text-lg font-bold text-[#F5F5F5] mb-3 flex items-center gap-2">
@@ -437,5 +463,101 @@ function SortButton({ children, active, onClick }: { children: React.ReactNode; 
     <button onClick={onClick} className={`px-3 py-2 rounded-lg transition-colors text-xs ${active ? 'bg-[#333] text-[#F5F5F5]' : 'bg-[#1A1A1A] text-[#737373] border border-[#333] hover:bg-[#2A2A2A]'}`}>
       {children}
     </button>
+  );
+}
+
+function EloDistributionChart({ rankings }: { rankings: ElementRanking[] }) {
+  const buckets: { label: string; count: number; range: [number, number] }[] = [
+    { label: '<900', count: 0, range: [0, 900] },
+    { label: '900-950', count: 0, range: [900, 950] },
+    { label: '950-1000', count: 0, range: [950, 1000] },
+    { label: '1000-1050', count: 0, range: [1000, 1050] },
+    { label: '1050-1100', count: 0, range: [1050, 1100] },
+    { label: '>1100', count: 0, range: [1100, 9999] },
+  ];
+
+  for (const r of rankings) {
+    const elo = r.elo_global;
+    for (const bucket of buckets) {
+      if (elo >= bucket.range[0] && elo < bucket.range[1]) {
+        bucket.count++;
+        break;
+      }
+    }
+  }
+
+  const maxCount = Math.max(...buckets.map(b => b.count), 1);
+
+  return (
+    <div>
+      <div className="flex items-end gap-2 h-28 mb-2">
+        {buckets.map((bucket, i) => {
+          const pct = (bucket.count / maxCount) * 100;
+          const isCenter = i === 2 || i === 3;
+          return (
+            <div key={bucket.label} className="flex-1 flex flex-col items-center gap-1">
+              <span className="text-[#A3A3A3] text-[10px] font-mono">{bucket.count}</span>
+              <motion.div
+                className={`w-full rounded-t-md ${
+                  isCenter
+                    ? 'bg-gradient-to-t from-[#D97706] to-[#FBBF24]'
+                    : i < 2
+                    ? 'bg-gradient-to-t from-[#059669] to-[#34D399]'
+                    : 'bg-gradient-to-t from-[#DC2626] to-[#EF4444]'
+                }`}
+                initial={{ height: 0 }}
+                animate={{ height: `${Math.max(pct, 4)}%` }}
+                transition={{ delay: 0.1 + i * 0.08, duration: 0.5 }}
+                style={{ minHeight: 4 }}
+              />
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex gap-2">
+        {buckets.map(bucket => (
+          <div key={bucket.label} className="flex-1 text-center">
+            <span className="text-[#737373] text-[10px]">{bucket.label}</span>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-center gap-4 mt-3 text-[10px]">
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#059669]" /> Green Flags</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#D97706]" /> Neutres</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#DC2626]" /> Red Flags</span>
+      </div>
+    </div>
+  );
+}
+
+function TopParticipationsChart({ rankings }: { rankings: ElementRanking[] }) {
+  const sorted = [...rankings].sort((a, b) => b.nb_participations - a.nb_participations).slice(0, 10);
+  const maxP = sorted[0]?.nb_participations || 1;
+
+  return (
+    <div className="space-y-2">
+      {sorted.map((entry, i) => {
+        const pct = (entry.nb_participations / maxP) * 100;
+        return (
+          <div key={entry.id} className="flex items-center gap-3">
+            <span className="text-[#737373] text-xs font-mono w-4 text-right">{i + 1}</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-0.5">
+                <p className="text-[#F5F5F5] text-xs truncate max-w-[70%]">{entry.texte}</p>
+                <span className="text-[#A3A3A3] text-[10px] font-mono">{entry.nb_participations} votes</span>
+              </div>
+              <div className="h-1.5 bg-[#2A2A2A] rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${pct}%` }}
+                  transition={{ delay: 0.15 + i * 0.06, duration: 0.5 }}
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }

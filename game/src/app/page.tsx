@@ -1,129 +1,130 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 
-const games = [
-  {
-    id: 'redflag',
-    title: 'Red Flag',
-    subtitle: 'Le duel des Red Flags',
-    description:
-      'Entre deux choix, lequel est le plus gros Red Flag ? Vote et découvre ce que pensent les autres !',
-    emoji: '🚩',
-    href: '/redflag',
-    gradient: 'from-[#DC2626]/20 to-[#991B1B]/10',
-    borderColor: 'border-[#DC2626]/40',
-    hoverBorder: 'hover:border-[#DC2626]',
-    hoverShadow: 'hover:shadow-[0_0_30px_rgba(220,38,38,0.3)]',
-    accentText: 'text-[#DC2626]',
-    tags: ['🎲 Infini', '⚡ Instant', '📊 Stats live'],
-  },
-  {
-    id: 'flagornot',
-    title: 'Red Flag ou Green Flag ?',
-    subtitle: "L'IA te juge",
-    description:
-      "Écris n'importe quoi et découvre si c'est plutôt Red Flag 🚩 ou Green Flag 🟢 selon l'IA !",
-    emoji: '🤖',
-    href: '/flagornot',
-    gradient: 'from-[#059669]/20 to-[#DC2626]/10',
-    borderColor: 'border-[#333]',
-    hoverBorder: 'hover:border-[#059669]',
-    hoverShadow: 'hover:shadow-[0_0_30px_rgba(5,150,105,0.3)]',
-    accentText: 'text-[#059669]',
-    tags: ['🤖 IA', '✍️ Libre', '😂 Fun'],
-  },
-];
-
 export default function HubPage() {
   const router = useRouter();
+  const [stats, setStats] = useState<{ totalVotes: number; estimatedPlayers: number } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/stats/public')
+      .then(r => r.json())
+      .then(d => { if (d.success) setStats(d.data); })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen min-h-[100dvh] bg-[#0D0D0D] p-5 safe-area-top safe-area-bottom">
       {/* Header */}
       <motion.div
-        className="text-center mb-10"
+        className="text-center mb-8"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="flex justify-center gap-3 text-4xl mb-3">
+        <div className="flex justify-center gap-3 text-5xl mb-4">
           <motion.span
-            animate={{ rotate: [0, -10, 10, 0] }}
+            animate={{ rotate: [0, -12, 12, 0] }}
             transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
           >
             🚩
           </motion.span>
           <motion.span
-            animate={{ scale: [1, 1.15, 1] }}
+            animate={{ scale: [1, 1.2, 1] }}
             transition={{ duration: 2, repeat: Infinity, repeatDelay: 1.5 }}
           >
             🟢
           </motion.span>
         </div>
-        <h1 className="text-4xl sm:text-5xl font-black text-[#F5F5F5] tracking-tight">
+        <h1 className="text-5xl sm:text-6xl font-black text-[#F5F5F5] tracking-tight">
           FLAG <span className="text-[#DC2626]">GAMES</span>
         </h1>
-        <p className="text-[#737373] text-base mt-2">
-          Choisis ton jeu et amuse-toi 🎉
-        </p>
+
+        {/* Live stats */}
+        {stats && (
+          <motion.div
+            className="flex justify-center gap-4 mt-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <span className="text-[#737373] text-sm">
+              <span className="text-[#F5F5F5] font-bold">{stats.estimatedPlayers}</span> joueurs
+            </span>
+            <span className="text-[#333]">•</span>
+            <span className="text-[#737373] text-sm">
+              <span className="text-[#F5F5F5] font-bold">{stats.totalVotes.toLocaleString()}</span> votes
+            </span>
+          </motion.div>
+        )}
       </motion.div>
 
       {/* Game cards */}
-      <div className="flex flex-col gap-5 w-full max-w-md">
-        {games.map((game, i) => (
-          <motion.button
-            key={game.id}
-            onClick={() => router.push(game.href)}
-            className={`
-              relative text-left w-full p-6 rounded-2xl
-              bg-gradient-to-br ${game.gradient}
-              bg-[#1A1A1A] border ${game.borderColor}
-              ${game.hoverBorder} ${game.hoverShadow}
-              transition-all duration-300 cursor-pointer
-              active:scale-[0.98]
-            `}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 + i * 0.15, duration: 0.5 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            <div className="flex items-start gap-4">
-              <span className="text-4xl flex-shrink-0">{game.emoji}</span>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-xl font-bold text-[#F5F5F5]">
-                  {game.title}
-                </h2>
-                <p className={`text-sm font-medium ${game.accentText} mt-0.5`}>
-                  {game.subtitle}
-                </p>
-                <p className="text-[#A3A3A3] text-sm mt-2 leading-relaxed">
-                  {game.description}
-                </p>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {game.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-xs px-2 py-1 rounded-full bg-[#0D0D0D]/60 text-[#737373] border border-[#333]/50"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+      <div className="flex flex-col gap-4 w-full max-w-md">
+        {/* Red Flag Game */}
+        <motion.button
+          onClick={() => router.push('/jeu')}
+          className="relative text-left w-full rounded-2xl bg-gradient-to-br from-[#DC2626]/15 to-[#991B1B]/5 bg-[#1A1A1A] border border-[#DC2626]/30 hover:border-[#DC2626] hover:shadow-[0_0_40px_rgba(220,38,38,0.25)] transition-all duration-300 cursor-pointer active:scale-[0.98] overflow-hidden"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          <div className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-[#DC2626]/15 flex items-center justify-center flex-shrink-0">
+                <span className="text-3xl">🚩</span>
               </div>
-              <span className="text-[#737373] text-xl ml-2 flex-shrink-0 self-center">
-                →
-              </span>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-2xl font-black text-[#F5F5F5]">Red Flag</h2>
+                <p className="text-[#DC2626] text-sm font-semibold mt-0.5">Choisis le pire entre deux options</p>
+              </div>
+              <span className="text-[#DC2626] text-2xl ml-2 flex-shrink-0">→</span>
             </div>
-          </motion.button>
-        ))}
+            <div className="flex flex-wrap gap-2 mt-4">
+              <Tag emoji="🎲" text="Infini" />
+              <Tag emoji="⚡" text="Instant" />
+              <Tag emoji="📊" text="Stats live" />
+              <Tag emoji="👥" text="Multijoueur" />
+            </div>
+          </div>
+        </motion.button>
+
+        {/* Flag or Not Game */}
+        <motion.button
+          onClick={() => router.push('/flagornot')}
+          className="relative text-left w-full rounded-2xl bg-gradient-to-br from-[#059669]/12 to-[#DC2626]/5 bg-[#1A1A1A] border border-[#333] hover:border-[#059669] hover:shadow-[0_0_40px_rgba(5,150,105,0.2)] transition-all duration-300 cursor-pointer active:scale-[0.98] overflow-hidden"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.5 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          <div className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-[#059669]/15 flex items-center justify-center flex-shrink-0">
+                <span className="text-3xl">🤖</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-2xl font-black text-[#F5F5F5]">Flag or Not</h2>
+                <p className="text-[#059669] text-sm font-semibold mt-0.5">Écris quelque chose, l&apos;IA décide</p>
+              </div>
+              <span className="text-[#059669] text-2xl ml-2 flex-shrink-0">→</span>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-4">
+              <Tag emoji="🤖" text="IA" />
+              <Tag emoji="✍️" text="Libre" />
+              <Tag emoji="😂" text="Fun" />
+            </div>
+          </div>
+        </motion.button>
       </div>
 
       {/* Leaderboard CTA */}
       <motion.button
         onClick={() => router.push('/classement')}
-        className="mt-6 px-6 py-3 rounded-xl bg-[#1A1A1A] border border-[#333] hover:border-[#FCD34D]/50 hover:shadow-[0_0_20px_rgba(252,211,77,0.15)] transition-all text-[#A3A3A3] hover:text-[#FCD34D] text-sm font-medium"
+        className="mt-6 px-8 py-3 rounded-xl bg-[#1A1A1A] border border-[#333] hover:border-[#FCD34D]/50 hover:shadow-[0_0_20px_rgba(252,211,77,0.15)] transition-all text-[#A3A3A3] hover:text-[#FCD34D] text-sm font-bold"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
@@ -134,7 +135,7 @@ export default function HubPage() {
 
       {/* Footer */}
       <motion.footer
-        className="mt-8 text-[#737373] text-xs text-center"
+        className="mt-6 text-[#737373] text-xs text-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
@@ -142,5 +143,14 @@ export default function HubPage() {
         Aucun compte requis • Données anonymes
       </motion.footer>
     </div>
+  );
+}
+
+function Tag({ emoji, text }: { emoji: string; text: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full bg-[#0D0D0D]/70 text-[#A3A3A3] border border-[#333]/60 tracking-wide">
+      <span>{emoji}</span>
+      <span>{text}</span>
+    </span>
   );
 }

@@ -59,8 +59,14 @@ export function ProfileForm() {
         <h1 className="text-4xl font-bold text-[#F5F5F5] mb-2">
           RED <span className="text-[#DC2626]">FLAG</span>
         </h1>
-        <div className="flex justify-center gap-3 text-4xl">
-          <span>�</span>
+        <div className="flex justify-center gap-3 text-4xl mb-3">
+          <span>🚩</span>
+        </div>
+        {/* Short onboarding */}
+        <div className="bg-[#1A1A1A] border border-[#333]/60 rounded-xl px-5 py-3 max-w-xs mx-auto">
+          <p className="text-[#A3A3A3] text-sm leading-relaxed">
+            <span className="text-[#F5F5F5] font-semibold">Comment jouer :</span> deux options apparaissent, choisis celle que tu trouves <span className="text-[#DC2626] font-semibold">la pire</span> !
+          </p>
         </div>
       </motion.div>
       

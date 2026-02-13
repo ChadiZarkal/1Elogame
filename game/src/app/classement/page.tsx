@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Loading } from '@/components/ui/Loading';
 
 interface RankEntry {
@@ -15,38 +15,50 @@ interface RankEntry {
   nb_participations: number;
 }
 
+type RankMode = 'redflag' | 'greenflag';
 type ViewMode = 'global' | 'homme' | 'femme';
 
 export default function LeaderboardPage() {
   const router = useRouter();
-  const [rankings, setRankings] = useState<RankEntry[]>([]);
+  const [redRankings, setRedRankings] = useState<RankEntry[]>([]);
+  const [greenRankings, setGreenRankings] = useState<RankEntry[]>([]);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalVotes, setTotalVotes] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [mode, setMode] = useState<RankMode>('redflag');
   const [view, setView] = useState<ViewMode>('global');
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('/api/leaderboard')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setRankings(data.data.rankings);
-        } else {
-          setError('Impossible de charger le classement');
+    Promise.all([
+      fetch('/api/leaderboard?order=desc').then(r => r.json()),
+      fetch('/api/leaderboard?order=asc').then(r => r.json()),
+    ])
+      .then(([redData, greenData]) => {
+        if (redData.success) {
+          setRedRankings(redData.data.rankings);
+          setTotalElements(redData.data.totalElements || 0);
+          setTotalVotes(redData.data.totalVotes || 0);
         }
+        if (greenData.success) setGreenRankings(greenData.data.rankings);
+        if (!redData.success && !greenData.success) setError('Impossible de charger le classement');
       })
       .catch(() => setError('Erreur de connexion'))
       .finally(() => setIsLoading(false));
   }, []);
 
+  const rankings = mode === 'redflag' ? redRankings : greenRankings;
+
   const sorted = useMemo(() => {
     return [...rankings].sort((a, b) => {
+      const dir = mode === 'redflag' ? -1 : 1;
       switch (view) {
-        case 'homme': return b.elo_homme - a.elo_homme;
-        case 'femme': return b.elo_femme - a.elo_femme;
-        default: return b.elo_global - a.elo_global;
+        case 'homme': return dir * (a.elo_homme - b.elo_homme);
+        case 'femme': return dir * (a.elo_femme - b.elo_femme);
+        default: return dir * (a.elo_global - b.elo_global);
       }
     });
-  }, [rankings, view]);
+  }, [rankings, view, mode]);
 
   const getElo = (r: RankEntry) => {
     switch (view) {
@@ -55,6 +67,10 @@ export default function LeaderboardPage() {
       default: return r.elo_global;
     }
   };
+
+  const isRed = mode === 'redflag';
+  const accent = isRed ? '#DC2626' : '#059669';
+  const accentLight = isRed ? '#EF4444' : '#34D399';
 
   if (isLoading) {
     return (
@@ -67,28 +83,58 @@ export default function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-[#0D0D0D] pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-b from-[#DC2626]/20 to-transparent pt-8 pb-6 px-4">
+      <div className="pt-8 pb-6 px-4" style={{ background: `linear-gradient(to bottom, ${accent}22, transparent)` }}>
         <div className="max-w-2xl mx-auto">
           <button onClick={() => router.push('/')} className="text-[#737373] hover:text-[#F5F5F5] text-sm mb-4 block transition-colors">
             ← Accueil
           </button>
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
             <h1 className="text-3xl font-black text-[#F5F5F5] text-center">
-              🏆 Classement <span className="text-[#DC2626]">Red Flags</span>
+              🏆 Classement
             </h1>
-            <p className="text-[#737373] text-center text-sm mt-2">
-              Top 50 des plus gros Red Flags selon les votes
-            </p>
           </motion.div>
 
-          {/* View tabs */}
-          <div className="flex justify-center gap-2 mt-5">
+          {/* Stats bar */}
+          <div className="flex justify-center gap-4 mt-3 text-xs text-[#737373]">
+            <span>{totalElements} red flags</span>
+            <span>•</span>
+            <span>{totalVotes.toLocaleString()} votes</span>
+          </div>
+
+          {/* RED / GREEN mode toggle */}
+          <div className="flex justify-center mt-5">
+            <div className="inline-flex bg-[#1A1A1A] border border-[#333] rounded-full p-1">
+              <button
+                onClick={() => setMode('redflag')}
+                className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
+                  isRed
+                    ? 'bg-[#DC2626] text-white shadow-lg shadow-[#DC2626]/30'
+                    : 'text-[#A3A3A3] hover:text-[#F5F5F5]'
+                }`}
+              >
+                🚩 Plus Red Flag
+              </button>
+              <button
+                onClick={() => setMode('greenflag')}
+                className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
+                  !isRed
+                    ? 'bg-[#059669] text-white shadow-lg shadow-[#059669]/30'
+                    : 'text-[#A3A3A3] hover:text-[#F5F5F5]'
+                }`}
+              >
+                🟢 Moins Red Flag
+              </button>
+            </div>
+          </div>
+
+          {/* Gender filter */}
+          <div className="flex justify-center gap-2 mt-4">
             {(['global', 'homme', 'femme'] as ViewMode[]).map((v) => (
               <button key={v} onClick={() => setView(v)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
                   view === v
-                    ? 'bg-[#DC2626] text-white'
-                    : 'bg-[#1A1A1A] text-[#A3A3A3] border border-[#333] hover:bg-[#2A2A2A]'
+                    ? 'bg-[#F5F5F5]/10 text-[#F5F5F5] border border-[#F5F5F5]/20'
+                    : 'text-[#737373] hover:text-[#A3A3A3]'
                 }`}>
                 {v === 'global' ? '🌍 Tous' : v === 'homme' ? '♂️ Hommes' : '♀️ Femmes'}
               </button>
@@ -103,65 +149,108 @@ export default function LeaderboardPage() {
         </div>
       )}
 
+      {/* Subtitle */}
+      <div className="max-w-2xl mx-auto px-4 mb-4">
+        <p className="text-center text-sm" style={{ color: accentLight }}>
+          {isRed
+            ? 'Les comportements jugés les pires par la communauté'
+            : 'Les comportements jugés les plus acceptables'}
+        </p>
+      </div>
+
       {/* Podium (top 3) */}
-      {sorted.length >= 3 && (
-        <div className="max-w-2xl mx-auto px-4 mb-6">
-          <div className="flex items-end justify-center gap-3 h-52">
-            {/* 2nd place */}
-            <PodiumCard rank={2} entry={sorted[1]} elo={getElo(sorted[1])} height="h-32" />
-            {/* 1st place */}
-            <PodiumCard rank={1} entry={sorted[0]} elo={getElo(sorted[0])} height="h-44" />
-            {/* 3rd place */}
-            <PodiumCard rank={3} entry={sorted[2]} elo={getElo(sorted[2])} height="h-24" />
-          </div>
-        </div>
-      )}
+      <AnimatePresence mode="wait">
+        {sorted.length >= 3 && (
+          <motion.div
+            key={mode + view}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="max-w-2xl mx-auto px-4 mb-6"
+          >
+            <div className="flex items-end justify-center gap-3 h-52">
+              <PodiumCard rank={2} entry={sorted[1]} elo={getElo(sorted[1])} height="h-32" isRed={isRed} />
+              <PodiumCard rank={1} entry={sorted[0]} elo={getElo(sorted[0])} height="h-44" isRed={isRed} />
+              <PodiumCard rank={3} entry={sorted[2]} elo={getElo(sorted[2])} height="h-24" isRed={isRed} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Ranking list (4th+) */}
       <div className="max-w-2xl mx-auto px-4">
         <div className="space-y-2">
-          {sorted.slice(3).map((entry, idx) => (
-            <motion.div key={entry.texte} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: Math.min(idx * 0.02, 0.5) }}
-              className="bg-[#1A1A1A] border border-[#333] rounded-xl p-3 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#2A2A2A] flex items-center justify-center text-[#737373] font-bold text-sm flex-shrink-0">
-                {idx + 4}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[#F5F5F5] text-sm truncate">{entry.texte}</p>
-                <p className="text-[#737373] text-xs">{entry.categorie} • {entry.nb_participations} votes</p>
-              </div>
-              <div className="text-right flex-shrink-0">
-                <p className="text-lg font-bold text-[#F5F5F5]">{getElo(entry)}</p>
-                <p className="text-[#737373] text-[10px]">ELO</p>
-              </div>
-            </motion.div>
-          ))}
+          {sorted.slice(3).map((entry, idx) => {
+            const elo = getElo(entry);
+            const maxElo = getElo(sorted[0]) || 1;
+            const minElo = getElo(sorted[sorted.length - 1]) || 0;
+            const range = maxElo - minElo || 1;
+            const percent = isRed
+              ? ((elo - minElo) / range) * 100
+              : ((maxElo - elo) / range) * 100;
+
+            return (
+              <motion.div key={entry.texte} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: Math.min(idx * 0.02, 0.5) }}
+                className="bg-[#1A1A1A] border border-[#333] rounded-xl p-3 flex items-center gap-3 relative overflow-hidden">
+                {/* ELO bar background */}
+                <div
+                  className="absolute inset-0 opacity-[0.04]"
+                  style={{ width: `${percent}%`, backgroundColor: accent }}
+                />
+                <div className="w-8 h-8 rounded-full bg-[#2A2A2A] flex items-center justify-center text-[#737373] font-bold text-sm flex-shrink-0 z-10">
+                  {idx + 4}
+                </div>
+                <div className="flex-1 min-w-0 z-10">
+                  <p className="text-[#F5F5F5] text-sm truncate">{entry.texte}</p>
+                  <p className="text-[#737373] text-xs">{entry.categorie} • {entry.nb_participations} votes</p>
+                </div>
+                <div className="text-right flex-shrink-0 z-10">
+                  <p className="text-lg font-bold text-[#F5F5F5]">{elo}</p>
+                  <p className="text-[10px]" style={{ color: accentLight }}>ELO</p>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
 
       {/* CTA */}
       <div className="max-w-2xl mx-auto px-4 mt-8 text-center">
         <motion.button
-          onClick={() => router.push('/redflag')}
-          className="px-8 py-3 bg-[#DC2626] text-white rounded-xl font-bold text-lg hover:bg-[#EF4444] transition-colors shadow-[0_0_30px_rgba(220,38,38,0.3)]"
+          onClick={() => router.push('/jeu')}
+          className="px-8 py-3 text-white rounded-xl font-bold text-lg transition-colors"
+          style={{
+            backgroundColor: accent,
+            boxShadow: `0 0 30px ${accent}44`,
+          }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
-          🚩 Jouer et voter !
+          {isRed ? '🚩 Jouer et voter !' : '🟢 Jouer et voter !'}
         </motion.button>
       </div>
     </div>
   );
 }
 
-function PodiumCard({ rank, entry, elo, height }: { rank: number; entry: RankEntry; elo: number; height: string }) {
+function PodiumCard({ rank, entry, elo, height, isRed }: {
+  rank: number; entry: RankEntry; elo: number; height: string; isRed: boolean;
+}) {
   const medals = ['🥇', '🥈', '🥉'];
-  const colors = [
+
+  const redColors = [
     'bg-gradient-to-t from-[#FCD34D]/20 to-[#FCD34D]/5 border-[#FCD34D]/40',
     'bg-gradient-to-t from-[#A3A3A3]/20 to-[#A3A3A3]/5 border-[#A3A3A3]/40',
     'bg-gradient-to-t from-[#D97706]/20 to-[#D97706]/5 border-[#D97706]/40',
   ];
+  const greenColors = [
+    'bg-gradient-to-t from-[#34D399]/20 to-[#34D399]/5 border-[#34D399]/40',
+    'bg-gradient-to-t from-[#A3A3A3]/20 to-[#A3A3A3]/5 border-[#A3A3A3]/40',
+    'bg-gradient-to-t from-[#6EE7B7]/20 to-[#6EE7B7]/5 border-[#6EE7B7]/40',
+  ];
+
+  const colors = isRed ? redColors : greenColors;
 
   return (
     <motion.div
@@ -175,7 +264,7 @@ function PodiumCard({ rank, entry, elo, height }: { rank: number; entry: RankEnt
         {entry.texte}
       </p>
       <p className="text-[#F5F5F5] font-bold text-lg">{elo}</p>
-      <p className="text-[#737373] text-[10px]">ELO</p>
+      <p className="text-[10px]" style={{ color: isRed ? '#EF4444' : '#34D399' }}>ELO</p>
     </motion.div>
   );
 }

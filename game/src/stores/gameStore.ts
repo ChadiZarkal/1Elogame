@@ -25,6 +25,14 @@ export const DEFAULT_GAME_MODE: GameModeSelection = {
   category: null,
 };
 
+// History entry for scroll-back
+export interface DuelHistoryEntry {
+  duel: Duel;
+  result: VoteResult;
+}
+
+const MAX_HISTORY = 10;
+
 interface GameState {
   // Profile state
   profile: PlayerProfile | null;
@@ -41,6 +49,9 @@ interface GameState {
   // Result state
   lastResult: VoteResult | null;
   showingResult: boolean;
+  
+  // History for scroll-back
+  duelHistory: DuelHistoryEntry[];
   
   // Streak
   streak: number;
@@ -79,6 +90,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   isLoadingDuel: false,
   lastResult: null,
   showingResult: false,
+  duelHistory: [],
   streak: 0,
   streakEmoji: '',
   duelCount: 0,
@@ -122,6 +134,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       nextDuel: null,
       lastResult: null,
       showingResult: false,
+      duelHistory: [],
       streak: 0,
       streakEmoji: '',
       duelCount: 0,
@@ -255,7 +268,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   
   // Show the next duel (called after viewing result)
   showNextDuel: () => {
-    const { nextDuel } = get();
+    const { nextDuel, currentDuel, lastResult, duelHistory } = get();
+    
+    // Push current duel+result to history (keep last MAX_HISTORY)
+    if (currentDuel && lastResult) {
+      const newHistory = [...duelHistory, { duel: currentDuel, result: lastResult }];
+      if (newHistory.length > MAX_HISTORY) newHistory.shift();
+      set({ duelHistory: newHistory });
+    }
     
     if (nextDuel) {
       set({
@@ -286,6 +306,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       nextDuel: null,
       lastResult: null,
       showingResult: false,
+      duelHistory: [],
       streak: 0,
       streakEmoji: '',
       duelCount: 0,
