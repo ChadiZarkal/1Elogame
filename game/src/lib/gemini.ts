@@ -2,51 +2,88 @@
  * Gemini (Vertex AI) integration using official Google Cloud SDK.
  * Inspired by: https://cloud.google.com/vertex-ai/generative-ai/docs/learn/overview
  * 
- * Loads service account credentials from JSON file, creates a VertexAI client,
+ * Loads service account credentials from JSON file or env var, creates a VertexAI client,
  * and calls Gemini models with structured JSON output.
+ * 
+ * For Vercel: Pass GOOGLE_SERVICE_ACCOUNT_JSON as a JSON string in env vars.
  */
 
 import { VertexAI, SchemaType } from '@google-cloud/vertexai';
-import { readFileSync, existsSync, readdirSync } from 'fs';
+import { JWT } from 'google-auth-library';
+import { readFileSync, existsSync, readdirSync, writeFileSync, unlinkSync } from 'fs';
 import { resolve, join } from 'path';
+import { tmpdir } from 'os';
 
 // ═══════════════════════════════════════
-// Service Account loader
+// Credentials loader (Vercel + local)
 // ═══════════════════════════════════════
 
-function findServiceAccountFile(): string | null {
-  // Try env var first
-  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    const p = resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS);
-    if (existsSync(p)) return p;
+interface ServiceAccountCredentials {
+  type: string;
+  project_id: string;
+  private_key_id: string;
+  private_key: string;
+  client_email: string;
+  client_id: string;
+  auth_uri: string;
+  token_uri: string;
+  auth_provider_x509_cert_url: string;
+  client_x509_cert_url: string;
+}
+
+function getServiceAccountCredentials(): ServiceAccountCredentials | null {
+  // Priority 1: Env var with inline JSON (Vercel)
+  if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+    try {
+      return JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+    } catch (e) {
+      console.warn('Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON:', e);
+      return null;
+    }
   }
 
-  // Search in current working directory (game/)
+  // Priority 2: GOOGLE_APPLICATION_CREDENTIALS file
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    const p = resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+    if (existsSync(p)) {
+      try {
+        const content = readFileSync(p, 'utf-8');
+        return JSON.parse(content);
+      } catch (e) {
+        console.warn('Failed to read GOOGLE_APPLICATION_CREDENTIALS file:', e);
+        return null;
+      }
+    }
+  }
+
+  // Priority 3: Search for ai-agent JSON file in cwd
   try {
     const files = readdirSync(process.cwd());
-    const saFile = files.find(
-      (f) => f.endsWith('.json') && f.includes('ai-agent')
-    );
+    const saFile = files.find((f) => f.endsWith('.json') && f.includes('ai-agent'));
     if (saFile) {
       const p = join(process.cwd(), saFile);
-      if (existsSync(p)) return p;
+      if (existsSync(p)) {
+        const content = readFileSync(p, 'utf-8');
+        return JSON.parse(content);
+      }
     }
-  } catch {
+  } catch (e) {
     // ignore
   }
 
-  // Search in parent directory
-  const projectRoot = resolve(process.cwd(), '..');
+  // Priority 4: Search in parent directory
   try {
+    const projectRoot = resolve(process.cwd(), '..');
     const files = readdirSync(projectRoot);
-    const saFile = files.find(
-      (f) => f.endsWith('.json') && f.includes('ai-agent')
-    );
+    const saFile = files.find((f) => f.endsWith('.json') && f.includes('ai-agent'));
     if (saFile) {
       const p = join(projectRoot, saFile);
-      if (existsSync(p)) return p;
+      if (existsSync(p)) {
+        const content = readFileSync(p, 'utf-8');
+        return JSON.parse(content);
+      }
     }
-  } catch {
+  } catch (e) {
     // ignore
   }
 
@@ -58,33 +95,28 @@ function findServiceAccountFile(): string | null {
 // ═══════════════════════════════════════
 
 let vertexaiInstance: VertexAI | null = null;
+let tempCredentialsFile: string | null = null;
 
 function getVertexAIClient(): VertexAI {
   if (vertexaiInstance) return vertexaiInstance;
 
-  // Try env var with inline JSON
-  if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
-    const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
-    vertexaiInstance = new VertexAI({
-      project: credentials.project_id,
-      location: process.env.VERTEX_AI_LOCATION || 'us-central1',
-    });
-    return vertexaiInstance;
-  }
-
-  // Find and read service account file
-  const filePath = findServiceAccountFile();
-  if (!filePath) {
+  const credentials = getServiceAccountCredentials();
+  if (!credentials) {
     throw new Error(
-      'Service account JSON not found. Place it in the project root (e.g., ai-agent-cha-2y53-c855d0c34cb8.json)'
+      'GCP service account credentials not found. Provide GOOGLE_SERVICE_ACCOUNT_JSON env var or place ai-agent-*.json in project root.'
     );
   }
 
-  const content = readFileSync(filePath, 'utf-8');
-  const credentials = JSON.parse(content);
-
-  // Set GOOGLE_APPLICATION_CREDENTIALS so @google-cloud/vertexai can auto-discover it
-  process.env.GOOGLE_APPLICATION_CREDENTIALS = filePath;
+  // On Vercel, we need to write credentials to a temp file because @google-cloud/vertexai
+  // requires GOOGLE_APPLICATION_CREDENTIALS to point to a file
+  try {
+    const tempFile = join(tmpdir(), `gcp-sa-${Date.now()}.json`);
+    writeFileSync(tempFile, JSON.stringify(credentials));
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = tempFile;
+    tempCredentialsFile = tempFile;
+  } catch (e) {
+    console.warn('Failed to write temp credentials file, trying without:', e);
+  }
 
   vertexaiInstance = new VertexAI({
     project: credentials.project_id,
@@ -92,6 +124,19 @@ function getVertexAIClient(): VertexAI {
   });
 
   return vertexaiInstance;
+}
+
+// Cleanup on exit
+if (typeof process !== 'undefined') {
+  process.on('exit', () => {
+    if (tempCredentialsFile && existsSync(tempCredentialsFile)) {
+      try {
+        unlinkSync(tempCredentialsFile);
+      } catch (e) {
+        // ignore
+      }
+    }
+  });
 }
 
 // ═══════════════════════════════════════

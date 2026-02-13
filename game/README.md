@@ -187,26 +187,51 @@ The game uses a modified ELO rating system:
 
 ### Vercel (Recommended)
 
-1. Push to GitHub
-2. Connect to Vercel
-3. Set environment variables
+1. Push to GitHub  
+2. Connect to Vercel (Settings → Git → Connected repository)
+3. Configure environment variables (Settings → Environment Variables)
 4. Deploy!
 
-### Environment Variables for Production
+### Environment Variables for Production on Vercel
 
-```env
-NEXT_PUBLIC_MOCK_MODE=false
-NEXT_PUBLIC_SUPABASE_URL=your-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-key
-ADMIN_PASSWORD_HASH=your-bcrypt-hash
-```
+| Variable | Value | Required |
+|----------|-------|----------|
+| `NEXT_PUBLIC_MOCK_MODE` | `false` | ✅ Yes |
+| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase URL | ✅ Yes |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key | ✅ Yes |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service key | ✅ Yes |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | GCP service account JSON (full object) | ⚠️ Recommended |
+| `VERTEX_AI_LOCATION` | `us-central1` | Optional (default) |
+| `VERTEX_AI_MODEL` | `gemini-2.0-flash-001` | Optional (default) |
+| `OPENAI_API_KEY` | OpenAI API key | Optional (fallback) |
+| `ADMIN_EMAIL` | Admin email | ✅ Yes |
+| `ADMIN_PASSWORD_HASH` | bcrypt hash | ✅ Yes |
 
-Generate admin password hash:
+### Getting GCP Service Account for Gemini
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Create a project and enable Vertex AI API
+3. Service Accounts → Create → Grant "Vertex AI User" role
+4. Keys → Create JSON key → Download
+5. Copy entire JSON content and paste into `GOOGLE_SERVICE_ACCOUNT_JSON` env var on Vercel
+
+⚠️ **Security**: Never commit this key to Git. Use Vercel's environment variables UI.
+
+### Generate Admin Password Hash
+
 ```javascript
 const bcrypt = require('bcryptjs');
 console.log(bcrypt.hashSync('your-password', 10));
 ```
+
+### AI Fallback Chain
+
+The app uses this cascade for the "Flag or Not" AI feature:
+1. **Gemini** (via GCP service account) — Primary
+2. **OpenAI** (fallback) — If Gemini unavailable
+3. **Local** (keyword-based) — If both APIs fail
+
+Mock mode disables all AI and uses local keyword matching.
 
 ## 📝 License
 
