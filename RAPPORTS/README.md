@@ -21,6 +21,14 @@ Index centralisé des rapports d'audit et plans d'amélioration pour le projet R
 - **Approche**: Walk-through du persona jouant le jeu
 - **Mis à jour**: 13 février 2026
 
+### 3. **`03-STATISTIQUES-VIRALES.md`** 🚀 CROISSANCE
+- **Type**: Stratégie data + propositions statistiques
+- **Contenu**: 18 types de statistiques exploitables (BFM TV, presse)
+- **Structure**: P0/P1/P2 par faisabilité, examples concrets, angles médias
+- **Audience**: Growth, business development, média partnerships
+- **Impact**: Générer articles viraux, sponsorships, B2B data
+- **Mis à jour**: 13 février 2026
+
 ---
 
 ## 🚀 Quick Reference — P0 Actions Immédiat
