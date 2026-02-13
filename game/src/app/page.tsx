@@ -65,7 +65,7 @@ export default function HubPage() {
       <div className="flex flex-col gap-4 w-full max-w-md">
         {/* Red Flag Test Game */}
         <motion.button
-          onClick={() => window.location.href = 'https://redorgreen.fr/'}
+          onClick={() => window.location.href = 'https://redorgreen.fr/?quiz=quiz-sexualite'}
           className="relative text-left w-full rounded-2xl bg-gradient-to-br from-[#F97316]/15 to-[#EA580C]/5 bg-[#1A1A1A] border border-[#F97316]/30 hover:border-[#F97316] hover:shadow-[0_0_40px_rgba(249,115,22,0.25)] transition-all duration-300 cursor-pointer active:scale-[0.98] overflow-hidden"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
