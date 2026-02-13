@@ -157,38 +157,4 @@
 
 ---
 
-## 🔄 Méthodologie OODA — Résumé des itérations
-
-| Itération | Phase | Action | Résultat |
-|-----------|-------|--------|---------|
-| 1-5 | OBSERVE | Lecture complète du codebase (29 fichiers) | Cartographie complète |
-| 6-8 | ORIENT | Identification des 10 tâches prioritaires | Plan d'action créé |
-| 9-10 | DECIDE/ACT | Fix profil (form + session + types + zod) | ✅ Build OK |
-| 11-13 | ACT | Refonte stats (insights, comparateur, gender gap) | ✅ Build OK |
-| 14-16 | ACT | Admin elements (delete, star) | ✅ Build OK |
-| 17-18 | ACT | Admin categories (rename inline) | ✅ Build OK |
-| 19-22 | ACT | Dashboard UX overhaul (nav bar, cards, greeting) | ✅ Build OK |
-| 23-25 | OBSERVE | Re-lecture post-modifications, grep nonbinaire | 0 résidus dans le code actif |
-| 26-28 | ACT | Fix Zod schema, build validation, linting | ✅ Clean build |
-| 29-35 | ORIENT | Identification de 50 améliorations | Ce document |
-| 36-40 | DECIDE | Priorisation P0/P1/P2 | Tableau ci-dessus |
-| 41-50 | OBSERVE+ORIENT | Review architecture, sécurité, performance | Dette technique documentée |
-
----
-
-## 📊 Scores d'audit
-
-| Catégorie | Score | Notes |
-|-----------|-------|-------|
-| **Fonctionnalité** | 7/10 | 2 jeux fonctionnels, admin complet |
-| **UX/UI** | 8/10 | Design cohérent, responsive, animations. Manque onboarding |
-| **Sécurité** | 4/10 | Admin token basique, pas de rate limiting, CORS ouvert |
-| **Performance** | 7/10 | Next.js Turbopack, mais pas de caching |
-| **Maintenabilité** | 5/10 | 0 tests, fichiers monolithiques, pas de CI/CD |
-| **Accessibilité** | 3/10 | Pas de labels ARIA, pas de focus management |
-| **SEO** | 2/10 | SPA sans metadata, pas d'Open Graph |
-| **DevOps** | 4/10 | Vercel auto-deploy mais 0 monitoring, 0 alertes |
-
----
-
 *Ce document sert de backlog produit. Mettre à jour au fur et à mesure de l'avancement.*
