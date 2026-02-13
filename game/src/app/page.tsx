@@ -20,7 +20,7 @@ export default function HubPage() {
       {/* Version badge */}
       <div className="fixed top-4 right-4 z-50">
         <span className="px-3 py-1 rounded-full bg-[#1A1A1A] border border-[#333] text-[#737373] text-xs font-mono">
-          v3.2
+          v3.3
         </span>
       </div>
 

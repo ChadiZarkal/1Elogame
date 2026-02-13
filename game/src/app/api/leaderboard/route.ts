@@ -67,15 +67,20 @@ export async function GET(request: NextRequest) {
       nb_participations: e.nb_participations,
     }));
 
-    const { count } = await supabase
+    const { count: totalElements } = await supabase
       .from('elements')
       .select('*', { count: 'exact', head: true })
       .eq('actif', true);
 
+    // Count votes from source of truth: votes table (not from nb_participations)
+    const { count: totalVotesCount } = await supabase
+      .from('votes')
+      .select('*', { count: 'exact', head: true });
+
     return NextResponse.json(createApiSuccess({
       rankings: ranked,
-      totalElements: count ?? ranked.length,
-      totalVotes: ranked.reduce((sum, e) => sum + e.nb_participations, 0),
+      totalElements: totalElements ?? ranked.length,
+      totalVotes: totalVotesCount ?? 0,
     }));
   } catch (err) {
     console.error('Leaderboard error:', err);
