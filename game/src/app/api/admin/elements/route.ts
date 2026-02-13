@@ -102,6 +102,13 @@ export async function POST(request: NextRequest) {
         elo_23_26: 1000,
         elo_27plus: 1000,
         nb_participations: 0,
+        nb_participations_homme: 0,
+        nb_participations_femme: 0,
+        nb_participations_autre: 0,
+        nb_participations_16_18: 0,
+        nb_participations_19_22: 0,
+        nb_participations_23_26: 0,
+        nb_participations_27plus: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };

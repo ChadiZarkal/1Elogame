@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { voteSchema } from '@/lib/validations';
-import { calculateNewELO, estimatePercentage, didMatchMajority, getEloFieldForSex, getEloFieldForAge, getKFactor } from '@/lib/elo';
+import { calculateNewELO, estimatePercentage, didMatchMajority, getEloFieldForSex, getEloFieldForAge, getKFactor, getParticipationFieldForSex, getParticipationFieldForAge } from '@/lib/elo';
 import { createApiSuccess, createApiError } from '@/lib/utils';
 import { Element } from '@/types/database';
 
@@ -56,9 +56,19 @@ export async function POST(request: NextRequest) {
       // Record mock vote (for seen pairs tracking)
       recordMockVote('mock-session', winnerId, loserId);
       
-      // Update participation counts
+      // Update participation counts (global + per-segment)
       winner.nb_participations += 1;
       loser.nb_participations += 1;
+      
+      // Update sex-specific participation counts
+      const sexPartField = getParticipationFieldForSex(sexe) as keyof Element;
+      (winner as unknown as Record<string, number>)[sexPartField as string] = ((winner[sexPartField] as number) || 0) + 1;
+      (loser as unknown as Record<string, number>)[sexPartField as string] = ((loser[sexPartField] as number) || 0) + 1;
+      
+      // Update age-specific participation counts
+      const agePartField = getParticipationFieldForAge(age) as keyof Element;
+      (winner as unknown as Record<string, number>)[agePartField as string] = ((winner[agePartField] as number) || 0) + 1;
+      (loser as unknown as Record<string, number>)[agePartField as string] = ((loser[agePartField] as number) || 0) + 1;
       
       // Calculate percentages for response
       const winnerPercentage = estimatePercentage(newWinnerELO, newLoserELO);
@@ -127,6 +137,8 @@ export async function POST(request: NextRequest) {
     // Calculate segmented ELO updates
     const sexField = getEloFieldForSex(sexe) as keyof Element;
     const ageField = getEloFieldForAge(age) as keyof Element;
+    const sexPartField = getParticipationFieldForSex(sexe) as keyof Element;
+    const agePartField = getParticipationFieldForAge(age) as keyof Element;
     
     const { newWinnerELO: newWinnerSexELO, newLoserELO: newLoserSexELO } = calculateNewELO(
       winner[sexField] as number,
@@ -164,6 +176,8 @@ export async function POST(request: NextRequest) {
       [sexField]: newWinnerSexELO,
       [ageField]: newWinnerAgeELO,
       nb_participations: winner.nb_participations + 1,
+      [sexPartField]: ((winner[sexPartField] as number) || 0) + 1,
+      [agePartField]: ((winner[agePartField] as number) || 0) + 1,
       updated_at: new Date().toISOString(),
     };
     
@@ -182,6 +196,8 @@ export async function POST(request: NextRequest) {
       [sexField]: newLoserSexELO,
       [ageField]: newLoserAgeELO,
       nb_participations: loser.nb_participations + 1,
+      [sexPartField]: ((loser[sexPartField] as number) || 0) + 1,
+      [agePartField]: ((loser[agePartField] as number) || 0) + 1,
       updated_at: new Date().toISOString(),
     };
     

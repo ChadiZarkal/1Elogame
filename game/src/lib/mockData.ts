@@ -31,6 +31,13 @@ function createElement(
     elo_23_26: elo,
     elo_27plus: elo,
     nb_participations: 0,
+    nb_participations_homme: 0,
+    nb_participations_femme: 0,
+    nb_participations_autre: 0,
+    nb_participations_16_18: 0,
+    nb_participations_19_22: 0,
+    nb_participations_23_26: 0,
+    nb_participations_27plus: 0,
     created_at: now,
     updated_at: now,
   };

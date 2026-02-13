@@ -14,11 +14,22 @@ interface ElementRanking {
   elo_global: number;
   elo_homme: number;
   elo_femme: number;
+  elo_16_18: number;
+  elo_19_22: number;
+  elo_23_26: number;
+  elo_27plus: number;
   nb_participations: number;
+  nb_participations_homme: number;
+  nb_participations_femme: number;
+  nb_participations_autre: number;
+  nb_participations_16_18: number;
+  nb_participations_19_22: number;
+  nb_participations_23_26: number;
+  nb_participations_27plus: number;
   is_starred?: boolean;
 }
 
-type ViewMode = 'global' | 'homme' | 'femme';
+type ViewMode = 'global' | 'homme' | 'femme' | '16-18' | '19-22' | '23-26' | '27+';
 type SortField = 'elo' | 'participations' | 'gap';
 
 export default function AdminStatsPage() {
@@ -54,7 +65,18 @@ export default function AdminStatsPage() {
           elo_global: e.elo_global,
           elo_homme: e.elo_homme,
           elo_femme: e.elo_femme,
+          elo_16_18: e.elo_16_18 ?? 1000,
+          elo_19_22: e.elo_19_22 ?? 1000,
+          elo_23_26: e.elo_23_26 ?? 1000,
+          elo_27plus: e.elo_27plus ?? 1000,
           nb_participations: e.nb_participations,
+          nb_participations_homme: e.nb_participations_homme ?? 0,
+          nb_participations_femme: e.nb_participations_femme ?? 0,
+          nb_participations_autre: e.nb_participations_autre ?? 0,
+          nb_participations_16_18: e.nb_participations_16_18 ?? 0,
+          nb_participations_19_22: e.nb_participations_19_22 ?? 0,
+          nb_participations_23_26: e.nb_participations_23_26 ?? 0,
+          nb_participations_27plus: e.nb_participations_27plus ?? 0,
           is_starred: e.is_starred || false,
         })));
       } else {
@@ -80,7 +102,23 @@ export default function AdminStatsPage() {
     switch (view) {
       case 'homme': return r.elo_homme;
       case 'femme': return r.elo_femme;
+      case '16-18': return r.elo_16_18;
+      case '19-22': return r.elo_19_22;
+      case '23-26': return r.elo_23_26;
+      case '27+': return r.elo_27plus;
       default: return r.elo_global;
+    }
+  }, [view]);
+
+  const getParticipationsValue = useCallback((r: ElementRanking) => {
+    switch (view) {
+      case 'homme': return r.nb_participations_homme;
+      case 'femme': return r.nb_participations_femme;
+      case '16-18': return r.nb_participations_16_18;
+      case '19-22': return r.nb_participations_19_22;
+      case '23-26': return r.nb_participations_23_26;
+      case '27+': return r.nb_participations_27plus;
+      default: return r.nb_participations;
     }
   }, [view]);
 
@@ -93,28 +131,28 @@ export default function AdminStatsPage() {
     return filtered.sort((a, b) => {
       switch (sortBy) {
         case 'participations':
-          return b.nb_participations - a.nb_participations;
+          return getParticipationsValue(b) - getParticipationsValue(a);
         case 'gap':
           return Math.abs(getGenderGap(b)) - Math.abs(getGenderGap(a));
         default:
           return getEloValue(b) - getEloValue(a);
       }
     });
-  }, [rankings, searchQuery, sortBy, getEloValue]);
+  }, [rankings, searchQuery, sortBy, getEloValue, getParticipationsValue]);
 
   const displayedRankings = showAll ? processedRankings : processedRankings.slice(0, 100);
 
   const summaryStats = useMemo(() => {
     if (rankings.length === 0) return null;
-    const totalParticipations = rankings.reduce((s, r) => s + r.nb_participations, 0);
-    const avgElo = Math.round(rankings.reduce((s, r) => s + r.elo_global, 0) / rankings.length);
+    const totalParticipations = rankings.reduce((s, r) => s + getParticipationsValue(r), 0);
+    const avgElo = Math.round(rankings.reduce((s, r) => s + getEloValue(r), 0) / rankings.length);
     const sorted = [...rankings].sort((a, b) => Math.abs(getGenderGap(b)) - Math.abs(getGenderGap(a)));
     const biggestGap = sorted[0];
     const mostDebated = [...rankings]
-      .filter(r => r.nb_participations >= 5)
-      .sort((a, b) => Math.abs(a.elo_global - 1000) - Math.abs(b.elo_global - 1000))[0];
+      .filter(r => getParticipationsValue(r) >= 5)
+      .sort((a, b) => Math.abs(getEloValue(a) - 1000) - Math.abs(getEloValue(b) - 1000))[0];
     return { totalParticipations, avgElo, biggestGap, mostDebated };
-  }, [rankings]);
+  }, [rankings, getEloValue, getParticipationsValue]);
 
   const marketingInsights = useMemo(() => {
     if (rankings.length < 2) return [];
@@ -163,7 +201,7 @@ export default function AdminStatsPage() {
   }, [selectedPair, rankings]);
 
   const exportCSV = useCallback(() => {
-    const headers = ['Rang', 'Texte', 'Catégorie', 'ELO Global', 'ELO Hommes', 'ELO Femmes', 'Écart H/F', 'Participations', 'Starred'];
+    const headers = ['Rang', 'Texte', 'Catégorie', 'ELO Global', 'ELO Hommes', 'ELO Femmes', 'ELO 16-18', 'ELO 19-22', 'ELO 23-26', 'ELO 27+', 'Écart H/F', 'Participations Total', 'Part. Hommes', 'Part. Femmes', 'Part. 16-18', 'Part. 19-22', 'Part. 23-26', 'Part. 27+', 'Starred'];
     const rows = processedRankings.map((r, i) => [
       i + 1,
       `"${r.texte.replace(/"/g, '""')}"`,
@@ -171,8 +209,18 @@ export default function AdminStatsPage() {
       Math.round(r.elo_global),
       Math.round(r.elo_homme),
       Math.round(r.elo_femme),
+      Math.round(r.elo_16_18),
+      Math.round(r.elo_19_22),
+      Math.round(r.elo_23_26),
+      Math.round(r.elo_27plus),
       Math.round(getGenderGap(r)),
       r.nb_participations,
+      r.nb_participations_homme,
+      r.nb_participations_femme,
+      r.nb_participations_16_18,
+      r.nb_participations_19_22,
+      r.nb_participations_23_26,
+      r.nb_participations_27plus,
       r.is_starred ? 'Oui' : 'Non',
     ]);
     const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -224,7 +272,7 @@ export default function AdminStatsPage() {
           <SummaryCard label="ELO Moyen" value={summaryStats.avgElo.toString()} icon="📊" />
           <SummaryCard label="Total Votes" value={Math.round(summaryStats.totalParticipations / 2).toLocaleString()} icon="🗳️" />
           <SummaryCard label="Plus gros écart H/F" value={summaryStats.biggestGap ? `${Math.abs(getGenderGap(summaryStats.biggestGap))} pts` : '-'} icon="⚡" sublabel={summaryStats.biggestGap?.texte?.substring(0, 25)} />
-          <SummaryCard label="Plus débattu" value={summaryStats.mostDebated ? `${Math.round(summaryStats.mostDebated.elo_global)} ELO` : '-'} icon="🔥" sublabel={summaryStats.mostDebated?.texte?.substring(0, 25)} />
+          <SummaryCard label="Plus débattu" value={summaryStats.mostDebated ? `${Math.round(getEloValue(summaryStats.mostDebated))} ELO` : '-'} icon="🔥" sublabel={summaryStats.mostDebated?.texte?.substring(0, 25)} />
         </div>
       )}
 
@@ -246,10 +294,10 @@ export default function AdminStatsPage() {
         <div className="max-w-6xl mx-auto mb-6">
           <h2 className="text-lg font-bold text-[#F5F5F5] mb-3 flex items-center gap-2">
             🎯 Top 10 — Participations
-            <span className="text-xs font-normal text-[#737373]">— Éléments les plus votés</span>
+            <span className="text-xs font-normal text-[#737373]">— Éléments les plus votés {view !== 'global' ? `(${view})` : ''}</span>
           </h2>
           <div className="bg-[#1A1A1A] border border-[#333] rounded-xl p-5">
-            <TopParticipationsChart rankings={rankings} />
+            <TopParticipationsChart rankings={rankings} getParticipations={getParticipationsValue} />
           </div>
         </div>
       )}
@@ -296,6 +344,15 @@ export default function AdminStatsPage() {
               <ComparisonRow label="🌍 Global" a={pairComparison.a} b={pairComparison.b} eloA={pairComparison.a.elo_global} eloB={pairComparison.b.elo_global} />
               <ComparisonRow label="♂️ Hommes" a={pairComparison.a} b={pairComparison.b} eloA={pairComparison.a.elo_homme} eloB={pairComparison.b.elo_homme} />
               <ComparisonRow label="♀️ Femmes" a={pairComparison.a} b={pairComparison.b} eloA={pairComparison.a.elo_femme} eloB={pairComparison.b.elo_femme} />
+              <div className="border-t border-[#333] pt-3 mt-3">
+                <p className="text-[#737373] text-xs mb-2">Par tranche d&apos;âge</p>
+                <div className="space-y-2">
+                  <ComparisonRow label="🎓 16-18" a={pairComparison.a} b={pairComparison.b} eloA={pairComparison.a.elo_16_18} eloB={pairComparison.b.elo_16_18} />
+                  <ComparisonRow label="🎯 19-22" a={pairComparison.a} b={pairComparison.b} eloA={pairComparison.a.elo_19_22} eloB={pairComparison.b.elo_19_22} />
+                  <ComparisonRow label="💼 23-26" a={pairComparison.a} b={pairComparison.b} eloA={pairComparison.a.elo_23_26} eloB={pairComparison.b.elo_23_26} />
+                  <ComparisonRow label="🔥 27+" a={pairComparison.a} b={pairComparison.b} eloA={pairComparison.a.elo_27plus} eloB={pairComparison.b.elo_27plus} />
+                </div>
+              </div>
               <div className="mt-3 p-3 bg-[#0D0D0D] rounded-lg">
                 <p className="text-[#A3A3A3] text-xs mb-1">🔊 Texte marketing :</p>
                 <p className="text-[#F5F5F5] text-sm">
@@ -316,10 +373,22 @@ export default function AdminStatsPage() {
       </div>
 
       <div className="max-w-6xl mx-auto mb-4 space-y-3">
-        <div className="flex gap-2 flex-wrap">
-          <ViewButton active={view === 'global'} onClick={() => setView('global')}>🌍 Global</ViewButton>
-          <ViewButton active={view === 'homme'} onClick={() => setView('homme')}>♂️ Hommes</ViewButton>
-          <ViewButton active={view === 'femme'} onClick={() => setView('femme')}>♀️ Femmes</ViewButton>
+        <div>
+          <p className="text-[#737373] text-xs mb-1.5">Par genre</p>
+          <div className="flex gap-2 flex-wrap">
+            <ViewButton active={view === 'global'} onClick={() => setView('global')}>🌍 Global</ViewButton>
+            <ViewButton active={view === 'homme'} onClick={() => setView('homme')}>♂️ Hommes</ViewButton>
+            <ViewButton active={view === 'femme'} onClick={() => setView('femme')}>♀️ Femmes</ViewButton>
+          </div>
+        </div>
+        <div>
+          <p className="text-[#737373] text-xs mb-1.5">Par tranche d&apos;âge</p>
+          <div className="flex gap-2 flex-wrap">
+            <ViewButton active={view === '16-18'} onClick={() => setView('16-18')}>🎓 16-18</ViewButton>
+            <ViewButton active={view === '19-22'} onClick={() => setView('19-22')}>🎯 19-22</ViewButton>
+            <ViewButton active={view === '23-26'} onClick={() => setView('23-26')}>💼 23-26</ViewButton>
+            <ViewButton active={view === '27+'} onClick={() => setView('27+')}>🔥 27+</ViewButton>
+          </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <input type="text" placeholder="Rechercher un élément..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
@@ -346,15 +415,32 @@ export default function AdminStatsPage() {
                     {ranking.is_starred && <span className="mr-1">⭐</span>}{ranking.texte}
                   </p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[#737373] text-xs">{ranking.nb_participations} participations</span>
+                    <span className="text-[#737373] text-xs">{getParticipationsValue(ranking)} participations</span>
                     <span className="text-[#737373] text-xs">•</span>
                     <span className="text-[#737373] text-xs">{ranking.categorie}</span>
+                    {view !== 'global' && (
+                      <>
+                        <span className="text-[#737373] text-xs">•</span>
+                        <span className="text-[#525252] text-[10px]">{ranking.nb_participations} total</span>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="hidden md:flex items-center gap-4">
-                  <EloChip label="G" value={ranking.elo_global} highlighted={view === 'global'} />
-                  <EloChip label="H" value={ranking.elo_homme} highlighted={view === 'homme'} />
-                  <EloChip label="F" value={ranking.elo_femme} highlighted={view === 'femme'} />
+                  {(view === 'global' || view === 'homme' || view === 'femme') ? (
+                    <>
+                      <EloChip label="G" value={ranking.elo_global} highlighted={view === 'global'} />
+                      <EloChip label="H" value={ranking.elo_homme} highlighted={view === 'homme'} />
+                      <EloChip label="F" value={ranking.elo_femme} highlighted={view === 'femme'} />
+                    </>
+                  ) : (
+                    <>
+                      <EloChip label="16-18" value={ranking.elo_16_18} highlighted={view === '16-18'} />
+                      <EloChip label="19-22" value={ranking.elo_19_22} highlighted={view === '19-22'} />
+                      <EloChip label="23-26" value={ranking.elo_23_26} highlighted={view === '23-26'} />
+                      <EloChip label="27+" value={ranking.elo_27plus} highlighted={view === '27+'} />
+                    </>
+                  )}
                 </div>
                 <div className="md:hidden text-right">
                   <p className="text-xl font-bold text-[#F5F5F5]">{Math.round(getEloValue(ranking))}</p>
@@ -530,21 +616,21 @@ function EloDistributionChart({ rankings }: { rankings: ElementRanking[] }) {
   );
 }
 
-function TopParticipationsChart({ rankings }: { rankings: ElementRanking[] }) {
-  const sorted = [...rankings].sort((a, b) => b.nb_participations - a.nb_participations).slice(0, 10);
-  const maxP = sorted[0]?.nb_participations || 1;
+function TopParticipationsChart({ rankings, getParticipations }: { rankings: ElementRanking[]; getParticipations: (r: ElementRanking) => number }) {
+  const sorted = [...rankings].sort((a, b) => getParticipations(b) - getParticipations(a)).slice(0, 10);
+  const maxP = getParticipations(sorted[0]) || 1;
 
   return (
     <div className="space-y-2">
       {sorted.map((entry, i) => {
-        const pct = (entry.nb_participations / maxP) * 100;
+        const pct = (getParticipations(entry) / maxP) * 100;
         return (
           <div key={entry.id} className="flex items-center gap-3">
             <span className="text-[#737373] text-xs font-mono w-4 text-right">{i + 1}</span>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-0.5">
                 <p className="text-[#F5F5F5] text-xs truncate max-w-[70%]">{entry.texte}</p>
-                <span className="text-[#A3A3A3] text-[10px] font-mono">{entry.nb_participations} votes</span>
+                <span className="text-[#A3A3A3] text-[10px] font-mono">{getParticipations(entry)} votes</span>
               </div>
               <div className="h-1.5 bg-[#2A2A2A] rounded-full overflow-hidden">
                 <motion.div

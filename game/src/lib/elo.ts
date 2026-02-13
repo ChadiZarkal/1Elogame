@@ -148,3 +148,28 @@ export function getEloFieldForAge(age: '16-18' | '19-22' | '23-26' | '27+'): str
   };
   return mapping[age];
 }
+
+/**
+ * Get the participation field name for a specific sex segment.
+ */
+export function getParticipationFieldForSex(sexe: 'homme' | 'femme' | 'autre'): string {
+  const mapping: Record<string, string> = {
+    homme: 'nb_participations_homme',
+    femme: 'nb_participations_femme',
+    autre: 'nb_participations_autre',
+  };
+  return mapping[sexe];
+}
+
+/**
+ * Get the participation field name for a specific age segment.
+ */
+export function getParticipationFieldForAge(age: '16-18' | '19-22' | '23-26' | '27+'): string {
+  const mapping: Record<string, string> = {
+    '16-18': 'nb_participations_16_18',
+    '19-22': 'nb_participations_19_22',
+    '23-26': 'nb_participations_23_26',
+    '27+': 'nb_participations_27plus',
+  };
+  return mapping[age];
+}

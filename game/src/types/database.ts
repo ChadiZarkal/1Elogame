@@ -32,6 +32,13 @@ export interface Element {
   elo_27plus: number;
   
   nb_participations: number;
+  nb_participations_homme: number;
+  nb_participations_femme: number;
+  nb_participations_autre: number;
+  nb_participations_16_18: number;
+  nb_participations_19_22: number;
+  nb_participations_23_26: number;
+  nb_participations_27plus: number;
   created_at: string;
   updated_at: string;
 }
@@ -72,6 +79,13 @@ export interface Database {
           elo_23_26?: number;
           elo_27plus?: number;
           nb_participations?: number;
+          nb_participations_homme?: number;
+          nb_participations_femme?: number;
+          nb_participations_autre?: number;
+          nb_participations_16_18?: number;
+          nb_participations_19_22?: number;
+          nb_participations_23_26?: number;
+          nb_participations_27plus?: number;
         };
         Update: Partial<Omit<Element, 'id' | 'created_at'>>;
       };
