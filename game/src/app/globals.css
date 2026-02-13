@@ -138,3 +138,69 @@ body {
 .safe-area-top {
   padding-top: env(safe-area-inset-top, 20px);
 }
+
+/* ========== Flag Or Not Game (Jeu 2) ========== */
+
+/* Red flash background */
+@keyframes bg-flash-red {
+  0% { background-color: #0D0D0D; }
+  30% { background-color: #2a0505; }
+  100% { background-color: #1a0505; }
+}
+
+/* Green flash background */
+@keyframes bg-flash-green {
+  0% { background-color: #0D0D0D; }
+  30% { background-color: #052a14; }
+  100% { background-color: #051a0d; }
+}
+
+.bg-flash-red {
+  animation: bg-flash-red 0.7s ease-out forwards;
+}
+
+.bg-flash-green {
+  animation: bg-flash-green 0.7s ease-out forwards;
+}
+
+/* Keyboard-aware viewport */
+@supports (height: 100dvh) {
+  .min-h-dvh {
+    min-height: 100dvh;
+  }
+}
+
+/* Input focus glow for flagornot */
+.input-glow-red:focus {
+  box-shadow: 0 0 20px rgba(220, 38, 38, 0.25), 0 0 40px rgba(220, 38, 38, 0.1);
+  border-color: #DC2626;
+}
+
+.input-glow-green:focus {
+  box-shadow: 0 0 20px rgba(5, 150, 105, 0.25), 0 0 40px rgba(5, 150, 105, 0.1);
+  border-color: #059669;
+}
+
+/* ========== Premium UX Utilities ========== */
+
+/* Glass morphism */
+.glass {
+  background: rgba(20, 20, 20, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Smooth input focus transition */
+input:focus {
+  transition: border-color 0.2s ease, box-shadow 0.3s ease;
+}
+

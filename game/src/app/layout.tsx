@@ -8,13 +8,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Red or Green - Le jeu des Red Flags",
-  description: "Entre deux choix, lequel est le plus gros Red Flag ? Découvre ce que pensent les autres !",
-  keywords: ["jeu", "party game", "red flag", "débat", "amis"],
-  authors: [{ name: "Red or Green Game" }],
+  title: "Flag Games - Red Flag & More",
+  description: "Red Flag, Green Flag… Choisis ton jeu et amuse-toi entre amis ! Party games mobiles, sans compte, instantanés.",
+  keywords: ["jeu", "party game", "red flag", "green flag", "débat", "amis", "IA"],
+  authors: [{ name: "Flag Games" }],
   openGraph: {
-    title: "Red or Green - Le jeu des Red Flags",
-    description: "Entre deux choix, lequel est le plus gros Red Flag ?",
+    title: "Flag Games - Red Flag & More",
+    description: "Red Flag, Green Flag… Choisis ton jeu préféré !",
     type: "website",
   },
 };

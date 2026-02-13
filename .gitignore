@@ -1,0 +1,9 @@
+# Google Cloud service account keys
+ai-agent-*.json
+*service*account*.json
+
+# Node / IDE
+node_modules/
+.DS_Store
+.env.local
+.env.local.example
