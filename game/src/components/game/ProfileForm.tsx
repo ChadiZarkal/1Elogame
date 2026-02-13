@@ -63,7 +63,7 @@ export function ProfileForm() {
           <span>🚩</span>
         </div>
         {/* Short onboarding */}
-        <div className="bg-[#1A1A1A] border border-[#333]/60 rounded-xl px-5 py-3 max-w-xs mx-auto">
+        <div className="bg-[#1A1A1A] border border-[#333]/60 rounded-xl px-5 py-3 max-w-sm mx-auto">
           <p className="text-[#A3A3A3] text-sm leading-relaxed">
             <span className="text-[#F5F5F5] font-semibold">Comment jouer :</span> choisis l&apos;option la plus red flag.
           </p>
@@ -78,63 +78,54 @@ export function ProfileForm() {
         transition={{ delay: 0.2 }}
       >
         {/* Sex selection */}
-        <div>
-          <label className="block text-[#F5F5F5] text-lg font-semibold mb-3">
+        <fieldset className="pb-4 border-b border-[#333]">
+          <label className="block text-[#F5F5F5] text-lg font-bold mb-3">
             Quel est ton sexe ?
           </label>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {sexOptions.slice(0, 2).map((option) => (
+          <div className="grid grid-cols-3 gap-2">
+            {sexOptions.map((option) => (
               <button
                 key={option.value}
                 onClick={() => { setSex(option.value); setError(null); }}
-                className={`flex-1 min-w-[120px] py-3 px-4 rounded-xl text-center font-medium transition-all duration-200 ${
+                className={`py-3 px-3 rounded-xl text-center font-medium transition-all duration-200 text-sm ${
                   sex === option.value
                     ? 'bg-[#DC2626] text-white ring-2 ring-[#EF4444] scale-105'
                     : 'bg-[#2A2A2A] text-[#A3A3A3] hover:bg-[#333] border border-[#333]'
                 }`}
+                role="radio"
+                aria-checked={sex === option.value}
+                aria-label={option.label}
               >
                 {option.label}
               </button>
             ))}
           </div>
-          <div className="flex justify-center mt-2">
-            {sexOptions.slice(2).map((option) => (
-              <button
-                key={option.value}
-                onClick={() => { setSex(option.value); setError(null); }}
-                className={`flex-1 min-w-[180px] max-w-[200px] py-3 px-4 rounded-xl text-center font-medium transition-all duration-200 ${
-                  sex === option.value
-                    ? 'bg-[#DC2626] text-white ring-2 ring-[#EF4444] scale-105'
-                    : 'bg-[#2A2A2A] text-[#A3A3A3] hover:bg-[#333] border border-[#333]'
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        </fieldset>
         
         {/* Age selection */}
-        <div>
-          <label className="block text-[#F5F5F5] text-lg font-semibold mb-3">
+        <fieldset>
+          <label className="block text-[#F5F5F5] text-lg font-bold mb-3">
             Quel âge as-tu ?
           </label>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {ageOptions.map((option) => (
               <button
                 key={option.value}
                 onClick={() => { setAge(option.value); setError(null); }}
-                className={`py-3 px-2 rounded-xl text-center font-medium transition-all duration-200 ${
+                className={`py-3 px-2 rounded-xl text-center font-medium transition-all duration-200 text-sm ${
                   age === option.value
                     ? 'bg-[#DC2626] text-white ring-2 ring-[#EF4444] scale-105'
                     : 'bg-[#2A2A2A] text-[#A3A3A3] hover:bg-[#333] border border-[#333]'
                 }`}
+                role="radio"
+                aria-checked={age === option.value}
+                aria-label={`${option.label} ans`}
               >
                 {option.label}
               </button>
             ))}
           </div>
-        </div>
+        </fieldset>
         
         {/* Error message */}
         {error && (
@@ -148,14 +139,16 @@ export function ProfileForm() {
         )}
         
         {/* Submit button */}
-        <Button
-          onClick={handleSubmit}
-          variant="primary"
-          size="lg"
-          className="w-full"
-        >
-          JOUER
-        </Button>
+        <div className="mt-6 pt-6 border-t border-[#333]">
+          <Button
+            onClick={handleSubmit}
+            variant="primary"
+            size="lg"
+            className="w-full text-lg py-4"
+          >
+            JOUER
+          </Button>
+        </div>
       </motion.div>
       
 

@@ -69,7 +69,7 @@ export default function HubPage() {
       </motion.div>
 
       {/* Game cards */}
-      <div className="flex flex-col gap-4 w-full max-w-md">
+      <div className="flex flex-col gap-3 sm:gap-4 w-full max-w-md">
         {/* Red Flag Test Game */}
         <motion.button
           onClick={() => window.location.href = 'https://redorgreen.fr/?quiz=quiz-sexualite'}
@@ -146,7 +146,7 @@ export default function HubPage() {
       {/* Leaderboard CTA */}
       <motion.button
         onClick={() => router.push('/classement')}
-        className="mt-6 px-8 py-3 rounded-xl bg-[#1A1A1A] border border-[#333] hover:border-[#FCD34D]/50 hover:shadow-[0_0_20px_rgba(252,211,77,0.15)] transition-all text-[#A3A3A3] hover:text-[#FCD34D] text-sm font-bold"
+        className="mt-8 pt-6 border-t-2 border-[#333] px-8 py-3 rounded-xl bg-[#1A1A1A] border-b border-[#333] hover:border-b-[#FCD34D]/50 hover:shadow-[0_0_20px_rgba(252,211,77,0.15)] transition-all text-[#A3A3A3] hover:text-[#FCD34D] text-sm font-bold"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
