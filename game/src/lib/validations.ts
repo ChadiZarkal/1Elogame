@@ -32,9 +32,11 @@ export const elementUpdateSchema = z.object({
 });
 
 // Vote schema
+// Note: winnerId/loserId accept any non-empty string (UUID in prod, simple ID in mock mode)
+// Actual existence is validated by the element lookup in the route handler
 export const voteSchema = z.object({
-  winnerId: z.string().uuid('Format UUID invalide pour winnerId'),
-  loserId: z.string().uuid('Format UUID invalide pour loserId'),
+  winnerId: z.string().min(1, 'winnerId est requis'),
+  loserId: z.string().min(1, 'loserId est requis'),
   sexe: sexeVotantSchema,
   age: ageVotantSchema,
 }).refine(data => data.winnerId !== data.loserId, {
@@ -44,8 +46,8 @@ export const voteSchema = z.object({
 
 // Feedback schema
 export const feedbackSchema = z.object({
-  elementAId: z.string().uuid('Format UUID invalide'),
-  elementBId: z.string().uuid('Format UUID invalide'),
+  elementAId: z.string().min(1, 'elementAId est requis'),
+  elementBId: z.string().min(1, 'elementBId est requis'),
   type: feedbackTypeSchema,
 }).refine(data => data.elementAId !== data.elementBId, {
   message: 'Les deux éléments doivent être différents',

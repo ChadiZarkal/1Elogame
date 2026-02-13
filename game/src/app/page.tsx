@@ -17,6 +17,13 @@ export default function HubPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen min-h-[100dvh] bg-[#0D0D0D] p-5 safe-area-top safe-area-bottom">
+      {/* Version badge */}
+      <div className="fixed top-4 right-4 z-50">
+        <span className="px-3 py-1 rounded-full bg-[#1A1A1A] border border-[#333] text-[#737373] text-xs font-mono">
+          v3.1
+        </span>
+      </div>
+
       {/* Header */}
       <motion.div
         className="text-center mb-8"
