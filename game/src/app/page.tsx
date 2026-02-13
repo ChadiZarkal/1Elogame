@@ -20,7 +20,7 @@ export default function HubPage() {
       {/* Version badge */}
       <div className="fixed top-4 right-4 z-50">
         <span className="px-3 py-1 rounded-full bg-[#1A1A1A] border border-[#333] text-[#737373] text-xs font-mono">
-          v3.3
+          v3.4
         </span>
       </div>
 
@@ -46,7 +46,7 @@ export default function HubPage() {
           </motion.span>
         </div>
         <h1 className="text-5xl sm:text-6xl font-black text-[#F5F5F5] tracking-tight">
-          FLAG <span className="text-[#DC2626]">GAMES</span>
+          Red <span className="text-[#DC2626]">FLAG</span> Games
         </h1>
 
         {/* Live stats */}

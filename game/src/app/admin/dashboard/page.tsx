@@ -31,6 +31,8 @@ export default function AdminDashboardPage() {
   const [topGreen, setTopGreen] = useState<RankEntry[]>([]);
   const [error, setError] = useState('');
   const [now] = useState(new Date());
+  const [showJustification, setShowJustification] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   const fetchStats = useCallback(async (token: string) => {
     try {
@@ -65,6 +67,14 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     const token = sessionStorage.getItem('adminToken');
     if (!token) { router.push('/admin'); return; }
+    
+    // Load preference from localStorage
+    const saved = localStorage.getItem('flagornot_show_justification');
+    if (saved !== null) {
+      setShowJustification(saved === 'true');
+    }
+    setIsMounted(true);
+    
     fetchStats(token);
   }, [router, fetchStats]);
 
@@ -221,6 +231,36 @@ export default function AdminDashboardPage() {
               href="/admin/moderation" icon="🛡️" delay={0.15} />
           </div>
         </div>
+
+        {/* Settings Section */}
+        {isMounted && (
+          <div className="max-w-7xl mx-auto mb-8">
+            <h2 className="text-[#A3A3A3] mb-4 uppercase tracking-wider text-xs font-semibold">Paramètres</h2>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+              className="bg-[#1A1A1A] border border-[#333] rounded-xl p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-[#F5F5F5] font-semibold text-sm">🤖 Justifications d'IA</h3>
+                  <p className="text-[#737373] text-xs mt-1">Afficher les justifications détaillées dans le jeu "Flag or Not"</p>
+                </div>
+                <button
+                  onClick={() => {
+                    const newValue = !showJustification;
+                    setShowJustification(newValue);
+                    localStorage.setItem('flagornot_show_justification', newValue ? 'true' : 'false');
+                  }}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                    showJustification
+                      ? 'bg-[#059669] text-[#F5F5F5] hover:bg-[#047857]'
+                      : 'bg-[#333] text-[#A3A3A3] hover:bg-[#404040]'
+                  }`}
+                >
+                  {showJustification ? '✓ Activé' : '✕ Désactivé'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
 
         {/* Quick Links */}
         <div className="max-w-7xl mx-auto mb-8">

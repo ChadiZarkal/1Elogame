@@ -77,6 +77,8 @@ export default function FlagOrNotPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loadingPhrase, setLoadingPhrase] = useState(LOADING_PHRASES[0]);
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  const [showJustification, setShowJustification] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   // ═══ Refs ═══
   const inputRef = useRef<HTMLInputElement>(null);
@@ -94,6 +96,14 @@ export default function FlagOrNotPage() {
       const vh = window.visualViewport?.height || window.innerHeight;
       document.documentElement.style.setProperty('--app-height', `${vh}px`);
     };
+    
+    // Load preference from localStorage
+    const saved = localStorage.getItem('flagornot_show_justification');
+    if (saved !== null) {
+      setShowJustification(saved === 'true');
+    }
+    setIsMounted(true);
+    
     updateHeight();
     window.visualViewport?.addEventListener('resize', updateHeight);
     window.addEventListener('resize', updateHeight);
@@ -417,24 +427,37 @@ export default function FlagOrNotPage() {
                   &quot;{submittedText}&quot;
                 </motion.p>
 
-                {/* [Iter 19] Justification card — auto-shown with glass effect */}
-                <motion.div
-                  className="w-full rounded-2xl p-5 text-center glass"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.45 }}
-                  style={{
-                    border: `1px solid ${
-                      result.verdict === 'red'
-                        ? 'rgba(239,68,68,0.2)'
-                        : 'rgba(16,185,129,0.2)'
-                    }`,
-                  }}
-                >
-                  <p className="text-[#D1D5DB] text-[15px] leading-relaxed">
-                    {result.justification}
-                  </p>
-                </motion.div>
+                {/* [Iter 19] Justification card — auto-shown with glass effect, now conditionally hidden */}
+                {isMounted && showJustification && (
+                  <motion.div
+                    className="w-full rounded-2xl p-5 text-center glass"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.45 }}
+                    style={{
+                      border: `1px solid ${
+                        result.verdict === 'red'
+                          ? 'rgba(239,68,68,0.2)'
+                          : 'rgba(16,185,129,0.2)'
+                      }`,
+                    }}
+                  >
+                    <p className="text-[#D1D5DB] text-[15px] leading-relaxed">
+                      {result.justification}
+                    </p>
+                  </motion.div>
+                )}
+                
+                {isMounted && !showJustification && (
+                  <motion.div
+                    className="w-full rounded-2xl p-5 text-center text-[#737373] text-sm italic"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.45 }}
+                  >
+                    (Justifications désactivées par l'admin)
+                  </motion.div>
+                )}
               </div>
 
               {/* [Iter 24] "Encore!" button — bottom, big, thumb-friendly */}
