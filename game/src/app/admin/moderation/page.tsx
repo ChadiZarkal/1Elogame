@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Loading } from '@/components/ui/Loading';
+import { AdminNav } from '@/components/admin/AdminNav';
 
 interface FeedbackItem {
   element_a_texte: string;
@@ -80,12 +81,11 @@ export default function AdminModerationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] p-6">
+    <div className="min-h-screen bg-[#0D0D0D]">
+      <AdminNav />
+      <div className="p-6">
       {/* Header */}
       <header className="max-w-4xl mx-auto mb-8">
-        <Link href="/admin/dashboard" className="text-gray-400 hover:text-white text-sm mb-2 block">
-          ← Retour au dashboard
-        </Link>
         <h1 className="text-2xl font-bold text-white">
           <span className="text-red-500">Modération</span> & Feedback
         </h1>
@@ -171,6 +171,7 @@ export default function AdminModerationPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

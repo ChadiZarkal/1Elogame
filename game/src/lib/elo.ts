@@ -124,11 +124,10 @@ export function didMatchMajority(winnerElo: number, loserElo: number): boolean {
  * @param sexe - The sex segment
  * @returns The corresponding ELO field name
  */
-export function getEloFieldForSex(sexe: 'homme' | 'femme' | 'nonbinaire' | 'autre'): string {
+export function getEloFieldForSex(sexe: 'homme' | 'femme' | 'autre'): string {
   const mapping: Record<string, string> = {
     homme: 'elo_homme',
     femme: 'elo_femme',
-    nonbinaire: 'elo_nonbinaire',
     autre: 'elo_autre',
   };
   return mapping[sexe];

@@ -120,9 +120,21 @@ export default function HubPage() {
         ))}
       </div>
 
+      {/* Leaderboard CTA */}
+      <motion.button
+        onClick={() => router.push('/classement')}
+        className="mt-6 px-6 py-3 rounded-xl bg-[#1A1A1A] border border-[#333] hover:border-[#FCD34D]/50 hover:shadow-[0_0_20px_rgba(252,211,77,0.15)] transition-all text-[#A3A3A3] hover:text-[#FCD34D] text-sm font-medium"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.6 }}
+        whileTap={{ scale: 0.97 }}
+      >
+        🏆 Voir le classement
+      </motion.button>
+
       {/* Footer */}
       <motion.footer
-        className="mt-10 text-[#737373] text-xs text-center"
+        className="mt-8 text-[#737373] text-xs text-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}

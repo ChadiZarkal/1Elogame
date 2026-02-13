@@ -9,7 +9,7 @@ export type Categorie =
   | 'bureau'    // Bureau - comportements et attitudes au travail
   | string;     // Permet des catégories personnalisées
 
-export type SexeVotant = 'homme' | 'femme' | 'nonbinaire' | 'autre';
+export type SexeVotant = 'homme' | 'femme' | 'autre';
 
 export type AgeVotant = '16-18' | '19-22' | '23-26' | '27+';
 

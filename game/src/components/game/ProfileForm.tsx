@@ -10,8 +10,7 @@ import { SexeVotant, AgeVotant } from '@/types/database';
 const sexOptions: { value: SexeVotant; label: string }[] = [
   { value: 'homme', label: 'Homme' },
   { value: 'femme', label: 'Femme' },
-  { value: 'nonbinaire', label: 'Non-binaire' },
-  { value: 'autre', label: 'Autre' },
+  { value: 'autre', label: 'Ne se prononce pas' },
 ];
 
 const ageOptions: { value: AgeVotant; label: string }[] = [

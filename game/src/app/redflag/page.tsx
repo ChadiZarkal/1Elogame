@@ -8,18 +8,15 @@ import { useGameStore } from '@/stores/gameStore';
 
 export default function RedFlagHome() {
   const router = useRouter();
-  const { hasProfile, initializeFromStorage } = useGameStore();
+  const { initializeFromStorage, clearProfile } = useGameStore();
 
+  // Always clear profile on page load to force re-entry
   useEffect(() => {
-    initializeFromStorage();
-  }, [initializeFromStorage]);
+    clearProfile();
+  }, [clearProfile]);
 
   const handlePlay = () => {
-    if (hasProfile) {
-      router.push('/jeu/jouer');
-    } else {
-      router.push('/jeu');
-    }
+    router.push('/jeu');
   };
 
   return (
@@ -91,11 +88,7 @@ export default function RedFlagHome() {
             🎮 JOUER
           </Button>
 
-          {hasProfile && (
-            <p className="text-[#737373] text-sm mt-3">
-              Session en cours • Cliquez pour continuer
-            </p>
-          )}
+          {/* No persistent session message since we always ask */}
         </motion.div>
 
         <motion.div

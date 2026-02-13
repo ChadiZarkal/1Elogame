@@ -1,57 +1,106 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
-import { CATEGORIES_CONFIG } from '@/config/categories';
-
-/**
- * PAGE DE GESTION DES CATÉGORIES
- * 
- * Cette page affiche les catégories actuelles et explique comment en ajouter.
- * Pour ajouter une nouvelle catégorie :
- * 
- * 1. Ouvrir /src/config/categories.ts
- * 2. Ajouter une entrée dans CATEGORIES_CONFIG
- * 3. Ajouter la valeur dans types/database.ts si nécessaire
- */
+import { CATEGORIES_CONFIG, CategoryConfig } from '@/config/categories';
+import { AdminNav } from '@/components/admin/AdminNav';
 
 export default function AdminCategoriesPage() {
   const router = useRouter();
+  const [localCategories, setLocalCategories] = useState<Record<string, CategoryConfig>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editLabel, setEditLabel] = useState('');
+  const [editEmoji, setEditEmoji] = useState('');
   const [showAddGuide, setShowAddGuide] = useState(false);
-  
-  // Get all categories
-  const categories = Object.values(CATEGORIES_CONFIG);
+  const [saved, setSaved] = useState(false);
 
-  // Check auth
-  if (typeof window !== 'undefined') {
-    const token = sessionStorage.getItem('adminToken');
-    if (!token) {
-      router.push('/admin');
-      return null;
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = sessionStorage.getItem('adminToken');
+      if (!token) {
+        router.push('/admin');
+        return;
+      }
     }
-  }
+    // Load local overrides from localStorage
+    const saved = localStorage.getItem('category_overrides');
+    if (saved) {
+      try {
+        const overrides = JSON.parse(saved);
+        const merged = { ...CATEGORIES_CONFIG };
+        for (const [key, val] of Object.entries(overrides)) {
+          if (merged[key]) {
+            merged[key] = { ...merged[key], ...(val as Partial<CategoryConfig>) };
+          }
+        }
+        setLocalCategories(merged);
+      } catch {
+        setLocalCategories({ ...CATEGORIES_CONFIG });
+      }
+    } else {
+      setLocalCategories({ ...CATEGORIES_CONFIG });
+    }
+  }, [router]);
+
+  const categories = Object.values(localCategories);
+
+  const startEdit = (cat: CategoryConfig) => {
+    setEditingId(cat.id);
+    setEditLabel(cat.labelFr);
+    setEditEmoji(cat.emoji || '');
+  };
+
+  const saveEdit = () => {
+    if (!editingId) return;
+    const updated = { ...localCategories };
+    if (updated[editingId]) {
+      updated[editingId] = {
+        ...updated[editingId],
+        label: editLabel,
+        labelFr: editLabel,
+        emoji: editEmoji,
+      };
+    }
+    setLocalCategories(updated);
+    
+    // Save overrides to localStorage
+    const overrides: Record<string, Partial<CategoryConfig>> = {};
+    for (const [key, val] of Object.entries(updated)) {
+      const original = CATEGORIES_CONFIG[key];
+      if (original && (val.label !== original.label || val.emoji !== original.emoji)) {
+        overrides[key] = { label: val.label, labelFr: val.labelFr, emoji: val.emoji };
+      }
+    }
+    localStorage.setItem('category_overrides', JSON.stringify(overrides));
+    
+    setEditingId(null);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] p-6 overflow-y-auto pb-24">
-      {/* Header */}
+    <div className="min-h-screen bg-[#0D0D0D]">
+      <AdminNav />
+      <div className="p-6 overflow-y-auto pb-24">
       <header className="max-w-4xl mx-auto mb-8">
-        <Link href="/admin/dashboard" className="text-[#A3A3A3] hover:text-[#F5F5F5] text-sm mb-2 block">
-          ← Retour au dashboard
-        </Link>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#F5F5F5]">
             Gérer les <span className="text-[#DC2626]">catégories</span>
           </h1>
-          <Button variant="primary" onClick={() => setShowAddGuide(true)}>
-            + Comment ajouter
-          </Button>
+          <div className="flex gap-2">
+            {saved && (
+              <span className="text-[#22C55E] text-sm self-center">✓ Sauvegardé</span>
+            )}
+            <Button variant="primary" onClick={() => setShowAddGuide(true)}>
+              + Comment ajouter
+            </Button>
+          </div>
         </div>
       </header>
 
-      {/* Categories Grid */}
       <div className="max-w-4xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           {categories.map((cat) => (
@@ -61,23 +110,60 @@ export default function AdminCategoriesPage() {
               animate={{ opacity: 1, y: 0 }}
               className="bg-[#1A1A1A] border border-[#333] rounded-xl p-6"
             >
-              <div className="flex items-center gap-4 mb-4">
-                <span className="text-3xl">{cat.emoji}</span>
-                <div>
-                  <h3 className="text-lg font-bold text-[#F5F5F5]">{cat.labelFr}</h3>
-                  <p className="text-sm text-[#737373]">ID: {cat.id}</p>
+              {editingId === cat.id ? (
+                <div className="space-y-3">
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      value={editEmoji}
+                      onChange={(e) => setEditEmoji(e.target.value)}
+                      className="w-16 px-3 py-2 bg-[#0D0D0D] border border-[#333] rounded-lg text-2xl text-center"
+                      placeholder="🏷️"
+                    />
+                    <input
+                      type="text"
+                      value={editLabel}
+                      onChange={(e) => setEditLabel(e.target.value)}
+                      className="flex-1 px-3 py-2 bg-[#0D0D0D] border border-[#333] rounded-lg text-[#F5F5F5]"
+                      placeholder="Nom de la catégorie"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="secondary" size="sm" onClick={() => setEditingId(null)} className="flex-1">
+                      Annuler
+                    </Button>
+                    <Button variant="primary" size="sm" onClick={saveEdit} className="flex-1">
+                      Sauvegarder
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-2">
-                <span className={`px-3 py-1 rounded-full text-sm ${cat.color} ${cat.textColor}`}>
-                  Aperçu du style
-                </span>
-              </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-4 mb-4">
+                    <span className="text-3xl">{cat.emoji}</span>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-[#F5F5F5]">{cat.labelFr}</h3>
+                      <p className="text-sm text-[#737373]">ID: {cat.id}</p>
+                    </div>
+                    <button
+                      onClick={() => startEdit(cat)}
+                      className="text-[#A3A3A3] hover:text-[#F5F5F5] transition-colors text-sm px-3 py-1 rounded-lg bg-[#2A2A2A] hover:bg-[#333]"
+                    >
+                      ✏️ Renommer
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className={`px-3 py-1 rounded-full text-sm ${cat.color} ${cat.textColor}`}>
+                      Aperçu du style
+                    </span>
+                  </div>
+                </>
+              )}
             </motion.div>
           ))}
         </div>
 
-        {/* Info Box */}
         <div className="bg-[#1A1A1A] border border-[#DC2626]/30 rounded-xl p-6">
           <h2 className="text-lg font-bold text-[#DC2626] mb-3">📁 Fichier de configuration</h2>
           <p className="text-[#A3A3A3] mb-4">
@@ -87,44 +173,26 @@ export default function AdminCategoriesPage() {
             src/config/categories.ts
           </code>
           <p className="text-[#737373] text-sm">
-            Ce fichier contient toutes les catégories avec leurs couleurs et emojis.
-            Modifiez-le directement pour ajouter de nouvelles catégories.
+            Les renommages sont stockés localement. Pour un changement permanent, modifiez directement le fichier source.
           </p>
         </div>
       </div>
 
-      {/* Add Guide Modal */}
       <AnimatePresence>
         {showAddGuide && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 overflow-y-auto"
-            onClick={() => setShowAddGuide(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-[#1A1A1A] border border-[#333] rounded-xl p-6 w-full max-w-2xl my-8"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 className="text-xl font-bold text-[#F5F5F5] mb-6">
-                📖 Guide : Ajouter une catégorie
-              </h2>
-
+            onClick={() => setShowAddGuide(false)}>
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-[#1A1A1A] border border-[#333] rounded-xl p-6 w-full max-w-2xl my-8" onClick={(e) => e.stopPropagation()}>
+              <h2 className="text-xl font-bold text-[#F5F5F5] mb-6">📖 Guide : Ajouter une catégorie</h2>
               <div className="space-y-6">
                 <div>
                   <h3 className="text-[#DC2626] font-bold mb-2">Étape 1 : Ouvrir le fichier</h3>
-                  <code className="block bg-[#0D0D0D] p-3 rounded-lg text-[#22C55E] font-mono text-sm">
-                    src/config/categories.ts
-                  </code>
+                  <code className="block bg-[#0D0D0D] p-3 rounded-lg text-[#22C55E] font-mono text-sm">src/config/categories.ts</code>
                 </div>
-
                 <div>
                   <h3 className="text-[#DC2626] font-bold mb-2">Étape 2 : Ajouter votre catégorie</h3>
-                  <p className="text-[#A3A3A3] mb-2">Ajoutez un bloc comme celui-ci dans CATEGORIES_CONFIG :</p>
                   <pre className="bg-[#0D0D0D] p-4 rounded-lg text-[#F5F5F5] font-mono text-sm overflow-x-auto">
 {`lifestyle: {
   id: 'lifestyle',
@@ -136,28 +204,7 @@ export default function AdminCategoriesPage() {
 },`}
                   </pre>
                 </div>
-
-                <div>
-                  <h3 className="text-[#DC2626] font-bold mb-2">Étape 3 (optionnel) : Mise à jour du type</h3>
-                  <p className="text-[#A3A3A3] mb-2">Si vous voulez du typage strict, ajoutez dans :</p>
-                  <code className="block bg-[#0D0D0D] p-3 rounded-lg text-[#22C55E] font-mono text-sm">
-                    src/types/database.ts
-                  </code>
-                </div>
-
-                <div className="bg-[#DC2626]/10 border border-[#DC2626]/30 rounded-lg p-4">
-                  <h4 className="text-[#DC2626] font-bold mb-2">💡 Couleurs suggérées</h4>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <span className="text-[#60A5FA]">Blue: #60A5FA</span>
-                    <span className="text-[#34D399]">Green: #34D399</span>
-                    <span className="text-[#FBBF24]">Yellow: #FBBF24</span>
-                    <span className="text-[#F87171]">Red: #F87171</span>
-                    <span className="text-[#A78BFA]">Purple: #A78BFA</span>
-                    <span className="text-[#FB923C]">Orange: #FB923C</span>
-                  </div>
-                </div>
               </div>
-
               <div className="mt-6">
                 <Button variant="primary" className="w-full" onClick={() => setShowAddGuide(false)}>
                   J&apos;ai compris !
@@ -167,6 +214,7 @@ export default function AdminCategoriesPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
 import { Element, Categorie } from '@/types';
 import { CATEGORIES_CONFIG, CATEGORIES_LIST, getCategoryClasses } from '@/config/categories';
+import { AdminNav } from '@/components/admin/AdminNav';
 
 export default function AdminElementsPage() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function AdminElementsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingElement, setEditingElement] = useState<Element | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchElements = useCallback(async (token: string) => {
     try {
@@ -78,6 +80,52 @@ export default function AdminElementsPage() {
     }
   };
 
+  const deleteElement = async (id: string) => {
+    const token = sessionStorage.getItem('adminToken');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`/api/admin/elements/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        setElements(elements.filter(e => e.id !== id));
+        setDeletingId(null);
+      } else {
+        setError('Erreur lors de la suppression');
+      }
+    } catch {
+      setError('Erreur de connexion');
+    }
+  };
+
+  const toggleStar = async (element: Element) => {
+    const token = sessionStorage.getItem('adminToken');
+    if (!token) return;
+
+    const newStarred = !(element as Element & { is_starred?: boolean }).is_starred;
+    try {
+      const response = await fetch(`/api/admin/elements/${element.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ is_starred: newStarred }),
+      });
+
+      if (response.ok) {
+        setElements(elements.map(e =>
+          e.id === element.id ? { ...e, is_starred: newStarred } as Element : e
+        ));
+      }
+    } catch {
+      setError('Erreur lors de la mise à jour');
+    }
+  };
+
   const filteredElements = elements
     .filter(e => {
       if (filter === 'active') return e.actif;
@@ -102,14 +150,13 @@ export default function AdminElementsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] p-6 overflow-y-auto pb-24">
+    <div className="min-h-screen bg-[#0D0D0D]">
+      <AdminNav />
+      <div className="p-6 overflow-y-auto pb-24">
       {/* Header */}
       <header className="max-w-6xl mx-auto mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <Link href="/admin/dashboard" className="text-[#A3A3A3] hover:text-[#F5F5F5] text-sm mb-2 block">
-              ← Retour au dashboard
-            </Link>
             <h1 className="text-2xl font-bold text-[#F5F5F5]">
               Gérer les <span className="text-[#DC2626]">éléments</span>
             </h1>
@@ -247,12 +294,28 @@ export default function AdminElementsPage() {
                         </button>
                       </td>
                       <td className="p-4 text-right">
-                        <button
-                          onClick={() => setEditingElement(element)}
-                          className="text-[#A3A3A3] hover:text-[#F5F5F5] transition-colors"
-                        >
-                          Modifier
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => toggleStar(element)}
+                            className={`transition-colors text-lg ${(element as Element & { is_starred?: boolean }).is_starred ? 'text-[#FCD34D]' : 'text-[#737373] hover:text-[#FCD34D]'}`}
+                            title={`${(element as Element & { is_starred?: boolean }).is_starred ? 'Retirer des favoris' : 'Mettre en avant'}`}
+                          >
+                            {(element as Element & { is_starred?: boolean }).is_starred ? '⭐' : '☆'}
+                          </button>
+                          <button
+                            onClick={() => setEditingElement(element)}
+                            className="text-[#A3A3A3] hover:text-[#F5F5F5] transition-colors text-sm"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => setDeletingId(element.id)}
+                            className="text-[#737373] hover:text-[#DC2626] transition-colors text-sm"
+                            title="Supprimer"
+                          >
+                            🗑️
+                          </button>
+                        </div>
                       </td>
                     </motion.tr>
                   ))}
@@ -297,12 +360,26 @@ export default function AdminElementsPage() {
                   <CategoryBadge category={element.categorie} />
                   <span className="text-[#A3A3A3] text-sm font-mono">ELO: {Math.round(element.elo_global)}</span>
                 </div>
-                <button
-                  onClick={() => setEditingElement(element)}
-                  className="text-[#DC2626] text-sm hover:underline"
-                >
-                  Modifier
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleStar(element)}
+                    className={`transition-colors ${(element as Element & { is_starred?: boolean }).is_starred ? 'text-[#FCD34D]' : 'text-[#737373]'}`}
+                  >
+                    {(element as Element & { is_starred?: boolean }).is_starred ? '⭐' : '☆'}
+                  </button>
+                  <button
+                    onClick={() => setEditingElement(element)}
+                    className="text-[#DC2626] text-sm hover:underline"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => setDeletingId(element.id)}
+                    className="text-[#737373] hover:text-[#DC2626] text-sm"
+                  >
+                    🗑️
+                  </button>
+                </div>
               </div>
             </motion.div>
           ))}
@@ -314,6 +391,46 @@ export default function AdminElementsPage() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AnimatePresence>
+        {deletingId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50"
+            onClick={() => setDeletingId(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-[#1A1A1A] border border-[#DC2626]/50 rounded-xl p-6 w-full max-w-sm"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-bold text-[#F5F5F5] mb-2">Supprimer cet élément ?</h3>
+              <p className="text-[#A3A3A3] text-sm mb-1">
+                {elements.find(e => e.id === deletingId)?.texte}
+              </p>
+              <p className="text-[#737373] text-xs mb-6">
+                L&apos;élément sera désactivé (soft delete). Les données ELO seront conservées.
+              </p>
+              <div className="flex gap-3">
+                <Button variant="secondary" className="flex-1" onClick={() => setDeletingId(null)}>
+                  Annuler
+                </Button>
+                <button
+                  onClick={() => deletingId && deleteElement(deletingId)}
+                  className="flex-1 px-4 py-2 bg-[#DC2626] text-white rounded-lg hover:bg-[#EF4444] transition-colors font-medium"
+                >
+                  🗑️ Supprimer
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Add Modal */}
       <AnimatePresence>
@@ -396,6 +513,7 @@ export default function AdminElementsPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
