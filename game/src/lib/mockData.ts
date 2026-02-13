@@ -5,6 +5,14 @@
 
 import { Element, Categorie } from '@/types';
 
+// Use globalThis to share mock state across Turbopack route modules
+declare global {
+  // eslint-disable-next-line no-var
+  var __mockElements: Element[] | undefined;
+  // eslint-disable-next-line no-var
+  var __mockVotes: Map<string, Set<string>> | undefined;
+}
+
 const now = new Date().toISOString();
 
 // Helper to create an element with default values
@@ -44,7 +52,7 @@ function createElement(
 }
 
 // Sample elements for testing (matching the production SQL seed data)
-export const mockElements: Element[] = [
+const _initialMockElements: Element[] = [
   // SEXE & KINKS (🔥)
   createElement('1', "Ghoster après le premier date", 'sexe', 3, 1000),
   createElement('2', "Stalker les ex sur Instagram", 'sexe', 2, 1050),
@@ -94,8 +102,16 @@ export const mockElements: Element[] = [
   createElement('40', "Être politicien", 'bureau', 4, 1155),
 ];
 
-// Simulate votes storage (in memory for mock mode)
-const mockVotes: Map<string, Set<string>> = new Map();
+// Shared state via globalThis (persists across Turbopack module instances)
+if (!globalThis.__mockElements) {
+  globalThis.__mockElements = _initialMockElements;
+}
+if (!globalThis.__mockVotes) {
+  globalThis.__mockVotes = new Map();
+}
+
+export const mockElements = globalThis.__mockElements;
+const mockVotes = globalThis.__mockVotes;
 
 export function getMockElements(): Element[] {
   return mockElements.filter(e => e.actif);

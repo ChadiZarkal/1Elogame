@@ -50,8 +50,28 @@ export async function POST(request: NextRequest) {
       const kFactor = Math.min(getKFactor(winner.nb_participations), getKFactor(loser.nb_participations));
       const { newWinnerELO, newLoserELO } = calculateNewELO(winner.elo_global, loser.elo_global, kFactor);
       
-      // Update mock ELO (simplified - only global)
+      // Update mock ELO - global
       updateMockElo(winnerId, loserId, newWinnerELO, newLoserELO);
+      
+      // Update mock ELO - segmented (sex + age)
+      const sexField = getEloFieldForSex(sexe) as keyof Element;
+      const ageField = getEloFieldForAge(age) as keyof Element;
+      
+      const { newWinnerELO: newWinnerSexELO, newLoserELO: newLoserSexELO } = calculateNewELO(
+        winner[sexField] as number,
+        loser[sexField] as number,
+        kFactor
+      );
+      (winner as unknown as Record<string, number>)[sexField as string] = newWinnerSexELO;
+      (loser as unknown as Record<string, number>)[sexField as string] = newLoserSexELO;
+      
+      const { newWinnerELO: newWinnerAgeELO, newLoserELO: newLoserAgeELO } = calculateNewELO(
+        winner[ageField] as number,
+        loser[ageField] as number,
+        kFactor
+      );
+      (winner as unknown as Record<string, number>)[ageField as string] = newWinnerAgeELO;
+      (loser as unknown as Record<string, number>)[ageField as string] = newLoserAgeELO;
       
       // Record mock vote (for seen pairs tracking)
       recordMockVote('mock-session', winnerId, loserId);

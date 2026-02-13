@@ -98,6 +98,14 @@ export default function AdminStatsPage() {
     fetchRankings(token);
   }, [router, fetchRankings]);
 
+  // Auto-refresh every 10 seconds
+  useEffect(() => {
+    const token = sessionStorage.getItem('adminToken');
+    if (!token) return;
+    const interval = setInterval(() => fetchRankings(token), 10000);
+    return () => clearInterval(interval);
+  }, [fetchRankings]);
+
   const getEloValue = useCallback((r: ElementRanking) => {
     switch (view) {
       case 'homme': return r.elo_homme;
