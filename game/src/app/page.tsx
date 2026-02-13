@@ -63,6 +63,34 @@ export default function HubPage() {
 
       {/* Game cards */}
       <div className="flex flex-col gap-4 w-full max-w-md">
+        {/* Red Flag Test Game */}
+        <motion.button
+          onClick={() => window.location.href = 'https://redorgreen.fr/'}
+          className="relative text-left w-full rounded-2xl bg-gradient-to-br from-[#F97316]/15 to-[#EA580C]/5 bg-[#1A1A1A] border border-[#F97316]/30 hover:border-[#F97316] hover:shadow-[0_0_40px_rgba(249,115,22,0.25)] transition-all duration-300 cursor-pointer active:scale-[0.98] overflow-hidden"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.5 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          <div className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-[#F97316]/15 flex items-center justify-center flex-shrink-0">
+                <span className="text-3xl">🧪</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-2xl font-black text-[#F5F5F5]">Red Flag Test</h2>
+                <p className="text-[#F97316] text-sm font-semibold mt-0.5">Es-tu un red flag ? Découvre-le</p>
+              </div>
+              <span className="text-[#F97316] text-2xl ml-2 flex-shrink-0">→</span>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-4">
+              <Tag emoji="🤔" text="Perso" />
+              <Tag emoji="❓" text="Questions" />
+              <Tag emoji="🎯" text="Verdict" />
+            </div>
+          </div>
+        </motion.button>
+
         {/* Red Flag Game */}
         <motion.button
           onClick={() => router.push('/jeu')}
