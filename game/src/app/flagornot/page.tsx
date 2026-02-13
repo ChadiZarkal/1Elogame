@@ -511,15 +511,9 @@ export default function FlagOrNotPage() {
                   🤔
                 </motion.div>
 
-                <h2 className="text-[22px] sm:text-2xl font-bold text-[#FAFAFA] text-center mb-1.5">
-                  Dis quelque chose…
+                <h2 className="text-[28px] sm:text-[32px] font-black text-[#FAFAFA] text-center mb-3">
+                  Demande à L&apos;IA
                 </h2>
-
-                <p className="text-[#6B7280] text-[13px] sm:text-sm text-center max-w-[300px] leading-relaxed">
-                  L&apos;IA va te dire si c&apos;est{' '}
-                  <span className="text-[#EF4444] font-semibold">Red Flag</span> ou{' '}
-                  <span className="text-[#10B981] font-semibold">Green Flag</span>
-                </p>
 
                 {/* [Iter 33] History pills — recent judgments */}
                 {history.length > 0 && (

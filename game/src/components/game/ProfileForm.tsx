@@ -65,7 +65,7 @@ export function ProfileForm() {
         {/* Short onboarding */}
         <div className="bg-[#1A1A1A] border border-[#333]/60 rounded-xl px-5 py-3 max-w-xs mx-auto">
           <p className="text-[#A3A3A3] text-sm leading-relaxed">
-            <span className="text-[#F5F5F5] font-semibold">Comment jouer :</span> deux options apparaissent, choisis celle que tu trouves <span className="text-[#DC2626] font-semibold">la pire</span> !
+            <span className="text-[#F5F5F5] font-semibold">Comment jouer :</span> choisis l&apos;option la plus red flag.
           </p>
         </div>
       </motion.div>
@@ -82,12 +82,27 @@ export function ProfileForm() {
           <label className="block text-[#F5F5F5] text-lg font-semibold mb-3">
             Quel est ton sexe ?
           </label>
-          <div className="grid grid-cols-2 gap-2">
-            {sexOptions.map((option) => (
+          <div className="flex flex-wrap gap-2 justify-center">
+            {sexOptions.slice(0, 2).map((option) => (
               <button
                 key={option.value}
                 onClick={() => { setSex(option.value); setError(null); }}
-                className={`py-3 px-4 rounded-xl text-center font-medium transition-all duration-200 ${
+                className={`flex-1 min-w-[120px] py-3 px-4 rounded-xl text-center font-medium transition-all duration-200 ${
+                  sex === option.value
+                    ? 'bg-[#DC2626] text-white ring-2 ring-[#EF4444] scale-105'
+                    : 'bg-[#2A2A2A] text-[#A3A3A3] hover:bg-[#333] border border-[#333]'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex justify-center mt-2">
+            {sexOptions.slice(2).map((option) => (
+              <button
+                key={option.value}
+                onClick={() => { setSex(option.value); setError(null); }}
+                className={`flex-1 min-w-[180px] max-w-[200px] py-3 px-4 rounded-xl text-center font-medium transition-all duration-200 ${
                   sex === option.value
                     ? 'bg-[#DC2626] text-white ring-2 ring-[#EF4444] scale-105'
                     : 'bg-[#2A2A2A] text-[#A3A3A3] hover:bg-[#333] border border-[#333]'
@@ -139,19 +154,11 @@ export function ProfileForm() {
           size="lg"
           className="w-full"
         >
-          🎮 JOUER
+          JOUER
         </Button>
       </motion.div>
       
-      {/* Footer text */}
-      <motion.p 
-        className="mt-6 text-[#737373] text-sm text-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-      >
-        Aucun compte requis • 100% anonyme
-      </motion.p>
+
     </motion.div>
   );
 }

@@ -83,11 +83,7 @@ export default function HubPage() {
               </div>
               <span className="text-[#F97316] text-2xl ml-2 flex-shrink-0">→</span>
             </div>
-            <div className="flex flex-wrap gap-2 mt-4">
-              <Tag emoji="🤔" text="Perso" />
-              <Tag emoji="❓" text="Questions" />
-              <Tag emoji="🎯" text="Verdict" />
-            </div>
+
           </div>
         </motion.button>
 
@@ -111,12 +107,7 @@ export default function HubPage() {
               </div>
               <span className="text-[#DC2626] text-2xl ml-2 flex-shrink-0">→</span>
             </div>
-            <div className="flex flex-wrap gap-2 mt-4">
-              <Tag emoji="🎲" text="Infini" />
-              <Tag emoji="⚡" text="Instant" />
-              <Tag emoji="📊" text="Stats live" />
-              <Tag emoji="👥" text="Multijoueur" />
-            </div>
+
           </div>
         </motion.button>
 
@@ -140,11 +131,7 @@ export default function HubPage() {
               </div>
               <span className="text-[#059669] text-2xl ml-2 flex-shrink-0">→</span>
             </div>
-            <div className="flex flex-wrap gap-2 mt-4">
-              <Tag emoji="🤖" text="IA" />
-              <Tag emoji="✍️" text="Libre" />
-              <Tag emoji="😂" text="Fun" />
-            </div>
+
           </div>
         </motion.button>
       </div>
@@ -161,24 +148,8 @@ export default function HubPage() {
         🏆 Voir le classement
       </motion.button>
 
-      {/* Footer */}
-      <motion.footer
-        className="mt-6 text-[#737373] text-xs text-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8 }}
-      >
-        Aucun compte requis • Données anonymes
-      </motion.footer>
+
     </div>
   );
 }
 
-function Tag({ emoji, text }: { emoji: string; text: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full bg-[#0D0D0D]/70 text-[#A3A3A3] border border-[#333]/60 tracking-wide">
-      <span>{emoji}</span>
-      <span>{text}</span>
-    </span>
-  );
-}
