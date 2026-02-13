@@ -47,8 +47,66 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Compute per-segment participation counts from votes table (source of truth)
+    // This works even if nb_participations_* columns don't exist on elements table
+    
+    // Get all votes to compute participation by segment
+    const { data: votesRaw } = await supabase
+      .from('votes')
+      .select('element_gagnant_id, element_perdant_id, sexe_votant, age_votant');
+    
+    const votes = (votesRaw || []) as { element_gagnant_id: string; element_perdant_id: string; sexe_votant: string | null; age_votant: string | null }[];
+    
+    // Build participation maps from votes
+    const partMap: Record<string, {
+      total: number;
+      homme: number;
+      femme: number;
+      autre: number;
+      '16_18': number;
+      '19_22': number;
+      '23_26': number;
+      '27plus': number;
+    }> = {};
+    
+    const initEntry = () => ({ total: 0, homme: 0, femme: 0, autre: 0, '16_18': 0, '19_22': 0, '23_26': 0, '27plus': 0 });
+    
+    if (votes.length > 0) {
+      for (const v of votes) {
+        for (const eid of [v.element_gagnant_id, v.element_perdant_id]) {
+          if (!partMap[eid]) partMap[eid] = initEntry();
+          partMap[eid].total += 1;
+          // Sex segment
+          if (v.sexe_votant === 'homme') partMap[eid].homme += 1;
+          else if (v.sexe_votant === 'femme') partMap[eid].femme += 1;
+          else partMap[eid].autre += 1;
+          // Age segment
+          const ageKey = (v.age_votant || '').replace(/-/g, '_').replace('+', 'plus') as keyof ReturnType<typeof initEntry>;
+          if (ageKey && ageKey in partMap[eid]) {
+            partMap[eid][ageKey] += 1;
+          }
+        }
+      }
+    }
+    
+    // Enrich elements with computed participation data
+    const enrichedElements = (elements || []).map((e: Record<string, unknown>) => {
+      const p = partMap[e.id as string] || initEntry();
+      return {
+        ...e,
+        nb_participations: p.total,
+        nb_participations_homme: p.homme,
+        nb_participations_femme: p.femme,
+        nb_participations_autre: p.autre,
+        nb_participations_16_18: p['16_18'],
+        nb_participations_19_22: p['19_22'],
+        nb_participations_23_26: p['23_26'],
+        nb_participations_27plus: p['27plus'],
+      };
+    });
+
     return NextResponse.json(
-      createApiSuccess({ elements: elements as Element[] })
+      createApiSuccess({ elements: enrichedElements })
     );
   } catch (error) {
     console.error('Error in GET /api/admin/elements:', error);

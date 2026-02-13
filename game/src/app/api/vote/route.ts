@@ -190,44 +190,67 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Update winner ELO scores
-    const winnerUpdate = {
+    // Update winner ELO scores (core fields that always exist in DB)
+    const winnerCoreUpdate = {
       elo_global: newWinnerELO,
       [sexField]: newWinnerSexELO,
       [ageField]: newWinnerAgeELO,
       nb_participations: winner.nb_participations + 1,
-      [sexPartField]: ((winner[sexPartField] as number) || 0) + 1,
-      [agePartField]: ((winner[agePartField] as number) || 0) + 1,
       updated_at: new Date().toISOString(),
     };
     
     const { error: winnerError } = await supabase
       .from('elements')
-      .update(winnerUpdate as never)
+      .update(winnerCoreUpdate as never)
       .eq('id', winnerId);
     
     if (winnerError) {
       console.error('Error updating winner:', winnerError);
     }
     
-    // Update loser ELO scores
-    const loserUpdate = {
+    // Try to update per-segment participation columns (may not exist yet)
+    const winnerSegmentUpdate = {
+      [sexPartField]: ((winner[sexPartField] as number) || 0) + 1,
+      [agePartField]: ((winner[agePartField] as number) || 0) + 1,
+    };
+    const { error: winnerSegError } = await supabase
+      .from('elements')
+      .update(winnerSegmentUpdate as never)
+      .eq('id', winnerId);
+    if (winnerSegError) {
+      // Segment columns may not exist yet - this is OK
+      console.log('Segment participation columns not available for winner (run migration 003)');
+    }
+    
+    // Update loser ELO scores (core fields)
+    const loserCoreUpdate = {
       elo_global: newLoserELO,
       [sexField]: newLoserSexELO,
       [ageField]: newLoserAgeELO,
       nb_participations: loser.nb_participations + 1,
-      [sexPartField]: ((loser[sexPartField] as number) || 0) + 1,
-      [agePartField]: ((loser[agePartField] as number) || 0) + 1,
       updated_at: new Date().toISOString(),
     };
     
     const { error: loserError } = await supabase
       .from('elements')
-      .update(loserUpdate as never)
+      .update(loserCoreUpdate as never)
       .eq('id', loserId);
     
     if (loserError) {
       console.error('Error updating loser:', loserError);
+    }
+    
+    // Try to update per-segment participation columns for loser
+    const loserSegmentUpdate = {
+      [sexPartField]: ((loser[sexPartField] as number) || 0) + 1,
+      [agePartField]: ((loser[agePartField] as number) || 0) + 1,
+    };
+    const { error: loserSegError } = await supabase
+      .from('elements')
+      .update(loserSegmentUpdate as never)
+      .eq('id', loserId);
+    if (loserSegError) {
+      console.log('Segment participation columns not available for loser (run migration 003)');
     }
     
     // Calculate percentages for response
