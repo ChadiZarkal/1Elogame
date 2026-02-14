@@ -51,7 +51,7 @@ export function ProfileForm() {
     >
       {/* Logo */}
       <motion.div 
-        className="mb-8 text-center"
+        className="mb-12 text-center"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
@@ -72,13 +72,13 @@ export function ProfileForm() {
       
       {/* Form container */}
       <motion.div 
-        className="w-full max-w-md bg-[#1A1A1A] border border-[#333] rounded-2xl p-6 space-y-6"
+        className="w-full max-w-md bg-[#1A1A1A] border border-[#333] rounded-2xl p-8 space-y-8"
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
         {/* Sex selection */}
-        <fieldset className="pb-4 border-b border-[#333]">
+        <fieldset className="pb-6 mb-4 border-b border-[#333]">
           <label className="block text-[#F5F5F5] text-lg font-bold mb-3">
             Quel est ton sexe ?
           </label>
@@ -139,7 +139,7 @@ export function ProfileForm() {
         )}
         
         {/* Submit button */}
-        <div className="mt-6 pt-6 border-t border-[#333]">
+        <div className="mt-8 pt-8 border-t border-[#333]">
           <Button
             onClick={handleSubmit}
             variant="primary"

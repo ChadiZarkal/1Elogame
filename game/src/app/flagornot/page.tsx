@@ -384,20 +384,6 @@ export default function FlagOrNotPage() {
 
               {/* Main verdict content — centered */}
               <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full max-w-md">
-                {/* [Iter 17] Big emoji with heavy spring */}
-                <motion.div
-                  className="text-[96px] sm:text-[112px] leading-none mb-2"
-                  initial={{ scale: 0, rotate: -25, y: -60 }}
-                  animate={{ scale: 1, rotate: 0, y: 0 }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 180,
-                    damping: 12,
-                    delay: 0.05,
-                  }}
-                >
-                  {result.verdict === 'red' ? '🚩' : '🟢'}
-                </motion.div>
 
                 {/* [Iter 18] Verdict text with glow */}
                 <motion.h2
@@ -448,16 +434,6 @@ export default function FlagOrNotPage() {
                   </motion.div>
                 )}
                 
-                {isMounted && !showJustification && (
-                  <motion.div
-                    className="w-full rounded-2xl p-5 text-center text-[#737373] text-sm italic"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.45 }}
-                  >
-                    (Justifications désactivées par l'admin)
-                  </motion.div>
-                )}
               </div>
 
               {/* [Iter 24] "Encore!" button — bottom, big, thumb-friendly */}
