@@ -336,6 +336,7 @@ export function ResultDisplay({
                       ? 'bg-[#FCD34D] text-[#92400E]'
                       : 'bg-[#2A2A2A] text-[#F5F5F5] hover:bg-[#333] border border-[#333]'
                   }`}
+                  aria-label={starGiven ? 'Duel déjà noté' : 'Voter pour ce duel'}
                 >
                   ⭐
                 </motion.button>
@@ -343,6 +344,7 @@ export function ResultDisplay({
                   onClick={onThumbsUp}
                   whileTap={{ scale: 0.9 }}
                   className="p-2.5 rounded-xl bg-[#2A2A2A] text-[#F5F5F5] hover:bg-[#333] border border-[#333] transition-all"
+                  aria-label="J'aime ce duel"
                 >
                   👍
                 </motion.button>
@@ -350,8 +352,27 @@ export function ResultDisplay({
                   onClick={onThumbsDown}
                   whileTap={{ scale: 0.9 }}
                   className="p-2.5 rounded-xl bg-[#2A2A2A] text-[#F5F5F5] hover:bg-[#333] border border-[#333] transition-all"
+                  aria-label="Je n'aime pas ce duel"
                 >
                   👎
+                </motion.button>
+                <motion.button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const moreRF = elementAStats.isMoreRedFlag ? duel.elementA.texte : duel.elementB.texte;
+                    const lessRF = !elementAStats.isMoreRedFlag ? duel.elementA.texte : duel.elementB.texte;
+                    const shareText = `🚩 Red Flag Games\n\n"${moreRF}" est voté plus Red Flag que "${lessRF}" par la communauté !\n\nJoue toi aussi → redflaggames.fr`;
+                    if (navigator.share) {
+                      navigator.share({ text: shareText }).catch(() => {});
+                    } else {
+                      navigator.clipboard.writeText(shareText).catch(() => {});
+                    }
+                  }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-2.5 rounded-xl bg-[#2A2A2A] text-[#F5F5F5] hover:bg-[#333] border border-[#333] transition-all"
+                  aria-label="Partager ce duel"
+                >
+                  📤
                 </motion.button>
               </div>
               

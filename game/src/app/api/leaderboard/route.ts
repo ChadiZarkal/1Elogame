@@ -25,6 +25,10 @@ export async function GET(request: NextRequest) {
         elo_global: Math.round(e.elo_global),
         elo_homme: Math.round(e.elo_homme),
         elo_femme: Math.round(e.elo_femme),
+        elo_16_18: Math.round(e.elo_16_18 ?? e.elo_global),
+        elo_19_22: Math.round(e.elo_19_22 ?? e.elo_global),
+        elo_23_26: Math.round(e.elo_23_26 ?? e.elo_global),
+        elo_27plus: Math.round(e.elo_27plus ?? e.elo_global),
         nb_participations: e.nb_participations,
       }));
       const totalVotes = active.reduce((sum, e) => sum + e.nb_participations, 0);
@@ -39,7 +43,7 @@ export async function GET(request: NextRequest) {
     const supabase = createServerClient();
     const { data, error } = await supabase
       .from('elements')
-      .select('texte, categorie, elo_global, elo_homme, elo_femme, nb_participations')
+      .select('texte, categorie, elo_global, elo_homme, elo_femme, elo_16_18, elo_19_22, elo_23_26, elo_27plus, nb_participations')
       .eq('actif', true)
       .order('elo_global', { ascending: order === 'asc' })
       .limit(limit);
@@ -54,7 +58,9 @@ export async function GET(request: NextRequest) {
 
     const elements = data as Array<{
       texte: string; categorie: string; elo_global: number;
-      elo_homme: number; elo_femme: number; nb_participations: number;
+      elo_homme: number; elo_femme: number;
+      elo_16_18: number; elo_19_22: number; elo_23_26: number; elo_27plus: number;
+      nb_participations: number;
     }>;
 
     const ranked = (elements || []).map((e, i) => ({
@@ -64,6 +70,10 @@ export async function GET(request: NextRequest) {
       elo_global: Math.round(e.elo_global),
       elo_homme: Math.round(e.elo_homme),
       elo_femme: Math.round(e.elo_femme),
+      elo_16_18: Math.round(e.elo_16_18 ?? e.elo_global),
+      elo_19_22: Math.round(e.elo_19_22 ?? e.elo_global),
+      elo_23_26: Math.round(e.elo_23_26 ?? e.elo_global),
+      elo_27plus: Math.round(e.elo_27plus ?? e.elo_global),
       nb_participations: e.nb_participations,
     }));
 

@@ -177,6 +177,24 @@ function judgeLocally(text: string): { verdict: 'red' | 'green'; justification: 
 // Route handler — Cascade: Gemini → OpenAI → Local
 // ═══════════════════════════════════════
 
+// ═══════════════════════════════════════
+// Save to community store (fire-and-forget)
+// ═══════════════════════════════════════
+
+async function saveToCommunity(text: string, verdict: 'red' | 'green') {
+  try {
+    // Use internal API call in same process
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    await fetch(`${baseUrl}/api/flagornot/community`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, verdict }),
+    }).catch(() => {/* silent */});
+  } catch {
+    // Non-blocking — community storage is optional
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -193,6 +211,8 @@ export async function POST(request: NextRequest) {
     // Try Gemini first (Google service account)
     try {
       const result = await tryGemini(text);
+      // Fire-and-forget: Save to community store
+      saveToCommunity(text, result.verdict);
       return NextResponse.json({ ...result, provider: 'gemini' });
     } catch (geminiErr) {
       console.warn('[FlagOrNot] Gemini failed:', geminiErr);
@@ -201,6 +221,7 @@ export async function POST(request: NextRequest) {
     // Fallback to OpenAI
     try {
       const result = await tryOpenAI(text);
+      saveToCommunity(text, result.verdict);
       return NextResponse.json({ ...result, provider: 'openai' });
     } catch (openaiErr) {
       console.warn('[FlagOrNot] OpenAI failed:', openaiErr);
@@ -208,6 +229,7 @@ export async function POST(request: NextRequest) {
 
     // Final fallback: local keyword analysis
     const result = judgeLocally(text);
+    saveToCommunity(text, result.verdict);
     return NextResponse.json({ ...result, provider: 'local' });
   } catch {
     return NextResponse.json({ error: 'Erreur interne du serveur.' }, { status: 500 });

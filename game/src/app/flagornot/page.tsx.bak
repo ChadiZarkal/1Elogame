@@ -19,19 +19,11 @@ interface HistoryItem extends JudgmentResult {
   text: string;
 }
 
-interface CommunitySubmission {
-  id: string;
-  text: string;
-  verdict: 'red' | 'green';
-  emoji: string;
-  timeAgo: string;
-}
-
 // ═══════════════════════════════════════
 // Constants
 // ═══════════════════════════════════════
 
-const FALLBACK_SUGGESTIONS = [
+const SUGGESTIONS = [
   { emoji: '📱', text: 'Il regarde ton téléphone' },
   { emoji: '☀️', text: 'Elle te dit bonjour chaque matin' },
   { emoji: '❤️', text: 'Il like les photos de son ex' },
@@ -87,8 +79,6 @@ export default function FlagOrNotPage() {
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [showJustification, setShowJustification] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
-  const [communitySubmissions, setCommunitySubmissions] = useState<CommunitySubmission[]>([]);
-  const [showCommunityTab, setShowCommunityTab] = useState(true);
 
   // ═══ Refs ═══
   const inputRef = useRef<HTMLInputElement>(null);
@@ -98,60 +88,32 @@ export default function FlagOrNotPage() {
   const redCount = useMemo(() => history.filter((h) => h.verdict === 'red').length, [history]);
   const greenCount = useMemo(() => history.filter((h) => h.verdict === 'green').length, [history]);
 
-  // ═══ Suggestions: mix community + fallback ═══
-  const displaySuggestions = useMemo(() => {
-    if (communitySubmissions.length >= 4) {
-      return communitySubmissions.slice(0, 12).map(s => ({
-        emoji: s.emoji,
-        text: s.text,
-        isCommunity: true,
-        timeAgo: s.timeAgo,
-      }));
-    }
-    return FALLBACK_SUGGESTIONS.map(s => ({ ...s, isCommunity: false, timeAgo: '' }));
-  }, [communitySubmissions]);
-
   // ═══ Effects ═══
 
+  // [Iter 4] Viewport height fix — mobile keyboards
   useEffect(() => {
     const updateHeight = () => {
       const vh = window.visualViewport?.height || window.innerHeight;
       document.documentElement.style.setProperty('--app-height', `${vh}px`);
     };
     
+    // Load preference from localStorage
     const saved = localStorage.getItem('flagornot_show_justification');
     if (saved !== null) {
       setShowJustification(saved === 'true');
     }
-
-    const savedHistory = localStorage.getItem('flagornot_history');
-    if (savedHistory) {
-      try {
-        const parsed = JSON.parse(savedHistory);
-        if (Array.isArray(parsed)) setHistory(parsed.slice(0, 50));
-      } catch { /* ignore */ }
-    }
-
     setIsMounted(true);
     
     updateHeight();
     window.visualViewport?.addEventListener('resize', updateHeight);
     window.addEventListener('resize', updateHeight);
-
-    fetchCommunitySubmissions();
-
     return () => {
       window.visualViewport?.removeEventListener('resize', updateHeight);
       window.removeEventListener('resize', updateHeight);
     };
   }, []);
 
-  useEffect(() => {
-    if (history.length > 0) {
-      localStorage.setItem('flagornot_history', JSON.stringify(history.slice(0, 50)));
-    }
-  }, [history]);
-
+  // [Iter 10] Auto-focus when going back to idle
   useEffect(() => {
     if (phase === 'idle') {
       const t = setTimeout(() => inputRef.current?.focus(), 150);
@@ -159,6 +121,7 @@ export default function FlagOrNotPage() {
     }
   }, [phase]);
 
+  // [Iter 6] Cycle placeholders
   useEffect(() => {
     const interval = setInterval(() => {
       setPlaceholderIdx((p) => (p + 1) % PLACEHOLDERS.length);
@@ -166,25 +129,13 @@ export default function FlagOrNotPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // ═══ Fetch community submissions ═══
-  const fetchCommunitySubmissions = async () => {
-    try {
-      const res = await fetch('/api/flagornot/community?limit=20');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.data?.submissions) {
-          setCommunitySubmissions(data.data.submissions);
-        }
-      }
-    } catch { /* Silent fail */ }
-  };
-
   // ═══ Handlers ═══
 
   const handleSubmit = useCallback(async () => {
     const text = input.trim();
     if (!text || phase !== 'idle') return;
 
+    // [Iter 27] Dismiss keyboard for more screen space
     inputRef.current?.blur();
 
     setSubmittedText(text);
@@ -203,6 +154,7 @@ export default function FlagOrNotPage() {
       if (!res.ok) throw new Error('API error');
       const data: JudgmentResult = await res.json();
 
+      // [Iter 13] Minimum loading for dramatic suspense
       const elapsed = Date.now() - startTime;
       if (elapsed < MIN_LOADING_MS) {
         await new Promise((r) => setTimeout(r, MIN_LOADING_MS - elapsed));
@@ -212,11 +164,10 @@ export default function FlagOrNotPage() {
       setHistory((prev) => [{ ...data, text }, ...prev].slice(0, 50));
       setPhase('reveal');
 
+      // [Iter 23] Haptic feedback
       if (navigator.vibrate) {
         navigator.vibrate(data.verdict === 'red' ? [80, 40, 80] : [60]);
       }
-
-      fetchCommunitySubmissions();
     } catch {
       const fallback: JudgmentResult = {
         verdict: Math.random() > 0.5 ? 'red' : 'green',
@@ -233,7 +184,6 @@ export default function FlagOrNotPage() {
       setPhase('reveal');
       if (navigator.vibrate) navigator.vibrate(40);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [input, phase]);
 
   const handleNext = useCallback(() => {
@@ -249,19 +199,6 @@ export default function FlagOrNotPage() {
       handleSubmit();
     }
   };
-
-  const handleShare = useCallback(async () => {
-    if (!result || !submittedText) return;
-    const shareText = `${result.verdict === 'red' ? '🚩 RED FLAG' : '🟢 GREEN FLAG'}: "${submittedText}" — Joue sur Red Flag Games !`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'Red Flag Games — Flag or Not', text: shareText });
-      } catch { /* user cancelled */ }
-    } else {
-      await navigator.clipboard.writeText(shareText);
-    }
-  }, [result, submittedText]);
 
   // ═══ Background ═══
 
@@ -285,14 +222,14 @@ export default function FlagOrNotPage() {
       className="relative flex flex-col overflow-hidden"
       style={{ height: 'var(--app-height, 100dvh)', background: '#0A0A0A' }}
     >
-      {/* Ambient background */}
+      {/* ═══ [Iter 20] Ambient background layer ═══ */}
       <motion.div
         className="fixed inset-0 pointer-events-none z-0"
         animate={{ background: bgGradient }}
         transition={{ duration: 0.7 }}
       />
 
-      {/* Top bar */}
+      {/* ═══ [Iter 21] Top bar ═══ */}
       <div className="relative z-20 flex items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top))] pb-2">
         <button
           onClick={() => router.push('/')}
@@ -306,6 +243,7 @@ export default function FlagOrNotPage() {
           🚩 ou 🟢 ?
         </h1>
 
+        {/* [Iter 25] Score pill */}
         {history.length > 0 ? (
           <div className="flex items-center gap-2 text-xs min-w-[48px] justify-end font-medium">
             <span className="text-[#EF4444]">🚩 {redCount}</span>
@@ -317,10 +255,12 @@ export default function FlagOrNotPage() {
         )}
       </div>
 
-      {/* Main content area */}
+      {/* ═══ Main content area ═══ */}
       <div className="relative z-10 flex-1 flex flex-col min-h-0">
         <AnimatePresence mode="wait">
-          {/* ─── LOADING ──────── */}
+          {/* ─────────────────────────── */}
+          {/* ─── LOADING STATE ──────── */}
+          {/* ─────────────────────────── */}
           {phase === 'loading' && (
             <motion.div
               key="loading"
@@ -330,6 +270,7 @@ export default function FlagOrNotPage() {
               exit={{ opacity: 0, scale: 1.05 }}
               transition={{ duration: 0.25 }}
             >
+              {/* [Iter 11] Pulsing orb with red/green alternation */}
               <div className="relative w-28 h-28 mb-8">
                 <motion.div
                   className="absolute inset-0 rounded-full"
@@ -363,6 +304,7 @@ export default function FlagOrNotPage() {
                 </motion.div>
               </div>
 
+              {/* [Iter 14] Loading phrase */}
               <motion.p
                 className="text-[#9CA3AF] text-lg text-center font-medium"
                 animate={{ opacity: [0.5, 1, 0.5] }}
@@ -371,6 +313,7 @@ export default function FlagOrNotPage() {
                 {loadingPhrase}
               </motion.p>
 
+              {/* [Iter 15] Animated dots */}
               <div className="flex gap-1.5 mt-6">
                 {[0, 1, 2].map((i) => (
                   <motion.div
@@ -385,6 +328,7 @@ export default function FlagOrNotPage() {
                 ))}
               </div>
 
+              {/* The submitted text */}
               <motion.p
                 className="text-[#4B5563] text-sm italic mt-8 text-center max-w-[280px]"
                 initial={{ opacity: 0, y: 10 }}
@@ -396,7 +340,9 @@ export default function FlagOrNotPage() {
             </motion.div>
           )}
 
-          {/* ─── REVEAL ────────── */}
+          {/* ─────────────────────────── */}
+          {/* ─── REVEAL STATE ────────── */}
+          {/* ─────────────────────────── */}
           {phase === 'reveal' && result && (
             <motion.div
               key="reveal"
@@ -405,7 +351,7 @@ export default function FlagOrNotPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              {/* Particles burst */}
+              {/* [Iter 16, 20] Particles burst */}
               <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
                 {Array.from({ length: 14 }).map((_, i) => {
                   const angle = (i / 14) * 360 + Math.random() * 20;
@@ -436,8 +382,10 @@ export default function FlagOrNotPage() {
                 })}
               </div>
 
-              {/* Main verdict content */}
+              {/* Main verdict content — centered */}
               <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full max-w-md">
+
+                {/* [Iter 18] Verdict text with glow */}
                 <motion.h2
                   className={`text-[40px] sm:text-5xl font-black tracking-tight mb-5 ${
                     result.verdict === 'red' ? 'text-[#EF4444]' : 'text-[#10B981]'
@@ -455,6 +403,7 @@ export default function FlagOrNotPage() {
                   {result.verdict === 'red' ? 'RED FLAG' : 'GREEN FLAG'}
                 </motion.h2>
 
+                {/* [Iter 28] Original text */}
                 <motion.p
                   className="text-[#9CA3AF] text-base italic text-center mb-5 px-2"
                   initial={{ opacity: 0 }}
@@ -464,6 +413,7 @@ export default function FlagOrNotPage() {
                   &quot;{submittedText}&quot;
                 </motion.p>
 
+                {/* [Iter 19] Justification card — auto-shown with glass effect, now conditionally hidden */}
                 {isMounted && showJustification && (
                   <motion.div
                     className="w-full rounded-2xl p-5 text-center glass"
@@ -483,20 +433,10 @@ export default function FlagOrNotPage() {
                     </p>
                   </motion.div>
                 )}
-
-                {/* Share button */}
-                <motion.button
-                  onClick={handleShare}
-                  className="mt-4 px-4 py-2 rounded-xl text-xs text-[#9CA3AF] bg-[#1A1A1A] border border-[#333] hover:border-[#555] hover:text-white transition-all active:scale-95"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                >
-                  📤 Partager le résultat
-                </motion.button>
+                
               </div>
 
-              {/* Encore! button */}
+              {/* [Iter 24] "Encore!" button — bottom, big, thumb-friendly */}
               <motion.div
                 className="w-full max-w-md pb-[max(16px,env(safe-area-inset-bottom))] pt-4"
                 initial={{ opacity: 0, y: 30 }}
@@ -520,6 +460,7 @@ export default function FlagOrNotPage() {
                 </motion.button>
               </motion.div>
 
+              {/* [Iter 34] Progress bar */}
               {history.length > 1 && (
                 <motion.div
                   className="w-full max-w-md pb-2"
@@ -544,7 +485,9 @@ export default function FlagOrNotPage() {
             </motion.div>
           )}
 
-          {/* ─── IDLE ──────────── */}
+          {/* ─────────────────────────── */}
+          {/* ─── IDLE STATE ──────────── */}
+          {/* ─────────────────────────── */}
           {phase === 'idle' && (
             <motion.div
               key="idle"
@@ -554,6 +497,7 @@ export default function FlagOrNotPage() {
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.25 }}
             >
+              {/* [Iter 1, 5] Center content */}
               <div className="flex-1 flex flex-col items-center justify-center px-6 min-h-0">
                 <motion.div
                   className="text-6xl mb-3"
@@ -566,27 +510,22 @@ export default function FlagOrNotPage() {
                   🤔
                 </motion.div>
 
-                <h2 className="text-[28px] sm:text-[32px] font-black text-[#FAFAFA] text-center mb-2">
+                <h2 className="text-[28px] sm:text-[32px] font-black text-[#FAFAFA] text-center mb-3">
                   Demande à L&apos;IA
                 </h2>
 
-                <p className="text-[#6B7280] text-sm text-center mb-4 max-w-xs">
-                  Écris un comportement, une situation ou un objet — l&apos;IA te dit si c&apos;est un Red Flag ou un Green Flag
-                </p>
-
-                {/* History pills — clickable to re-ask */}
+                {/* [Iter 33] History pills — recent judgments */}
                 {history.length > 0 && (
                   <motion.div
-                    className="mt-3 flex flex-wrap gap-1.5 justify-center max-w-sm"
+                    className="mt-5 flex flex-wrap gap-1.5 justify-center max-w-sm"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2 }}
                   >
                     {history.slice(0, 5).map((h, i) => (
-                      <button
+                      <span
                         key={i}
-                        onClick={() => setInput(h.text)}
-                        className={`text-[11px] px-2.5 py-1 rounded-full border cursor-pointer hover:brightness-150 transition-all ${
+                        className={`text-[11px] px-2.5 py-1 rounded-full border ${
                           h.verdict === 'red'
                             ? 'border-[#EF4444]/15 text-[#EF4444]/60 bg-[#EF4444]/5'
                             : 'border-[#10B981]/15 text-[#10B981]/60 bg-[#10B981]/5'
@@ -594,15 +533,15 @@ export default function FlagOrNotPage() {
                       >
                         {h.verdict === 'red' ? '🚩' : '🟢'} {h.text.slice(0, 22)}
                         {h.text.length > 22 ? '…' : ''}
-                      </button>
+                      </span>
                     ))}
                   </motion.div>
                 )}
               </div>
 
-              {/* Bottom input zone */}
+              {/* ─── [Iter 1, 3] Bottom input zone ─── */}
               <div className="px-4 pb-[max(12px,env(safe-area-inset-bottom))]">
-                {/* Suggestions — Community vs Static */}
+                {/* [Iter 7, 29] Suggestions — horizontal snap scroll */}
                 {!input && (
                   <motion.div
                     className="mb-3 -mx-4 px-4"
@@ -610,69 +549,32 @@ export default function FlagOrNotPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.25 }}
                   >
-                    {/* Tab headers */}
-                    {communitySubmissions.length > 0 && (
-                      <div className="flex gap-2 mb-2">
-                        <button
-                          onClick={() => setShowCommunityTab(true)}
-                          className={`text-[11px] px-3 py-1 rounded-full font-medium transition-all ${
-                            showCommunityTab
-                              ? 'bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/20'
-                              : 'text-[#6B7280] hover:text-[#9CA3AF]'
-                          }`}
-                        >
-                          🔥 Tendances ({communitySubmissions.length})
-                        </button>
-                        <button
-                          onClick={() => setShowCommunityTab(false)}
-                          className={`text-[11px] px-3 py-1 rounded-full font-medium transition-all ${
-                            !showCommunityTab
-                              ? 'bg-[#6B7280]/10 text-[#9CA3AF] border border-[#6B7280]/20'
-                              : 'text-[#6B7280] hover:text-[#9CA3AF]'
-                          }`}
-                        >
-                          💡 Suggestions
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Scrollable suggestions */}
                     <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
-                      {(showCommunityTab && communitySubmissions.length > 0
-                        ? displaySuggestions
-                        : FALLBACK_SUGGESTIONS.map(s => ({ ...s, isCommunity: false, timeAgo: '' }))
-                      ).map((s, i) => (
+                      {SUGGESTIONS.map((s, i) => (
                         <button
                           key={i}
                           onClick={() => setInput(s.text)}
-                          className={`
+                          className="
                             flex-none snap-start
                             flex items-center gap-1.5
                             text-[12px] px-3 py-2.5 rounded-xl
-                            border
+                            bg-[#141414] border border-[#1E1E1E]
                             text-[#9CA3AF]
-                            hover:text-[#FAFAFA]
-                            active:scale-[0.96]
+                            hover:border-[#EF4444]/30 hover:text-[#FAFAFA]
+                            active:scale-[0.96] active:bg-[#1A1A1A]
                             transition-all duration-150
                             whitespace-nowrap
-                            ${s.isCommunity
-                              ? 'bg-[#141414] border-[#EF4444]/10 hover:border-[#EF4444]/30'
-                              : 'bg-[#141414] border-[#1E1E1E] hover:border-[#EF4444]/30 active:bg-[#1A1A1A]'
-                            }
-                          `}
+                          "
                         >
                           <span className="text-sm">{s.emoji}</span>
-                          <span>{s.text.length > 35 ? s.text.slice(0, 35) + '…' : s.text}</span>
-                          {s.isCommunity && s.timeAgo && (
-                            <span className="text-[9px] text-[#4B5563] ml-1">{s.timeAgo}</span>
-                          )}
+                          <span>{s.text}</span>
                         </button>
                       ))}
                     </div>
                   </motion.div>
                 )}
 
-                {/* Input field + send button */}
+                {/* [Iter 8, 9] Input field + send button */}
                 <div className="flex gap-2.5 items-center">
                   <div className="flex-1 relative">
                     <input
@@ -697,9 +599,9 @@ export default function FlagOrNotPage() {
                         transition-all duration-200
                       "
                       style={{ fontSize: '16px' }}
-                      aria-label="Écris un comportement à analyser"
                     />
 
+                    {/* Character count */}
                     {input.length > 0 && (
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[#3D3D3D] tabular-nums">
                         {input.length}
@@ -707,6 +609,7 @@ export default function FlagOrNotPage() {
                     )}
                   </div>
 
+                  {/* [Iter 8] Send button — large touch target */}
                   <motion.button
                     onClick={handleSubmit}
                     disabled={!input.trim()}

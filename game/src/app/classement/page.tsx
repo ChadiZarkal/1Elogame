@@ -12,11 +12,25 @@ interface RankEntry {
   elo_global: number;
   elo_homme: number;
   elo_femme: number;
+  elo_16_18: number;
+  elo_19_22: number;
+  elo_23_26: number;
+  elo_27plus: number;
   nb_participations: number;
 }
 
 type RankMode = 'redflag' | 'greenflag';
-type ViewMode = 'global' | 'homme' | 'femme';
+type ViewMode = 'global' | 'homme' | 'femme' | '16-18' | '19-22' | '23-26' | '27+';
+
+const VIEW_CONFIG: { value: ViewMode; label: string; emoji: string; group: 'gender' | 'age' }[] = [
+  { value: 'global', label: 'Tous', emoji: '🌍', group: 'gender' },
+  { value: 'homme', label: 'Hommes', emoji: '♂️', group: 'gender' },
+  { value: 'femme', label: 'Femmes', emoji: '♀️', group: 'gender' },
+  { value: '16-18', label: '16-18', emoji: '🎓', group: 'age' },
+  { value: '19-22', label: '19-22', emoji: '🎯', group: 'age' },
+  { value: '23-26', label: '23-26', emoji: '💼', group: 'age' },
+  { value: '27+', label: '27+', emoji: '🧠', group: 'age' },
+];
 
 export default function LeaderboardPage() {
   const router = useRouter();
@@ -27,6 +41,7 @@ export default function LeaderboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [mode, setMode] = useState<RankMode>('redflag');
   const [view, setView] = useState<ViewMode>('global');
+  const [filterType, setFilterType] = useState<'gender' | 'age'>('gender');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -52,21 +67,11 @@ export default function LeaderboardPage() {
   const sorted = useMemo(() => {
     return [...rankings].sort((a, b) => {
       const dir = mode === 'redflag' ? -1 : 1;
-      switch (view) {
-        case 'homme': return dir * (a.elo_homme - b.elo_homme);
-        case 'femme': return dir * (a.elo_femme - b.elo_femme);
-        default: return dir * (a.elo_global - b.elo_global);
-      }
+      const eloA = getEloForView(a, view);
+      const eloB = getEloForView(b, view);
+      return dir * (eloA - eloB);
     });
   }, [rankings, view, mode]);
-
-  const getElo = (r: RankEntry) => {
-    switch (view) {
-      case 'homme': return r.elo_homme;
-      case 'femme': return r.elo_femme;
-      default: return r.elo_global;
-    }
-  };
 
   const isRed = mode === 'redflag';
   const accent = isRed ? '#DC2626' : '#059669';
@@ -79,6 +84,8 @@ export default function LeaderboardPage() {
       </div>
     );
   }
+
+  const visibleFilters = VIEW_CONFIG.filter(v => v.group === filterType);
 
   return (
     <div className="min-h-screen bg-[#0D0D0D] pb-20">
@@ -127,16 +134,40 @@ export default function LeaderboardPage() {
             </div>
           </div>
 
-          {/* Gender filter */}
-          <div className="flex justify-center gap-2 mt-4">
-            {(['global', 'homme', 'femme'] as ViewMode[]).map((v) => (
-              <button key={v} onClick={() => setView(v)}
+          {/* Filter type toggle: Gender vs Age */}
+          <div className="flex justify-center gap-3 mt-4">
+            <button
+              onClick={() => { setFilterType('gender'); setView('global'); }}
+              className={`text-xs px-4 py-1.5 rounded-full font-medium transition-all ${
+                filterType === 'gender'
+                  ? 'bg-[#F5F5F5]/10 text-[#F5F5F5] border border-[#F5F5F5]/20'
+                  : 'text-[#737373] hover:text-[#A3A3A3]'
+              }`}
+            >
+              👤 Par sexe
+            </button>
+            <button
+              onClick={() => { setFilterType('age'); setView('16-18'); }}
+              className={`text-xs px-4 py-1.5 rounded-full font-medium transition-all ${
+                filterType === 'age'
+                  ? 'bg-[#F5F5F5]/10 text-[#F5F5F5] border border-[#F5F5F5]/20'
+                  : 'text-[#737373] hover:text-[#A3A3A3]'
+              }`}
+            >
+              📊 Par âge
+            </button>
+          </div>
+
+          {/* Filter buttons */}
+          <div className="flex justify-center gap-2 mt-3 flex-wrap">
+            {visibleFilters.map((v) => (
+              <button key={v.value} onClick={() => setView(v.value)}
                 className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  view === v
+                  view === v.value
                     ? 'bg-[#F5F5F5]/10 text-[#F5F5F5] border border-[#F5F5F5]/20'
                     : 'text-[#737373] hover:text-[#A3A3A3]'
                 }`}>
-                {v === 'global' ? '🌍 Tous' : v === 'homme' ? '♂️ Hommes' : '♀️ Femmes'}
+                {v.emoji} {v.label}
               </button>
             ))}
           </div>
@@ -155,6 +186,11 @@ export default function LeaderboardPage() {
           {isRed
             ? 'Les comportements jugés les pires par la communauté'
             : 'Les comportements jugés les plus acceptables'}
+          {view !== 'global' && (
+            <span className="text-[#737373]">
+              {' '}— vue {VIEW_CONFIG.find(v => v.value === view)?.emoji} {VIEW_CONFIG.find(v => v.value === view)?.label}
+            </span>
+          )}
         </p>
       </div>
 
@@ -169,9 +205,9 @@ export default function LeaderboardPage() {
             className="max-w-2xl mx-auto px-4 mb-6"
           >
             <div className="flex items-end justify-center gap-3 h-52">
-              <PodiumCard rank={2} entry={sorted[1]} elo={getElo(sorted[1])} height="h-32" isRed={isRed} />
-              <PodiumCard rank={1} entry={sorted[0]} elo={getElo(sorted[0])} height="h-44" isRed={isRed} />
-              <PodiumCard rank={3} entry={sorted[2]} elo={getElo(sorted[2])} height="h-24" isRed={isRed} />
+              <PodiumCard rank={2} entry={sorted[1]} elo={getEloForView(sorted[1], view)} height="h-32" isRed={isRed} />
+              <PodiumCard rank={1} entry={sorted[0]} elo={getEloForView(sorted[0], view)} height="h-44" isRed={isRed} />
+              <PodiumCard rank={3} entry={sorted[2]} elo={getEloForView(sorted[2], view)} height="h-24" isRed={isRed} />
             </div>
           </motion.div>
         )}
@@ -181,9 +217,9 @@ export default function LeaderboardPage() {
       <div className="max-w-2xl mx-auto px-4">
         <div className="space-y-2">
           {sorted.slice(3).map((entry, idx) => {
-            const elo = getElo(entry);
-            const maxElo = getElo(sorted[0]) || 1;
-            const minElo = getElo(sorted[sorted.length - 1]) || 0;
+            const elo = getEloForView(entry, view);
+            const maxElo = getEloForView(sorted[0], view) || 1;
+            const minElo = getEloForView(sorted[sorted.length - 1], view) || 0;
             const range = maxElo - minElo || 1;
             const percent = isRed
               ? ((elo - minElo) / range) * 100
@@ -193,7 +229,6 @@ export default function LeaderboardPage() {
               <motion.div key={entry.texte} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: Math.min(idx * 0.02, 0.5) }}
                 className="bg-[#1A1A1A] border border-[#333] rounded-xl p-3 flex items-center gap-3 relative overflow-hidden">
-                {/* ELO bar background */}
                 <div
                   className="absolute inset-0 opacity-[0.04]"
                   style={{ width: `${percent}%`, backgroundColor: accent }}
@@ -233,6 +268,26 @@ export default function LeaderboardPage() {
     </div>
   );
 }
+
+// ═══════════════════════════════════════
+// Helper: Get ELO for any view mode
+// ═══════════════════════════════════════
+
+function getEloForView(r: RankEntry, view: ViewMode): number {
+  switch (view) {
+    case 'homme': return r.elo_homme;
+    case 'femme': return r.elo_femme;
+    case '16-18': return r.elo_16_18 ?? r.elo_global;
+    case '19-22': return r.elo_19_22 ?? r.elo_global;
+    case '23-26': return r.elo_23_26 ?? r.elo_global;
+    case '27+': return r.elo_27plus ?? r.elo_global;
+    default: return r.elo_global;
+  }
+}
+
+// ═══════════════════════════════════════
+// Podium Card Component
+// ═══════════════════════════════════════
 
 function PodiumCard({ rank, entry, elo, height, isRed }: {
   rank: number; entry: RankEntry; elo: number; height: string; isRed: boolean;
