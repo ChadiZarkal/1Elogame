@@ -91,16 +91,16 @@ export default function HubPage() {
         {/* Live stats */}
         {stats && (
           <motion.div
-            className="flex justify-center gap-4 mt-3"
+            className="flex justify-center items-center gap-4 mt-3 text-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <span className="text-[#737373] text-sm">
+            <span className="text-[#737373] text-sm text-center">
               <span className="text-[#F5F5F5] font-bold">{stats.estimatedPlayers}</span> joueurs
             </span>
             <span className="text-[#333]">•</span>
-            <span className="text-[#737373] text-sm">
+            <span className="text-[#737373] text-sm text-center">
               <span className="text-[#F5F5F5] font-bold">{stats.totalVotes.toLocaleString()}</span> votes
             </span>
           </motion.div>

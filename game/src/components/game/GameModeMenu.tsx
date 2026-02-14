@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CATEGORIES_CONFIG, CategoryConfig } from '@/config/categories';
 
@@ -18,6 +18,13 @@ interface GameModeMenuProps {
 
 export function GameModeMenu({ currentSelection, onSelectionChange }: GameModeMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showPulse, setShowPulse] = useState(true);
+
+  // Masquer l'animation de pulsation après 5 secondes
+  useEffect(() => {
+    const timer = setTimeout(() => setShowPulse(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Charger les catégories dynamiquement depuis la config
   // Utilisation directe au lieu d'un useEffect pour éviter les re-renders inutiles
@@ -46,21 +53,30 @@ export function GameModeMenu({ currentSelection, onSelectionChange }: GameModeMe
 
   return (
     <div className="relative">
-      {/* Bouton principal */}
+      {/* Bouton principal avec label */}
       <motion.button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => { setIsOpen(!isOpen); setShowPulse(false); }}
         className={`
-          relative p-3 rounded-full backdrop-blur-md transition-all
+          relative px-4 py-2.5 rounded-xl backdrop-blur-md transition-all flex items-center gap-2
           ${isFiltered 
-            ? 'bg-purple-500/30 ring-2 ring-purple-400' 
-            : 'bg-white/10 hover:bg-white/20'
+            ? 'bg-purple-500/30 ring-2 ring-purple-400 shadow-lg shadow-purple-500/20' 
+            : 'bg-white/10 hover:bg-white/20 border border-white/20'
           }
         `}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        title="Mode de jeu"
+        animate={showPulse ? {
+          boxShadow: [
+            '0 0 0 0 rgba(168, 85, 247, 0.4)',
+            '0 0 0 10px rgba(168, 85, 247, 0)',
+            '0 0 0 0 rgba(168, 85, 247, 0)'
+          ]
+        } : {}}
+        transition={showPulse ? { duration: 2, repeat: Infinity } : {}}
+        title="Clique pour changer de mode"
       >
         <span className="text-xl">{getCurrentModeLabel()}</span>
+        <span className="text-white/80 text-sm font-medium whitespace-nowrap">Mode de jeu</span>
         
         {/* Indicateur de filtre actif */}
         {isFiltered && (
@@ -71,6 +87,14 @@ export function GameModeMenu({ currentSelection, onSelectionChange }: GameModeMe
             transition={{ type: 'spring', stiffness: 500 }}
           />
         )}
+        
+        {/* Flèche indicatrice */}
+        <motion.span
+          className="text-white/60 text-xs ml-1"
+          animate={isOpen ? { rotate: 180 } : { rotate: 0 }}
+        >
+          ▼
+        </motion.span>
       </motion.button>
 
       {/* Menu déroulant */}
@@ -174,6 +198,6 @@ export function GameModeMenu({ currentSelection, onSelectionChange }: GameModeMe
 
 // Export des defaults pour usage externe
 export const DEFAULT_GAME_MODE: GameModeSelection = {
-  mode: 'default',
-  category: null,
+  mode: 'thematique',
+  category: 'lifestyle',
 };

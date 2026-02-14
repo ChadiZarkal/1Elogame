@@ -21,8 +21,8 @@ export interface GameModeSelection {
 }
 
 export const DEFAULT_GAME_MODE: GameModeSelection = {
-  mode: 'default',
-  category: null,
+  mode: 'thematique',
+  category: 'lifestyle',
 };
 
 // History entry for scroll-back
