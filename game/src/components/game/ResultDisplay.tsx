@@ -28,38 +28,60 @@ interface ElementStats {
 function ResultCard({ 
   element, 
   stats,
-  flexValue
+  flexValue,
+  isOptimistic
 }: { 
   element: ElementDTO; 
   stats: ElementStats;
   flexValue: number; // Valeur de flex calculée proportionnellement
+  isOptimistic?: boolean; // Mode optimiste = affichage neutre en attente
 }) {
   // isMoreRedFlag = true → C'est le plus red flag → ROUGE + GRAND
   // isMoreRedFlag = false → C'est le moins red flag → VERT + PETIT
   const isMoreRedFlag = stats.isMoreRedFlag;
   
+  // En mode optimiste: fond neutre gris, pas de direction affichée
+  const bgClass = isOptimistic
+    ? 'bg-gradient-to-br from-[#2A2A2A] to-[#1A1A1A]'
+    : isMoreRedFlag 
+      ? 'bg-gradient-to-br from-[#DC2626] to-[#991B1B]'
+      : 'bg-gradient-to-br from-[#059669] to-[#047857]';
+  
   return (
     <motion.div
-      className={`relative flex items-center justify-center p-5 ${
-        isMoreRedFlag 
-          ? 'bg-gradient-to-br from-[#DC2626] to-[#991B1B]'
-          : 'bg-gradient-to-br from-[#059669] to-[#047857]'
-      }`}
+      className={`relative flex items-center justify-center p-5 ${bgClass}`}
       initial={{ flex: 1 }}
       animate={{ flex: flexValue }}
       transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
-      {/* Flash effect */}
-      <motion.div 
-        className={`absolute inset-0 ${isMoreRedFlag ? 'bg-[#DC2626]' : 'bg-[#059669]'}`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 0.4, 0] }}
-        transition={{ duration: 0.4 }}
-      />
+      {/* Flash effect — only when real data */}
+      {!isOptimistic && (
+        <motion.div 
+          className={`absolute inset-0 ${isMoreRedFlag ? 'bg-[#DC2626]' : 'bg-[#059669]'}`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 0.4, 0] }}
+          transition={{ duration: 0.4 }}
+        />
+      )}
       
       <div className="text-center z-10 max-w-md">
-        {/* Badge RED FLAG amélioré pour le plus red flag */}
-        {isMoreRedFlag && (
+        {/* Shimmer loading pour mode optimiste */}
+        {isOptimistic && (
+          <motion.div
+            className="mb-3"
+            initial={{ opacity: 0.4 }}
+            animate={{ opacity: [0.4, 0.8, 0.4] }}
+            transition={{ duration: 1.2, repeat: Infinity }}
+          >
+            <span className="inline-flex items-center gap-2 bg-white/10 text-white/60 px-4 py-1.5 rounded-lg text-sm font-medium">
+              <span>⏳</span>
+              <span>Calcul des votes...</span>
+            </span>
+          </motion.div>
+        )}
+
+        {/* Badge RED FLAG amélioré pour le plus red flag — hidden in optimistic mode */}
+        {!isOptimistic && isMoreRedFlag && (
           <motion.div
             className="mb-4"
             initial={{ scale: 0, rotate: -10 }}
@@ -77,7 +99,7 @@ function ResultCard({
         {/* Texte de l'élément */}
         <motion.p 
           className={`font-bold text-white leading-tight mb-3 ${
-            isMoreRedFlag ? 'text-xl sm:text-2xl md:text-3xl' : 'text-base sm:text-lg'
+            isOptimistic ? 'text-lg sm:text-xl' : isMoreRedFlag ? 'text-xl sm:text-2xl md:text-3xl' : 'text-base sm:text-lg'
           }`}
           initial={{ opacity: 0.5 }}
           animate={{ opacity: 1 }}
@@ -85,23 +107,25 @@ function ResultCard({
           {element.texte}
         </motion.p>
         
-        {/* Pourcentage */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="space-y-1"
-        >
-          <p className={`font-black text-white ${isMoreRedFlag ? 'text-4xl sm:text-5xl' : 'text-xl sm:text-2xl'}`}>
-            {stats.percentage}%
-          </p>
-          <p className="text-white/70 text-xs sm:text-sm">
-            {formatNumber(stats.votes)} votes
-          </p>
-        </motion.div>
+        {/* Pourcentage — hidden in optimistic mode */}
+        {!isOptimistic && (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="space-y-1"
+          >
+            <p className={`font-black text-white ${isMoreRedFlag ? 'text-4xl sm:text-5xl' : 'text-xl sm:text-2xl'}`}>
+              {stats.percentage}%
+            </p>
+            <p className="text-white/70 text-xs sm:text-sm">
+              {formatNumber(stats.votes)} votes
+            </p>
+          </motion.div>
+        )}
 
-        {/* Classement global */}
-        {stats.rank && stats.totalElements && (
+        {/* Classement global — hidden in optimistic mode */}
+        {!isOptimistic && stats.rank && stats.totalElements && (
           <motion.div
             className="mt-3"
             initial={{ opacity: 0, y: 10 }}
@@ -120,8 +144,8 @@ function ResultCard({
           </motion.div>
         )}
 
-        {/* Badge "Moins pire" pour le moins red flag */}
-        {!isMoreRedFlag && (
+        {/* Badge "Moins pire" pour le moins red flag — hidden in optimistic mode */}
+        {!isOptimistic && !isMoreRedFlag && (
           <motion.div
             className="mt-3"
             initial={{ opacity: 0 }}
@@ -278,6 +302,7 @@ export function ResultDisplay({
         element={duel.elementA} 
         stats={elementAStats}
         flexValue={flexA}
+        isOptimistic={result.isOptimistic}
       />
       
       <div className="relative h-0 z-20">
@@ -297,6 +322,7 @@ export function ResultDisplay({
         element={duel.elementB} 
         stats={elementBStats}
         flexValue={flexB}
+        isOptimistic={result.isOptimistic}
       />
       
       <AnimatePresence>

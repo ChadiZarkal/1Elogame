@@ -49,6 +49,7 @@ export interface VoteResult {
     matched: boolean;
     current: number;
   };
+  isOptimistic?: boolean; // true = données provisoires, en attente de l'API
 }
 
 // Feedback types

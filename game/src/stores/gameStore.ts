@@ -206,18 +206,18 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Mark duel as seen IMMEDIATELY (no need to wait)
     markDuelAsSeen(currentDuel.elementA.id, currentDuel.elementB.id);
     
-    // OPTIMISTIC RESULT: show instant feedback with estimated values
+    // OPTIMISTIC RESULT: show instant feedback — neutral state (no percentages yet)
     const optimisticResult = {
       winner: {
         id: winnerId,
-        percentage: 55, // Placeholder — will be updated
+        percentage: 50, // Neutral — will be updated by real API data
         participations: 0,
         rank: 0,
         totalElements: 0,
       },
       loser: {
         id: loserId,
-        percentage: 45,
+        percentage: 50,
         participations: 0,
         rank: 0,
         totalElements: 0,
@@ -226,6 +226,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         matched: true,
         current: 0,
       },
+      isOptimistic: true, // Signals ResultDisplay to show neutral/loading state
     };
     
     // Track vote in analytics

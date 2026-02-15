@@ -297,8 +297,15 @@ export default function AdminDemographicsPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-black text-[#F5F5F5]">📊 Démographie & Analytics</h1>
           <p className="text-[#6B7280] text-sm mt-1">
-            Dernière mise à jour: {new Date(data.generatedAt).toLocaleTimeString('fr-FR')}
+            Données réelles traquées — Mise à jour: {new Date(data.generatedAt).toLocaleTimeString('fr-FR')}
           </p>
+          {data.sessionMetrics.totalSessions === 0 && (
+            <div className="mt-3 bg-[#1E3A5F]/30 border border-[#3B82F6]/30 rounded-xl p-4 text-[#93C5FD] text-sm">
+              <span className="font-bold">ℹ️ Aucune donnée de session enregistrée pour le moment.</span>
+              <br />
+              <span className="text-xs text-[#6B7280]">Les statistiques se rempliront automatiquement au fur et à mesure que des utilisateurs visitent le site.</span>
+            </div>
+          )}
         </div>
 
         {/* KPI Cards Row */}

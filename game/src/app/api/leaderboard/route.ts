@@ -10,11 +10,18 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const order = searchParams.get('order') === 'asc' ? 'asc' : 'desc';
     const limit = Math.min(Number(searchParams.get('limit') || 50), 100);
+    const category = searchParams.get('category') || null; // Filter by category
 
     if (isMockMode) {
       const { getMockElements } = await import('@/lib/mockData');
       const elements = getMockElements();
-      const active = elements.filter(e => e.actif);
+      let active = elements.filter(e => e.actif);
+      
+      // Filter by category if specified
+      if (category) {
+        active = active.filter(e => e.categorie === category);
+      }
+      
       const sorted = active.sort((a, b) =>
         order === 'asc' ? a.elo_global - b.elo_global : b.elo_global - a.elo_global
       );
@@ -41,10 +48,18 @@ export async function GET(request: NextRequest) {
 
     const { createServerClient } = await import('@/lib/supabase');
     const supabase = createServerClient();
-    const { data, error } = await supabase
+    
+    let query = supabase
       .from('elements')
       .select('texte, categorie, elo_global, elo_homme, elo_femme, elo_16_18, elo_19_22, elo_23_26, elo_27plus, nb_participations')
-      .eq('actif', true)
+      .eq('actif', true);
+    
+    // Filter by category if specified
+    if (category) {
+      query = query.eq('categorie', category);
+    }
+    
+    const { data, error } = await query
       .order('elo_global', { ascending: order === 'asc' })
       .limit(limit);
 

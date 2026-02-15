@@ -141,9 +141,18 @@ export default function FlagOrNotPage() {
 
     fetchCommunitySubmissions();
 
+    // Listen for cross-tab localStorage changes (admin toggling justification)
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'flagornot_show_justification' && e.newValue !== null) {
+        setShowJustification(e.newValue === 'true');
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
     return () => {
       window.visualViewport?.removeEventListener('resize', updateHeight);
       window.removeEventListener('resize', updateHeight);
+      window.removeEventListener('storage', handleStorage);
     };
   }, []);
 
@@ -213,6 +222,12 @@ export default function FlagOrNotPage() {
       setResult(data);
       setHistory((prev) => [{ ...data, text }, ...prev].slice(0, 50));
       setPhase('reveal');
+
+      // Re-read justification setting in case admin toggled it mid-session
+      const justifSetting = localStorage.getItem('flagornot_show_justification');
+      if (justifSetting !== null) {
+        setShowJustification(justifSetting === 'true');
+      }
 
       if (navigator.vibrate) {
         navigator.vibrate(data.verdict === 'red' ? [80, 40, 80] : [60]);

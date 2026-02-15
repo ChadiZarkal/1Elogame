@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loading } from '@/components/ui/Loading';
@@ -32,6 +32,14 @@ const VIEW_CONFIG: { value: ViewMode; label: string; emoji: string; group: 'gend
   { value: '27+', label: '27+', emoji: '🧠', group: 'age' },
 ];
 
+const CATEGORY_FILTERS = [
+  { value: '', label: 'Toutes', emoji: '🌐' },
+  { value: 'lifestyle', label: 'Lifestyle', emoji: '🎯' },
+  { value: 'sexe', label: 'Sexe & Kinks', emoji: '🔥' },
+  { value: 'quotidien', label: 'Quotidien', emoji: '🤷' },
+  { value: 'bureau', label: 'Bureau', emoji: '💼' },
+];
+
 export default function LeaderboardPage() {
   const router = useRouter();
   const [redRankings, setRedRankings] = useState<RankEntry[]>([]);
@@ -42,12 +50,16 @@ export default function LeaderboardPage() {
   const [mode, setMode] = useState<RankMode>('redflag');
   const [view, setView] = useState<ViewMode>('global');
   const [filterType, setFilterType] = useState<'gender' | 'age'>('gender');
+  const [categoryFilter, setCategoryFilter] = useState(''); // '' = all categories
   const [error, setError] = useState('');
 
-  useEffect(() => {
+  const fetchRankings = useCallback((category: string) => {
+    setIsLoading(true);
+    setError('');
+    const catParam = category ? `&category=${category}` : '';
     Promise.all([
-      fetch('/api/leaderboard?order=desc').then(r => r.json()),
-      fetch('/api/leaderboard?order=asc').then(r => r.json()),
+      fetch(`/api/leaderboard?order=desc${catParam}`).then(r => r.json()),
+      fetch(`/api/leaderboard?order=asc${catParam}`).then(r => r.json()),
     ])
       .then(([redData, greenData]) => {
         if (redData.success) {
@@ -61,6 +73,10 @@ export default function LeaderboardPage() {
       .catch(() => setError('Erreur de connexion'))
       .finally(() => setIsLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchRankings(categoryFilter);
+  }, [categoryFilter, fetchRankings]);
 
   const rankings = mode === 'redflag' ? redRankings : greenRankings;
 
@@ -171,6 +187,23 @@ export default function LeaderboardPage() {
               </button>
             ))}
           </div>
+
+          {/* Category filter */}
+          <div className="flex justify-center gap-2 mt-3 flex-wrap">
+            {CATEGORY_FILTERS.map((cat) => (
+              <button
+                key={cat.value}
+                onClick={() => setCategoryFilter(cat.value)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                  categoryFilter === cat.value
+                    ? 'bg-[#DC2626]/20 text-[#FCA5A5] border border-[#DC2626]/30'
+                    : 'text-[#737373] hover:text-[#A3A3A3]'
+                }`}
+              >
+                {cat.emoji} {cat.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -186,9 +219,14 @@ export default function LeaderboardPage() {
           {isRed
             ? 'Les comportements jugés les pires par la communauté'
             : 'Les comportements jugés les plus acceptables'}
+          {categoryFilter && (
+            <span className="text-[#737373]">
+              {' '}— {CATEGORY_FILTERS.find(c => c.value === categoryFilter)?.emoji} {CATEGORY_FILTERS.find(c => c.value === categoryFilter)?.label}
+            </span>
+          )}
           {view !== 'global' && (
             <span className="text-[#737373]">
-              {' '}— vue {VIEW_CONFIG.find(v => v.value === view)?.emoji} {VIEW_CONFIG.find(v => v.value === view)?.label}
+              {' '}— {VIEW_CONFIG.find(v => v.value === view)?.emoji} {VIEW_CONFIG.find(v => v.value === view)?.label}
             </span>
           )}
         </p>
