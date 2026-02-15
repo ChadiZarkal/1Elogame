@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Loading } from '@/components/ui/Loading';
 import { AdminNav } from '@/components/admin/AdminNav';
+import { CATEGORIES_CONFIG } from '@/config/categories';
 
 interface ElementRanking {
   id: string;
@@ -40,6 +41,7 @@ export default function AdminStatsPage() {
   const [sortBy, setSortBy] = useState<SortField>('elo');
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [selectedPair, setSelectedPair] = useState<[string, string] | null>(null);
 
@@ -134,7 +136,8 @@ export default function AdminStatsPage() {
 
   const processedRankings = useMemo(() => {
     const filtered = rankings.filter(r =>
-      r.texte.toLowerCase().includes(searchQuery.toLowerCase())
+      r.texte.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      (!selectedCategory || r.categorie === selectedCategory)
     );
     return filtered.sort((a, b) => {
       switch (sortBy) {
@@ -146,7 +149,7 @@ export default function AdminStatsPage() {
           return getEloValue(b) - getEloValue(a);
       }
     });
-  }, [rankings, searchQuery, sortBy, getEloValue, getParticipationsValue]);
+  }, [rankings, searchQuery, selectedCategory, sortBy, getEloValue, getParticipationsValue]);
 
   const displayedRankings = showAll ? processedRankings : processedRankings.slice(0, 100);
 
@@ -396,6 +399,17 @@ export default function AdminStatsPage() {
             <ViewButton active={view === '19-22'} onClick={() => setView('19-22')}>🎯 19-22</ViewButton>
             <ViewButton active={view === '23-26'} onClick={() => setView('23-26')}>💼 23-26</ViewButton>
             <ViewButton active={view === '27+'} onClick={() => setView('27+')}>🔥 27+</ViewButton>
+          </div>
+        </div>
+        <div>
+          <p className="text-[#737373] text-xs mb-1.5">Par catégorie</p>
+          <div className="flex gap-2 flex-wrap">
+            <ViewButton active={selectedCategory === null} onClick={() => setSelectedCategory(null)}>✅ Toutes</ViewButton>
+            {Object.entries(CATEGORIES_CONFIG).map(([id, category]) => (
+              <ViewButton key={id} active={selectedCategory === id} onClick={() => setSelectedCategory(id)}>
+                {category.emoji} {category.labelFr}
+              </ViewButton>
+            ))}
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
