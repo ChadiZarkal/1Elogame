@@ -6,17 +6,6 @@ import { motion } from 'framer-motion';
 
 const GAMES = [
   {
-    href: 'https://redorgreen.fr/?quiz=quiz-sexualite',
-    external: true,
-    emoji: '🧪',
-    title: 'Red Flag Test',
-    subtitle: 'Es-tu un red flag ? Découvre-le',
-    gradient: 'from-[#F97316]/15 to-[#EA580C]/5',
-    border: '#F97316',
-    tag: 'Populaire',
-    tagColor: '#F97316',
-  },
-  {
     href: '/jeu',
     external: false,
     emoji: '🚩',
@@ -24,7 +13,7 @@ const GAMES = [
     subtitle: 'Choisis le pire entre deux options',
     gradient: 'from-[#DC2626]/15 to-[#991B1B]/5',
     border: '#DC2626',
-    tag: 'Classique',
+    tag: 'N°1',
     tagColor: '#DC2626',
   },
   {
@@ -32,11 +21,22 @@ const GAMES = [
     external: false,
     emoji: '🤖',
     title: 'Flag or Not',
-    subtitle: "Écris quelque chose, l'IA décide",
+    subtitle: "Écris un truc, l'IA juge si c'est red flag",
     gradient: 'from-[#059669]/12 to-[#DC2626]/5',
     border: '#059669',
     tag: 'IA',
     tagColor: '#059669',
+  },
+  {
+    href: 'https://redorgreen.fr/?quiz=quiz-sexualite',
+    external: true,
+    emoji: '🧪',
+    title: 'Red Flag Test',
+    subtitle: 'Es-tu un red flag ? Fais le quiz',
+    gradient: 'from-[#F97316]/15 to-[#EA580C]/5',
+    border: '#F97316',
+    tag: 'Quiz ↗',
+    tagColor: '#F97316',
   },
 ];
 
@@ -56,7 +56,7 @@ export default function HubPage() {
       {/* Version badge */}
       <div className="fixed top-4 right-4 z-50">
         <span className="px-3 py-1 rounded-full bg-[#1A1A1A] border border-[#333] text-[#737373] text-xs font-mono">
-          v3.7.1
+          v3.7.2
         </span>
       </div>
 
@@ -84,23 +84,28 @@ export default function HubPage() {
         <h1 className="text-5xl sm:text-6xl font-black text-[#F5F5F5] tracking-tight">
           Red <span className="text-[#DC2626]">FLAG</span> Games
         </h1>
-        <p className="text-[#737373] text-sm mt-2 max-w-xs mx-auto text-center leading-relaxed">
-          Party games mobiles gratuits — joue et débats avec tes amis
+        <p className="text-[#A3A3A3] text-sm mt-2 font-medium">
+          Le party game qui fait débat 🔥
+        </p>
+
+        {/* Trust signals - moved up for visibility */}
+        <p className="text-[#737373] text-xs mt-1.5">
+          Gratuit • Sans inscription • Entre amis
         </p>
 
         {/* Live stats */}
         {stats && (
           <motion.div
-            className="flex justify-center items-center gap-4 mt-3 text-center"
+            className="flex justify-center items-center gap-4 mt-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <span className="text-[#737373] text-sm text-center">
+            <span className="text-[#737373] text-sm">
               <span className="text-[#F5F5F5] font-bold">{stats.estimatedPlayers}</span> joueurs
             </span>
             <span className="text-[#333]">•</span>
-            <span className="text-[#737373] text-sm text-center">
+            <span className="text-[#737373] text-sm">
               <span className="text-[#F5F5F5] font-bold">{stats.totalVotes.toLocaleString()}</span> votes
             </span>
           </motion.div>
@@ -108,11 +113,11 @@ export default function HubPage() {
       </motion.div>
 
       {/* Game cards */}
-      <div className="flex flex-col gap-3 sm:gap-4 w-full max-w-md">
+      <div className="flex flex-col gap-3 sm:gap-4 w-full max-w-md sm:max-w-lg">
         {GAMES.map((game, i) => (
           <motion.button
             key={game.title}
-            onClick={() => game.external ? window.location.href = game.href : router.push(game.href)}
+            onClick={() => game.external ? window.open(game.href, '_blank') : router.push(game.href)}
             className={`relative text-left w-full rounded-2xl bg-gradient-to-br ${game.gradient} bg-[#1A1A1A] border transition-all duration-300 cursor-pointer active:scale-[0.98] overflow-hidden`}
             style={{ borderColor: `${game.border}30` }}
             initial={{ opacity: 0, y: 30 }}
@@ -121,15 +126,15 @@ export default function HubPage() {
             whileHover={{ borderColor: game.border, boxShadow: `0 0 40px ${game.border}25` }}
             whileTap={{ scale: 0.97 }}
           >
-            <div className="p-6">
+            <div className="p-5 sm:p-6">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
                   style={{ background: `${game.border}15` }}>
-                  <span className="text-3xl">{game.emoji}</span>
+                  <span className="text-2xl sm:text-3xl">{game.emoji}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-2xl font-black text-[#F5F5F5]">{game.title}</h2>
+                    <h2 className="text-xl sm:text-2xl font-black text-[#F5F5F5]">{game.title}</h2>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide"
                       style={{ backgroundColor: `${game.tagColor}20`, color: game.tagColor }}>
                       {game.tag}
@@ -137,17 +142,19 @@ export default function HubPage() {
                   </div>
                   <p className="text-sm font-semibold mt-0.5" style={{ color: game.border }}>{game.subtitle}</p>
                 </div>
-                <span className="text-2xl ml-2 flex-shrink-0" style={{ color: game.border }}>→</span>
+                <span className="text-xl sm:text-2xl ml-2 flex-shrink-0" style={{ color: game.border }}>
+                  {game.external ? '↗' : '→'}
+                </span>
               </div>
             </div>
           </motion.button>
         ))}
       </div>
 
-      {/* Leaderboard CTA */}
+      {/* Leaderboard CTA - more prominent */}
       <motion.button
         onClick={() => router.push('/classement')}
-        className="mt-8 px-8 py-3 rounded-xl bg-[#1A1A1A] border border-[#333] hover:border-[#FCD34D]/50 hover:shadow-[0_0_20px_rgba(252,211,77,0.15)] transition-all text-[#A3A3A3] hover:text-[#FCD34D] text-sm font-bold"
+        className="mt-6 px-8 py-3.5 rounded-xl bg-[#FCD34D]/10 border border-[#FCD34D]/30 hover:border-[#FCD34D]/60 hover:bg-[#FCD34D]/15 hover:shadow-[0_0_25px_rgba(252,211,77,0.15)] transition-all text-[#FCD34D] text-sm font-bold"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
@@ -156,17 +163,14 @@ export default function HubPage() {
         🏆 Voir le classement
       </motion.button>
 
-      {/* SEO-friendly footer with links */}
+      {/* SEO-friendly footer */}
       <motion.footer
-        className="mt-8 text-center text-[#737373] text-xs space-y-1"
+        className="mt-8 text-center text-[#555] text-xs"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
       >
-        <p>Aucun compte requis • Données anonymes • 100% gratuit</p>
-        <p className="text-[#555]">
-          Red Flag Games — Le meilleur party game en ligne
-        </p>
+        <p>Red Flag Games — Le meilleur party game en ligne</p>
       </motion.footer>
     </div>
   );

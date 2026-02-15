@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { useGameStore } from '@/stores/gameStore';
 import { DuelInterface } from '@/components/game/DuelInterface';
 import { ResultDisplay } from '@/components/game/ResultDisplay';
@@ -140,13 +141,44 @@ export default function JouerPage() {
       
       {/* Current active duel/result - takes full screen height */}
       <div className="h-screen w-full relative flex flex-col">
-        {/* Streak display */}
-        {!showingResult && (
-          <StreakDisplay 
-            streak={streak} 
-            streakEmoji={streakEmoji} 
-            duelCount={duelCount} 
+        {/* Top bar: home + streak + mode */}
+        <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {/* Home button */}
+            <button
+              onClick={() => router.push('/')}
+              className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-[#333] rounded-full w-10 h-10 flex items-center justify-center text-[#A3A3A3] hover:text-[#F5F5F5] transition-colors"
+              aria-label="Retour accueil"
+            >
+              ←
+            </button>
+            {/* Streak */}
+            {!showingResult && (
+              <StreakDisplay 
+                streak={streak} 
+                streakEmoji={streakEmoji} 
+                duelCount={duelCount} 
+              />
+            )}
+          </div>
+          {/* Game Mode Menu */}
+          <GameModeMenu
+            currentSelection={gameMode}
+            onSelectionChange={setGameMode}
           />
+        </div>
+        
+        {/* First duel hint */}
+        {duelCount === 0 && !showingResult && (
+          <motion.div
+            className="absolute top-20 left-1/2 -translate-x-1/2 z-10 bg-[#DC2626]/90 text-white text-xs font-bold px-4 py-2 rounded-full"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            👆 Choisis le pire des deux 👇
+          </motion.div>
         )}
         
         {showingResult && lastResult ? (
@@ -168,14 +200,6 @@ export default function JouerPage() {
             disabled={showingResult || isLoadingDuel}
           />
         )}
-        
-        {/* Game Mode Menu */}
-        <div className="absolute top-4 right-4 z-20">
-          <GameModeMenu
-            currentSelection={gameMode}
-            onSelectionChange={setGameMode}
-          />
-        </div>
       </div>
     </div>
   );

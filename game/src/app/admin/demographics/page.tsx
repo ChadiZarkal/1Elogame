@@ -198,7 +198,7 @@ function formatDuration(seconds: number): string {
 function StatCard({ icon, label, value, subtitle, color = '#DC2626' }: { icon: string; label: string; value: string | number; subtitle?: string; color?: string }) {
   return (
     <motion.div
-      className="bg-[#111] border border-[#222] rounded-xl p-4 space-y-1"
+      className="bg-[#1A1A1A] border border-[#333] rounded-xl p-4 space-y-1"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
     >
@@ -261,7 +261,7 @@ export default function AdminDemographicsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A]">
+      <div className="min-h-screen bg-[#0D0D0D]">
         <AdminNav />
         <div className="flex items-center justify-center h-[80vh]">
           <div className="text-center space-y-3">
@@ -275,7 +275,7 @@ export default function AdminDemographicsPage() {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A]">
+      <div className="min-h-screen bg-[#0D0D0D]">
         <AdminNav />
         <div className="flex items-center justify-center h-[80vh]">
           <div className="text-center space-y-3">
@@ -289,7 +289,7 @@ export default function AdminDemographicsPage() {
   const genderTotal = data.genderBreakdown.homme + data.genderBreakdown.femme + data.genderBreakdown.autre;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A]">
+    <div className="min-h-screen bg-[#0D0D0D]">
       <AdminNav />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
@@ -323,7 +323,7 @@ export default function AdminDemographicsPage() {
           
           {/* Visitor Evolution */}
           <motion.div
-            className="bg-[#111] border border-[#222] rounded-xl p-5"
+            className="bg-[#1A1A1A] border border-[#333] rounded-xl p-5"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
@@ -347,7 +347,7 @@ export default function AdminDemographicsPage() {
           {/* Gender + Age Breakdown */}
           <div className="space-y-4">
             <motion.div
-              className="bg-[#111] border border-[#222] rounded-xl p-5"
+              className="bg-[#1A1A1A] border border-[#333] rounded-xl p-5"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.1 }}
@@ -368,7 +368,7 @@ export default function AdminDemographicsPage() {
             </motion.div>
             
             <motion.div
-              className="bg-[#111] border border-[#222] rounded-xl p-5"
+              className="bg-[#1A1A1A] border border-[#333] rounded-xl p-5"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
@@ -387,7 +387,7 @@ export default function AdminDemographicsPage() {
           
           {/* Game entries */}
           <motion.div
-            className="bg-[#111] border border-[#222] rounded-xl p-5"
+            className="bg-[#1A1A1A] border border-[#333] rounded-xl p-5"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15 }}
@@ -401,7 +401,7 @@ export default function AdminDemographicsPage() {
               ]}
               color="#EF4444"
             />
-            <div className="mt-3 pt-3 border-t border-[#222]">
+            <div className="mt-3 pt-3 border-t border-[#333]">
               <p className="text-[10px] text-[#6B7280] uppercase tracking-widest font-bold mb-2">Temps moyen par jeu</p>
               {Object.entries(data.timePerGame).map(([game, seconds]) => (
                 <div key={game} className="flex justify-between text-xs py-1">
@@ -414,7 +414,7 @@ export default function AdminDemographicsPage() {
           
           {/* Category popularity */}
           <motion.div
-            className="bg-[#111] border border-[#222] rounded-xl p-5"
+            className="bg-[#1A1A1A] border border-[#333] rounded-xl p-5"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -444,7 +444,7 @@ export default function AdminDemographicsPage() {
           
           {/* Session metrics */}
           <motion.div
-            className="bg-[#111] border border-[#222] rounded-xl p-5 space-y-4"
+            className="bg-[#1A1A1A] border border-[#333] rounded-xl p-5 space-y-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.25 }}
@@ -470,7 +470,7 @@ export default function AdminDemographicsPage() {
               </div>
             </div>
             
-            <div className="pt-3 border-t border-[#222]">
+            <div className="pt-3 border-t border-[#333]">
               <h4 className="text-xs text-[#6B7280] mb-2">🤖 Requêtes IA / session</h4>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
@@ -492,7 +492,7 @@ export default function AdminDemographicsPage() {
         
         {/* Hourly Activity Heatmap */}
         <motion.div
-          className="bg-[#111] border border-[#222] rounded-xl p-5 mb-6"
+          className="bg-[#1A1A1A] border border-[#333] rounded-xl p-5 mb-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}

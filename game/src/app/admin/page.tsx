@@ -11,6 +11,7 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,15 +62,26 @@ export default function AdminLoginPage() {
             <label htmlFor="password" className="block text-sm font-medium text-[#A3A3A3] mb-2">
               Mot de passe
             </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-[#1A1A1A] border border-[#333] rounded-xl text-[#F5F5F5] placeholder-[#737373] focus:outline-none focus:ring-2 focus:ring-[#DC2626] focus:border-transparent transition-all"
-              placeholder="••••••••"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 pr-12 bg-[#1A1A1A] border border-[#333] rounded-xl text-[#F5F5F5] placeholder-[#737373] focus:outline-none focus:ring-2 focus:ring-[#DC2626] focus:border-transparent transition-all"
+                placeholder="••••••••"
+                required
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#737373] hover:text-[#F5F5F5] transition-colors text-sm"
+                tabIndex={-1}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
           </div>
 
           {error && (

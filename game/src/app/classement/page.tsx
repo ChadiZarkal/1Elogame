@@ -106,9 +106,9 @@ export default function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-[#0D0D0D] pb-20">
       {/* Header */}
-      <div className="pt-8 pb-6 px-4" style={{ background: `linear-gradient(to bottom, ${accent}22, transparent)` }}>
+      <div className="pt-8 pb-5 px-4" style={{ background: `linear-gradient(to bottom, ${accent}15, transparent)` }}>
         <div className="max-w-2xl mx-auto">
-          <button onClick={() => router.push('/')} className="text-[#737373] hover:text-[#F5F5F5] text-sm mb-4 block transition-colors">
+          <button onClick={() => router.push('/')} className="text-[#737373] hover:text-[#F5F5F5] text-sm mb-3 block transition-colors">
             ← Accueil
           </button>
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
@@ -118,67 +118,66 @@ export default function LeaderboardPage() {
           </motion.div>
 
           {/* Stats bar */}
-          <div className="flex justify-center gap-4 mt-3 text-xs text-[#737373]">
-            <span>{totalElements} red flags</span>
+          <div className="flex justify-center gap-4 mt-2 text-xs text-[#737373]">
+            <span>{totalElements} éléments</span>
             <span>•</span>
             <span>{totalVotes.toLocaleString()} votes</span>
           </div>
 
           {/* RED / GREEN mode toggle */}
-          <div className="flex justify-center mt-5">
+          <div className="flex justify-center mt-4">
             <div className="inline-flex bg-[#1A1A1A] border border-[#333] rounded-full p-1">
               <button
                 onClick={() => setMode('redflag')}
-                className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
+                className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${
                   isRed
                     ? 'bg-[#DC2626] text-white shadow-lg shadow-[#DC2626]/30'
                     : 'text-[#A3A3A3] hover:text-[#F5F5F5]'
                 }`}
               >
-                🚩 Plus Red Flag
+                🚩 Red Flag
               </button>
               <button
                 onClick={() => setMode('greenflag')}
-                className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
+                className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${
                   !isRed
                     ? 'bg-[#059669] text-white shadow-lg shadow-[#059669]/30'
                     : 'text-[#A3A3A3] hover:text-[#F5F5F5]'
                 }`}
               >
-                🟢 Moins Red Flag
+                🟢 Green Flag
               </button>
             </div>
           </div>
 
-          {/* Filter type toggle: Gender vs Age */}
-          <div className="flex justify-center gap-3 mt-4">
+          {/* Filters: collapsed into a single scrollable row */}
+          <div className="flex justify-center gap-2 mt-4 flex-wrap">
+            {/* Gender/Age type toggle */}
             <button
               onClick={() => { setFilterType('gender'); setView('global'); }}
-              className={`text-xs px-4 py-1.5 rounded-full font-medium transition-all ${
+              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${
                 filterType === 'gender'
                   ? 'bg-[#F5F5F5]/10 text-[#F5F5F5] border border-[#F5F5F5]/20'
                   : 'text-[#737373] hover:text-[#A3A3A3]'
               }`}
             >
-              👤 Par sexe
+              👤 Sexe
             </button>
             <button
               onClick={() => { setFilterType('age'); setView('16-18'); }}
-              className={`text-xs px-4 py-1.5 rounded-full font-medium transition-all ${
+              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${
                 filterType === 'age'
                   ? 'bg-[#F5F5F5]/10 text-[#F5F5F5] border border-[#F5F5F5]/20'
                   : 'text-[#737373] hover:text-[#A3A3A3]'
               }`}
             >
-              📊 Par âge
+              📊 Âge
             </button>
-          </div>
-
-          {/* Filter buttons */}
-          <div className="flex justify-center gap-2 mt-3 flex-wrap">
+            <span className="text-[#333] self-center">|</span>
+            {/* Inline view options */}
             {visibleFilters.map((v) => (
               <button key={v.value} onClick={() => setView(v.value)}
-                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   view === v.value
                     ? 'bg-[#F5F5F5]/10 text-[#F5F5F5] border border-[#F5F5F5]/20'
                     : 'text-[#737373] hover:text-[#A3A3A3]'
@@ -188,16 +187,16 @@ export default function LeaderboardPage() {
             ))}
           </div>
 
-          {/* Category filter */}
-          <div className="flex justify-center gap-2 mt-3 flex-wrap">
+          {/* Category filter - compact */}
+          <div className="flex justify-center gap-2 mt-2 flex-wrap">
             {CATEGORY_FILTERS.map((cat) => (
               <button
                 key={cat.value}
                 onClick={() => setCategoryFilter(cat.value)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                   categoryFilter === cat.value
                     ? 'bg-[#DC2626]/20 text-[#FCA5A5] border border-[#DC2626]/30'
-                    : 'text-[#737373] hover:text-[#A3A3A3]'
+                    : 'text-[#555] hover:text-[#A3A3A3]'
                 }`}
               >
                 {cat.emoji} {cat.label}
@@ -234,7 +233,7 @@ export default function LeaderboardPage() {
 
       {/* Podium (top 3) */}
       <AnimatePresence mode="wait">
-        {sorted.length >= 3 && (
+        {sorted.length >= 3 ? (
           <motion.div
             key={mode + view}
             initial={{ opacity: 0, y: 10 }}
@@ -242,13 +241,23 @@ export default function LeaderboardPage() {
             exit={{ opacity: 0, y: -10 }}
             className="max-w-2xl mx-auto px-4 mb-6"
           >
-            <div className="flex items-end justify-center gap-3 h-52">
+            <div className="flex items-end justify-center gap-2 sm:gap-3 h-52">
               <PodiumCard rank={2} entry={sorted[1]} elo={getEloForView(sorted[1], view)} height="h-32" isRed={isRed} />
               <PodiumCard rank={1} entry={sorted[0]} elo={getEloForView(sorted[0], view)} height="h-44" isRed={isRed} />
               <PodiumCard rank={3} entry={sorted[2]} elo={getEloForView(sorted[2], view)} height="h-24" isRed={isRed} />
             </div>
           </motion.div>
-        )}
+        ) : sorted.length === 0 ? (
+          <motion.div
+            key="empty"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="max-w-2xl mx-auto px-4 mb-6 text-center py-12"
+          >
+            <span className="text-5xl mb-4 block">🏜️</span>
+            <p className="text-[#A3A3A3] text-sm">Aucun résultat pour ces filtres</p>
+          </motion.div>
+        ) : null}
       </AnimatePresence>
 
       {/* Ranking list (4th+) */}
@@ -350,7 +359,7 @@ function PodiumCard({ rank, entry, elo, height, isRed }: {
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: rank === 1 ? 0.2 : rank === 2 ? 0.1 : 0.3 }}
-      className={`${height} w-28 sm:w-36 ${colors[rank - 1]} border rounded-t-xl flex flex-col items-center justify-end p-3`}
+      className={`${height} w-[7.5rem] sm:w-40 ${colors[rank - 1]} border rounded-t-xl flex flex-col items-center justify-end p-3`}
     >
       <span className="text-2xl mb-1">{medals[rank - 1]}</span>
       <p className="text-[#F5F5F5] text-xs text-center font-medium leading-tight line-clamp-2 mb-1">

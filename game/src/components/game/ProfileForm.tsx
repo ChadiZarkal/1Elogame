@@ -8,9 +8,9 @@ import { useGameStore } from '@/stores/gameStore';
 import { SexeVotant, AgeVotant } from '@/types/database';
 
 const sexOptions: { value: SexeVotant; label: string }[] = [
-  { value: 'homme', label: 'Homme' },
-  { value: 'femme', label: 'Femme' },
-  { value: 'autre', label: 'Ne se prononce pas' },
+  { value: 'homme', label: '♂️ Homme' },
+  { value: 'femme', label: '♀️ Femme' },
+  { value: 'autre', label: '🤷 Autre' },
 ];
 
 const ageOptions: { value: AgeVotant; label: string }[] = [
@@ -44,28 +44,38 @@ export function ProfileForm() {
   
   return (
     <motion.div 
-      className="flex flex-col items-center justify-center min-h-screen p-6 bg-[#0D0D0D]"
+      className="flex flex-col items-center justify-center min-h-screen min-h-[100dvh] p-6 bg-[#0D0D0D]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
+      {/* Back button */}
+      <div className="fixed top-4 left-4 z-50">
+        <button 
+          onClick={() => router.push('/')}
+          className="text-[#737373] hover:text-[#F5F5F5] text-sm transition-colors"
+        >
+          ← Accueil
+        </button>
+      </div>
+
       {/* Logo */}
       <motion.div 
-        className="mb-12 text-center"
+        className="mb-10 text-center"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
       >
-        <h1 className="text-4xl font-bold text-[#F5F5F5] mb-2">
-          RED <span className="text-[#DC2626]">FLAG</span>
-        </h1>
         <div className="flex justify-center gap-3 text-4xl mb-3">
           <span>🚩</span>
         </div>
+        <h1 className="text-4xl font-bold text-[#F5F5F5] mb-3">
+          RED <span className="text-[#DC2626]">FLAG</span>
+        </h1>
         {/* Short onboarding */}
         <div className="bg-[#1A1A1A] border border-[#333]/60 rounded-xl px-5 py-3 max-w-sm mx-auto">
           <p className="text-[#A3A3A3] text-sm leading-relaxed">
-            <span className="text-[#F5F5F5] font-semibold">Comment jouer :</span> choisis l&apos;option la plus red flag.
+            Choisis l&apos;option la plus <span className="text-[#DC2626] font-semibold">red flag</span> 🚩
           </p>
         </div>
       </motion.div>
@@ -77,10 +87,15 @@ export function ProfileForm() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
+        {/* Step indicator */}
+        <p className="text-center text-[#737373] text-xs font-medium">
+          Avant de jouer, dis-nous en 2 clics 👇
+        </p>
+
         {/* Sex selection */}
-        <fieldset className="pb-5 mb-2 border-b border-[#333]">
-          <label className="block text-[#F5F5F5] text-lg font-bold mb-4">
-            Quel est ton sexe ?
+        <fieldset>
+          <label className="block text-[#F5F5F5] text-base font-bold mb-3">
+            Sexe
           </label>
           <div className="grid grid-cols-3 gap-3">
             {sexOptions.map((option) => (
@@ -104,8 +119,8 @@ export function ProfileForm() {
         
         {/* Age selection */}
         <fieldset>
-          <label className="block text-[#F5F5F5] text-lg font-bold mb-4">
-            Quel âge as-tu ?
+          <label className="block text-[#F5F5F5] text-base font-bold mb-3">
+            Âge
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {ageOptions.map((option) => (
@@ -139,14 +154,14 @@ export function ProfileForm() {
         )}
         
         {/* Submit button */}
-        <div className="mt-6 pt-6 border-t border-[#333]">
+        <div className="mt-4 pt-4">
           <Button
             onClick={handleSubmit}
             variant="primary"
             size="lg"
             className="w-full text-lg py-4"
           >
-            JOUER
+            🚩 C&apos;EST PARTI
           </Button>
         </div>
       </motion.div>

@@ -57,7 +57,7 @@ export function GameModeMenu({ currentSelection, onSelectionChange }: GameModeMe
       <motion.button
         onClick={() => { setIsOpen(!isOpen); setShowPulse(false); }}
         className={`
-          relative px-4 py-2.5 rounded-xl backdrop-blur-md transition-all flex items-center gap-2
+          relative px-3 py-2 rounded-xl backdrop-blur-md transition-all flex items-center gap-1.5
           ${isFiltered 
             ? 'bg-purple-500/30 ring-2 ring-purple-400 shadow-lg shadow-purple-500/20' 
             : 'bg-white/10 hover:bg-white/20 border border-white/20'
@@ -73,10 +73,9 @@ export function GameModeMenu({ currentSelection, onSelectionChange }: GameModeMe
           ]
         } : {}}
         transition={showPulse ? { duration: 2, repeat: Infinity } : {}}
-        title="Clique pour changer de mode"
+        title="Changer de mode"
       >
-        <span className="text-xl">{getCurrentModeLabel()}</span>
-        <span className="text-white/80 text-sm font-medium whitespace-nowrap">Mode de jeu</span>
+        <span className="text-lg">{getCurrentModeLabel()}</span>
         
         {/* Indicateur de filtre actif */}
         {isFiltered && (
@@ -90,7 +89,7 @@ export function GameModeMenu({ currentSelection, onSelectionChange }: GameModeMe
         
         {/* Flèche indicatrice */}
         <motion.span
-          className="text-white/60 text-xs ml-1"
+          className="text-white/60 text-xs"
           animate={isOpen ? { rotate: 180 } : { rotate: 0 }}
         >
           ▼

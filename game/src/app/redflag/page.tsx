@@ -56,7 +56,7 @@ export default function RedFlagHome() {
             RED <span className="text-[#DC2626]">FLAG</span>
           </h1>
 
-          <p className="text-[#737373] text-lg mt-2">Le jeu des Red Flags</p>
+          <p className="text-[#737373] text-lg mt-2">Le party game qui fait débat 🔥</p>
         </motion.div>
 
         <motion.div
@@ -70,7 +70,7 @@ export default function RedFlagHome() {
             <strong className="text-[#DC2626]">Red Flag</strong> ?
           </p>
           <p className="text-[#A3A3A3] mt-2">
-            Découvre ce que pensent les autres et débats avec tes amis ! 🎉
+            Découvre ce que pensent les autres et débat avec tes amis ! 🎉
           </p>
         </motion.div>
 
@@ -85,7 +85,7 @@ export default function RedFlagHome() {
             size="lg"
             className="w-full text-xl py-6"
           >
-            🎮 JOUER
+            🚩 C'EST PARTI
           </Button>
 
           {/* No persistent session message since we always ask */}

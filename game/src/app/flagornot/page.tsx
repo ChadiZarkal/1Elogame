@@ -320,7 +320,7 @@ export default function FlagOrNotPage() {
         </button>
 
         <h1 className="text-base font-bold text-[#FAFAFA] tracking-tight">
-          🚩 ou 🟢 ?
+          Flag or Not
         </h1>
 
         {history.length > 0 ? (
@@ -594,11 +594,11 @@ export default function FlagOrNotPage() {
                 </motion.div>
 
                 <h2 className="text-[28px] sm:text-[32px] font-black text-[#FAFAFA] text-center mb-2">
-                  Demande à L&apos;IA
+                  Demande à l&apos;IA
                 </h2>
 
                 <p className="text-[#6B7280] text-sm text-center mb-4 max-w-xs">
-                  Écris un comportement, une situation ou un objet — l&apos;IA te dit si c&apos;est un Red Flag ou un Green Flag
+                  Écris un truc — l&apos;IA décide si c&apos;est 🚩 ou 🟢
                 </p>
 
                 {/* History pills — clickable to re-ask */}
@@ -635,7 +635,7 @@ export default function FlagOrNotPage() {
                     transition={{ delay: 0.3 }}
                   >
                     <div className="flex items-center gap-2 mb-2.5">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#4B5563]">Sessions de la communauté</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#4B5563]">D&apos;autres ont testé</span>
                       <span className="flex-1 h-px bg-[#1E1E1E]" />
                     </div>
                     <div className="space-y-1.5 max-h-[120px] overflow-y-auto scrollbar-hide">
