@@ -163,6 +163,8 @@ export function getCurrentSessionStats(): AnalyticsSession {
 // Flush session data to the API endpoint (call on page unload or periodically)
 export function flushSessionToAPI(): void {
   const session = getSession();
+  if (!session) return; // Nothing to flush if no session exists
+  
   const duration = getSessionDuration();
   
   // Use navigator.sendBeacon for reliable delivery on page unload
