@@ -11,6 +11,7 @@ import {
   getSeenDuelsString,
   getStreakEmoji,
 } from '@/lib/session';
+import { trackVote, trackProfile, trackCategoryChange } from '@/lib/analytics';
 
 // Types pour le mode de jeu
 export type GameMode = 'default' | 'thematique';
@@ -115,6 +116,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   // Set profile and initialize session
   setProfile: (profile: PlayerProfile) => {
     initSession(profile);
+    trackProfile(profile.sex, profile.age);
     set({
       profile,
       hasProfile: true,
@@ -193,7 +195,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
   
-  // Submit a vote
+  // Submit a vote — OPTIMISTIC UI: show instant result, refine with API data
   submitVote: async (winnerId: string, loserId: string) => {
     const { profile, currentDuel } = get();
     
@@ -201,6 +203,50 @@ export const useGameStore = create<GameState>((set, get) => ({
     
     set({ error: null });
     
+    // Mark duel as seen IMMEDIATELY (no need to wait)
+    markDuelAsSeen(currentDuel.elementA.id, currentDuel.elementB.id);
+    
+    // OPTIMISTIC RESULT: show instant feedback with estimated values
+    const optimisticResult = {
+      winner: {
+        id: winnerId,
+        percentage: 55, // Placeholder — will be updated
+        participations: 0,
+        rank: 0,
+        totalElements: 0,
+      },
+      loser: {
+        id: loserId,
+        percentage: 45,
+        participations: 0,
+        rank: 0,
+        totalElements: 0,
+      },
+      streak: {
+        matched: true,
+        current: 0,
+      },
+    };
+    
+    // Track vote in analytics
+    trackVote(get().gameMode.category);
+    
+    // Show result INSTANTLY — don't wait for API
+    const newStreak = updateStreak(true); // Optimistic: assume match
+    set({
+      lastResult: optimisticResult,
+      showingResult: true,
+      streak: newStreak,
+      streakEmoji: getStreakEmoji(newStreak),
+      duelCount: get().duelCount + 1,
+    });
+    
+    // Preload next duel in parallel with vote submission
+    if (!get().nextDuel) {
+      get().fetchNextDuel();
+    }
+    
+    // Fire API call in background — update result when it arrives
     try {
       const response = await fetch('/api/vote', {
         method: 'POST',
@@ -216,31 +262,21 @@ export const useGameStore = create<GameState>((set, get) => ({
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error?.message || 'Failed to submit vote');
+        console.warn('Vote API error:', data.error?.message);
+        return; // Keep optimistic result visible
       }
       
-      // Mark duel as seen
-      markDuelAsSeen(currentDuel.elementA.id, currentDuel.elementB.id);
-      
-      // Update streak
-      const newStreak = updateStreak(data.data.streak.matched);
+      // Refine with real data (streak correctness, percentages, ranks)
+      const realStreak = updateStreak(data.data.streak.matched);
       
       set({
         lastResult: data.data,
-        showingResult: true,
-        streak: newStreak,
-        streakEmoji: getStreakEmoji(newStreak),
-        duelCount: get().duelCount + 1,
+        streak: realStreak,
+        streakEmoji: getStreakEmoji(realStreak),
       });
-      
-      // Preload next duel while showing result
-      if (!get().nextDuel) {
-        get().fetchNextDuel();
-      }
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Une erreur est survenue',
-      });
+      // Keep optimistic result — don't disrupt UX for network errors 
+      console.warn('Vote submission error:', error instanceof Error ? error.message : error);
     }
   },
   
@@ -336,6 +372,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       allDuelsExhausted: false,
       isLoadingDuel: false,
     });
+    
+    // Track category change
+    if (selection.category) trackCategoryChange(selection.category);
     
     // Charger deux duels avec le nouveau mode (current + preload)
     await get().fetchNextDuel(); // Premier duel (current)

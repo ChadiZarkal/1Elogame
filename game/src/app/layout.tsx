@@ -84,6 +84,7 @@ export const viewport: Viewport = {
 };
 
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { AnalyticsProvider } from '@/components/AnalyticsProvider';
 
 // JSON-LD structured data for Google
 function JsonLd() {
@@ -102,7 +103,7 @@ function JsonLd() {
     },
     inLanguage: 'fr-FR',
     browserRequirements: 'Requires JavaScript',
-    softwareVersion: '3.5',
+    softwareVersion: '3.7',
     author: {
       '@type': 'Organization',
       name: SITE_NAME,
@@ -132,7 +133,9 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} antialiased min-h-full`}>
         <ErrorBoundary>
-          {children}
+          <AnalyticsProvider>
+            {children}
+          </AnalyticsProvider>
         </ErrorBoundary>
       </body>
     </html>

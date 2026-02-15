@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Update winner ELO scores (core fields that always exist in DB)
+    // PARALLEL: Update winner + loser ELO + segments + calculate rankings ALL AT ONCE
     const winnerCoreUpdate = {
       elo_global: newWinnerELO,
       [sexField]: newWinnerSexELO,
@@ -199,30 +199,6 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString(),
     };
     
-    const { error: winnerError } = await supabase
-      .from('elements')
-      .update(winnerCoreUpdate as never)
-      .eq('id', winnerId);
-    
-    if (winnerError) {
-      console.error('Error updating winner:', winnerError);
-    }
-    
-    // Try to update per-segment participation columns (may not exist yet)
-    const winnerSegmentUpdate = {
-      [sexPartField]: ((winner[sexPartField] as number) || 0) + 1,
-      [agePartField]: ((winner[agePartField] as number) || 0) + 1,
-    };
-    const { error: winnerSegError } = await supabase
-      .from('elements')
-      .update(winnerSegmentUpdate as never)
-      .eq('id', winnerId);
-    if (winnerSegError) {
-      // Segment columns may not exist yet - this is OK
-      console.log('Segment participation columns not available for winner (run migration 003)');
-    }
-    
-    // Update loser ELO scores (core fields)
     const loserCoreUpdate = {
       elo_global: newLoserELO,
       [sexField]: newLoserSexELO,
@@ -231,27 +207,37 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString(),
     };
     
-    const { error: loserError } = await supabase
-      .from('elements')
-      .update(loserCoreUpdate as never)
-      .eq('id', loserId);
+    const winnerSegmentUpdate = {
+      [sexPartField]: ((winner[sexPartField] as number) || 0) + 1,
+      [agePartField]: ((winner[agePartField] as number) || 0) + 1,
+    };
     
-    if (loserError) {
-      console.error('Error updating loser:', loserError);
-    }
-    
-    // Try to update per-segment participation columns for loser
     const loserSegmentUpdate = {
       [sexPartField]: ((loser[sexPartField] as number) || 0) + 1,
       [agePartField]: ((loser[agePartField] as number) || 0) + 1,
     };
-    const { error: loserSegError } = await supabase
-      .from('elements')
-      .update(loserSegmentUpdate as never)
-      .eq('id', loserId);
-    if (loserSegError) {
-      console.log('Segment participation columns not available for loser (run migration 003)');
-    }
+    
+    // Fire ALL updates + ranking queries in parallel
+    const [
+      winnerResult,
+      loserResult,
+      , // winnerSeg - fire and forget
+      , // loserSeg - fire and forget
+      winnerRankResult,
+      loserRankResult,
+      totalResult,
+    ] = await Promise.all([
+      supabase.from('elements').update(winnerCoreUpdate as never).eq('id', winnerId),
+      supabase.from('elements').update(loserCoreUpdate as never).eq('id', loserId),
+      supabase.from('elements').update(winnerSegmentUpdate as never).eq('id', winnerId).then(r => { if (r.error) console.log('Segment cols not available for winner'); }),
+      supabase.from('elements').update(loserSegmentUpdate as never).eq('id', loserId).then(r => { if (r.error) console.log('Segment cols not available for loser'); }),
+      supabase.from('elements').select('*', { count: 'exact', head: true }).eq('actif', true).gt('elo_global', newWinnerELO),
+      supabase.from('elements').select('*', { count: 'exact', head: true }).eq('actif', true).gt('elo_global', newLoserELO),
+      supabase.from('elements').select('*', { count: 'exact', head: true }).eq('actif', true),
+    ]);
+    
+    if (winnerResult.error) console.error('Error updating winner:', winnerResult.error);
+    if (loserResult.error) console.error('Error updating loser:', loserResult.error);
     
     // Calculate percentages for response
     const winnerPercentage = estimatePercentage(newWinnerELO, newLoserELO);
@@ -259,24 +245,6 @@ export async function POST(request: NextRequest) {
     
     // Determine if player matched majority (the higher ELO element is the "majority" choice)
     const matched = didMatchMajority(winner.elo_global, loser.elo_global);
-    
-    // Calculate global rankings for both elements
-    const { count: winnerRank } = await supabase
-      .from('elements')
-      .select('*', { count: 'exact', head: true })
-      .eq('actif', true)
-      .gt('elo_global', newWinnerELO);
-    
-    const { count: loserRank } = await supabase
-      .from('elements')
-      .select('*', { count: 'exact', head: true })
-      .eq('actif', true)
-      .gt('elo_global', newLoserELO);
-    
-    const { count: totalElements } = await supabase
-      .from('elements')
-      .select('*', { count: 'exact', head: true })
-      .eq('actif', true);
     
     const endTime = performance.now();
     console.log(`Vote processed in ${Math.round(endTime - startTime)}ms`);
@@ -287,15 +255,15 @@ export async function POST(request: NextRequest) {
           id: winnerId,
           percentage: winnerPercentage,
           participations: winner.nb_participations + 1,
-          rank: (winnerRank ?? 0) + 1,
-          totalElements: totalElements ?? 0,
+          rank: (winnerRankResult.count ?? 0) + 1,
+          totalElements: totalResult.count ?? 0,
         },
         loser: {
           id: loserId,
           percentage: loserPercentage,
           participations: loser.nb_participations + 1,
-          rank: (loserRank ?? 0) + 1,
-          totalElements: totalElements ?? 0,
+          rank: (loserRankResult.count ?? 0) + 1,
+          totalElements: totalResult.count ?? 0,
         },
         streak: {
           matched,

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { trackAIRequest } from '@/lib/analytics';
 
 // ═══════════════════════════════════════
 // Types
@@ -190,6 +191,7 @@ export default function FlagOrNotPage() {
     setSubmittedText(text);
     setPhase('loading');
     setLoadingPhrase(LOADING_PHRASES[Math.floor(Math.random() * LOADING_PHRASES.length)]);
+    trackAIRequest();
 
     const startTime = Date.now();
 
@@ -556,14 +558,24 @@ export default function FlagOrNotPage() {
             >
               <div className="flex-1 flex flex-col items-center justify-center px-6 min-h-0">
                 <motion.div
-                  className="text-6xl mb-3"
-                  animate={{
-                    rotate: [0, -6, 6, -3, 0],
-                    scale: [1, 1.06, 1],
-                  }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                  className="text-5xl mb-4 flex items-center gap-3"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
                 >
-                  🤔
+                  <motion.span
+                    animate={{ rotate: [0, -8, 8, 0] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    🚩
+                  </motion.span>
+                  <span className="text-[#4B5563] text-3xl font-thin">ou</span>
+                  <motion.span
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+                  >
+                    🟢
+                  </motion.span>
                 </motion.div>
 
                 <h2 className="text-[28px] sm:text-[32px] font-black text-[#FAFAFA] text-center mb-2">
@@ -596,6 +608,41 @@ export default function FlagOrNotPage() {
                         {h.text.length > 22 ? '…' : ''}
                       </button>
                     ))}
+                  </motion.div>
+                )}
+
+                {/* Community history feed */}
+                {communitySubmissions.length > 0 && (
+                  <motion.div
+                    className="mt-5 w-full max-w-sm"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <div className="flex items-center gap-2 mb-2.5">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#4B5563]">Sessions de la communauté</span>
+                      <span className="flex-1 h-px bg-[#1E1E1E]" />
+                    </div>
+                    <div className="space-y-1.5 max-h-[120px] overflow-y-auto scrollbar-hide">
+                      {communitySubmissions.slice(0, 8).map((sub, i) => (
+                        <motion.button
+                          key={sub.id || i}
+                          onClick={() => setInput(sub.text)}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#111] border border-[#1A1A1A] hover:border-[#333] transition-all text-left group cursor-pointer"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.35 + i * 0.04 }}
+                        >
+                          <span className={`text-xs flex-shrink-0 ${sub.verdict === 'red' ? 'text-[#EF4444]' : 'text-[#10B981]'}`}>
+                            {sub.verdict === 'red' ? '🚩' : '🟢'}
+                          </span>
+                          <span className="text-[12px] text-[#9CA3AF] group-hover:text-[#D1D5DB] truncate flex-1 transition-colors">
+                            {sub.text}
+                          </span>
+                          <span className="text-[9px] text-[#3D3D3D] flex-shrink-0">{sub.timeAgo}</span>
+                        </motion.button>
+                      ))}
+                    </div>
                   </motion.div>
                 )}
               </div>

@@ -40,9 +40,9 @@ export function DuelInterface({ elementA, elementB, onVote, disabled }: DuelInte
         onClick={handleClickA}
         disabled={disabled}
         className={neutralCardClass}
-        initial={{ opacity: 0, y: -30 }}
+        initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+        transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
         whileHover={{ scale: disabled ? 1 : 1.01 }}
         whileTap={{ scale: disabled ? 1 : 0.98 }}
       >
@@ -51,7 +51,7 @@ export function DuelInterface({ elementA, elementB, onVote, disabled }: DuelInte
             className="text-xl sm:text-2xl md:text-3xl font-bold text-[#F5F5F5] leading-tight px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.15 }}
+            transition={{ delay: 0.05 }}
           >
             {elementA.texte}
           </motion.p>
@@ -68,7 +68,7 @@ export function DuelInterface({ elementA, elementB, onVote, disabled }: DuelInte
             className="bg-[#DC2626] rounded-full w-14 h-14 flex items-center justify-center shadow-[0_0_30px_rgba(220,38,38,0.5)]"
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.2 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 22, delay: 0.1 }}
           >
             <span className="text-lg font-black text-white tracking-tight">VS</span>
           </motion.div>
@@ -80,9 +80,9 @@ export function DuelInterface({ elementA, elementB, onVote, disabled }: DuelInte
         onClick={handleClickB}
         disabled={disabled}
         className={neutralCardClass}
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+        transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
         whileHover={{ scale: disabled ? 1 : 1.01 }}
         whileTap={{ scale: disabled ? 1 : 0.98 }}
       >
@@ -91,7 +91,7 @@ export function DuelInterface({ elementA, elementB, onVote, disabled }: DuelInte
             className="text-xl sm:text-2xl md:text-3xl font-bold text-[#F5F5F5] leading-tight px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.15 }}
+            transition={{ delay: 0.05 }}
           >
             {elementB.texte}
           </motion.p>

@@ -56,7 +56,7 @@ export default function HubPage() {
       {/* Version badge */}
       <div className="fixed top-4 right-4 z-50">
         <span className="px-3 py-1 rounded-full bg-[#1A1A1A] border border-[#333] text-[#737373] text-xs font-mono">
-          v3.6
+          v3.7
         </span>
       </div>
 
@@ -84,7 +84,7 @@ export default function HubPage() {
         <h1 className="text-5xl sm:text-6xl font-black text-[#F5F5F5] tracking-tight">
           Red <span className="text-[#DC2626]">FLAG</span> Games
         </h1>
-        <p className="text-[#737373] text-sm mt-2 max-w-xs mx-auto">
+        <p className="text-[#737373] text-sm mt-2 max-w-xs mx-auto text-center leading-relaxed">
           Party games mobiles gratuits — joue et débats avec tes amis
         </p>
 
@@ -147,7 +147,7 @@ export default function HubPage() {
       {/* Leaderboard CTA */}
       <motion.button
         onClick={() => router.push('/classement')}
-        className="mt-10 px-8 py-3 rounded-xl bg-[#1A1A1A] border border-[#333] hover:border-[#FCD34D]/50 hover:shadow-[0_0_20px_rgba(252,211,77,0.15)] transition-all text-[#A3A3A3] hover:text-[#FCD34D] text-sm font-bold"
+        className="mt-8 px-8 py-3 rounded-xl bg-[#1A1A1A] border border-[#333] hover:border-[#FCD34D]/50 hover:shadow-[0_0_20px_rgba(252,211,77,0.15)] transition-all text-[#A3A3A3] hover:text-[#FCD34D] text-sm font-bold"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}

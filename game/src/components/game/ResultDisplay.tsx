@@ -47,14 +47,14 @@ function ResultCard({
       }`}
       initial={{ flex: 1 }}
       animate={{ flex: flexValue }}
-      transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+      transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
       {/* Flash effect */}
       <motion.div 
         className={`absolute inset-0 ${isMoreRedFlag ? 'bg-[#DC2626]' : 'bg-[#059669]'}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: [0, 0.4, 0] }}
-        transition={{ duration: 0.8 }}
+        transition={{ duration: 0.4 }}
       />
       
       <div className="text-center z-10 max-w-md">
@@ -64,7 +64,7 @@ function ResultCard({
             className="mb-4"
             initial={{ scale: 0, rotate: -10 }}
             animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.3, type: 'spring', stiffness: 300, damping: 15 }}
+            transition={{ delay: 0.1, type: 'spring', stiffness: 400, damping: 18 }}
           >
             <span className="inline-flex items-center gap-2 bg-white text-[#DC2626] px-5 py-2 rounded-lg text-base sm:text-lg font-black shadow-xl border-2 border-white/50">
               <span className="text-xl">🚩</span>
@@ -89,7 +89,7 @@ function ResultCard({
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.2 }}
           className="space-y-1"
         >
           <p className={`font-black text-white ${isMoreRedFlag ? 'text-4xl sm:text-5xl' : 'text-xl sm:text-2xl'}`}>
@@ -106,7 +106,7 @@ function ResultCard({
             className="mt-3"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
+            transition={{ delay: 0.3 }}
           >
             <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold ${
               isMoreRedFlag 
@@ -236,12 +236,12 @@ export function ResultDisplay({
   const flexB = !elementAIsMoreRedFlag ? flexBig : flexSmall;
   
   useEffect(() => {
-    // Afficher le feedback après 1.2s
-    const animationTimer = setTimeout(() => setShowFeedback(true), 1200);
-    // Permettre le clic pour avancer après 0.8s (après l'animation initiale)
-    const clickTimer = setTimeout(() => setCanClickToAdvance(true), 800);
-    // Auto-advance après 6s
-    autoAdvanceTimerRef.current = setTimeout(() => onNext(), 6000);
+    // Afficher le feedback après 0.4s (was 1.2s)
+    const animationTimer = setTimeout(() => setShowFeedback(true), 400);
+    // Permettre le clic pour avancer après 0.25s (was 0.8s)
+    const clickTimer = setTimeout(() => setCanClickToAdvance(true), 250);
+    // Auto-advance après 4s (was 6s)
+    autoAdvanceTimerRef.current = setTimeout(() => onNext(), 4000);
     
     return () => {
       clearTimeout(animationTimer);

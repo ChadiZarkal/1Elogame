@@ -72,17 +72,17 @@ export function ProfileForm() {
       
       {/* Form container */}
       <motion.div 
-        className="w-full max-w-md bg-[#1A1A1A] border border-[#333] rounded-2xl p-8 space-y-8"
+        className="w-full max-w-md bg-[#1A1A1A] border border-[#333] rounded-2xl p-6 sm:p-8 space-y-6"
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
         {/* Sex selection */}
-        <fieldset className="pb-6 mb-4 border-b border-[#333]">
-          <label className="block text-[#F5F5F5] text-lg font-bold mb-3">
+        <fieldset className="pb-5 mb-2 border-b border-[#333]">
+          <label className="block text-[#F5F5F5] text-lg font-bold mb-4">
             Quel est ton sexe ?
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-3">
             {sexOptions.map((option) => (
               <button
                 key={option.value}
@@ -104,10 +104,10 @@ export function ProfileForm() {
         
         {/* Age selection */}
         <fieldset>
-          <label className="block text-[#F5F5F5] text-lg font-bold mb-3">
+          <label className="block text-[#F5F5F5] text-lg font-bold mb-4">
             Quel âge as-tu ?
           </label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {ageOptions.map((option) => (
               <button
                 key={option.value}
@@ -139,7 +139,7 @@ export function ProfileForm() {
         )}
         
         {/* Submit button */}
-        <div className="mt-8 pt-8 border-t border-[#333]">
+        <div className="mt-6 pt-6 border-t border-[#333]">
           <Button
             onClick={handleSubmit}
             variant="primary"
