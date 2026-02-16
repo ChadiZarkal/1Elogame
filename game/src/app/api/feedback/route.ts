@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { feedbackSchema } from '@/lib/validations';
 import { createApiSuccess, createApiError } from '@/lib/utils';
+import { typedUpdate, typedInsert } from '@/lib/supabaseHelpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -93,9 +94,7 @@ export async function POST(request: NextRequest) {
         updated_at: new Date().toISOString(),
       };
       
-      const { error: updateError } = await supabase
-        .from('duel_feedback')
-        .update(updateData as never)
+      const { error: updateError } = await typedUpdate(supabase, 'duel_feedback', updateData)
         .eq('id', existing.id);
       
       if (updateError) {
@@ -115,9 +114,7 @@ export async function POST(request: NextRequest) {
         thumbs_down_count: type === 'thumbs_down' ? 1 : 0,
       };
       
-      const { error: insertError } = await supabase
-        .from('duel_feedback')
-        .insert(insertData as never);
+      const { error: insertError } = await typedInsert(supabase, 'duel_feedback', insertData);
       
       if (insertError) {
         console.error('Error inserting feedback:', insertError);

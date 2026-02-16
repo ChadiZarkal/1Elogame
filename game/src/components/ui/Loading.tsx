@@ -16,7 +16,7 @@ export function Loading({ size = 'md', className, text }: LoadingProps) {
   };
   
   return (
-    <div className={cn('flex flex-col items-center justify-center gap-3', className)}>
+    <div className={cn('flex flex-col items-center justify-center gap-3', className)} role="status" aria-live="polite">
       <div className={cn('animate-spin rounded-full border-4 border-[#333] border-t-[#DC2626]', sizes[size])} />
       {text && <p className="text-[#A3A3A3] text-sm animate-pulse">{text}</p>}
     </div>

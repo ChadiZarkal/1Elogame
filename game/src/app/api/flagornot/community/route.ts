@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createApiSuccess, createApiError } from '@/lib/utils';
+import { typedInsert } from '@/lib/supabaseHelpers';
+import { sanitizeText } from '@/lib/sanitize';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,7 +63,7 @@ export async function GET(request: NextRequest) {
     const { createServerClient } = await import('@/lib/supabase');
     const supabase = createServerClient();
 
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('flagornot_submissions')
       .select('id, text, verdict, created_at')
       .order('created_at', { ascending: false })
@@ -120,7 +122,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sanitized = text.trim().slice(0, 280);
+    const sanitized = sanitizeText(text, 280);
 
     if (isMockMode) {
       const store = getCommunityStore();
@@ -147,12 +149,10 @@ export async function POST(request: NextRequest) {
     const { createServerClient } = await import('@/lib/supabase');
     const supabase = createServerClient();
 
-    const { error } = await (supabase as any)
-      .from('flagornot_submissions')
-      .insert({
-        text: sanitized,
-        verdict,
-      });
+    const { error } = await typedInsert(supabase, 'flagornot_submissions', {
+      text: sanitized,
+      verdict,
+    });
 
     if (error) {
       console.warn('[Community] Insert error:', error.message);

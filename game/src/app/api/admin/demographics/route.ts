@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { authenticateAdmin } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -188,19 +189,8 @@ function aggregateRealDemographics(sessions: AnalyticsSessionData[]) {
 
 export async function GET(request: NextRequest) {
   // Check admin auth
-  const authHeader = request.headers.get('authorization');
-  const token = authHeader?.replace('Bearer ', '');
-  
-  if (!token) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-  }
-  
-  // Simple token validation (matches admin login logic)
-  if (isMockMode) {
-    if (token !== 'mock-admin-token') {
-      return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
-    }
-  }
+  const authError = authenticateAdmin(request);
+  if (authError) return authError;
   
   try {
     // Aggregate from real tracked sessions (works for both mock and production)

@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createApiSuccess, createApiError } from '@/lib/utils';
+import { authenticateAdmin } from '@/lib/adminAuth';
+import { elementUpdateSchema } from '@/lib/validations';
+import { typedUpdate } from '@/lib/supabaseHelpers';
 
 export const dynamic = 'force-dynamic';
 
 const isMockMode = process.env.NEXT_PUBLIC_MOCK_MODE === 'true';
-
-// Simple token validation
-function isValidToken(authHeader: string | null): boolean {
-  if (!authHeader?.startsWith('Bearer ')) return false;
-  const token = authHeader.substring(7);
-  return token.startsWith('admin_');
-}
 
 // PATCH: Update element
 export async function PATCH(
@@ -18,16 +14,26 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const authHeader = request.headers.get('Authorization');
-    if (!isValidToken(authHeader)) {
-      return NextResponse.json(
-        createApiError('UNAUTHORIZED', 'Token invalide'),
-        { status: 401 }
-      );
-    }
+    const authError = authenticateAdmin(request);
+    if (authError) return authError;
 
     const { id } = await params;
     const body = await request.json();
+
+    // Validate with Zod schema
+    const validation = elementUpdateSchema.safeParse(body);
+    if (!validation.success) {
+      const errors = validation.error.issues.map((e) => ({
+        field: e.path.join('.'),
+        message: e.message,
+      }));
+      return NextResponse.json(
+        createApiError('VALIDATION_ERROR', 'Données invalides', errors),
+        { status: 400 }
+      );
+    }
+    
+    const updatePayload = validation.data;
 
     if (isMockMode) {
       const { mockElements } = await import('@/lib/mockData');
@@ -43,7 +49,7 @@ export async function PATCH(
       // Update the mock element
       mockElements[index] = {
         ...mockElements[index],
-        ...body,
+        ...updatePayload,
         updated_at: new Date().toISOString(),
       };
 
@@ -56,13 +62,11 @@ export async function PATCH(
     const supabase = createServerClient();
 
     const updateData = {
-      ...body,
+      ...updatePayload,
       updated_at: new Date().toISOString(),
     };
 
-    const { data: element, error } = await supabase
-      .from('elements')
-      .update(updateData as never)
+    const { data: element, error } = await typedUpdate(supabase, 'elements', updateData)
       .eq('id', id)
       .select()
       .single();
@@ -93,13 +97,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const authHeader = request.headers.get('Authorization');
-    if (!isValidToken(authHeader)) {
-      return NextResponse.json(
-        createApiError('UNAUTHORIZED', 'Token invalide'),
-        { status: 401 }
-      );
-    }
+    const authError = authenticateAdmin(request);
+    if (authError) return authError;
 
     const { id } = await params;
 
@@ -126,9 +125,7 @@ export async function DELETE(
     const { createServerClient } = await import('@/lib/supabase');
     const supabase = createServerClient();
 
-    const { error } = await supabase
-      .from('elements')
-      .update({ actif: false, updated_at: new Date().toISOString() } as never)
+    const { error } = await typedUpdate(supabase, 'elements', { actif: false, updated_at: new Date().toISOString() })
       .eq('id', id);
 
     if (error) {

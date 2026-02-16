@@ -81,6 +81,21 @@ function getServiceAccountCredentials(): ServiceAccountCredentials | null {
 let vertexaiInstance: VertexAI | null = null;
 let tempCredentialsFile: string | null = null;
 
+/**
+ * Clean up temporary credentials file if it exists.
+ * Safe to call multiple times.
+ */
+function cleanupTempCredentials(): void {
+  if (tempCredentialsFile && existsSync(tempCredentialsFile)) {
+    try {
+      unlinkSync(tempCredentialsFile);
+      tempCredentialsFile = null;
+    } catch {
+      // ignore cleanup errors
+    }
+  }
+}
+
 function getVertexAIClient(): VertexAI {
   if (vertexaiInstance) return vertexaiInstance;
 
@@ -91,11 +106,16 @@ function getVertexAIClient(): VertexAI {
     );
   }
 
-  // On Vercel, we need to write credentials to a temp file because @google-cloud/vertexai
-  // requires GOOGLE_APPLICATION_CREDENTIALS to point to a file
+  // On Vercel/serverless, we write credentials to a deterministic temp file
+  // to avoid accumulating files across cold starts
   try {
-    const tempFile = join(tmpdir(), `gcp-sa-${Date.now()}.json`);
-    writeFileSync(tempFile, JSON.stringify(credentials));
+    // Use a deterministic filename to avoid orphan files
+    const tempFile = join(tmpdir(), 'gcp-sa-redflaggames.json');
+    
+    // Clean up any previous file first
+    cleanupTempCredentials();
+    
+    writeFileSync(tempFile, JSON.stringify(credentials), { mode: 0o600 });
     process.env.GOOGLE_APPLICATION_CREDENTIALS = tempFile;
     tempCredentialsFile = tempFile;
   } catch (e) {
@@ -110,17 +130,12 @@ function getVertexAIClient(): VertexAI {
   return vertexaiInstance;
 }
 
-// Cleanup on exit
+// Cleanup on exit (best-effort for non-serverless)
 if (typeof process !== 'undefined') {
-  process.on('exit', () => {
-    if (tempCredentialsFile && existsSync(tempCredentialsFile)) {
-      try {
-        unlinkSync(tempCredentialsFile);
-      } catch (e) {
-        // ignore
-      }
-    }
-  });
+  const cleanup = () => cleanupTempCredentials();
+  process.on('exit', cleanup);
+  process.on('SIGINT', cleanup);
+  process.on('SIGTERM', cleanup);
 }
 
 // ═══════════════════════════════════════

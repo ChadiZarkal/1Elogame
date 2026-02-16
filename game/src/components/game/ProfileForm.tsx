@@ -97,7 +97,7 @@ export function ProfileForm() {
           <label className="block text-[#F5F5F5] text-base font-bold mb-3">
             Sexe
           </label>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-3" role="radiogroup" aria-label="Sélection du sexe">
             {sexOptions.map((option) => (
               <button
                 key={option.value}
@@ -122,7 +122,7 @@ export function ProfileForm() {
           <label className="block text-[#F5F5F5] text-base font-bold mb-3">
             Âge
           </label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" role="radiogroup" aria-label="Sélection de l'âge">
             {ageOptions.map((option) => (
               <button
                 key={option.value}

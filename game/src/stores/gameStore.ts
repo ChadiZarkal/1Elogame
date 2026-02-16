@@ -79,8 +79,11 @@ interface GameState {
   clearError: () => void;
   
   // Game mode actions
-  setGameMode: (selection: GameModeSelection) => void;
+  setGameMode: (selection: GameModeSelection) => Promise<void>;
 }
+
+// AbortController for in-flight duel fetch requests
+let fetchAbortController: AbortController | null = null;
 
 export const useGameStore = create<GameState>((set, get) => ({
   // Initial state
@@ -152,6 +155,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     
     set({ isLoadingDuel: true, error: null });
     
+    // Cancel any in-flight fetch
+    fetchAbortController?.abort();
+    fetchAbortController = new AbortController();
+    const { signal } = fetchAbortController;
+    
     try {
       const seenDuels = getSeenDuelsString();
       
@@ -167,7 +175,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const queryString = params.toString();
       const url = queryString ? `/api/duel?${queryString}` : '/api/duel';
       
-      const response = await fetch(url);
+      const response = await fetch(url, { signal });
       const data = await response.json();
       
       if (!response.ok) {
@@ -188,7 +196,12 @@ export const useGameStore = create<GameState>((set, get) => ({
         set({ nextDuel: data.data, isLoadingDuel: false });
       }
     } catch (error) {
-      set({ 
+      // Ignore abort errors — they're expected during mode switches
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        set({ isLoadingDuel: false });
+        return;
+      }
+      set({
         error: error instanceof Error ? error.message : 'Une erreur est survenue',
         isLoadingDuel: false,
       });
@@ -365,6 +378,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       return;
     }
     
+    // Cancel any in-flight fetch before switching mode
+    fetchAbortController?.abort();
+    fetchAbortController = null;
+    
     // Mettre à jour le mode et réinitialiser pour charger de nouveaux duels
     set({
       gameMode: selection,
@@ -377,8 +394,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Track category change
     if (selection.category) trackCategoryChange(selection.category);
     
-    // Charger deux duels avec le nouveau mode (current + preload)
-    await get().fetchNextDuel(); // Premier duel (current)
-    await get().fetchNextDuel(); // Deuxième duel (next)
+    // Charger le premier duel — le second sera préchargé automatiquement
+    // par le mécanisme de preload dans fetchNextDuel/showNextDuel
+    await get().fetchNextDuel();
   },
 }));

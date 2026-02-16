@@ -1,28 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createApiSuccess, createApiError } from '@/lib/utils';
+import { authenticateAdmin } from '@/lib/adminAuth';
+import { elementCreateSchema } from '@/lib/validations';
+import { typedInsert } from '@/lib/supabaseHelpers';
 import { Element, Categorie } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
 const isMockMode = process.env.NEXT_PUBLIC_MOCK_MODE === 'true';
 
-// Simple token validation
-function isValidToken(authHeader: string | null): boolean {
-  if (!authHeader?.startsWith('Bearer ')) return false;
-  const token = authHeader.substring(7);
-  return token.startsWith('admin_');
-}
-
 // GET: List all elements
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('Authorization');
-    if (!isValidToken(authHeader)) {
-      return NextResponse.json(
-        createApiError('UNAUTHORIZED', 'Token invalide'),
-        { status: 401 }
-      );
-    }
+    const authError = authenticateAdmin(request);
+    if (authError) return authError;
 
     if (isMockMode) {
       const { mockElements } = await import('@/lib/mockData');
@@ -120,27 +111,25 @@ export async function GET(request: NextRequest) {
 // POST: Create new element
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('Authorization');
-    if (!isValidToken(authHeader)) {
-      return NextResponse.json(
-        createApiError('UNAUTHORIZED', 'Token invalide'),
-        { status: 401 }
-      );
-    }
+    const authError = authenticateAdmin(request);
+    if (authError) return authError;
 
     const body = await request.json();
-    const { texte, categorie, niveau_provocation } = body as {
-      texte: string;
-      categorie: Categorie;
-      niveau_provocation: 1 | 2 | 3 | 4;
-    };
-
-    if (!texte || !categorie) {
+    
+    // Validate with Zod schema
+    const validation = elementCreateSchema.safeParse(body);
+    if (!validation.success) {
+      const errors = validation.error.issues.map((e) => ({
+        field: e.path.join('.'),
+        message: e.message,
+      }));
       return NextResponse.json(
-        createApiError('VALIDATION_ERROR', 'Texte et catégorie requis'),
+        createApiError('VALIDATION_ERROR', 'Données invalides', errors),
         { status: 400 }
       );
     }
+    
+    const { texte, categorie, niveau_provocation } = validation.data;
 
     if (isMockMode) {
       const { mockElements } = await import('@/lib/mockData');
@@ -148,7 +137,7 @@ export async function POST(request: NextRequest) {
         id: `mock_${Date.now()}`,
         texte,
         categorie,
-        niveau_provocation: niveau_provocation || 2,
+        niveau_provocation,
         actif: true,
         elo_global: 1000,
         elo_homme: 1000,
@@ -180,12 +169,10 @@ export async function POST(request: NextRequest) {
     const { createServerClient } = await import('@/lib/supabase');
     const supabase = createServerClient();
 
-    const { data: element, error } = await supabase
-      .from('elements')
-      .insert({
+    const { data: element, error } = await typedInsert(supabase, 'elements', {
         texte,
         categorie,
-        niveau_provocation: niveau_provocation || 2,
+        niveau_provocation,
         actif: true,
         elo_global: 1000,
         elo_homme: 1000,
@@ -197,7 +184,7 @@ export async function POST(request: NextRequest) {
         elo_23_26: 1000,
         elo_27plus: 1000,
         nb_participations: 0,
-      } as never)
+      })
       .select()
       .single();
 

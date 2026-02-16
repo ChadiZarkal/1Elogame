@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminLoginSchema } from '@/lib/validations';
 import { createApiSuccess, createApiError } from '@/lib/utils';
 import { generateAdminToken } from '@/lib/adminAuth';
+import { checkRateLimit } from '@/lib/rateLimit';
 import bcrypt from 'bcryptjs';
 
 export const dynamic = 'force-dynamic';
@@ -11,6 +12,10 @@ const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 login attempts per minute
+    const rateLimited = checkRateLimit(request, 'auth');
+    if (rateLimited) return rateLimited;
+    
     const body = await request.json();
 
     // Validate with Zod schema

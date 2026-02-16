@@ -18,7 +18,7 @@ export const elementCreateSchema = z.object({
     .min(3, 'Le texte doit contenir au moins 3 caractères')
     .max(200, 'Le texte ne doit pas dépasser 200 caractères'),
   categorie: categorieSchema,
-  niveau_provocation: z.number().int().min(1).max(4).default(2),
+  niveau_provocation: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).default(2),
 });
 
 export const elementUpdateSchema = z.object({
@@ -27,7 +27,7 @@ export const elementUpdateSchema = z.object({
     .max(200, 'Le texte ne doit pas dépasser 200 caractères')
     .optional(),
   categorie: categorieSchema.optional(),
-  niveau_provocation: z.number().int().min(1).max(4).optional(),
+  niveau_provocation: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
   actif: z.boolean().optional(),
 });
 

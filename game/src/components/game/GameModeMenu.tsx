@@ -1,15 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CATEGORIES_CONFIG, CategoryConfig } from '@/config/categories';
-
-export type GameMode = 'default' | 'thematique';
-
-export interface GameModeSelection {
-  mode: GameMode;
-  category: string | null; // null = toutes catégories (default mode)
-}
+import type { GameModeSelection } from '@/stores/gameStore';
 
 interface GameModeMenuProps {
   currentSelection: GameModeSelection;
@@ -26,19 +20,28 @@ export function GameModeMenu({ currentSelection, onSelectionChange }: GameModeMe
     return () => clearTimeout(timer);
   }, []);
 
+  // Fermer le menu avec Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
   // Charger les catégories dynamiquement depuis la config
-  // Utilisation directe au lieu d'un useEffect pour éviter les re-renders inutiles
   const categories: CategoryConfig[] = Object.values(CATEGORIES_CONFIG);
 
-  const handleDefaultMode = () => {
+  const handleDefaultMode = useCallback(() => {
     onSelectionChange({ mode: 'default', category: null });
     setIsOpen(false);
-  };
+  }, [onSelectionChange]);
 
-  const handleCategorySelect = (categoryId: string) => {
+  const handleCategorySelect = useCallback((categoryId: string) => {
     onSelectionChange({ mode: 'thematique', category: categoryId });
     setIsOpen(false);
-  };
+  }, [onSelectionChange]);
 
   // Indicateur visuel du mode actuel
   const getCurrentModeLabel = (): string => {
@@ -194,9 +197,3 @@ export function GameModeMenu({ currentSelection, onSelectionChange }: GameModeMe
     </div>
   );
 }
-
-// Export des defaults pour usage externe
-export const DEFAULT_GAME_MODE: GameModeSelection = {
-  mode: 'thematique',
-  category: 'lifestyle',
-};

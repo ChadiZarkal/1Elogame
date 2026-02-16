@@ -121,8 +121,16 @@ export function getMockElement(id: string): Element | undefined {
   return mockElements.find(e => e.id === id && e.actif);
 }
 
+/** Maximum number of session entries in mockVotes to prevent memory leak */
+const MAX_MOCK_SESSIONS = 100;
+
 export function getSeenPairs(sessionId: string): Set<string> {
   if (!mockVotes.has(sessionId)) {
+    // Evict oldest sessions if at capacity
+    if (mockVotes.size >= MAX_MOCK_SESSIONS) {
+      const firstKey = mockVotes.keys().next().value;
+      if (firstKey !== undefined) mockVotes.delete(firstKey);
+    }
     mockVotes.set(sessionId, new Set());
   }
   return mockVotes.get(sessionId)!;

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { voteSchema } from '@/lib/validations';
 import { calculateNewELO, estimatePercentage, didMatchMajority, getEloFieldForSex, getEloFieldForAge, getKFactor, getParticipationFieldForSex, getParticipationFieldForAge } from '@/lib/elo';
 import { createApiSuccess, createApiError } from '@/lib/utils';
+import { typedInsert, typedUpdate } from '@/lib/supabaseHelpers';
+import { checkRateLimit } from '@/lib/rateLimit';
 import { Element } from '@/types/database';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +15,10 @@ export async function POST(request: NextRequest) {
   const startTime = performance.now();
   
   try {
+    // Rate limit: 60 votes per minute
+    const rateLimited = checkRateLimit(request, 'public');
+    if (rateLimited) return rateLimited;
+    
     // Parse and validate request body
     const body = await request.json();
     const validation = voteSchema.safeParse(body);
@@ -173,14 +179,12 @@ export async function POST(request: NextRequest) {
     );
     
     // Record the vote
-    const { error: voteError } = await supabase
-      .from('votes')
-      .insert({
-        element_gagnant_id: winnerId,
-        element_perdant_id: loserId,
-        sexe_votant: sexe,
-        age_votant: age,
-      } as never);
+    const { error: voteError } = await typedInsert(supabase, 'votes', {
+      element_gagnant_id: winnerId,
+      element_perdant_id: loserId,
+      sexe_votant: sexe,
+      age_votant: age,
+    });
     
     if (voteError) {
       console.error('Error recording vote:', voteError);
@@ -227,10 +231,10 @@ export async function POST(request: NextRequest) {
       loserRankResult,
       totalResult,
     ] = await Promise.all([
-      supabase.from('elements').update(winnerCoreUpdate as never).eq('id', winnerId),
-      supabase.from('elements').update(loserCoreUpdate as never).eq('id', loserId),
-      supabase.from('elements').update(winnerSegmentUpdate as never).eq('id', winnerId).then(r => { if (r.error) console.log('Segment cols not available for winner'); }),
-      supabase.from('elements').update(loserSegmentUpdate as never).eq('id', loserId).then(r => { if (r.error) console.log('Segment cols not available for loser'); }),
+      typedUpdate(supabase, 'elements', winnerCoreUpdate).eq('id', winnerId),
+      typedUpdate(supabase, 'elements', loserCoreUpdate).eq('id', loserId),
+      typedUpdate(supabase, 'elements', winnerSegmentUpdate).eq('id', winnerId).then(r => { if (r.error) console.log('Segment cols not available for winner'); }),
+      typedUpdate(supabase, 'elements', loserSegmentUpdate).eq('id', loserId).then(r => { if (r.error) console.log('Segment cols not available for loser'); }),
       supabase.from('elements').select('*', { count: 'exact', head: true }).eq('actif', true).gt('elo_global', newWinnerELO),
       supabase.from('elements').select('*', { count: 'exact', head: true }).eq('actif', true).gt('elo_global', newLoserELO),
       supabase.from('elements').select('*', { count: 'exact', head: true }).eq('actif', true),

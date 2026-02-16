@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { judgeWithGemini } from '@/lib/gemini';
+import { checkRateLimit } from '@/lib/rateLimit';
+import { sanitizeText } from '@/lib/sanitize';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -197,14 +199,25 @@ async function saveToCommunity(text: string, verdict: 'red' | 'green') {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 10 AI requests per minute
+    const rateLimited = checkRateLimit(request, 'ai');
+    if (rateLimited) return rateLimited;
+    
     const body = await request.json();
-    const text = body?.text?.trim();
+    const rawText = body?.text?.trim();
 
-    if (!text || typeof text !== 'string') {
+    if (!rawText || typeof rawText !== 'string') {
       return NextResponse.json({ error: 'Le champ "text" est requis.' }, { status: 400 });
     }
 
-    if (text.length > 500) {
+    // Sanitize input to prevent XSS and injection
+    const text = sanitizeText(rawText, 500);
+
+    if (text.length === 0) {
+      return NextResponse.json({ error: 'Le texte est vide après nettoyage.' }, { status: 400 });
+    }
+
+    if (rawText.length > 500) {
       return NextResponse.json({ error: 'Texte trop long (max 500 caractères).' }, { status: 400 });
     }
 
