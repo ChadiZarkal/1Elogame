@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { feedbackSchema } from '@/lib/validations';
 import { createApiSuccess, createApiError } from '@/lib/utils';
+import { checkRateLimit } from '@/lib/rateLimit';
 import { typedUpdate, typedInsert } from '@/lib/supabaseHelpers';
 
 export const dynamic = 'force-dynamic';
@@ -20,6 +21,10 @@ const mockFeedback: Map<string, FeedbackRecord> = new Map();
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 60 requests per minute
+    const rateLimited = checkRateLimit(request, 'public');
+    if (rateLimited) return rateLimited;
+
     // Parse and validate request body
     const body = await request.json();
     const validation = feedbackSchema.safeParse(body);

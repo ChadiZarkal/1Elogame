@@ -8,7 +8,7 @@ import { useGameStore } from '@/stores/gameStore';
 
 export default function RedFlagHome() {
   const router = useRouter();
-  const { initializeFromStorage, clearProfile } = useGameStore();
+  const { clearProfile } = useGameStore();
 
   // Always clear profile on page load to force re-entry
   useEffect(() => {

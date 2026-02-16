@@ -21,12 +21,14 @@ export async function GET(request: NextRequest) {
         e.elo_global > (max?.elo_global ?? 0) ? e : max, activeElements[0] ?? null
       );
 
+      const totalVotes = mockElements.reduce((sum, e) => sum + e.nb_participations, 0);
+      
       return NextResponse.json(
         createApiSuccess({
           totalElements: mockElements.length,
           activeElements: activeElements.length,
-          totalVotes: Math.floor(Math.random() * 10000) + 5000, // Simulated
-          todayVotes: Math.floor(Math.random() * 500) + 100, // Simulated
+          totalVotes,
+          todayVotes: Math.floor(totalVotes * 0.1), // Deterministic: ~10% of total
           topElement: topElement ? {
             texte: topElement.texte,
             elo_global: topElement.elo_global,
@@ -35,41 +37,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Production mode: Use Supabase
+    // Production mode: Use Supabase — parallelize all queries
     const { createServerClient } = await import('@/lib/supabase');
     const supabase = createServerClient();
 
-    // Get element counts
-    const { count: totalElements } = await supabase
-      .from('elements')
-      .select('*', { count: 'exact', head: true });
-
-    const { count: activeElements } = await supabase
-      .from('elements')
-      .select('*', { count: 'exact', head: true })
-      .eq('actif', true);
-
-    // Get vote counts
-    const { count: totalVotes } = await supabase
-      .from('votes')
-      .select('*', { count: 'exact', head: true });
-
-    // Get today's votes
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const { count: todayVotes } = await supabase
-      .from('votes')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', today.toISOString());
 
-    // Get top element by ELO
-    const { data: topElementData } = await supabase
-      .from('elements')
-      .select('texte, elo_global')
-      .eq('actif', true)
-      .order('elo_global', { ascending: false })
-      .limit(1)
-      .single();
+    const [
+      { count: totalElements },
+      { count: activeElements },
+      { count: totalVotes },
+      { count: todayVotes },
+      { data: topElementData },
+    ] = await Promise.all([
+      supabase.from('elements').select('*', { count: 'exact', head: true }),
+      supabase.from('elements').select('*', { count: 'exact', head: true }).eq('actif', true),
+      supabase.from('votes').select('*', { count: 'exact', head: true }),
+      supabase.from('votes').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString()),
+      supabase.from('elements').select('texte, elo_global').eq('actif', true).order('elo_global', { ascending: false }).limit(1).single(),
+    ]);
 
     return NextResponse.json(
       createApiSuccess({

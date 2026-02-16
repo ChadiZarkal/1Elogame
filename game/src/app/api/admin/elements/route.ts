@@ -3,7 +3,7 @@ import { createApiSuccess, createApiError } from '@/lib/utils';
 import { authenticateAdmin } from '@/lib/adminAuth';
 import { elementCreateSchema } from '@/lib/validations';
 import { typedInsert } from '@/lib/supabaseHelpers';
-import { Element, Categorie } from '@/types';
+import { Element } from '@/types';
 
 export const dynamic = 'force-dynamic';
 

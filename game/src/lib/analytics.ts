@@ -66,6 +66,10 @@ function saveSession(session: AnalyticsSession): void {
 // Public tracking functions
 // ═══════════════════════════════════════
 
+/**
+ * Track a page view. Deduplicates within the same session.
+ * @param page - The page path (e.g., '/jeu', '/classement')
+ */
 export function trackPageView(page: string): void {
   const session = getSession();
   if (!session.pageViews.includes(page)) {
@@ -75,6 +79,10 @@ export function trackPageView(page: string): void {
   storeEvent({ type: 'page_view', page, sessionId: session.sessionId });
 }
 
+/**
+ * Track a game entry event.
+ * @param game - The game identifier ('redflag', 'flagornot', 'redflagtest')
+ */
 export function trackGameEntry(game: 'redflag' | 'flagornot' | 'redflagtest'): void {
   const session = getSession();
   session.gameEntries.push({ game, at: Date.now() });
@@ -82,6 +90,10 @@ export function trackGameEntry(game: 'redflag' | 'flagornot' | 'redflagtest'): v
   storeEvent({ type: 'game_entry', game, sessionId: session.sessionId });
 }
 
+/**
+ * Track a vote event, incrementing vote count and choices-before-quit.
+ * @param category - Optional category name for the vote
+ */
 export function trackVote(category?: string | null): void {
   const session = getSession();
   session.votes += 1;
@@ -91,6 +103,7 @@ export function trackVote(category?: string | null): void {
   storeEvent({ type: 'vote', sessionId: session.sessionId, category: category || null });
 }
 
+/** Track an AI judge request (Flag or Not game). */
 export function trackAIRequest(): void {
   const session = getSession();
   session.aiRequests += 1;
@@ -98,6 +111,11 @@ export function trackAIRequest(): void {
   storeEvent({ type: 'ai_request', sessionId: session.sessionId });
 }
 
+/**
+ * Track player profile data for demographic analytics.
+ * @param sex - Player's sex ('homme', 'femme', 'autre')
+ * @param age - Player's age bracket ('16-18', '19-22', '23-26', '27+')
+ */
 export function trackProfile(sex: string, age: string): void {
   const session = getSession();
   session.sex = sex;
@@ -106,6 +124,10 @@ export function trackProfile(sex: string, age: string): void {
   storeEvent({ type: 'profile', sessionId: session.sessionId, sex, age });
 }
 
+/**
+ * Track a game category change.
+ * @param category - The new category ('sexe', 'lifestyle', 'quotidien', 'bureau')
+ */
 export function trackCategoryChange(category: string): void {
   const session = getSession();
   session.category = category;
@@ -143,6 +165,7 @@ function storeEvent(event: AnalyticsEvent): void {
 // Aggregation functions (for admin dashboard)
 // ═══════════════════════════════════════
 
+/** Retrieve all stored analytics events from localStorage. */
 export function getStoredEvents(): AnalyticsEvent[] {
   if (typeof window === 'undefined') return [];
   try {
@@ -151,16 +174,22 @@ export function getStoredEvents(): AnalyticsEvent[] {
   } catch { return []; }
 }
 
+/** Get the current session duration in seconds. */
 export function getSessionDuration(): number {
   const session = getSession();
   return Math.round((Date.now() - session.startedAt) / 1000);
 }
 
+/** Get current session stats for display/debugging. */
 export function getCurrentSessionStats(): AnalyticsSession {
   return getSession();
 }
 
-// Flush session data to the API endpoint (call on page unload or periodically)
+/**
+ * Flush session data to the analytics API endpoint.
+ * Uses navigator.sendBeacon for reliable delivery on page unload.
+ * Falls back to fetch with keepalive.
+ */
 export function flushSessionToAPI(): void {
   const session = getSession();
   if (!session) return; // Nothing to flush if no session exists

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Loading } from '@/components/ui/Loading';
 import { AdminNav } from '@/components/admin/AdminNav';
 

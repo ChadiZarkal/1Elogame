@@ -26,13 +26,6 @@ export function formatPercentage(value: number): string {
 }
 
 /**
- * Generate a random delay within a range (for staggered animations).
- */
-export function randomDelay(min: number = 0, max: number = 200): number {
-  return Math.floor(Math.random() * (max - min) + min);
-}
-
-/**
  * Sleep for a specified duration (useful for animations).
  */
 export function sleep(ms: number): Promise<void> {

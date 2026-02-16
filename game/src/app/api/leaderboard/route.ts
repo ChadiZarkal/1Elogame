@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createApiSuccess, createApiError } from '@/lib/utils';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,6 +8,10 @@ const isMockMode = process.env.NEXT_PUBLIC_MOCK_MODE === 'true';
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit: 60 requests per minute
+    const rateLimited = checkRateLimit(request, 'public');
+    if (rateLimited) return rateLimited;
+
     const { searchParams } = new URL(request.url);
     const order = searchParams.get('order') === 'asc' ? 'asc' : 'desc';
     const limit = Math.min(Number(searchParams.get('limit') || 50), 100);

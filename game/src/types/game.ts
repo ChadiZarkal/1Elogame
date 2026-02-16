@@ -58,12 +58,6 @@ export type FeedbackType = 'star' | 'thumbs_up' | 'thumbs_down';
 // Selection strategy for duel algorithm
 export type SelectionStrategy = 'elo_close' | 'cross_category' | 'starred' | 'random';
 
-// Admin element with full details (alias for Element with potential extensions)
-export type ElementAdmin = Element & {
-  // Computed fields can be added here
-  winRate?: number;
-};
-
 // Dashboard statistics
 export interface DashboardStats {
   totalVotes: number;
