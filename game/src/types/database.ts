@@ -6,8 +6,7 @@ export type Categorie =
   | 'sexe'      // Sexe & Kinks - relations, dating, intimité
   | 'lifestyle' // Lifestyle - hobbies, passions, sport, activités
   | 'quotidien' // Quotidien - comportements et habitudes du quotidien
-  | 'bureau'    // Bureau - comportements et attitudes au travail
-  | string;     // Permet des catégories personnalisées
+  | 'bureau';   // Bureau - comportements et attitudes au travail
 
 export type SexeVotant = 'homme' | 'femme' | 'autre';
 

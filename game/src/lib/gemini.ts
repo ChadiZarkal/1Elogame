@@ -9,7 +9,6 @@
  */
 
 import { VertexAI, SchemaType } from '@google-cloud/vertexai';
-import { JWT } from 'google-auth-library';
 import { readFileSync, existsSync, readdirSync, writeFileSync, unlinkSync } from 'fs';
 import { resolve, join } from 'path';
 import { tmpdir } from 'os';
@@ -56,28 +55,13 @@ function getServiceAccountCredentials(): ServiceAccountCredentials | null {
     }
   }
 
-  // Priority 3: Search for ai-agent JSON file in cwd
+  // Priority 3: Search for ai-agent JSON file in cwd only (not parent)
+  // Security: Only check current working directory
   try {
     const files = readdirSync(process.cwd());
     const saFile = files.find((f) => f.endsWith('.json') && f.includes('ai-agent'));
     if (saFile) {
       const p = join(process.cwd(), saFile);
-      if (existsSync(p)) {
-        const content = readFileSync(p, 'utf-8');
-        return JSON.parse(content);
-      }
-    }
-  } catch (e) {
-    // ignore
-  }
-
-  // Priority 4: Search in parent directory
-  try {
-    const projectRoot = resolve(process.cwd(), '..');
-    const files = readdirSync(projectRoot);
-    const saFile = files.find((f) => f.endsWith('.json') && f.includes('ai-agent'));
-    if (saFile) {
-      const p = join(projectRoot, saFile);
       if (existsSync(p)) {
         const content = readFileSync(p, 'utf-8');
         return JSON.parse(content);

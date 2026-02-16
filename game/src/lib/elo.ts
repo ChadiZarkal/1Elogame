@@ -39,7 +39,7 @@ export function calculateNewELO(
   
   // Winner gets a score of 1, loser gets 0
   const newWinnerELO = Math.round(winnerElo + kFactor * (1 - expectedWinner));
-  const newLoserELO = Math.round(loserElo + kFactor * (0 - expectedLoser));
+  const newLoserELO = Math.max(100, Math.round(loserElo + kFactor * (0 - expectedLoser)));
   
   return { newWinnerELO, newLoserELO };
 }
@@ -108,8 +108,7 @@ export function getKFactor(participations: number): number {
  * Determine if a player's vote matched the majority (based on ELO).
  * Used for streak calculation.
  * 
- * @param winnerId - ID of the element the player chose as winner
- * @param winnerElo - ELO of the chosen winner
+ * @param winnerElo - ELO of the element the player chose as winner
  * @param loserElo - ELO of the element not chosen
  * @returns True if the player agreed with the majority prediction
  */

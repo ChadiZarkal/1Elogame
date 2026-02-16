@@ -18,6 +18,7 @@ export function AdminNav() {
 
   const handleLogout = () => {
     sessionStorage.removeItem('adminToken');
+    localStorage.removeItem('rog_admin_token');
     router.push('/admin');
   };
 

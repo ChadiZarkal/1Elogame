@@ -1,29 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createApiSuccess, createApiError } from '@/lib/utils';
+import { authenticateAdmin } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
 // Check if we're in mock mode
 const isMockMode = process.env.NEXT_PUBLIC_MOCK_MODE === 'true';
 
-// Simple token validation
-function isValidToken(authHeader: string | null): boolean {
-  if (!authHeader?.startsWith('Bearer ')) return false;
-  const token = authHeader.substring(7);
-  // Check if token matches our format (admin_timestamp_random)
-  return token.startsWith('admin_');
-}
-
 export async function GET(request: NextRequest) {
   try {
     // Validate admin token
-    const authHeader = request.headers.get('Authorization');
-    if (!isValidToken(authHeader)) {
-      return NextResponse.json(
-        createApiError('UNAUTHORIZED', 'Token invalide ou expiré'),
-        { status: 401 }
-      );
-    }
+    const authError = authenticateAdmin(request);
+    if (authError) return authError;
 
     if (isMockMode) {
       // Return mock statistics

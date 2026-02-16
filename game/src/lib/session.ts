@@ -9,6 +9,7 @@
  */
 
 import { GameSession, PlayerProfile } from '@/types/game';
+import { getPairKey } from '@/lib/utils';
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -112,11 +113,11 @@ export function getProfile(): PlayerProfile | null {
 }
 
 /**
- * Generate a consistent duel pair key (sorted alphabetically).
- * This ensures "A-B" and "B-A" are treated as the same duel.
+ * @deprecated Use getPairKey from '@/lib/utils' instead.
+ * Kept for backward compatibility.
  */
 export function getDuelPairKey(idA: string, idB: string): string {
-  return idA < idB ? `${idA}-${idB}` : `${idB}-${idA}`;
+  return getPairKey(idA, idB);
 }
 
 /**

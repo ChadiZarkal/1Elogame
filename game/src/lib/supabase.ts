@@ -1,9 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database';
 
-// Environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+/**
+ * Supabase client configuration.
+ * 
+ * Uses NEXT_PUBLIC_* env vars for client-side access.
+ * Falls back to empty strings to avoid throwing at module load time;
+ * actual validation happens when the client is first used.
+ */
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 // Client-side Supabase client (singleton)
 let clientInstance: ReturnType<typeof createClient<Database>> | null = null;
@@ -41,7 +47,7 @@ export function createServerClient() {
   const key = serviceRoleKey || supabaseAnonKey;
   
   if (!key) {
-    throw new Error('Missing Supabase key');
+    throw new Error('Missing Supabase key (SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY)');
   }
   
   return createClient<Database>(supabaseUrl, key, {
@@ -51,6 +57,3 @@ export function createServerClient() {
     },
   });
 }
-
-// Export for convenience
-export { createClient };

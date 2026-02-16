@@ -1,30 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { adminLoginSchema } from '@/lib/validations';
 import { createApiSuccess, createApiError } from '@/lib/utils';
+import { generateAdminToken } from '@/lib/adminAuth';
 import bcrypt from 'bcryptjs';
 
 export const dynamic = 'force-dynamic';
 
-// Admin password hash from environment variable
+/** Admin password hash from environment variable */
 const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
-
-// Simple token generation (in production, use a proper JWT library)
-function generateToken(): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 15);
-  return `admin_${timestamp}_${random}`;
-}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { password } = body;
 
-    if (!password) {
+    // Validate with Zod schema
+    const validation = adminLoginSchema.safeParse(body);
+    if (!validation.success) {
       return NextResponse.json(
         createApiError('VALIDATION_ERROR', 'Mot de passe requis'),
         { status: 400 }
       );
     }
+
+    const { password } = validation.data;
 
     // Check if we're in mock mode
     const isMockMode = process.env.NEXT_PUBLIC_MOCK_MODE === 'true';
@@ -32,9 +30,9 @@ export async function POST(request: NextRequest) {
     if (isMockMode) {
       // In mock mode, accept "admin" as password
       if (password === 'admin') {
-        const token = generateToken();
+        const { token, expiresIn } = generateAdminToken();
         return NextResponse.json(
-          createApiSuccess({ token, expiresIn: 3600 })
+          createApiSuccess({ token, expiresIn })
         );
       }
       return NextResponse.json(
@@ -61,10 +59,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const token = generateToken();
+    const { token, expiresIn } = generateAdminToken();
     
     return NextResponse.json(
-      createApiSuccess({ token, expiresIn: 3600 })
+      createApiSuccess({ token, expiresIn })
     );
   } catch (error) {
     console.error('Error in POST /api/admin/login:', error);

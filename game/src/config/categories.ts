@@ -33,7 +33,7 @@ export const CATEGORIES_CONFIG: Record<string, CategoryConfig> = {
     labelFr: 'Sexe & Kinks',
     color: 'bg-[#DC2626]/20',
     textColor: 'text-[#FCA5A5]',
-    emoji: '�'
+    emoji: '🔥'
   },
   lifestyle: {
     id: 'lifestyle',

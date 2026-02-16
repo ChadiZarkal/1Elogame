@@ -5,8 +5,8 @@
  */
 
 const requiredServerVars = [
-  'SUPABASE_URL',
-  'SUPABASE_ANON_KEY',
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   'ADMIN_PASSWORD',
 ] as const;
 

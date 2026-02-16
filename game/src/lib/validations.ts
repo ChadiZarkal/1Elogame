@@ -56,13 +56,12 @@ export const feedbackSchema = z.object({
 
 // Admin login schema
 export const adminLoginSchema = z.object({
-  email: z.string().email('Email invalide'),
-  password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
+  password: z.string().min(1, 'Le mot de passe est requis'),
 });
 
 // Query params schemas
 export const duelQuerySchema = z.object({
-  seenDuels: z.string().optional(),
+  seenDuels: z.string().max(10000, 'seenDuels trop long').optional(),
 });
 
 export const elementsQuerySchema = z.object({

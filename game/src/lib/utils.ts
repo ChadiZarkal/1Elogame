@@ -80,19 +80,18 @@ export function createApiSuccess<T>(data: T, meta?: Record<string, unknown>) {
 }
 
 /**
- * Validate that required environment variables are set.
+ * Generate a consistent pair key for two IDs (sorted alphabetically).
+ * Ensures "A-B" and "B-A" produce the same key.
  */
-export function validateEnvVars(vars: string[]): void {
-  const missing = vars.filter(v => !process.env[v]);
-  if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
-  }
+export function getPairKey(idA: string, idB: string): string {
+  return idA < idB ? `${idA}-${idB}` : `${idB}-${idA}`;
 }
 
 /**
  * Safe JSON parse with fallback.
+ * Returns the fallback value if parsing fails.
  */
-export function safeJsonParse<T>(json: string, fallback: T): T {
+export function safeJsonParse<T>(json: string, fallback: T | null = null): T | null {
   try {
     return JSON.parse(json) as T;
   } catch {

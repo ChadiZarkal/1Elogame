@@ -11,6 +11,7 @@
 import { Element } from '@/types/database';
 import { SelectionStrategy, ElementDTO } from '@/types/game';
 import { getEloDifference, isCloseElo } from './elo';
+import { getPairKey as getPairKeyUtil } from './utils';
 
 // Strategy distribution weights
 const STRATEGY_WEIGHTS = {
@@ -51,9 +52,10 @@ export function shuffleArray<T>(array: T[]): T[] {
 
 /**
  * Get a consistent pair key for checking seen duels.
+ * @deprecated Use getPairKey from '@/lib/utils' directly.
  */
 export function getPairKey(idA: string, idB: string): string {
-  return idA < idB ? `${idA}-${idB}` : `${idB}-${idA}`;
+  return getPairKeyUtil(idA, idB);
 }
 
 /**
@@ -229,6 +231,7 @@ export function selectDuelPair(
  * Formula: n * (n-1) / 2
  */
 export function getTotalPossibleDuels(elementCount: number): number {
+  if (elementCount < 2) return 0;
   return (elementCount * (elementCount - 1)) / 2;
 }
 
