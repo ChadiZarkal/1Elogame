@@ -193,12 +193,14 @@ export default function JouerPage() {
             onThumbsDown={handleThumbsDown}
           />
         ) : (
-          <DuelInterface
-            elementA={currentDuel.elementA}
-            elementB={currentDuel.elementB}
-            onVote={handleVote}
-            disabled={showingResult || isLoadingDuel}
-          />
+          <div className="flex-1 flex flex-col w-full">
+            <DuelInterface
+              elementA={currentDuel.elementA}
+              elementB={currentDuel.elementB}
+              onVote={handleVote}
+              disabled={showingResult || isLoadingDuel}
+            />
+          </div>
         )}
       </div>
     </div>

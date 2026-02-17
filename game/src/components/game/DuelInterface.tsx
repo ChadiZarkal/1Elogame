@@ -34,7 +34,7 @@ export function DuelInterface({ elementA, elementB, onVote, disabled }: DuelInte
   `;
   
   return (
-    <div className="flex flex-col h-full w-full bg-[#0D0D0D]">
+    <div className="flex flex-col flex-1 w-full bg-[#0D0D0D]">
       {/* Element A - Top half - NEUTRE */}
       <motion.button
         onClick={handleClickA}
