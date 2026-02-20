@@ -3,12 +3,14 @@
  */
 
 import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 /**
- * Simple class name merger (alternative to clsx if needed).
+ * Merge Tailwind classes with proper conflict resolution.
+ * Uses clsx for conditional classes + tailwind-merge for deduplication.
  */
-export function cn(...classes: ClassValue[]): string {
-  return clsx(classes);
+export function cn(...inputs: ClassValue[]): string {
+  return twMerge(clsx(inputs));
 }
 
 /**

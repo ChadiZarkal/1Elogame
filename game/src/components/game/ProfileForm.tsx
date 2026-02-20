@@ -2,22 +2,22 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/Button';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/stores/gameStore';
 import { SexeVotant, AgeVotant } from '@/types/database';
+import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 
-const sexOptions: { value: SexeVotant; label: string }[] = [
-  { value: 'homme', label: '♂️ Homme' },
-  { value: 'femme', label: '♀️ Femme' },
-  { value: 'autre', label: '🤷 Autre' },
+const sexOptions: { value: SexeVotant; label: string; emoji: string }[] = [
+  { value: 'homme', label: 'Homme', emoji: '♂️' },
+  { value: 'femme', label: 'Femme', emoji: '♀️' },
+  { value: 'autre', label: 'Autre', emoji: '🤷' },
 ];
 
-const ageOptions: { value: AgeVotant; label: string }[] = [
-  { value: '16-18', label: '16-18' },
-  { value: '19-22', label: '19-22' },
-  { value: '23-26', label: '23-26' },
-  { value: '27+', label: '27+' },
+const ageOptions: { value: AgeVotant; label: string; vibe: string }[] = [
+  { value: '16-18', label: '16-18', vibe: '🎒' },
+  { value: '19-22', label: '19-22', vibe: '🎓' },
+  { value: '23-26', label: '23-26', vibe: '💼' },
+  { value: '27+', label: '27+', vibe: '🧠' },
 ];
 
 export function ProfileForm() {
@@ -43,130 +43,176 @@ export function ProfileForm() {
   };
   
   return (
-    <motion.div 
-      className="flex flex-col items-center justify-center min-h-screen min-h-[100dvh] p-6 bg-[#0D0D0D]"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
+    <div
+      className="relative flex flex-col items-center justify-center overflow-hidden"
+      style={{ minHeight: '100dvh', background: '#0A0A0B' }}
     >
+      <AnimatedBackground variant="default" />
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          top: '30%', left: '50%', transform: 'translate(-50%, -50%)',
+          width: 480, height: 480,
+          background: 'radial-gradient(circle, rgba(239,68,68,0.08) 0%, transparent 70%)',
+        }}
+      />
+      <motion.div
+        className="relative z-10 flex flex-col items-center justify-center w-full p-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
       {/* Back button */}
       <div className="fixed top-4 left-4 z-50">
-        <button 
+        <button
           onClick={() => router.push('/')}
-          className="text-[#737373] hover:text-[#F5F5F5] text-sm transition-colors"
+          className="flex items-center gap-1.5 text-[#52525B] hover:text-[#A1A1AA] text-sm transition-colors px-3 py-2 rounded-lg hover:bg-white/5"
         >
           ← Accueil
         </button>
       </div>
 
       {/* Logo */}
-      <motion.div 
-        className="mb-10 text-center"
+      <motion.div
+        className="mb-8 text-center"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
       >
-        <div className="flex justify-center gap-3 text-4xl mb-3">
-          <span>🚩</span>
-        </div>
-        <h1 className="text-4xl font-bold text-[#F5F5F5] mb-3">
-          RED <span className="text-[#DC2626]">FLAG</span>
+        <motion.div
+          className="text-5xl mb-4 select-none block"
+          animate={{ rotate: [0, -10, 10, 0] }}
+          transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 4 }}
+        >
+          🚩
+        </motion.div>
+        <h1 className="text-4xl font-black text-[#F5F5F7] tracking-tight mb-1">
+          Red <span style={{ color: '#EF4444' }}>Flag</span>
         </h1>
-        {/* Short onboarding */}
-        <div className="bg-[#1A1A1A] border border-[#333]/60 rounded-xl px-5 py-3 max-w-sm mx-auto">
-          <p className="text-[#A3A3A3] text-sm leading-relaxed">
-            Choisis l&apos;option la plus <span className="text-[#DC2626] font-semibold">red flag</span> 🚩
-          </p>
-        </div>
+        <p className="text-sm font-medium" style={{ color: '#52525B' }}>
+          2 infos rapides avant de jouer
+        </p>
       </motion.div>
       
       {/* Form container */}
-      <motion.div 
-        className="w-full max-w-md bg-[#1A1A1A] border border-[#333] rounded-2xl p-6 sm:p-8 space-y-6"
+      <motion.div
+        className="w-full max-w-sm"
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
+        style={{
+          background: 'rgba(20,20,23,0.9)',
+          border: '1px solid rgba(255,255,255,0.06)',
+          backdropFilter: 'blur(12px)',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
+          borderRadius: 20,
+          padding: '24px',
+        }}
       >
-        {/* Step indicator */}
-        <p className="text-center text-[#737373] text-xs font-medium">
-          Avant de jouer, dis-nous en 2 clics 👇
-        </p>
+        <div className="space-y-6">
 
         {/* Sex selection */}
         <fieldset>
-          <label className="block text-[#F5F5F5] text-base font-bold mb-3">
+          <label className="block text-xs font-black tracking-[0.14em] uppercase mb-3" style={{ color: '#6B7280' }}>
             Sexe
           </label>
-          <div className="grid grid-cols-3 gap-3" role="radiogroup" aria-label="Sélection du sexe">
-            {sexOptions.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => { setSex(option.value); setError(null); }}
-                className={`py-3 px-3 rounded-xl text-center font-medium transition-all duration-200 text-sm ${
-                  sex === option.value
-                    ? 'bg-[#DC2626] text-white ring-2 ring-[#EF4444] scale-105'
-                    : 'bg-[#2A2A2A] text-[#A3A3A3] hover:bg-[#333] border border-[#333]'
-                }`}
-                role="radio"
-                aria-checked={sex === option.value}
-                aria-label={option.label}
-              >
-                {option.label}
-              </button>
-            ))}
+          <div className="grid grid-cols-3 gap-2.5" role="radiogroup" aria-label="Sélection du sexe">
+            {sexOptions.map((opt) => {
+              const selected = sex === opt.value;
+              return (
+                <motion.button
+                  key={opt.value}
+                  onClick={() => { setSex(opt.value); setError(null); }}
+                  whileTap={{ scale: 0.94 }}
+                  role="radio"
+                  aria-checked={selected}
+                  aria-label={opt.label}
+                  className="flex flex-col items-center justify-center py-4 px-2 rounded-xl font-bold text-sm transition-all duration-200"
+                  style={{
+                    background: selected ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.03)',
+                    border: `1.5px solid ${selected ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                    color: selected ? '#FCA5A5' : '#6B7280',
+                    boxShadow: selected ? '0 0 20px rgba(239,68,68,0.15)' : 'none',
+                  }}
+                >
+                  <span className="text-2xl mb-1">{opt.emoji}</span>
+                  <span className="text-xs font-bold">{opt.label}</span>
+                </motion.button>
+              );
+            })}
           </div>
         </fieldset>
         
         {/* Age selection */}
         <fieldset>
-          <label className="block text-[#F5F5F5] text-base font-bold mb-3">
+          <label className="block text-xs font-black tracking-[0.14em] uppercase mb-3" style={{ color: '#6B7280' }}>
             Âge
           </label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" role="radiogroup" aria-label="Sélection de l'âge">
-            {ageOptions.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => { setAge(option.value); setError(null); }}
-                className={`py-3 px-2 rounded-xl text-center font-medium transition-all duration-200 text-sm ${
-                  age === option.value
-                    ? 'bg-[#DC2626] text-white ring-2 ring-[#EF4444] scale-105'
-                    : 'bg-[#2A2A2A] text-[#A3A3A3] hover:bg-[#333] border border-[#333]'
-                }`}
-                role="radio"
-                aria-checked={age === option.value}
-                aria-label={`${option.label} ans`}
-              >
-                {option.label}
-              </button>
-            ))}
+          <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Sélection de l'âge">
+            {ageOptions.map((opt) => {
+              const selected = age === opt.value;
+              return (
+                <motion.button
+                  key={opt.value}
+                  onClick={() => { setAge(opt.value); setError(null); }}
+                  whileTap={{ scale: 0.94 }}
+                  role="radio"
+                  aria-checked={selected}
+                  aria-label={`${opt.label} ans`}
+                  className="flex flex-col items-center justify-center py-3.5 px-1 rounded-xl font-bold transition-all duration-200"
+                  style={{
+                    background: selected ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.03)',
+                    border: `1.5px solid ${selected ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                    color: selected ? '#FCA5A5' : '#6B7280',
+                    boxShadow: selected ? '0 0 20px rgba(239,68,68,0.15)' : 'none',
+                  }}
+                >
+                  <span className="text-lg mb-0.5">{opt.vibe}</span>
+                  <span className="text-[11px] font-black">{opt.label}</span>
+                </motion.button>
+              );
+            })}
           </div>
         </fieldset>
         
-        {/* Error message */}
-        {error && (
-          <motion.p 
-            className="text-[#FCA5A5] text-center text-sm"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            {error}
-          </motion.p>
-        )}
-        
-        {/* Submit button */}
-        <div className="mt-4 pt-4">
-          <Button
-            onClick={handleSubmit}
-            variant="primary"
-            size="lg"
-            className="w-full text-lg py-4"
-          >
-            🚩 C&apos;EST PARTI
-          </Button>
+        {/* Error */}
+        <AnimatePresence>
+          {error && (
+            <motion.p
+              key="err"
+              className="text-[#FCA5A5] text-center text-xs font-medium"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
+              ⚠️ {error}
+            </motion.p>
+          )}
+        </AnimatePresence>
+
+        {/* CTA */}
+        <motion.button
+          onClick={handleSubmit}
+          whileTap={{ scale: 0.97 }}
+          className="w-full py-4 rounded-xl font-black text-base tracking-wide transition-all duration-200"
+          style={{
+            background: sex && age ? 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)' : 'rgba(255,255,255,0.04)',
+            border: sex && age ? '1px solid #EF4444' : '1px solid rgba(255,255,255,0.06)',
+            color: sex && age ? '#fff' : '#3F3F46',
+            boxShadow: sex && age ? '0 8px 32px rgba(239,68,68,0.35)' : 'none',
+            cursor: sex && age ? 'pointer' : 'not-allowed',
+          }}
+        >
+          {sex && age ? "🚩 C'EST PARTI" : 'Sélectionne sexe + âge'}
+        </motion.button>
         </div>
       </motion.div>
-      
 
-    </motion.div>
+      <p className="text-center mt-5 text-[10px]" style={{ color: '#3F3F46' }}>
+        Données 100% anonymes — juste pour les stats
+      </p>
+
+      </motion.div>
+    </div>
   );
 }

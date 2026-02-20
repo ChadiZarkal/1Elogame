@@ -85,6 +85,7 @@ export const viewport: Viewport = {
 
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { AnalyticsProvider } from '@/components/AnalyticsProvider';
+import { Toaster } from 'sonner';
 
 // JSON-LD structured data for Google
 function JsonLd() {
@@ -137,6 +138,13 @@ export default function RootLayout({
             {children}
           </AnalyticsProvider>
         </ErrorBoundary>
+        <Toaster
+          theme="dark"
+          position="top-center"
+          toastOptions={{
+            style: { background: '#1A1A1A', border: '1px solid #333', color: '#F5F5F5' },
+          }}
+        />
       </body>
     </html>
   );

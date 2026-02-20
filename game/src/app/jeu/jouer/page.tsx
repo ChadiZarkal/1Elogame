@@ -3,6 +3,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import { useGameStore } from '@/stores/gameStore';
 import { DuelInterface } from '@/components/game/DuelInterface';
 import { ResultDisplay } from '@/components/game/ResultDisplay';
@@ -55,13 +56,12 @@ export default function JouerPage() {
   }, [hasProfile, router]);
   
   // Fetch first duel when profile is loaded
+  // Guard: !error prevents infinite retry loop when API fails (429 / 500)
   useEffect(() => {
-    if (hasProfile && !currentDuel && !isLoadingDuel && !allDuelsExhausted) {
-      fetchNextDuel().then(() => {
-        fetchNextDuel();
-      });
+    if (hasProfile && !currentDuel && !isLoadingDuel && !allDuelsExhausted && !error) {
+      fetchNextDuel();
     }
-  }, [hasProfile, currentDuel, isLoadingDuel, allDuelsExhausted, fetchNextDuel]);
+  }, [hasProfile, currentDuel, isLoadingDuel, allDuelsExhausted, error, fetchNextDuel]);
   
   // Auto-scroll to bottom when new content appears
   useEffect(() => {
@@ -72,6 +72,19 @@ export default function JouerPage() {
       });
     }
   }, [duelHistory.length, showingResult, currentDuel]);
+
+  // Streak milestone toasts
+  const prevStreakRef = useRef(0);
+  useEffect(() => {
+    const prev = prevStreakRef.current;
+    prevStreakRef.current = streak;
+    if (streak > prev) {
+      if (streak === 3) toast('🔥 3 de suite !', { description: 'Tu es chaud·e ce soir !', duration: 2500 });
+      else if (streak === 5) toast('⚡ Streak x5 !', { description: 'Incroyable, continue !', duration: 3000 });
+      else if (streak === 10) toast('🏆 Streak x10 !', { description: 'Tu es inarrêtable !', duration: 3500 });
+      else if (streak >= 15 && streak % 5 === 0) toast(`🎯 Streak x${streak}`, { description: 'Légendaire !', duration: 3500 });
+    }
+  }, [streak]);
   
   const handleVote = useCallback((winnerId: string, loserId: string) => {
     submitVote(winnerId, loserId);
