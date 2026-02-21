@@ -1,13 +1,7 @@
-/**
- * @file rateLimit.test.ts
- * @description Tests unitaires pour le système de rate limiting.
- */
-
 import { describe, it, expect, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import {
   checkRateLimit,
-  getRateLimitHeaders,
   resetRateLimitStore,
   RATE_LIMITS,
 } from '@/lib/rateLimit';
@@ -92,25 +86,6 @@ describe('checkRateLimit', () => {
     // Public limit (60/min) should still be available
     const allowed = checkRateLimit(req, 'public');
     expect(allowed).toBeNull();
-  });
-});
-
-describe('getRateLimitHeaders', () => {
-  it('retourne les headers pour un client sans historique', () => {
-    const req = createMockRequest();
-    const headers = getRateLimitHeaders(req, 'public');
-    expect(headers['X-RateLimit-Limit']).toBe(String(RATE_LIMITS.public.maxRequests));
-    expect(headers['X-RateLimit-Remaining']).toBe(String(RATE_LIMITS.public.maxRequests));
-  });
-
-  it('décompte les requêtes restantes', () => {
-    const req = createMockRequest();
-    checkRateLimit(req, 'public');
-    checkRateLimit(req, 'public');
-    const headers = getRateLimitHeaders(req, 'public');
-    expect(headers['X-RateLimit-Remaining']).toBe(
-      String(RATE_LIMITS.public.maxRequests - 2)
-    );
   });
 });
 

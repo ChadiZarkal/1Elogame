@@ -36,6 +36,19 @@ export interface DuelHistoryEntry {
 
 const MAX_HISTORY = 10;
 
+/** Shared initial state for reset operations. */
+const INITIAL_GAME_STATE = {
+  currentDuel: null as Duel | null,
+  nextDuel: null as Duel | null,
+  lastResult: null as VoteResult | null,
+  showingResult: false,
+  duelHistory: [] as DuelHistoryEntry[],
+  streak: 0,
+  streakEmoji: '',
+  duelCount: 0,
+  allDuelsExhausted: false,
+};
+
 interface GameState {
   // Profile state
   profile: PlayerProfile | null;
@@ -134,19 +147,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   // Clear profile and session
   clearProfile: () => {
     clearSession();
-    set({
-      profile: null,
-      hasProfile: false,
-      currentDuel: null,
-      nextDuel: null,
-      lastResult: null,
-      showingResult: false,
-      duelHistory: [],
-      streak: 0,
-      streakEmoji: '',
-      duelCount: 0,
-      allDuelsExhausted: false,
-    });
+    set({ profile: null, hasProfile: false, ...INITIAL_GAME_STATE });
   },
   
   // Fetch the next duel from API
@@ -361,15 +362,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({
       profile: null,
       hasProfile: false,
-      currentDuel: null,
-      nextDuel: null,
-      lastResult: null,
-      showingResult: false,
-      duelHistory: [],
-      streak: 0,
-      streakEmoji: '',
-      duelCount: 0,
-      allDuelsExhausted: false,
+      ...INITIAL_GAME_STATE,
       error: null,
       gameMode: DEFAULT_GAME_MODE,
     });
@@ -381,17 +374,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   // Set game mode and reload duels
   setGameMode: async (selection: GameModeSelection) => {
     const { gameMode } = get();
-    
-    // Si le mode n'a pas changé, ne rien faire
-    if (gameMode.mode === selection.mode && gameMode.category === selection.category) {
-      return;
-    }
-    
-    // Cancel any in-flight fetch before switching mode
+
+    if (gameMode.mode === selection.mode && gameMode.category === selection.category) return;
+
     fetchAbortController?.abort();
     fetchAbortController = null;
-    
-    // Mettre à jour le mode et réinitialiser pour charger de nouveaux duels
+
     set({
       gameMode: selection,
       currentDuel: null,
@@ -399,12 +387,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       allDuelsExhausted: false,
       isLoadingDuel: false,
     });
-    
-    // Track category change
+
     if (selection.category) trackCategoryChange(selection.category);
-    
-    // Charger le premier duel — le second sera préchargé automatiquement
-    // par le mécanisme de preload dans fetchNextDuel/showNextDuel
+
     await get().fetchNextDuel();
   },
 }));

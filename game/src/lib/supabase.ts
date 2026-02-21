@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database';
 
 /**
@@ -56,4 +57,24 @@ export function createServerClient() {
       autoRefreshToken: false,
     },
   });
+}
+
+/** Type-safe Supabase insert with dynamically-computed field names. */
+export function typedInsert<T extends Record<string, unknown>>(
+  client: SupabaseClient,
+  table: string,
+  data: T
+) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return client.from(table).insert(data as any);
+}
+
+/** Type-safe Supabase update with dynamically-computed field names. */
+export function typedUpdate<T extends Record<string, unknown>>(
+  client: SupabaseClient,
+  table: string,
+  data: T
+) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return client.from(table).update(data as any);
 }

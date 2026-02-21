@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { feedbackSchema } from '@/lib/validations';
 import { createApiSuccess, createApiError } from '@/lib/utils';
 import { checkRateLimit } from '@/lib/rateLimit';
-import { typedUpdate, typedInsert } from '@/lib/supabaseHelpers';
+import { typedUpdate, typedInsert } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 

@@ -1,16 +1,10 @@
-/**
- * @file utils.test.ts
- * @description Tests unitaires pour les fonctions utilitaires
- */
-
 import { describe, it, expect } from 'vitest';
 import {
   cn,
   formatNumber,
-  formatPercentage,
   createApiError,
   createApiSuccess,
-  safeJsonParse,
+  getPairKey,
 } from '@/lib/utils';
 
 describe('cn (className merger)', () => {
@@ -44,20 +38,6 @@ describe('formatNumber', () => {
   });
 });
 
-describe('formatPercentage', () => {
-  it('retourne un pourcentage formaté', () => {
-    expect(formatPercentage(75)).toBe('75%');
-  });
-
-  it('gère les décimales', () => {
-    expect(formatPercentage(33.3)).toBe('33.3%');
-  });
-
-  it('gère 0', () => {
-    expect(formatPercentage(0)).toBe('0%');
-  });
-});
-
 describe('createApiError', () => {
   it('crée une réponse erreur structurée', () => {
     const error = createApiError('INVALID_INPUT', 'Champ requis');
@@ -81,18 +61,9 @@ describe('createApiSuccess', () => {
   });
 });
 
-describe('safeJsonParse', () => {
-  it('parse du JSON valide', () => {
-    expect(safeJsonParse('{"a":1}')).toEqual({ a: 1 });
-  });
-
-  it('retourne null/undefined pour du JSON invalide', () => {
-    const result = safeJsonParse('invalid');
-    expect(result == null).toBe(true); // null ou undefined
-  });
-
-  it('retourne null/undefined pour une chaîne vide', () => {
-    const result = safeJsonParse('');
-    expect(result == null).toBe(true);
+describe('getPairKey', () => {
+  it('trie les IDs alphabétiquement', () => {
+    expect(getPairKey('b', 'a')).toBe('a-b');
+    expect(getPairKey('a', 'b')).toBe('a-b');
   });
 });

@@ -219,16 +219,14 @@ export default function LeaderboardPage() {
           {isRed
             ? 'Les comportements jugés les pires par la communauté'
             : 'Les comportements jugés les plus acceptables'}
-          {categoryFilter && (
-            <span className="text-[#737373]">
-              {' '}— {CATEGORY_FILTERS.find(c => c.value === categoryFilter)?.emoji} {CATEGORY_FILTERS.find(c => c.value === categoryFilter)?.label}
-            </span>
-          )}
-          {view !== 'global' && (
-            <span className="text-[#737373]">
-              {' '}— {VIEW_CONFIG.find(v => v.value === view)?.emoji} {VIEW_CONFIG.find(v => v.value === view)?.label}
-            </span>
-          )}
+          {categoryFilter && (() => {
+            const cat = CATEGORY_FILTERS.find(c => c.value === categoryFilter);
+            return <span className="text-[#737373]">{' '}— {cat?.emoji} {cat?.label}</span>;
+          })()}
+          {view !== 'global' && (() => {
+            const v = VIEW_CONFIG.find(v => v.value === view);
+            return <span className="text-[#737373]">{' '}— {v?.emoji} {v?.label}</span>;
+          })()}
         </p>
       </div>
 
@@ -317,10 +315,6 @@ export default function LeaderboardPage() {
   );
 }
 
-// ═══════════════════════════════════════
-// Helper: Get ELO for any view mode
-// ═══════════════════════════════════════
-
 function getEloForView(r: RankEntry, view: ViewMode): number {
   switch (view) {
     case 'homme': return r.elo_homme;
@@ -332,10 +326,6 @@ function getEloForView(r: RankEntry, view: ViewMode): number {
     default: return r.elo_global;
   }
 }
-
-// ═══════════════════════════════════════
-// Podium Card Component
-// ═══════════════════════════════════════
 
 function PodiumCard({ rank, entry, elo, height, isRed }: {
   rank: number; entry: RankEntry; elo: number; height: string; isRed: boolean;

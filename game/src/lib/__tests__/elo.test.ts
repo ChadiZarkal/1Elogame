@@ -1,13 +1,6 @@
-/**
- * @file elo.test.ts
- * @description Tests unitaires complets pour le système ELO
- */
-
 import { describe, it, expect } from 'vitest';
 import {
-  DEFAULT_K_FACTOR,
   DEFAULT_ELO,
-  calculateExpectedScore,
   calculateNewELO,
   estimatePercentage,
   getEloDifference,
@@ -21,38 +14,34 @@ import {
 } from '@/lib/elo';
 
 describe('Constantes ELO', () => {
-  it('K-factor par défaut est 32', () => {
-    expect(DEFAULT_K_FACTOR).toBe(32);
-  });
-
   it('ELO par défaut est 1000', () => {
     expect(DEFAULT_ELO).toBe(1000);
   });
 });
 
-describe('calculateExpectedScore', () => {
-  it('retourne 0.5 pour des ELO identiques', () => {
-    expect(calculateExpectedScore(1000, 1000)).toBe(0.5);
+describe('estimatePercentage (wraps calculateExpectedScore)', () => {
+  it('ELO identiques → 50%', () => {
+    expect(estimatePercentage(1000, 1000)).toBe(50);
   });
 
-  it('retourne > 0.5 quand le joueur est plus fort', () => {
-    expect(calculateExpectedScore(1200, 1000)).toBeGreaterThan(0.5);
+  it('ELO supérieur → > 50%', () => {
+    expect(estimatePercentage(1200, 1000)).toBeGreaterThan(50);
   });
 
-  it('retourne < 0.5 quand le joueur est plus faible', () => {
-    expect(calculateExpectedScore(800, 1000)).toBeLessThan(0.5);
+  it('ELO inférieur → < 50%', () => {
+    expect(estimatePercentage(800, 1000)).toBeLessThan(50);
   });
 
-  it('retourne une probabilité entre 0 et 1', () => {
-    const score = calculateExpectedScore(500, 2000);
-    expect(score).toBeGreaterThan(0);
-    expect(score).toBeLessThan(1);
+  it('résultat entre 0 et 100', () => {
+    const pct = estimatePercentage(500, 2000);
+    expect(pct).toBeGreaterThanOrEqual(0);
+    expect(pct).toBeLessThanOrEqual(100);
   });
 
-  it('est symétrique : E(A,B) + E(B,A) ≈ 1', () => {
-    const eA = calculateExpectedScore(1200, 1000);
-    const eB = calculateExpectedScore(1000, 1200);
-    expect(eA + eB).toBeCloseTo(1, 10);
+  it('est symétrique : pct(A,B) + pct(B,A) ≈ 100', () => {
+    const pA = estimatePercentage(1200, 1000);
+    const pB = estimatePercentage(1000, 1200);
+    expect(pA + pB).toBe(100);
   });
 });
 
@@ -83,22 +72,6 @@ describe('calculateNewELO', () => {
     const low = calculateNewELO(1000, 1000, 8);
     const high = calculateNewELO(1000, 1000, 64);
     expect(high.newWinnerELO - 1000).toBeGreaterThan(low.newWinnerELO - 1000);
-  });
-});
-
-describe('estimatePercentage', () => {
-  it('ELO identiques → ~50%', () => {
-    expect(estimatePercentage(1000, 1000)).toBe(50);
-  });
-
-  it('ELO supérieur → > 50%', () => {
-    expect(estimatePercentage(1200, 1000)).toBeGreaterThan(50);
-  });
-
-  it('résultat entre 0 et 100', () => {
-    const pct = estimatePercentage(500, 2000);
-    expect(pct).toBeGreaterThanOrEqual(0);
-    expect(pct).toBeLessThanOrEqual(100);
   });
 });
 

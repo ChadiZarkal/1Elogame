@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createApiSuccess, createApiError } from '@/lib/utils';
 import { authenticateAdmin } from '@/lib/adminAuth';
 import { elementUpdateSchema } from '@/lib/validations';
-import { typedUpdate } from '@/lib/supabaseHelpers';
+import { typedUpdate } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 

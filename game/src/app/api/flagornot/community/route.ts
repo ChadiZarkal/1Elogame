@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createApiSuccess, createApiError } from '@/lib/utils';
-import { typedInsert } from '@/lib/supabaseHelpers';
+import { typedInsert } from '@/lib/supabase';
 import { sanitizeText } from '@/lib/sanitize';
 
 export const dynamic = 'force-dynamic';
 
 const isMockMode = process.env.NEXT_PUBLIC_MOCK_MODE === 'true';
 
-// ═══════════════════════════════════════
-// In-memory community store (mock mode)
-// Persists across hot reloads via globalThis
-// ═══════════════════════════════════════
-
+// In-memory community store (mock mode, persists via globalThis)
 interface CommunitySubmission {
   id: string;
   text: string;
@@ -30,10 +26,6 @@ function getCommunityStore(): CommunitySubmission[] {
   }
   return globalThis.__flagornotCommunity;
 }
-
-// ═══════════════════════════════════════
-// GET — Fetch recent community submissions
-// ═══════════════════════════════════════
 
 export async function GET(request: NextRequest) {
   try {
@@ -98,10 +90,6 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
-// ═══════════════════════════════════════
-// POST — Record a new community submission
-// ═══════════════════════════════════════
 
 export async function POST(request: NextRequest) {
   try {
@@ -169,10 +157,6 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-// ═══════════════════════════════════════
-// Utility: Human-readable time ago
-// ═══════════════════════════════════════
 
 function getTimeAgo(timestamp: number): string {
   const seconds = Math.floor((Date.now() - timestamp) / 1000);

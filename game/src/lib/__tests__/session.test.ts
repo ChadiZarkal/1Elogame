@@ -1,19 +1,11 @@
-/**
- * @file session.test.ts
- * @description Tests unitaires pour la gestion de session localStorage
- */
-
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   isLocalStorageAvailable,
   getSession,
   initSession,
-  saveSession,
   clearSession,
   hasProfile,
   getProfile,
-  getDuelPairKey,
-  hasSeenDuel,
   markDuelAsSeen,
   getSeenDuels,
   getSeenDuelsString,
@@ -25,6 +17,7 @@ import {
   setAdminToken,
   clearAdminToken,
 } from '@/lib/session';
+import { getPairKey } from '@/lib/utils';
 
 beforeEach(() => {
   localStorage.clear();
@@ -84,10 +77,10 @@ describe('Profile', () => {
   });
 });
 
-describe('getDuelPairKey', () => {
+describe('getPairKey (from utils)', () => {
   it('trie alphabétiquement les IDs', () => {
-    expect(getDuelPairKey('b', 'a')).toBe('a-b');
-    expect(getDuelPairKey('a', 'b')).toBe('a-b');
+    expect(getPairKey('b', 'a')).toBe('a-b');
+    expect(getPairKey('a', 'b')).toBe('a-b');
   });
 });
 
@@ -96,14 +89,18 @@ describe('Seen duels', () => {
     initSession({ sex: 'homme', age: '19-22' });
   });
 
-  it('hasSeenDuel retourne false par défaut', () => {
-    expect(hasSeenDuel('a', 'b')).toBe(false);
+  it('pas de duels vus par défaut', () => {
+    expect(getSeenDuels()).toEqual([]);
   });
 
   it('markDuelAsSeen marque le duel', () => {
     markDuelAsSeen('a', 'b');
-    expect(hasSeenDuel('a', 'b')).toBe(true);
-    expect(hasSeenDuel('b', 'a')).toBe(true); // Ordre inversé
+    expect(getSeenDuels()).toContain('a-b');
+  });
+
+  it('markDuelAsSeen fonctionne dans les deux sens', () => {
+    markDuelAsSeen('b', 'a');
+    expect(getSeenDuels()).toContain('a-b');
   });
 
   it('markDuelAsSeen incrémente le compteur', () => {

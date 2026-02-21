@@ -1,10 +1,5 @@
-/**
- * @file sanitize.test.ts
- * @description Tests unitaires pour les fonctions de sanitization.
- */
-
 import { describe, it, expect } from 'vitest';
-import { sanitizeText, escapeHtml } from '@/lib/sanitize';
+import { sanitizeText } from '@/lib/sanitize';
 
 describe('sanitizeText', () => {
   it('retourne le texte tel quel si propre', () => {
@@ -76,31 +71,4 @@ describe('sanitizeText', () => {
   });
 });
 
-describe('escapeHtml', () => {
-  it('échappe les chevrons', () => {
-    expect(escapeHtml('<div>')).toBe('&lt;div&gt;');
-  });
 
-  it('échappe les guillemets', () => {
-    expect(escapeHtml('"hello"')).toBe('&quot;hello&quot;');
-  });
-
-  it('échappe les apostrophes', () => {
-    expect(escapeHtml("it's")).toBe("it&#039;s");
-  });
-
-  it('échappe les ampersands', () => {
-    expect(escapeHtml('a & b')).toBe('a &amp; b');
-  });
-
-  it('ne modifie pas le texte sans caractères spéciaux', () => {
-    expect(escapeHtml('hello world')).toBe('hello world');
-  });
-
-  it('gère une injection complète', () => {
-    const input = '<script>alert("xss")</script>';
-    const result = escapeHtml(input);
-    expect(result).toBe('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
-    expect(result).not.toContain('<script>');
-  });
-});

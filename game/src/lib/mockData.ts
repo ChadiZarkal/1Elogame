@@ -149,41 +149,4 @@ export function updateMockElo(winnerId: string, loserId: string, newWinnerElo: n
   if (loser) loser.elo_global = newLoserElo;
 }
 
-export function getMockDuelPair(sessionId: string): { element1: Element; element2: Element } | null {
-  const elements = getMockElements();
-  const seenPairs = getSeenPairs(sessionId);
-  
-  // Find an unseen pair with similar ELO scores
-  for (let i = 0; i < elements.length; i++) {
-    for (let j = i + 1; j < elements.length; j++) {
-      const pairKey = [elements[i].id, elements[j].id].sort().join('-');
-      if (!seenPairs.has(pairKey)) {
-        // Check ELO difference (within 200 points preferred)
-        const eloDiff = Math.abs(elements[i].elo_global - elements[j].elo_global);
-        if (eloDiff <= 200) {
-          return { element1: elements[i], element2: elements[j] };
-        }
-      }
-    }
-  }
-  
-  // If no close ELO pairs found, find any unseen pair
-  for (let i = 0; i < elements.length; i++) {
-    for (let j = i + 1; j < elements.length; j++) {
-      const pairKey = [elements[i].id, elements[j].id].sort().join('-');
-      if (!seenPairs.has(pairKey)) {
-        return { element1: elements[i], element2: elements[j] };
-      }
-    }
-  }
-  
-  return null; // All pairs exhausted
-}
 
-// Count remaining duels for a session
-export function countRemainingDuels(sessionId: string): number {
-  const elements = getMockElements();
-  const seenPairs = getSeenPairs(sessionId);
-  const totalPairs = (elements.length * (elements.length - 1)) / 2;
-  return totalPairs - seenPairs.size;
-}

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { voteSchema } from '@/lib/validations';
 import { calculateNewELO, estimatePercentage, didMatchMajority, getEloFieldForSex, getEloFieldForAge, getKFactor, getParticipationFieldForSex, getParticipationFieldForAge } from '@/lib/elo';
 import { createApiSuccess, createApiError } from '@/lib/utils';
-import { typedInsert, typedUpdate } from '@/lib/supabaseHelpers';
+import { typedInsert, typedUpdate } from '@/lib/supabase';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { Element } from '@/types/database';
 

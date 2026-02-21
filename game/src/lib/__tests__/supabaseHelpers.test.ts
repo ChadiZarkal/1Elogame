@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { typedInsert, typedUpdate } from '@/lib/supabaseHelpers';
+import { typedInsert, typedUpdate } from '@/lib/supabase';
 
 // Create a minimal mock SupabaseClient
 function createMockClient() {

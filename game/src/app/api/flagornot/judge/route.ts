@@ -7,10 +7,6 @@ import { createServerClient } from '@/lib/supabase';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-// ═══════════════════════════════════════
-// System prompt — shared across all AI providers
-// ═══════════════════════════════════════
-
 const SYSTEM_PROMPT = `Tu es un juge jeune, sarcastique et tranchant de Red Flags et Green Flags. Contexte: on joue dans une soirée/jeu social pour s'amuser et créer du débat amusant.
 
 PERSONA CLÉS:
@@ -58,17 +54,9 @@ TONE FINAL:
 - Drôle = invente des angles amusants (BDSM pour corde par ex)
 - Pas révolutionnaire à chaque coin de rue`;
 
-// ═══════════════════════════════════════
-// Gemini (primary) — via service account
-// ═══════════════════════════════════════
-
 async function tryGemini(text: string): Promise<{ verdict: 'red' | 'green'; justification: string }> {
   return judgeWithGemini(text, SYSTEM_PROMPT);
 }
-
-// ═══════════════════════════════════════
-// OpenAI (secondary fallback)
-// ═══════════════════════════════════════
 
 async function tryOpenAI(text: string): Promise<{ verdict: 'red' | 'green'; justification: string }> {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -112,10 +100,7 @@ async function tryOpenAI(text: string): Promise<{ verdict: 'red' | 'green'; just
   };
 }
 
-// ═══════════════════════════════════════
-// Local fallback (no AI needed)
-// ═══════════════════════════════════════
-
+/** Keyword-based fallback when AI providers are unavailable. */
 function judgeLocally(text: string): { verdict: 'red' | 'green'; justification: string } {
   const lower = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
@@ -176,15 +161,7 @@ function judgeLocally(text: string): { verdict: 'red' | 'green'; justification: 
   };
 }
 
-// ═══════════════════════════════════════
-// Route handler — Cascade: Gemini → OpenAI → Local
-// ═══════════════════════════════════════
-
-// ═══════════════════════════════════════
-// Save to community store (fire-and-forget)
-// Saves directly to Supabase — no HTTP round-trip
-// ═══════════════════════════════════════
-
+/** Save to community store (fire-and-forget, non-blocking). */
 async function saveToCommunity(text: string, verdict: 'red' | 'green') {
   try {
     const isMockMode = process.env.NEXT_PUBLIC_MOCK_MODE === 'true';
