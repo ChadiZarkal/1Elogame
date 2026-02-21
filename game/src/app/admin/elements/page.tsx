@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
+import { CategoryBadge } from '@/components/ui/CategoryBadge';
 import { Element, Categorie } from '@/types';
 import { CATEGORIES_CONFIG, CATEGORIES_LIST, getCategoryClasses } from '@/config/categories';
 import { AdminNav } from '@/components/admin/AdminNav';
@@ -273,7 +274,7 @@ export default function AdminElementsPage() {
                     >
                       <td className="p-4 text-[#F5F5F5]">{element.texte}</td>
                       <td className="p-4 text-center">
-                        <CategoryBadge category={element.categorie} />
+                        <CategoryBadge categorie={element.categorie} variant="pill" />
                       </td>
                       <td className="p-4 text-center text-[#F5F5F5] font-mono">
                         {Math.round(element.elo_global)}
@@ -356,7 +357,7 @@ export default function AdminElementsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <CategoryBadge category={element.categorie} />
+                  <CategoryBadge categorie={element.categorie} variant="pill" />
                   <span className="text-[#A3A3A3] text-sm font-mono">ELO: {Math.round(element.elo_global)}</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -538,20 +539,6 @@ function FilterButton({
     >
       {children}
     </button>
-  );
-}
-
-// Category Badge Component - Utilise la config centralisée
-function CategoryBadge({ category }: { category: Categorie }) {
-  const classes = getCategoryClasses(category);
-  const config = CATEGORIES_CONFIG[category];
-  const label = config?.label || category;
-  const emoji = config?.emoji || '';
-
-  return (
-    <span className={`px-2 py-1 rounded-full text-xs ${classes}`}>
-      {emoji} {label}
-    </span>
   );
 }
 

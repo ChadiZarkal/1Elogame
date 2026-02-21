@@ -1,0 +1,238 @@
+'use client';
+
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { trackAIRequest } from '@/lib/analytics';
+import type { GamePhase, JudgmentResult, HistoryItem, CommunitySubmission } from './constants';
+import { LOADING_PHRASES, PLACEHOLDERS, MIN_LOADING_MS, FALLBACK_SUGGESTIONS } from './constants';
+
+/**
+ * Custom hook encapsulating all Flag or Not game logic.
+ * Keeps the page component purely presentational.
+ */
+export function useFlagOrNot() {
+  const [phase, setPhase] = useState<GamePhase>('idle');
+  const [input, setInput] = useState('');
+  const [submittedText, setSubmittedText] = useState('');
+  const [result, setResult] = useState<JudgmentResult | null>(null);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [loadingPhrase, setLoadingPhrase] = useState(LOADING_PHRASES[0]);
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  const [showJustification, setShowJustification] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+  const [communitySubmissions, setCommunitySubmissions] = useState<CommunitySubmission[]>([]);
+  const [showCommunityTab, setShowCommunityTab] = useState(true);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
+
+  const redCount = useMemo(() => history.filter((h) => h.verdict === 'red').length, [history]);
+  const greenCount = useMemo(() => history.filter((h) => h.verdict === 'green').length, [history]);
+
+  const displaySuggestions = useMemo(() => {
+    if (communitySubmissions.length >= 4) {
+      return communitySubmissions.slice(0, 12).map((s) => ({
+        emoji: s.emoji,
+        text: s.text,
+        isCommunity: true,
+        timeAgo: s.timeAgo,
+      }));
+    }
+    return FALLBACK_SUGGESTIONS.map((s) => ({ ...s, isCommunity: false, timeAgo: '' }));
+  }, [communitySubmissions]);
+
+  // ── Fetch community ──
+  const fetchCommunitySubmissions = useCallback(async () => {
+    try {
+      const res = await fetch('/api/flagornot/community?limit=20');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.success && data.data?.submissions) {
+        setCommunitySubmissions(data.data.submissions);
+      }
+    } catch {
+      /* silent */
+    }
+  }, []);
+
+  // ── Init effects ──
+  useEffect(() => {
+    const updateHeight = () => {
+      const vh = window.visualViewport?.height || window.innerHeight;
+      document.documentElement.style.setProperty('--app-height', `${vh}px`);
+    };
+
+    const saved = localStorage.getItem('flagornot_show_justification');
+    if (saved !== null) setShowJustification(saved === 'true');
+
+    const savedHistory = localStorage.getItem('flagornot_history');
+    if (savedHistory) {
+      try {
+        const parsed = JSON.parse(savedHistory);
+        if (Array.isArray(parsed)) setHistory(parsed.slice(0, 50));
+      } catch {
+        /* ignore */
+      }
+    }
+
+    setIsMounted(true);
+    updateHeight();
+    window.visualViewport?.addEventListener('resize', updateHeight);
+    window.addEventListener('resize', updateHeight);
+    fetchCommunitySubmissions();
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'flagornot_show_justification' && e.newValue !== null) {
+        setShowJustification(e.newValue === 'true');
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      window.visualViewport?.removeEventListener('resize', updateHeight);
+      window.removeEventListener('resize', updateHeight);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [fetchCommunitySubmissions]);
+
+  useEffect(() => {
+    if (history.length > 0) {
+      localStorage.setItem('flagornot_history', JSON.stringify(history.slice(0, 50)));
+    }
+  }, [history]);
+
+  useEffect(() => {
+    if (phase === 'idle') {
+      const t = setTimeout(() => inputRef.current?.focus(), 150);
+      return () => clearTimeout(t);
+    }
+  }, [phase]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlaceholderIdx((p) => (p + 1) % PLACEHOLDERS.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ── Handlers ──
+  const handleSubmit = useCallback(async () => {
+    const text = input.trim();
+    if (!text || phase !== 'idle') return;
+
+    inputRef.current?.blur();
+    setSubmittedText(text);
+    setPhase('loading');
+    setLoadingPhrase(LOADING_PHRASES[Math.floor(Math.random() * LOADING_PHRASES.length)]);
+    trackAIRequest();
+
+    const startTime = Date.now();
+    const ensureMinDelay = async () => {
+      const elapsed = Date.now() - startTime;
+      if (elapsed < MIN_LOADING_MS) {
+        await new Promise((r) => setTimeout(r, MIN_LOADING_MS - elapsed));
+      }
+    };
+
+    try {
+      const res = await fetch('/api/flagornot/judge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) throw new Error('API error');
+      const data: JudgmentResult = await res.json();
+
+      await ensureMinDelay();
+      setResult(data);
+      setHistory((prev) => [{ ...data, text }, ...prev].slice(0, 50));
+      setPhase('reveal');
+
+      const justifSetting = localStorage.getItem('flagornot_show_justification');
+      if (justifSetting !== null) setShowJustification(justifSetting === 'true');
+
+      if (navigator.vibrate) {
+        navigator.vibrate(data.verdict === 'red' ? [80, 40, 80] : [60]);
+      }
+      fetchCommunitySubmissions();
+    } catch {
+      const fallback: JudgmentResult = {
+        verdict: Math.random() > 0.5 ? 'red' : 'green',
+        justification: "L'IA a bugué… mais on a deviné quand même 😅",
+      };
+      await ensureMinDelay();
+      setResult(fallback);
+      setHistory((prev) => [{ ...fallback, text }, ...prev].slice(0, 50));
+      setPhase('reveal');
+      if (navigator.vibrate) navigator.vibrate(40);
+    }
+  }, [input, phase, fetchCommunitySubmissions]);
+
+  const handleNext = useCallback(() => {
+    setResult(null);
+    setInput('');
+    setSubmittedText('');
+    setPhase('idle');
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  const handleShare = useCallback(async () => {
+    if (!result || !submittedText) return;
+    const shareText = `${result.verdict === 'red' ? '🚩 RED FLAG' : '🟢 GREEN FLAG'}: "${submittedText}" — Joue sur Red Flag Games !`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Red Flag Games — Flag or Not', text: shareText });
+      } catch {
+        /* user cancelled */
+      }
+    } else {
+      await navigator.clipboard.writeText(shareText);
+    }
+  }, [result, submittedText]);
+
+  const bgGradient = useMemo(() => {
+    if (phase === 'reveal' && result) {
+      return result.verdict === 'red'
+        ? 'radial-gradient(ellipse at 50% 25%, rgba(239,68,68,0.18) 0%, #0A0A0A 65%)'
+        : 'radial-gradient(ellipse at 50% 25%, rgba(16,185,129,0.18) 0%, #0A0A0A 65%)';
+    }
+    if (phase === 'loading') {
+      return 'radial-gradient(ellipse at 50% 50%, rgba(120,120,120,0.06) 0%, #0A0A0A 65%)';
+    }
+    return 'radial-gradient(ellipse at 50% 60%, rgba(50,50,50,0.08) 0%, #0A0A0A 70%)';
+  }, [phase, result]);
+
+  return {
+    // State
+    phase,
+    input,
+    setInput,
+    submittedText,
+    result,
+    history,
+    loadingPhrase,
+    placeholderIdx,
+    showJustification,
+    isMounted,
+    communitySubmissions,
+    showCommunityTab,
+    setShowCommunityTab,
+    redCount,
+    greenCount,
+    displaySuggestions,
+    bgGradient,
+    // Refs
+    inputRef,
+    mainRef,
+    // Handlers
+    handleSubmit,
+    handleNext,
+    handleKeyDown,
+    handleShare,
+  };
+}

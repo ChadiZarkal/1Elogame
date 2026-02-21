@@ -1,0 +1,254 @@
+'use client';
+
+import { RefObject } from 'react';
+import { motion } from 'framer-motion';
+import type { HistoryItem, CommunitySubmission } from './constants';
+import { FALLBACK_SUGGESTIONS, PLACEHOLDERS } from './constants';
+
+interface IdlePhaseProps {
+  input: string;
+  setInput: (v: string) => void;
+  history: HistoryItem[];
+  communitySubmissions: CommunitySubmission[];
+  showCommunityTab: boolean;
+  setShowCommunityTab: (v: boolean) => void;
+  displaySuggestions: { emoji: string; text: string; isCommunity: boolean; timeAgo: string }[];
+  placeholderIdx: number;
+  inputRef: RefObject<HTMLInputElement | null>;
+  onSubmit: () => void;
+  onKeyDown: (e: React.KeyboardEvent) => void;
+}
+
+export function IdlePhase({
+  input,
+  setInput,
+  history,
+  communitySubmissions,
+  showCommunityTab,
+  setShowCommunityTab,
+  displaySuggestions,
+  placeholderIdx,
+  inputRef,
+  onSubmit,
+  onKeyDown,
+}: IdlePhaseProps) {
+  return (
+    <motion.div
+      key="idle"
+      className="flex-1 flex flex-col min-h-0"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, y: -15 }}
+      transition={{ duration: 0.25 }}
+    >
+      <div className="flex-1 flex flex-col items-center justify-center px-6 min-h-0">
+        {/* Header icons */}
+        <motion.div
+          className="text-5xl mb-4 flex items-center gap-3"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+        >
+          <motion.span
+            animate={{ rotate: [0, -8, 8, 0] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            🚩
+          </motion.span>
+          <span className="text-[#4B5563] text-3xl font-thin">ou</span>
+          <motion.span
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+          >
+            🟢
+          </motion.span>
+        </motion.div>
+
+        <h2 className="text-[28px] sm:text-[32px] font-black text-[#FAFAFA] text-center mb-2">
+          Flag or Not ?
+        </h2>
+        <p className="text-[#6B7280] text-sm text-center mb-4 max-w-xs">
+          Écris un comportement ou une situation. L&apos;IA te dit si c&apos;est un red flag ou un
+          green flag.
+        </p>
+
+        {/* History pills */}
+        {history.length > 0 && (
+          <motion.div
+            className="mt-3 flex flex-wrap gap-1.5 justify-center max-w-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            {history.slice(0, 5).map((h, i) => (
+              <button
+                key={i}
+                onClick={() => setInput(h.text)}
+                className={`text-[11px] px-2.5 py-1 rounded-full border cursor-pointer hover:brightness-150 transition-all ${
+                  h.verdict === 'red'
+                    ? 'border-[#EF4444]/15 text-[#EF4444]/60 bg-[#EF4444]/5'
+                    : 'border-[#10B981]/15 text-[#10B981]/60 bg-[#10B981]/5'
+                }`}
+              >
+                {h.verdict === 'red' ? '🚩' : '🟢'} {h.text.slice(0, 22)}
+                {h.text.length > 22 ? '…' : ''}
+              </button>
+            ))}
+          </motion.div>
+        )}
+
+        {/* Community feed */}
+        {communitySubmissions.length > 0 && (
+          <motion.div
+            className="mt-5 w-full max-w-sm"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className="flex items-center gap-2 mb-2.5">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#4B5563]">
+                D&apos;autres ont testé
+              </span>
+              <span className="flex-1 h-px bg-[#1E1E1E]" />
+            </div>
+            <div className="space-y-1.5 max-h-[120px] overflow-y-auto scrollbar-hide">
+              {communitySubmissions.slice(0, 8).map((sub, i) => (
+                <motion.button
+                  key={sub.id || i}
+                  onClick={() => setInput(sub.text)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#111] border border-[#1A1A1A] hover:border-[#333] transition-all text-left group cursor-pointer"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.35 + i * 0.04 }}
+                >
+                  <span
+                    className={`text-xs flex-shrink-0 ${sub.verdict === 'red' ? 'text-[#EF4444]' : 'text-[#10B981]'}`}
+                  >
+                    {sub.verdict === 'red' ? '🚩' : '🟢'}
+                  </span>
+                  <span className="text-[12px] text-[#9CA3AF] group-hover:text-[#D1D5DB] truncate flex-1 transition-colors">
+                    {sub.text}
+                  </span>
+                  <span className="text-[9px] text-[#3D3D3D] flex-shrink-0">{sub.timeAgo}</span>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Bottom input zone */}
+      <div className="px-4 pb-[max(12px,env(safe-area-inset-bottom))]">
+        {/* Suggestions */}
+        {!input && (
+          <motion.div
+            className="mb-3 -mx-4 px-4"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+          >
+            {communitySubmissions.length > 0 && (
+              <div className="flex gap-2 mb-2">
+                <button
+                  onClick={() => setShowCommunityTab(true)}
+                  className={`text-[11px] px-3 py-1 rounded-full font-medium transition-all ${
+                    showCommunityTab
+                      ? 'bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/20'
+                      : 'text-[#6B7280] hover:text-[#9CA3AF]'
+                  }`}
+                >
+                  🔥 Tendances ({communitySubmissions.length})
+                </button>
+                <button
+                  onClick={() => setShowCommunityTab(false)}
+                  className={`text-[11px] px-3 py-1 rounded-full font-medium transition-all ${
+                    !showCommunityTab
+                      ? 'bg-[#6B7280]/10 text-[#9CA3AF] border border-[#6B7280]/20'
+                      : 'text-[#6B7280] hover:text-[#9CA3AF]'
+                  }`}
+                >
+                  💡 Suggestions
+                </button>
+              </div>
+            )}
+
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
+              {(showCommunityTab && communitySubmissions.length > 0
+                ? displaySuggestions
+                : FALLBACK_SUGGESTIONS.map((s) => ({ ...s, isCommunity: false, timeAgo: '' }))
+              ).map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => setInput(s.text)}
+                  className={`flex-none snap-start flex items-center gap-1.5 text-[12px] px-3 py-2.5 rounded-xl border text-[#9CA3AF] hover:text-[#FAFAFA] active:scale-[0.96] transition-all duration-150 whitespace-nowrap ${
+                    s.isCommunity
+                      ? 'bg-[#141414] border-[#EF4444]/10 hover:border-[#EF4444]/30'
+                      : 'bg-[#141414] border-[#1E1E1E] hover:border-[#EF4444]/30 active:bg-[#1A1A1A]'
+                  }`}
+                >
+                  <span className="text-sm">{s.emoji}</span>
+                  <span>{s.text.length > 35 ? s.text.slice(0, 35) + '…' : s.text}</span>
+                  {s.isCommunity && s.timeAgo && (
+                    <span className="text-[9px] text-[#4B5563] ml-1">{s.timeAgo}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Input + send */}
+        <div className="flex gap-2.5 items-center">
+          <div className="flex-1 relative">
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder={PLACEHOLDERS[placeholderIdx]}
+              maxLength={280}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              enterKeyHint="send"
+              className="w-full pl-4 pr-[52px] py-[14px] bg-[#141414] border border-[#1E1E1E] rounded-2xl text-[#FAFAFA] text-base placeholder:text-[#3D3D3D] focus:outline-none focus:border-[#EF4444]/40 focus:shadow-[0_0_25px_rgba(239,68,68,0.08)] transition-all duration-200"
+              style={{ fontSize: '16px' }}
+              aria-label="Écris un comportement à analyser"
+            />
+            {input.length > 0 && (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[#3D3D3D] tabular-nums">
+                {input.length}
+              </span>
+            )}
+          </div>
+
+          <motion.button
+            onClick={onSubmit}
+            disabled={!input.trim()}
+            className={`w-[52px] h-[52px] rounded-xl flex items-center justify-center flex-none text-white font-bold disabled:opacity-15 disabled:cursor-not-allowed active:scale-90 transition-all duration-200 ${
+              input.trim()
+                ? 'bg-[#EF4444] shadow-[0_0_20px_rgba(239,68,68,0.25)]'
+                : 'bg-[#1A1A1A]'
+            }`}
+            whileTap={input.trim() ? { scale: 0.85 } : {}}
+            aria-label="Envoyer"
+          >
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </motion.button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
