@@ -107,7 +107,7 @@ export function GameModeMenu({ currentSelection, onSelectionChange }: GameModeMe
           <>
             {/* Overlay pour fermer */}
             <motion.div
-              className="fixed inset-0 z-40"
+              className="fixed inset-0 z-[55]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -116,7 +116,7 @@ export function GameModeMenu({ currentSelection, onSelectionChange }: GameModeMe
 
             {/* Menu */}
             <motion.div
-              className="absolute right-0 mt-2 w-64 bg-[#1A1A1A] rounded-2xl shadow-2xl border border-white/10 z-50 overflow-hidden"
+              className="absolute right-0 mt-2 w-64 bg-[#1A1A1A] rounded-2xl shadow-2xl border border-white/10 z-[60] overflow-hidden"
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}

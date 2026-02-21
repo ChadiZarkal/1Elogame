@@ -155,7 +155,7 @@ export default function JouerPage() {
       {/* Current active duel/result - takes full screen height */}
       <div className="h-screen w-full relative flex flex-col">
         {/* Top bar: home + streak + mode */}
-        <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between">
+        <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {/* Home button */}
             <button
