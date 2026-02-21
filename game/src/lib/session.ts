@@ -133,6 +133,7 @@ export function hasSeenDuel(idA: string, idB: string): boolean {
 
 /**
  * Mark a duel as seen and update the session.
+ * Also tracks individual element appearances for anti-repeat.
  */
 export function markDuelAsSeen(idA: string, idB: string): void {
   const session = getSession();
@@ -149,9 +150,21 @@ export function markDuelAsSeen(idA: string, idB: string): void {
       // Remove oldest half
       session.seenDuels = session.seenDuels.slice(MAX_SEEN_DUELS / 2);
     }
-    
-    saveSession(session);
   }
+  
+  // Track element appearances for anti-repeat
+  if (!session.elementAppearances) session.elementAppearances = {};
+  session.elementAppearances[idA] = (session.elementAppearances[idA] || 0) + 1;
+  session.elementAppearances[idB] = (session.elementAppearances[idB] || 0) + 1;
+  
+  // Track recent elements (circular buffer, keep last 20)
+  if (!session.recentElementIds) session.recentElementIds = [];
+  session.recentElementIds.push(idA, idB);
+  if (session.recentElementIds.length > 20) {
+    session.recentElementIds = session.recentElementIds.slice(-20);
+  }
+  
+  saveSession(session);
 }
 
 /**
@@ -167,6 +180,40 @@ export function getSeenDuels(): string[] {
  */
 export function getSeenDuelsString(): string {
   return getSeenDuels().join(',');
+}
+
+/**
+ * Get the recent element IDs (for cooldown anti-repeat).
+ */
+export function getRecentElementIds(): string[] {
+  const session = getSession();
+  return session?.recentElementIds ?? [];
+}
+
+/**
+ * Get element appearance counts (for max-appearances anti-repeat).
+ */
+export function getElementAppearances(): Record<string, number> {
+  const session = getSession();
+  return session?.elementAppearances ?? {};
+}
+
+/**
+ * Get recent element IDs as a comma-separated string for API calls.
+ */
+export function getRecentElementIdsString(): string {
+  return getRecentElementIds().join(',');
+}
+
+/**
+ * Get element appearances as a compact string for API calls.
+ * Format: "id1:count1,id2:count2,..."
+ */
+export function getElementAppearancesString(): string {
+  const appearances = getElementAppearances();
+  return Object.entries(appearances)
+    .map(([id, count]) => `${id}:${count}`)
+    .join(',');
 }
 
 /**

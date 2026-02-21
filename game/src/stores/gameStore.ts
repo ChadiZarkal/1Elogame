@@ -10,6 +10,8 @@ import {
   markDuelAsSeen,
   getSeenDuelsString,
   getStreakEmoji,
+  getRecentElementIdsString,
+  getElementAppearancesString,
 } from '@/lib/session';
 import { trackVote, trackProfile, trackCategoryChange } from '@/lib/analytics';
 
@@ -162,11 +164,19 @@ export const useGameStore = create<GameState>((set, get) => ({
     
     try {
       const seenDuels = getSeenDuelsString();
+      const recentElements = getRecentElementIdsString();
+      const appearances = getElementAppearancesString();
       
       // Construire les paramètres avec le mode de jeu
       const params = new URLSearchParams();
       if (seenDuels) {
         params.set('seenDuels', seenDuels);
+      }
+      if (recentElements) {
+        params.set('recentElements', recentElements);
+      }
+      if (appearances) {
+        params.set('appearances', appearances);
       }
       if (gameMode.mode === 'thematique' && gameMode.category) {
         params.set('category', gameMode.category);

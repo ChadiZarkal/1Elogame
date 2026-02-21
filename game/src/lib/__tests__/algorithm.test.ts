@@ -16,8 +16,11 @@ import {
   selectDuelPair,
   getTotalPossibleDuels,
   allDuelsExhausted,
+  AntiRepeatContext,
 } from '@/lib/algorithm';
 import { Element } from '@/types/database';
+
+const emptyContext: AntiRepeatContext = { recentElementIds: [], elementAppearances: {} };
 
 // Factory pour créer des éléments de test
 function createMockElement(overrides: Partial<Element> = {}): Element {
@@ -110,7 +113,7 @@ describe('findCloseEloPairs', () => {
       createMockElement({ id: 'b', elo_global: 1100 }), // diff = 100
       createMockElement({ id: 'c', elo_global: 2000 }), // diff = 1000 (trop loin)
     ];
-    const pairs = findCloseEloPairs(elements, new Set(), 10);
+    const pairs = findCloseEloPairs(elements, new Set(), emptyContext);
     // Au moins une paire a-b devrait être trouvée
     expect(pairs.length).toBeGreaterThanOrEqual(1);
     const foundPair = pairs.some(([a, b]) => 
@@ -125,7 +128,7 @@ describe('findCloseEloPairs', () => {
       createMockElement({ id: 'b', elo_global: 1050 }),
     ];
     const seen = new Set(['a-b']);
-    const pairs = findCloseEloPairs(elements, seen, 10);
+    const pairs = findCloseEloPairs(elements, seen, emptyContext);
     expect(pairs).toHaveLength(0);
   });
 });
@@ -137,7 +140,7 @@ describe('findCrossCategoryPairs', () => {
       createMockElement({ id: 'b', categorie: 'bureau' }),
       createMockElement({ id: 'c', categorie: 'sexe' }),
     ];
-    const pairs = findCrossCategoryPairs(elements, new Set(), 10);
+    const pairs = findCrossCategoryPairs(elements, new Set(), emptyContext);
     for (const [a, b] of pairs) {
       expect(a.categorie).not.toBe(b.categorie);
     }
@@ -151,16 +154,17 @@ describe('findRandomPairs', () => {
       createMockElement({ id: 'b' }),
       createMockElement({ id: 'c' }),
     ];
-    const pairs = findRandomPairs(elements, new Set(), 10);
+    const pairs = findRandomPairs(elements, new Set(), emptyContext);
     expect(pairs.length).toBeGreaterThan(0);
   });
 
-  it('respecte la limite', () => {
+  it('respecte la limite configurée', () => {
     const elements = Array.from({ length: 10 }, (_, i) =>
       createMockElement({ id: `el-${i}` })
     );
-    const pairs = findRandomPairs(elements, new Set(), 3);
-    expect(pairs.length).toBeLessThanOrEqual(3);
+    const pairs = findRandomPairs(elements, new Set(), emptyContext);
+    // Default candidatePoolSize = 10
+    expect(pairs.length).toBeLessThanOrEqual(10);
   });
 });
 

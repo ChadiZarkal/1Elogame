@@ -14,6 +14,10 @@ export interface GameSession {
   seenDuels: string[];  // "id1-id2" format, sorted alphabetically
   streak: number;
   duelCount: number;
+  /** Circular buffer of recent element IDs (for cooldown) */
+  recentElementIds?: string[];
+  /** Count of appearances per element this session (for max-appearances) */
+  elementAppearances?: Record<string, number>;
 }
 
 // Duel for game display

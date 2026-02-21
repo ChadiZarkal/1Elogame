@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { selectDuelPair, toElementDTO } from '@/lib/algorithm';
+import { selectDuelPair, toElementDTO, AntiRepeatContext } from '@/lib/algorithm';
 import { createApiSuccess, createApiError } from '@/lib/utils';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { Element } from '@/types/database';
@@ -18,11 +18,13 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const seenDuelsParam = searchParams.get('seenDuels') || '';
     const categoryParam = searchParams.get('category') || null;
+    const recentElementsParam = searchParams.get('recentElements') || '';
+    const appearancesParam = searchParams.get('appearances') || '';
     
-    // Guard against oversized seenDuels param (max 10KB)
-    if (seenDuelsParam.length > 10_000) {
+    // Guard against oversized params (max 10KB each)
+    if (seenDuelsParam.length > 10_000 || recentElementsParam.length > 5_000 || appearancesParam.length > 5_000) {
       return NextResponse.json(
-        createApiError('VALIDATION_ERROR', 'seenDuels trop long'),
+        createApiError('VALIDATION_ERROR', 'Paramètres trop longs'),
         { status: 400 }
       );
     }
@@ -31,6 +33,22 @@ export async function GET(request: NextRequest) {
     const seenDuels = new Set<string>(
       seenDuelsParam ? seenDuelsParam.split(',').filter(Boolean) : []
     );
+    
+    // Parse anti-repeat context
+    const antiRepeatContext: AntiRepeatContext = {
+      recentElementIds: recentElementsParam ? recentElementsParam.split(',').filter(Boolean) : [],
+      elementAppearances: {},
+    };
+    
+    // Parse appearances: "id1:count1,id2:count2,..."
+    if (appearancesParam) {
+      for (const entry of appearancesParam.split(',').filter(Boolean)) {
+        const [id, countStr] = entry.split(':');
+        if (id && countStr) {
+          antiRepeatContext.elementAppearances[id] = parseInt(countStr, 10) || 0;
+        }
+      }
+    }
     
     let elements: Element[];
     let starredPairs: { element_a_id: string; element_b_id: string; stars_count: number }[] | undefined;
@@ -93,8 +111,8 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Select duel pair using the algorithm
-    const pair = selectDuelPair(elements, seenDuels, starredPairs);
+    // Select duel pair using the algorithm with anti-repeat
+    const pair = selectDuelPair(elements, seenDuels, antiRepeatContext, starredPairs);
     
     if (!pair) {
       return NextResponse.json(
