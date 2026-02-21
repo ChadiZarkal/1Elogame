@@ -76,7 +76,7 @@ export default function AdminLoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#737373] hover:text-[#F5F5F5] transition-colors text-sm"
+                className="absolute right-1 top-1/2 -translate-y-1/2 text-[#737373] hover:text-[#F5F5F5] transition-colors text-sm p-2 rounded-lg"
                 tabIndex={-1}
               >
                 {showPassword ? '🙈' : '👁️'}
@@ -106,7 +106,7 @@ export default function AdminLoginPage() {
         </form>
 
         <p className="text-center text-[#737373] text-sm mt-8">
-          <Link href="/" className="hover:text-[#F5F5F5] transition-colors">
+          <Link href="/" className="hover:text-[#F5F5F5] transition-colors py-2 px-3 -mx-3 rounded-lg inline-block">
             ← Retour au jeu
           </Link>
         </p>

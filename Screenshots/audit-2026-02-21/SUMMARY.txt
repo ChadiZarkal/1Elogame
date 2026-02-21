@@ -1,0 +1,7 @@
+UX/UI Audit Screenshots — 2026-02-21
+
+✅ 01-homepage: OK
+✅ 02-profile-form: OK
+✅ 03-flagornot: OK
+✅ 04-classement: OK
+✅ 05-admin: OK

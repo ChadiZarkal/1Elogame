@@ -2,6 +2,26 @@
 
 import { motion } from 'framer-motion';
 import { ElementDTO } from '@/types/game';
+import { getCategory } from '@/config/categories';
+
+// Pretty category badge with emoji + name
+function CategoryBadge({ categorie }: { categorie: string }) {
+  const cat = getCategory(categorie);
+  if (!cat) return (
+    <p className="mt-3 text-[#737373] text-xs uppercase tracking-widest font-medium">
+      {categorie}
+    </p>
+  );
+  return (
+    <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <span className="text-sm">{cat.emoji}</span>
+      <span className="text-[10px] uppercase tracking-widest font-medium" style={{ color: '#9CA3AF' }}>
+        {cat.labelFr}
+      </span>
+    </div>
+  );
+}
 
 interface DuelInterfaceProps {
   elementA: ElementDTO;
@@ -55,9 +75,7 @@ export function DuelInterface({ elementA, elementB, onVote, disabled }: DuelInte
           >
             {elementA.texte}
           </motion.p>
-          <p className="mt-3 text-[#737373] text-xs uppercase tracking-widest font-medium">
-            {elementA.categorie}
-          </p>
+          <CategoryBadge categorie={elementA.categorie} />
         </div>
       </motion.button>
       
@@ -95,9 +113,7 @@ export function DuelInterface({ elementA, elementB, onVote, disabled }: DuelInte
           >
             {elementB.texte}
           </motion.p>
-          <p className="mt-3 text-[#737373] text-xs uppercase tracking-widest font-medium">
-            {elementB.categorie}
-          </p>
+          <CategoryBadge categorie={elementB.categorie} />
         </div>
       </motion.button>
     </div>

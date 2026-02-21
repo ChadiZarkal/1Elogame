@@ -1,317 +1,114 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Share2, ArrowRight, ExternalLink, Users, Heart, Sparkles, ChevronDown, Play, Zap } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Trophy, Share2, ArrowRight, ExternalLink, Users, Heart, Play } from 'lucide-react';
 import { toast } from 'sonner';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { GradientText } from '@/components/ui/GradientText';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
-import { useReducedMotion, useHaptics, useIsMobile } from '@/lib/hooks';
+import { useReducedMotion, useHaptics } from '@/lib/hooks';
 
-// ─── First-visit detection ─────────────────────────────────
-function useFirstVisit() {
-  const [isFirst, setIsFirst] = useState(false);
-  useEffect(() => {
-    if (!localStorage.getItem('rf_visited')) {
-      setIsFirst(true);
-      localStorage.setItem('rf_visited', '1');
-    }
-  }, []);
-  return isFirst;
-}
-
-// ─── Game config ───────────────────────────────────────────
-const PRIMARY_GAME = {
-  id: 'red-flag',
-  href: '/jeu',
-  external: false,
-  emoji: '🚩',
-  label: 'JEU PRINCIPAL',
-  title: 'Red Flag',
-  subtitle: 'Le classique',
-  description: '2 situations. 1 choix. Laquelle est la pire ?',
-  cta: 'Jouer maintenant',
-  color: '#EF4444',
-  colorDim: 'rgba(239,68,68,0.12)',
-  colorBorder: 'rgba(239,68,68,0.30)',
-  colorGlow: 'rgba(239,68,68,0.25)',
-  players: '+ de 10k joueurs',
-} as const;
-
-const SECONDARY_GAMES = [
+// ─── Game config — all 3 games at the SAME level ───────────
+const GAMES = [
+  {
+    id: 'red-flag',
+    href: '/jeu',
+    external: false,
+    emoji: '🚩',
+    badge: 'DUEL',
+    title: 'Red Flag',
+    description: '2 situations. 1 choix. Lequel est le plus red flag ?',
+    cta: 'Jouer',
+    color: '#EF4444',
+    colorDim: 'rgba(239,68,68,0.10)',
+    colorBorder: 'rgba(239,68,68,0.25)',
+  },
   {
     id: 'flag-or-not',
     href: '/flagornot',
     external: false,
     emoji: '🤖',
+    badge: 'IA',
     title: 'Flag or Not',
-    description: 'L\'IA juge ta situation',
+    description: "L'IA juge ta situation",
     cta: 'Tester',
     color: '#10B981',
     colorDim: 'rgba(16,185,129,0.10)',
-    colorBorder: 'rgba(16,185,129,0.22)',
-    colorGlow: 'rgba(16,185,129,0.15)',
-    badge: 'IA',
+    colorBorder: 'rgba(16,185,129,0.25)',
   },
   {
     id: 'red-flag-test',
     href: 'https://redorgreen.fr/?quiz=quiz-sexualite',
     external: true,
     emoji: '🧪',
+    badge: 'QUIZ',
     title: 'Red Flag Test',
     description: 'Es-tu un red flag ?',
     cta: 'Quiz',
-    color: '#F59E0B',
-    colorDim: 'rgba(245,158,11,0.10)',
-    colorBorder: 'rgba(245,158,11,0.22)',
-    colorGlow: 'rgba(245,158,11,0.15)',
-    badge: 'QUIZ',
+    color: '#A855F7',
+    colorDim: 'rgba(168,85,247,0.10)',
+    colorBorder: 'rgba(168,85,247,0.25)',
   },
 ] as const;
 
-// ─── How-to-play steps ─────────────────────────────────────
-const STEPS = [
-  { emoji: '👆', title: 'Choisis', desc: 'La pire des 2 situations' },
-  { emoji: '📊', title: 'Compare', desc: 'Avec les autres joueurs' },
-  { emoji: '🔥', title: 'Enchaîne', desc: 'Le streak monte !' },
-] as const;
-
-// ─── Primary Hero Card ─────────────────────────────────────
-function HeroCard({
-  onPlay,
-  reducedMotion,
-  stats,
-}: {
-  onPlay: () => void;
-  reducedMotion: boolean;
-  stats: { totalVotes: number; estimatedPlayers: number } | null;
-}) {
-  const { tap } = useHaptics();
-
-  return (
-    <motion.div
-      initial={reducedMotion ? undefined : { opacity: 0, y: 24, scale: 0.97 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: 0.1, type: 'spring', stiffness: 200, damping: 20 }}
-      className="w-full rounded-3xl overflow-hidden relative"
-      style={{
-        background: 'linear-gradient(145deg, rgba(239,68,68,0.08) 0%, rgba(15,15,18,0.98) 50%, rgba(249,115,22,0.05) 100%)',
-        border: '1px solid rgba(239,68,68,0.20)',
-        boxShadow: '0 8px 40px rgba(239,68,68,0.12), 0 0 0 1px rgba(239,68,68,0.06)',
-      }}
-    >
-      {/* Glow orb behind card */}
-      <div
-        className="absolute -top-20 left-1/2 -translate-x-1/2 w-60 h-60 rounded-full pointer-events-none"
-        style={{
-          background: 'radial-gradient(circle, rgba(239,68,68,0.15) 0%, transparent 70%)',
-          filter: 'blur(40px)',
-        }}
-      />
-
-      <div className="relative px-6 pt-7 pb-6">
-        {/* Top label */}
-        <div className="flex items-center justify-between mb-5">
-          <span
-            className="inline-flex items-center gap-1.5 text-[10px] font-black tracking-[0.16em] px-2.5 py-1 rounded-full"
-            style={{
-              color: '#EF4444',
-              background: 'rgba(239,68,68,0.12)',
-              border: '1px solid rgba(239,68,68,0.25)',
-            }}
-          >
-            <Sparkles size={10} />
-            JEU PRINCIPAL
-          </span>
-          {stats && (
-            <span className="flex items-center gap-1.5 text-[10px] font-medium" style={{ color: '#52525B' }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              <AnimatedCounter value={stats.estimatedPlayers} /> en ligne
-            </span>
-          )}
-        </div>
-
-        {/* Emoji + title row */}
-        <div className="flex items-center gap-4 mb-4">
-          <motion.div
-            className="flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center text-4xl"
-            animate={reducedMotion ? undefined : { rotate: [0, -8, 8, 0] }}
-            transition={{ duration: 3.5, repeat: Infinity, repeatDelay: 2 }}
-            style={{
-              background: 'rgba(239,68,68,0.12)',
-              border: '1.5px solid rgba(239,68,68,0.30)',
-              boxShadow: '0 0 24px rgba(239,68,68,0.20)',
-            }}
-          >
-            🚩
-          </motion.div>
-          <div className="flex-1">
-            <h2
-              className="text-2xl font-black tracking-tight leading-none"
-              style={{ color: '#F5F5F7' }}
-            >
-              Red Flag
-            </h2>
-            <p className="text-sm mt-1 font-medium" style={{ color: '#6B7280' }}>
-              2 situations. 1 choix. Laquelle est la pire ?
-            </p>
-          </div>
-        </div>
-
-        {/* Big CTA button */}
-        <motion.button
-          onClick={() => { tap(); onPlay(); }}
-          whileTap={{ scale: 0.96 }}
-          className="hero-cta-pulse w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl font-black text-base cursor-pointer relative overflow-hidden"
-          style={{
-            background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
-            color: '#fff',
-            boxShadow: '0 4px 24px rgba(239,68,68,0.40), 0 0 0 1px rgba(239,68,68,0.50)',
-            minHeight: 56,
-          }}
-          aria-label="Jouer à Red Flag"
-        >
-          <Play size={20} fill="#fff" />
-          Jouer maintenant
-          <ArrowRight size={18} className="ml-1" />
-        </motion.button>
-
-        {/* Quick stats row */}
-        {stats && (
-          <div className="flex items-center justify-center gap-4 mt-4">
-            <div className="flex items-center gap-1.5">
-              <Heart size={11} style={{ color: '#EF4444' }} />
-              <span className="text-xs font-bold" style={{ color: '#EF4444' }}>
-                <AnimatedCounter value={stats.totalVotes} />
-              </span>
-              <span className="text-[10px]" style={{ color: '#52525B' }}>votes</span>
-            </div>
-            <div className="w-px h-3" style={{ background: 'rgba(255,255,255,0.08)' }} />
-            <div className="flex items-center gap-1.5">
-              <Users size={11} style={{ color: '#A1A1AA' }} />
-              <span className="text-xs font-bold" style={{ color: '#A1A1AA' }}>
-                <AnimatedCounter value={stats.estimatedPlayers} />
-              </span>
-              <span className="text-[10px]" style={{ color: '#52525B' }}>joueurs</span>
-            </div>
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── How‑to‑Play Section ───────────────────────────────────
-function HowToPlay({ reducedMotion }: { reducedMotion: boolean }) {
-  const [open, setOpen] = useState(false);
-  const isFirst = useFirstVisit();
-
-  // Auto-open for first-time visitors
-  useEffect(() => {
-    if (isFirst) setOpen(true);
-  }, [isFirst]);
-
-  return (
-    <motion.div
-      initial={reducedMotion ? undefined : { opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.25, duration: 0.4 }}
-      className="w-full"
-    >
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer"
-        style={{
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.06)',
-        }}
-        aria-expanded={open}
-        aria-controls="how-to-play"
-      >
-        <span className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#A1A1AA' }}>
-          <Zap size={14} style={{ color: '#F59E0B' }} />
-          Comment ça marche ?
-        </span>
-        <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
-          <ChevronDown size={16} style={{ color: '#52525B' }} />
-        </motion.div>
-      </button>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            id="how-to-play"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="overflow-hidden"
-          >
-            <div className="grid grid-cols-3 gap-2 pt-3">
-              {STEPS.map((step, i) => (
-                <motion.div
-                  key={step.title}
-                  initial={reducedMotion ? undefined : { opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.08 * i }}
-                  className="flex flex-col items-center text-center px-2 py-3 rounded-xl"
-                  style={{
-                    background: 'rgba(255,255,255,0.02)',
-                    border: '1px solid rgba(255,255,255,0.04)',
-                  }}
-                >
-                  <span className="text-2xl mb-1.5">{step.emoji}</span>
-                  <span className="text-xs font-bold" style={{ color: '#F5F5F7' }}>{step.title}</span>
-                  <span className="text-[10px] mt-0.5 leading-tight" style={{ color: '#52525B' }}>{step.desc}</span>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
-
-// ─── Secondary Game Card ───────────────────────────────────
-function SecondaryCard({
+// ─── Game Card (equal for all 3) with 3D tilt ─────────────
+function GameCard({
   game,
   index,
   onNavigate,
   reducedMotion,
 }: {
-  game: (typeof SECONDARY_GAMES)[number];
+  game: (typeof GAMES)[number];
   index: number;
   onNavigate: (href: string, external: boolean) => void;
   reducedMotion: boolean;
 }) {
   const { tap } = useHaptics();
+  const cardRef = useRef<HTMLButtonElement>(null);
+
+  // 3D tilt on pointer move
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (reducedMotion || !cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    cardRef.current.style.transform = `perspective(600px) rotateY(${x * 8}deg) rotateX(${-y * 6}deg) scale(1.02)`;
+  }, [reducedMotion]);
+
+  const handlePointerLeave = useCallback(() => {
+    if (cardRef.current) {
+      cardRef.current.style.transform = 'perspective(600px) rotateY(0deg) rotateX(0deg) scale(1)';
+    }
+  }, []);
 
   return (
     <motion.button
-      initial={reducedMotion ? undefined : { opacity: 0, y: 20 }}
+      initial={reducedMotion ? undefined : { opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={
         reducedMotion
           ? { duration: 0 }
-          : { delay: 0.3 + index * 0.08, type: 'spring', stiffness: 260, damping: 22 }
+          : { delay: 0.15 + index * 0.1, type: 'spring', stiffness: 240, damping: 22 }
       }
       whileTap={{ scale: 0.96 }}
-      onClick={() => { tap(); onNavigate(game.href, 'external' in game && game.external); }}
-      className="flex-1 flex flex-col items-center text-center p-4 rounded-2xl cursor-pointer group relative overflow-hidden"
+      onClick={() => { tap(); onNavigate(game.href, game.external); }}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+      ref={cardRef}
+      className="w-full flex items-center gap-4 p-4 rounded-2xl cursor-pointer group relative overflow-hidden text-left"
       style={{
         background: `linear-gradient(145deg, ${game.colorDim} 0%, rgba(15,15,18,0.97) 70%)`,
         border: `1px solid ${game.colorBorder}`,
-        minHeight: 140,
-        transition: 'all 0.22s ease',
+        transition: 'transform 0.15s ease-out, box-shadow 0.22s ease',
+        willChange: 'transform',
       }}
       aria-label={`Jouer à ${game.title}`}
     >
       {/* Badge */}
       <span
-        className="absolute top-2.5 right-2.5 text-[8px] font-black tracking-[0.12em] px-2 py-[2px] rounded-full"
+        className="absolute top-2.5 right-2.5 text-[10px] font-black tracking-[0.12em] px-2 py-[2px] rounded-full"
         style={{
           color: game.color,
           background: `${game.color}18`,
@@ -322,41 +119,45 @@ function SecondaryCard({
       </span>
 
       {/* Emoji */}
-      <div
-        className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-2.5"
+      <motion.div
+        className="flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center text-3xl"
+        animate={reducedMotion ? undefined : { rotate: [0, -6, 6, 0] }}
+        transition={{ duration: 3.5, repeat: Infinity, repeatDelay: 2.5 + index }}
         style={{
           background: `${game.color}14`,
           border: `1px solid ${game.color}25`,
         }}
       >
         {game.emoji}
+      </motion.div>
+
+      {/* Text */}
+      <div className="flex-1 min-w-0">
+        <h3 className="text-lg font-black mb-0.5" style={{ color: '#F5F5F7' }}>{game.title}</h3>
+        <p className="text-xs leading-snug" style={{ color: '#6B7280' }}>{game.description}</p>
       </div>
 
-      {/* Title */}
-      <h3 className="text-sm font-bold mb-0.5" style={{ color: '#F5F5F7' }}>{game.title}</h3>
-      <p className="text-[10px] leading-snug mb-3" style={{ color: '#6B7280' }}>{game.description}</p>
-
-      {/* CTA pill */}
+      {/* CTA arrow */}
       <div
-        className="mt-auto flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold"
+        className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-full"
         style={{
           background: `${game.color}18`,
-          color: game.color,
           border: `1px solid ${game.color}30`,
         }}
       >
-        {game.cta}
-        {'external' in game && game.external ? <ExternalLink size={10} /> : <ArrowRight size={11} />}
+        {game.external ? (
+          <ExternalLink size={14} style={{ color: game.color }} />
+        ) : (
+          <ArrowRight size={14} style={{ color: game.color }} />
+        )}
       </div>
     </motion.button>
   );
 }
-
 // ─── Main Page ─────────────────────────────────────────────
 export default function HubPage() {
   const router = useRouter();
   const reducedMotion = useReducedMotion();
-  const isMobile = useIsMobile();
   const { tap } = useHaptics();
   const [stats, setStats] = useState<{ totalVotes: number; estimatedPlayers: number } | null>(null);
   const [statsLoaded, setStatsLoaded] = useState(false);
@@ -373,11 +174,6 @@ export default function HubPage() {
     if (external) window.open(href, '_blank', 'noopener,noreferrer');
     else router.push(href);
   }, [router]);
-
-  const handlePlay = useCallback(() => {
-    tap();
-    router.push('/jeu');
-  }, [tap, router]);
 
   const handleShare = useCallback(async () => {
     tap();
@@ -398,20 +194,17 @@ export default function HubPage() {
       className="relative flex flex-col items-center min-h-screen min-h-[100dvh] overflow-hidden"
       style={{ background: 'var(--bg-primary)' }}
     >
-      {/* Animated gradient orbs */}
       <AnimatedBackground variant="default" />
 
-      {/* ─── Main layout ─── */}
-      <main className="relative z-10 flex flex-col items-center w-full max-w-lg mx-auto px-4 sm:px-5 pt-10 pb-28 min-h-screen min-h-[100dvh]">
+      <main className="relative z-10 flex flex-col items-center w-full max-w-lg mx-auto px-4 sm:px-5 pt-10 pb-12 min-h-screen min-h-[100dvh]">
 
-        {/* ─── COMPACT HERO ─── */}
+        {/* ─── Header ─── */}
         <motion.header
-          className="w-full text-center mb-6"
+          className="w-full text-center mb-8"
           initial={reducedMotion ? undefined : { opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
-          {/* Title row — compact on mobile */}
           <div className="flex items-center justify-center gap-3 mb-2">
             <motion.span
               className="text-3xl sm:text-4xl select-none"
@@ -432,75 +225,55 @@ export default function HubPage() {
             Le party game qui fait débat entre amis 🔥
           </p>
 
-          {/* Compact trust pills */}
-          <div className="flex items-center justify-center gap-1.5 mt-3">
-            {['✅ Gratuit', '⚡ Sans inscription', '👥 Multijoueur'].map(pill => (
-              <span
-                key={pill}
-                className="px-2 py-0.5 rounded-full text-[10px] font-medium"
-                style={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  color: '#52525B',
-                }}
-              >
-                {pill}
-              </span>
-            ))}
-          </div>
+          {/* Stats row */}
+          {statsLoaded && stats && (
+            <div className="flex items-center justify-center gap-4 mt-3">
+              <div className="flex items-center gap-1.5">
+                <Heart size={11} style={{ color: '#EF4444' }} />
+                <span className="text-xs font-bold" style={{ color: '#EF4444' }}>
+                  <AnimatedCounter value={stats.totalVotes} />
+                </span>
+                <span className="text-[10px]" style={{ color: '#52525B' }}>votes</span>
+              </div>
+              <div className="w-px h-3" style={{ background: 'rgba(255,255,255,0.08)' }} />
+              <div className="flex items-center gap-1.5">
+                <Users size={11} style={{ color: '#A1A1AA' }} />
+                <span className="text-xs font-bold" style={{ color: '#A1A1AA' }}>
+                  <AnimatedCounter value={stats.estimatedPlayers} />
+                </span>
+                <span className="text-[10px]" style={{ color: '#52525B' }}>joueurs</span>
+              </div>
+            </div>
+          )}
         </motion.header>
 
-        {/* ─── HERO CARD (primary game) ─── */}
-        <div className="w-full mb-4">
-          <HeroCard
-            onPlay={handlePlay}
-            reducedMotion={reducedMotion}
-            stats={statsLoaded ? stats : null}
-          />
+        {/* ─── All 3 games — EQUAL level ─── */}
+        <div className="w-full flex flex-col gap-3 mb-6" role="list" aria-label="Nos jeux">
+          {GAMES.map((game, i) => (
+            <GameCard
+              key={game.id}
+              game={game}
+              index={i}
+              onNavigate={handleNavigate}
+              reducedMotion={reducedMotion}
+            />
+          ))}
         </div>
 
-        {/* ─── HOW TO PLAY ─── */}
-        <div className="w-full mb-5">
-          <HowToPlay reducedMotion={reducedMotion} />
-        </div>
-
-        {/* ─── SECONDARY GAMES (2-col grid) ─── */}
-        <motion.div
-          className="w-full mb-5"
-          initial={reducedMotion ? undefined : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <p className="text-[11px] font-bold tracking-[0.12em] uppercase mb-3 px-1" style={{ color: '#3F3F46' }}>
-            Autres jeux
-          </p>
-          <div className="grid grid-cols-2 gap-3" role="list" aria-label="Autres jeux">
-            {SECONDARY_GAMES.map((game, i) => (
-              <SecondaryCard
-                key={game.id}
-                game={game}
-                index={i}
-                onNavigate={handleNavigate}
-                reducedMotion={reducedMotion}
-              />
-            ))}
-          </div>
-        </motion.div>
-
-        {/* ─── ACTION BAR ─── */}
+        {/* ─── Action bar ─── */}
         <motion.div
           className="flex items-center gap-3 w-full"
           initial={reducedMotion ? undefined : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45, duration: 0.4 }}
+          transition={{ delay: 0.5, duration: 0.4 }}
         >
           <button
             onClick={() => { tap(); router.push('/classement'); }}
             className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm active:scale-[0.96]"
             style={{
-              background: 'rgba(245,158,11,0.08)',
-              border: '1px solid rgba(245,158,11,0.20)',
-              color: '#F59E0B',
+              background: 'rgba(59,130,246,0.08)',
+              border: '1px solid rgba(59,130,246,0.20)',
+              color: '#3B82F6',
               transition: 'all 0.2s ease',
             }}
           >
@@ -524,7 +297,7 @@ export default function HubPage() {
           </button>
         </motion.div>
 
-        {/* ─── FOOTER ─── */}
+        {/* ─── Footer ─── */}
         <motion.footer
           className="mt-6 text-center"
           initial={reducedMotion ? undefined : { opacity: 0 }}
@@ -532,45 +305,10 @@ export default function HubPage() {
           transition={{ delay: 0.7 }}
         >
           <p className="text-[10px]" style={{ color: '#27272A' }}>
-            Red Flag Games — v3.9
+            Red Flag Games — v4.0
           </p>
         </motion.footer>
       </main>
-
-      {/* ─── FLOATING BOTTOM CTA (mobile-only) ─── */}
-      {isMobile && (
-        <motion.div
-          className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom"
-          initial={{ y: 80 }}
-          animate={{ y: 0 }}
-          transition={{ delay: 1, type: 'spring', stiffness: 300, damping: 25 }}
-        >
-          <div
-            className="mx-4 mb-3 rounded-2xl overflow-hidden"
-            style={{
-              background: 'rgba(10,10,11,0.92)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(239,68,68,0.15)',
-              boxShadow: '0 -4px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(239,68,68,0.08)',
-            }}
-          >
-            <button
-              onClick={handlePlay}
-              className="hero-cta-pulse w-full flex items-center justify-center gap-2.5 py-3.5 font-black text-sm cursor-pointer"
-              style={{
-                background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
-                color: '#fff',
-              }}
-              aria-label="Lancer une partie Red Flag"
-            >
-              <Play size={16} fill="#fff" />
-              Jouer à Red Flag
-              <ArrowRight size={15} />
-            </button>
-          </div>
-        </motion.div>
-      )}
     </div>
   );
 }

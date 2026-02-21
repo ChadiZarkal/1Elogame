@@ -108,7 +108,7 @@ export default function LeaderboardPage() {
       {/* Header */}
       <div className="pt-8 pb-5 px-4" style={{ background: `linear-gradient(to bottom, ${accent}15, transparent)` }}>
         <div className="max-w-2xl mx-auto">
-          <button onClick={() => router.push('/')} className="text-[#737373] hover:text-[#F5F5F5] text-sm mb-3 block transition-colors">
+          <button onClick={() => router.push('/')} className="text-[#737373] hover:text-[#F5F5F5] text-sm mb-3 py-2 px-3 -ml-3 block transition-colors rounded-lg">
             ← Accueil
           </button>
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
@@ -155,7 +155,7 @@ export default function LeaderboardPage() {
             {/* Gender/Age type toggle */}
             <button
               onClick={() => { setFilterType('gender'); setView('global'); }}
-              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${
+              className={`text-xs px-3.5 py-2 rounded-full font-medium transition-all ${
                 filterType === 'gender'
                   ? 'bg-[#F5F5F5]/10 text-[#F5F5F5] border border-[#F5F5F5]/20'
                   : 'text-[#737373] hover:text-[#A3A3A3]'
@@ -165,7 +165,7 @@ export default function LeaderboardPage() {
             </button>
             <button
               onClick={() => { setFilterType('age'); setView('16-18'); }}
-              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${
+              className={`text-xs px-3.5 py-2 rounded-full font-medium transition-all ${
                 filterType === 'age'
                   ? 'bg-[#F5F5F5]/10 text-[#F5F5F5] border border-[#F5F5F5]/20'
                   : 'text-[#737373] hover:text-[#A3A3A3]'
@@ -177,7 +177,7 @@ export default function LeaderboardPage() {
             {/* Inline view options */}
             {visibleFilters.map((v) => (
               <button key={v.value} onClick={() => setView(v.value)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                className={`px-3.5 py-2 rounded-full text-xs font-medium transition-all ${
                   view === v.value
                     ? 'bg-[#F5F5F5]/10 text-[#F5F5F5] border border-[#F5F5F5]/20'
                     : 'text-[#737373] hover:text-[#A3A3A3]'
@@ -193,7 +193,7 @@ export default function LeaderboardPage() {
               <button
                 key={cat.value}
                 onClick={() => setCategoryFilter(cat.value)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                className={`px-3.5 py-2 rounded-full text-xs font-medium transition-all ${
                   categoryFilter === cat.value
                     ? 'bg-[#DC2626]/20 text-[#FCA5A5] border border-[#DC2626]/30'
                     : 'text-[#555] hover:text-[#A3A3A3]'

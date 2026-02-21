@@ -212,6 +212,38 @@ export function ProfileForm() {
         Données 100% anonymes — juste pour les stats
       </p>
 
+      {/* How to play — contextual for this game */}
+      <motion.div
+        className="w-full max-w-sm mt-5"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <p className="text-[10px] font-bold tracking-[0.12em] uppercase text-center mb-2" style={{ color: '#3F3F46' }}>
+          Comment ça marche
+        </p>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { emoji: '🚩', title: 'Choisis', desc: 'Le plus red flag' },
+            { emoji: '📊', title: 'Compare', desc: 'Avec les autres' },
+            { emoji: '🔥', title: 'Enchaîne', desc: 'Le streak monte' },
+          ].map((step, i) => (
+            <div
+              key={step.title}
+              className="flex flex-col items-center text-center py-2.5 px-1 rounded-xl"
+              style={{
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid rgba(255,255,255,0.04)',
+              }}
+            >
+              <span className="text-xl mb-1">{step.emoji}</span>
+              <span className="text-[10px] font-bold" style={{ color: '#A1A1AA' }}>{step.title}</span>
+              <span className="text-[10px] mt-0.5 leading-tight" style={{ color: '#52525B' }}>{step.desc}</span>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
       </motion.div>
     </div>
   );

@@ -190,7 +190,7 @@ export default function JouerPage() {
             exit={{ opacity: 0 }}
             transition={{ delay: 0.5 }}
           >
-            👆 Choisis le pire des deux 👇
+            � Choisis le plus red flag 🚩
           </motion.div>
         )}
         

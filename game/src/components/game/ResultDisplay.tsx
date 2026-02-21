@@ -273,6 +273,24 @@ export function ResultDisplay({
       if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
     };
   }, [onNext]);
+
+  // Sparkle burst on correct answer (green confetti)
+  useEffect(() => {
+    if (!result.isOptimistic && userGuessedCorrectly) {
+      import('canvas-confetti').then(({ default: confetti }) => {
+        confetti({
+          particleCount: 50,
+          spread: 60,
+          origin: { x: 0.5, y: 0.3 },
+          colors: ['#10B981', '#34D399', '#6EE7B7', '#A7F3D0'],
+          scalar: 0.7,
+          gravity: 1.2,
+          ticks: 80,
+          zIndex: 9999,
+        });
+      }).catch(() => {});
+    }
+  }, [result.isOptimistic, userGuessedCorrectly]);
   
   const handleNext = () => {
     if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
@@ -298,6 +316,32 @@ export function ResultDisplay({
       className="flex flex-col h-full w-full overflow-hidden bg-[#0D0D0D]"
       onClick={handleScreenClick}
     >
+      {/* Correct/Wrong answer feedback — subtle overlay */}
+      {!result.isOptimistic && (
+        <motion.div
+          className="absolute top-16 left-1/2 -translate-x-1/2 z-30 pointer-events-none"
+          initial={{ opacity: 0, y: -20, scale: 0.8 }}
+          animate={{ opacity: [0, 1, 1, 0], y: [-20, 0, 0, -10], scale: [0.8, 1.05, 1, 0.95] }}
+          transition={{ duration: 2, times: [0, 0.15, 0.7, 1] }}
+        >
+          <div
+            className="px-5 py-2.5 rounded-full font-black text-sm shadow-lg backdrop-blur-md"
+            style={{
+              background: userGuessedCorrectly 
+                ? 'rgba(16,185,129,0.25)' 
+                : 'rgba(239,68,68,0.20)',
+              border: `1px solid ${userGuessedCorrectly ? 'rgba(16,185,129,0.5)' : 'rgba(239,68,68,0.4)'}`,
+              color: userGuessedCorrectly ? '#34D399' : '#FCA5A5',
+              boxShadow: userGuessedCorrectly 
+                ? '0 4px 24px rgba(16,185,129,0.3)' 
+                : '0 4px 24px rgba(239,68,68,0.2)',
+            }}
+          >
+            {userGuessedCorrectly ? '✓ Bien vu !' : '✗ Raté !'}
+          </div>
+        </motion.div>
+      )}
+
       <ResultCard 
         element={duel.elementA} 
         stats={elementAStats}

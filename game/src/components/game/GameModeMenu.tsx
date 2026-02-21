@@ -44,19 +44,20 @@ export function GameModeMenu({ currentSelection, onSelectionChange }: GameModeMe
   }, [onSelectionChange]);
 
   // Indicateur visuel du mode actuel
-  const getCurrentModeLabel = (): string => {
+  const getCurrentModeLabel = (): { emoji: string; name: string } => {
     if (currentSelection.mode === 'default') {
-      return '🌍';
+      return { emoji: '🌍', name: 'Toutes' };
     }
     const cat = categories.find(c => c.id === currentSelection.category);
-    return cat?.emoji || '🎯';
+    return { emoji: cat?.emoji || '🎯', name: cat?.labelFr || 'Toutes' };
   };
 
   const isFiltered = currentSelection.mode === 'thematique';
+  const currentLabel = getCurrentModeLabel();
 
   return (
     <div className="relative">
-      {/* Bouton principal avec label */}
+      {/* Bouton principal avec label + nom catégorie */}
       <motion.button
         onClick={() => { setIsOpen(!isOpen); setShowPulse(false); }}
         className={`
@@ -76,9 +77,10 @@ export function GameModeMenu({ currentSelection, onSelectionChange }: GameModeMe
           ]
         } : {}}
         transition={showPulse ? { duration: 2, repeat: Infinity } : {}}
-        title="Changer de mode"
+        title="Changer de catégorie"
       >
-        <span className="text-lg">{getCurrentModeLabel()}</span>
+        <span className="text-lg">{currentLabel.emoji}</span>
+        <span className="text-xs font-semibold text-white/80 max-w-[80px] truncate">{currentLabel.name}</span>
         
         {/* Indicateur de filtre actif */}
         {isFiltered && (

@@ -256,12 +256,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     trackVote(get().gameMode.category);
     
     // Show result INSTANTLY — don't wait for API
-    const newStreak = updateStreak(true); // Optimistic: assume match
+    // NOTE: Do NOT call updateStreak here — wait for API to confirm match
+    // This prevents the streak from incrementing by 2 (once optimistic, once real)
     set({
       lastResult: optimisticResult,
       showingResult: true,
-      streak: newStreak,
-      streakEmoji: getStreakEmoji(newStreak),
       duelCount: get().duelCount + 1,
     });
     
