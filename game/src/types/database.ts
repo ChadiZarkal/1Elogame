@@ -98,6 +98,24 @@ export interface Database {
         Insert: Omit<DuelFeedback, 'id' | 'updated_at'>;
         Update: Partial<Omit<DuelFeedback, 'id'>>;
       };
+      flagornot_submissions: {
+        Row: {
+          id: string;
+          text: string;
+          verdict: 'red' | 'green';
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          text: string;
+          verdict: 'red' | 'green';
+          created_at?: string;
+        };
+        Update: Partial<{
+          text: string;
+          verdict: 'red' | 'green';
+        }>;
+      };
     };
   };
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { judgeWithGemini } from '@/lib/gemini';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { sanitizeText } from '@/lib/sanitize';
+import { createServerClient } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -181,17 +182,19 @@ function judgeLocally(text: string): { verdict: 'red' | 'green'; justification: 
 
 // ═══════════════════════════════════════
 // Save to community store (fire-and-forget)
+// Saves directly to Supabase — no HTTP round-trip
 // ═══════════════════════════════════════
 
 async function saveToCommunity(text: string, verdict: 'red' | 'green') {
   try {
-    // Use internal API call in same process
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    await fetch(`${baseUrl}/api/flagornot/community`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, verdict }),
-    }).catch(() => {/* silent */});
+    const isMockMode = process.env.NEXT_PUBLIC_MOCK_MODE === 'true';
+    if (isMockMode) return; // Skip in mock mode
+
+    const supabase = createServerClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
+      .from('flagornot_submissions')
+      .insert({ text: text.slice(0, 280), verdict });
   } catch {
     // Non-blocking — community storage is optional
   }
