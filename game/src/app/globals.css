@@ -1,248 +1,89 @@
 @import "tailwindcss";
 
-/* ========== Design System v2 — eloGames 2026 ========== */
+/* ========== Design Tokens ========== */
 
 :root {
-  /* === BACKGROUNDS === */
   --bg-primary: #0A0A0B;
-  --bg-secondary: #111113;
-  --bg-tertiary: #1A1A1F;
-  --bg-elevated: #222228;
-
-  /* === SURFACES === */
-  --surface-default: #151518;
-  --surface-hover: #1C1C21;
-  --surface-active: #242429;
-  --surface-border: rgba(255, 255, 255, 0.06);
-  --surface-border-hover: rgba(255, 255, 255, 0.12);
-
-  /* === TEXT === */
   --text-primary: #F5F5F7;
-  --text-secondary: #A1A1AA;
-  --text-muted: #71717A;
-
-  /* === ACCENT COLORS === */
   --accent-red: #EF4444;
-  --accent-red-hover: #F87171;
-  --accent-red-active: #DC2626;
-  --accent-red-glow: rgba(239, 68, 68, 0.35);
-  --accent-red-soft: rgba(239, 68, 68, 0.12);
-
   --accent-green: #10B981;
-  --accent-green-glow: rgba(16, 185, 129, 0.35);
-  --accent-green-soft: rgba(16, 185, 129, 0.12);
-
   --accent-gold: #F59E0B;
-  --accent-gold-glow: rgba(245, 158, 11, 0.35);
-  --accent-gold-soft: rgba(245, 158, 11, 0.12);
-
-  --accent-purple: #8B5CF6;
-  --accent-purple-glow: rgba(139, 92, 246, 0.35);
-
-  /* === NEUTRAL === */
-  --neutral-card: #151518;
-  --neutral-hover: #1C1C21;
-  --neutral-border: rgba(255, 255, 255, 0.06);
-
-  /* === LEGACY COMPAT (keep existing code working) === */
-  --background: var(--bg-primary);
-  --foreground: var(--text-primary);
-  --red-flag: var(--accent-red);
-  --green-flag: var(--accent-green);
-  --result-green: var(--accent-green);
-  --result-green-glow: var(--accent-green-glow);
-  --result-gold: var(--accent-gold);
-
-  /* === TRANSITIONS === */
-  --transition-fast: 150ms cubic-bezier(0.25, 0.1, 0.25, 1);
-  --transition-normal: 250ms cubic-bezier(0.25, 0.1, 0.25, 1);
-  --transition-slow: 400ms cubic-bezier(0.25, 0.1, 0.25, 1);
-  --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  /* === RADII === */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-2xl: 24px;
-  --radius-full: 9999px;
-
-  /* === SHADOWS === */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
 }
 
+/* ========== Base Layer ========== */
+
 @layer base {
-  * {
+  *,
+  *::before,
+  *::after {
     box-sizing: border-box;
     padding: 0;
     margin: 0;
   }
-}
 
-@layer base {
   html,
   body {
     max-width: 100vw;
     overflow-x: hidden;
-    min-height: 100vh;
     min-height: 100dvh;
   }
 
   body {
     background: var(--bg-primary);
     color: var(--text-primary);
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
 
-  button, input, textarea, select {
+  button,
+  input,
+  textarea,
+  select {
     color: inherit;
     font: inherit;
   }
 }
 
-/* Custom scrollbar */
+/* ========== Scrollbar ========== */
+
 ::-webkit-scrollbar {
   width: 6px;
 }
-
 ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: #111113;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-elevated);
+  background: #222228;
   border-radius: 3px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--neutral-border);
+  background: rgba(255, 255, 255, 0.06);
 }
 
-/* Touch optimizations for mobile */
+/* ========== Mobile Optimizations ========== */
+
 @media (hover: none) and (pointer: coarse) {
-  button, a {
+  button,
+  a {
     -webkit-tap-highlight-color: transparent;
   }
 }
 
-/* Neutral card style - BEFORE vote */
-.neutral-card {
-  background: var(--neutral-card);
-  border: 1px solid var(--neutral-border);
-  transition: all 0.2s ease;
-}
-
-.neutral-card:hover {
-  background: var(--neutral-hover);
-  border-color: var(--accent-red);
-  box-shadow: 0 0 20px var(--accent-red-glow);
-}
-
-/* Red glow effect - AFTER vote */
-.red-glow {
-  box-shadow: 0 0 30px var(--accent-red-glow), 0 0 60px rgba(220, 38, 38, 0.2);
-}
-
-/* Green glow effect - AFTER vote */
-.green-glow {
-  box-shadow: 0 0 30px var(--result-green-glow), 0 0 60px rgba(5, 150, 105, 0.2);
-}
-
-/* Pulse animation for selection */
-@keyframes pulse-red {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.4);
-  }
-}
-
-.pulse-red {
-  animation: pulse-red 1s ease-in-out infinite;
-}
-
-/* Streak fire animation */
-@keyframes fire {
-  0%, 100% {
-    transform: scale(1) rotate(-2deg);
-  }
-  50% {
-    transform: scale(1.1) rotate(2deg);
-  }
-}
-
-.fire-animation {
-  animation: fire 0.5s ease-in-out infinite;
-}
-
-/* Safe area for mobile */
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 20px);
 }
 
-.safe-area-top {
-  padding-top: env(safe-area-inset-top, 20px);
-}
+/* ========== Utilities ========== */
 
-/* ========== Flag Or Not Game (Jeu 2) ========== */
-
-/* Red flash background */
-@keyframes bg-flash-red {
-  0% { background-color: #0D0D0D; }
-  30% { background-color: #2a0505; }
-  100% { background-color: #1a0505; }
-}
-
-/* Green flash background */
-@keyframes bg-flash-green {
-  0% { background-color: #0D0D0D; }
-  30% { background-color: #052a14; }
-  100% { background-color: #051a0d; }
-}
-
-.bg-flash-red {
-  animation: bg-flash-red 0.7s ease-out forwards;
-}
-
-.bg-flash-green {
-  animation: bg-flash-green 0.7s ease-out forwards;
-}
-
-/* Keyboard-aware viewport */
-@supports (height: 100dvh) {
-  .min-h-dvh {
-    min-height: 100dvh;
-  }
-}
-
-/* Input focus glow for flagornot */
-.input-glow-red:focus {
-  box-shadow: 0 0 20px rgba(220, 38, 38, 0.25), 0 0 40px rgba(220, 38, 38, 0.1);
-  border-color: #DC2626;
-}
-
-.input-glow-green:focus {
-  box-shadow: 0 0 20px rgba(5, 150, 105, 0.25), 0 0 40px rgba(5, 150, 105, 0.1);
-  border-color: #059669;
-}
-
-/* ========== Premium UX Utilities ========== */
-
-/* Glass morphism */
 .glass {
   background: rgba(20, 20, 20, 0.65);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
-/* Hide scrollbar utility */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
@@ -251,28 +92,27 @@
   scrollbar-width: none;
 }
 
-/* Smooth input focus transition */
 input:focus {
   transition: border-color 0.2s ease, box-shadow 0.3s ease;
 }
 
 /* ========== Accessibility ========== */
 
-/* Focus-visible ring for keyboard navigation */
 :focus-visible {
-  outline: 2px solid #DC2626;
+  outline: 2px solid var(--accent-red);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 button:focus-visible {
-  outline: 2px solid #DC2626;
+  outline: 2px solid var(--accent-red);
   outline-offset: 2px;
 }
 
-/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -280,115 +120,19 @@ button:focus-visible {
   }
 }
 
-/* Selection colors */
 ::selection {
   background-color: rgba(220, 38, 38, 0.35);
-  color: #F5F5F5;
+  color: #f5f5f5;
 }
 
-/* Skeleton loading animation */
-@keyframes skeleton-pulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.6; }
-}
+/* ========== Animations ========== */
 
-.skeleton {
-  background: linear-gradient(90deg, #1A1A1A 25%, #2A2A2A 50%, #1A1A1A 75%);
-  background-size: 200% 100%;
-  animation: skeleton-pulse 1.5s ease-in-out infinite;
-  border-radius: 8px;
-}
-
-/* ========== Design System v2 Utils ========== */
-
-/* Shimmer animation for Skeleton loaders */
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-/* Glass morphism — layered */
-.glass-sm {
-  background: rgba(21, 21, 24, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.glass-md {
-  background: rgba(21, 21, 24, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
-
-.glass-lg {
-  background: rgba(21, 21, 24, 0.8);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-}
-
-/* Subtle text glow */
-.text-glow-red {
-  text-shadow: 0 0 20px rgba(239, 68, 68, 0.4), 0 0 40px rgba(239, 68, 68, 0.15);
-}
-
-.text-glow-gold {
-  text-shadow: 0 0 20px rgba(245, 158, 11, 0.4), 0 0 40px rgba(245, 158, 11, 0.15);
-}
-
-/* Border glow on hover */
-.border-glow-red {
-  transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
-}
-.border-glow-red:hover {
-  border-color: rgba(239, 68, 68, 0.3);
-  box-shadow: 0 0 24px rgba(239, 68, 68, 0.12);
-}
-
-/* Gradient border (pseudo-element technique) */
-.gradient-border {
-  position: relative;
-}
-.gradient-border::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(139,92,246,0.3));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-/* Safe area utilities */
-.pt-safe { padding-top: env(safe-area-inset-top, 0px); }
-.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
-
-/* Tap highlight removal on mobile */
-@media (hover: none) and (pointer: coarse) {
-  .tap-transparent {
-    -webkit-tap-highlight-color: transparent;
+  0% {
+    transform: translateX(-100%);
   }
-}
-
-/* ─── Hero CTA pulsing glow ─── */
-@keyframes cta-pulse-glow {
-  0%, 100% {
-    box-shadow: 0 4px 24px rgba(239,68,68,0.35), 0 0 0 0 rgba(239,68,68,0.35);
-  }
-  50% {
-    box-shadow: 0 4px 32px rgba(239,68,68,0.50), 0 0 0 6px rgba(239,68,68,0.08);
-  }
-}
-
-.hero-cta-pulse {
-  animation: cta-pulse-glow 2.5s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-cta-pulse {
-    animation: none;
+  100% {
+    transform: translateX(100%);
   }
 }
 

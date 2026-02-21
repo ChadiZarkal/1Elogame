@@ -86,14 +86,6 @@ export default function JouerPage() {
     }
   }, [streak]);
   
-  const handleVote = useCallback((winnerId: string, loserId: string) => {
-    submitVote(winnerId, loserId);
-  }, [submitVote]);
-  
-  const handleStar = useCallback(() => submitFeedback('star'), [submitFeedback]);
-  const handleThumbsUp = useCallback(() => submitFeedback('thumbs_up'), [submitFeedback]);
-  const handleThumbsDown = useCallback(() => submitFeedback('thumbs_down'), [submitFeedback]);
-  const handleNext = useCallback(() => showNextDuel(), [showNextDuel]);
   const handleReset = useCallback(() => { resetGame(); router.push('/jeu'); }, [resetGame, router]);
   
   if (!hasProfile) {
@@ -190,7 +182,7 @@ export default function JouerPage() {
             exit={{ opacity: 0 }}
             transition={{ delay: 0.5 }}
           >
-            � Choisis le plus red flag 🚩
+            👆 Choisis le plus red flag 🚩
           </motion.div>
         )}
         
@@ -200,17 +192,17 @@ export default function JouerPage() {
             result={lastResult}
             streak={streak}
             streakEmoji={streakEmoji}
-            onNext={handleNext}
-            onStar={handleStar}
-            onThumbsUp={handleThumbsUp}
-            onThumbsDown={handleThumbsDown}
+            onNext={showNextDuel}
+            onStar={() => submitFeedback('star')}
+            onThumbsUp={() => submitFeedback('thumbs_up')}
+            onThumbsDown={() => submitFeedback('thumbs_down')}
           />
         ) : (
           <div className="flex-1 flex flex-col w-full">
             <DuelInterface
               elementA={currentDuel.elementA}
               elementB={currentDuel.elementB}
-              onVote={handleVote}
+              onVote={submitVote}
               disabled={showingResult || isLoadingDuel}
             />
           </div>

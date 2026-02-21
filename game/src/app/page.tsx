@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Trophy, Share2, ArrowRight, ExternalLink, Users, Heart, Play } from 'lucide-react';
+import { Trophy, Share2, ArrowRight, ExternalLink, Users, Heart } from 'lucide-react';
 import { toast } from 'sonner';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { AnimatedGradientText } from '@/components/magicui/AnimatedGradientText';
