@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
+import { AnimatedGradientText } from '@/components/magicui/AnimatedGradientText';
+import { Sparkles } from '@/components/magicui/Sparkles';
 import { useGameStore } from '@/stores/gameStore';
 
 export default function RedFlagHome() {
@@ -20,11 +22,11 @@ export default function RedFlagHome() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen min-h-[100dvh] bg-[#0D0D0D] p-6">
+    <div className="flex flex-col items-center justify-center min-h-screen min-h-[100dvh] bg-[#0D0D0D] px-6 py-6">
       {/* Back to Hub */}
       <motion.button
         onClick={() => router.push('/')}
-        className="absolute top-5 left-5 text-[#737373] hover:text-[#F5F5F5] transition-colors text-sm flex items-center gap-1"
+        className="absolute top-4 left-4 text-[#737373] hover:text-[#F5F5F5] transition-colors text-sm flex items-center gap-1 px-3 py-2.5 min-h-[44px] rounded-lg hover:bg-white/5"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
@@ -44,16 +46,18 @@ export default function RedFlagHome() {
           transition={{ delay: 0.2, type: 'spring' }}
         >
           <div className="flex justify-center gap-4 text-6xl mb-4">
-            <motion.span
-              animate={{ rotate: [0, -10, 10, 0] }}
-              transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-            >
-              🚩
-            </motion.span>
+            <Sparkles color="#EF4444" count={5}>
+              <motion.span
+                animate={{ rotate: [0, -10, 10, 0] }}
+                transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+              >
+                🚩
+              </motion.span>
+            </Sparkles>
           </div>
 
           <h1 className="text-5xl font-black text-[#F5F5F5] tracking-tight">
-            RED <span className="text-[#DC2626]">FLAG</span>
+            RED <AnimatedGradientText>FLAG</AnimatedGradientText>
           </h1>
 
           <p className="text-[#737373] text-lg mt-2">Le party game qui fait débat 🔥</p>

@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loading } from '@/components/ui/Loading';
+import { AnimatedGradientText } from '@/components/magicui/AnimatedGradientText';
 
 interface RankEntry {
   rank: number;
@@ -104,7 +105,7 @@ export default function LeaderboardPage() {
   const visibleFilters = VIEW_CONFIG.filter(v => v.group === filterType);
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] pb-20">
+    <div className="min-h-screen bg-[#0D0D0D] pb-20 px-3">
       {/* Header */}
       <div className="pt-8 pb-5 px-4" style={{ background: `linear-gradient(to bottom, ${accent}15, transparent)` }}>
         <div className="max-w-2xl mx-auto">
@@ -113,7 +114,7 @@ export default function LeaderboardPage() {
           </button>
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
             <h1 className="text-3xl font-black text-[#F5F5F5] text-center">
-              🏆 Classement
+              🏆 <AnimatedGradientText className="text-3xl font-black">Classement</AnimatedGradientText>
             </h1>
           </motion.div>
 
@@ -155,7 +156,7 @@ export default function LeaderboardPage() {
             {/* Gender/Age type toggle */}
             <button
               onClick={() => { setFilterType('gender'); setView('global'); }}
-              className={`text-xs px-3.5 py-2 rounded-full font-medium transition-all ${
+              className={`text-xs px-3.5 py-2.5 min-h-[44px] rounded-full font-medium transition-all flex items-center ${
                 filterType === 'gender'
                   ? 'bg-[#F5F5F5]/10 text-[#F5F5F5] border border-[#F5F5F5]/20'
                   : 'text-[#737373] hover:text-[#A3A3A3]'
@@ -165,7 +166,7 @@ export default function LeaderboardPage() {
             </button>
             <button
               onClick={() => { setFilterType('age'); setView('16-18'); }}
-              className={`text-xs px-3.5 py-2 rounded-full font-medium transition-all ${
+              className={`text-xs px-3.5 py-2.5 min-h-[44px] rounded-full font-medium transition-all flex items-center ${
                 filterType === 'age'
                   ? 'bg-[#F5F5F5]/10 text-[#F5F5F5] border border-[#F5F5F5]/20'
                   : 'text-[#737373] hover:text-[#A3A3A3]'
@@ -177,7 +178,7 @@ export default function LeaderboardPage() {
             {/* Inline view options */}
             {visibleFilters.map((v) => (
               <button key={v.value} onClick={() => setView(v.value)}
-                className={`px-3.5 py-2 rounded-full text-xs font-medium transition-all ${
+                className={`px-3.5 py-2.5 min-h-[44px] rounded-full text-xs font-medium transition-all flex items-center ${
                   view === v.value
                     ? 'bg-[#F5F5F5]/10 text-[#F5F5F5] border border-[#F5F5F5]/20'
                     : 'text-[#737373] hover:text-[#A3A3A3]'
@@ -193,7 +194,7 @@ export default function LeaderboardPage() {
               <button
                 key={cat.value}
                 onClick={() => setCategoryFilter(cat.value)}
-                className={`px-3.5 py-2 rounded-full text-xs font-medium transition-all ${
+                className={`px-3.5 py-2.5 min-h-[44px] rounded-full text-xs font-medium transition-all flex items-center ${
                   categoryFilter === cat.value
                     ? 'bg-[#DC2626]/20 text-[#FCA5A5] border border-[#DC2626]/30'
                     : 'text-[#555] hover:text-[#A3A3A3]'

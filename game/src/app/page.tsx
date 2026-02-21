@@ -6,8 +6,11 @@ import { motion } from 'framer-motion';
 import { Trophy, Share2, ArrowRight, ExternalLink, Users, Heart, Play } from 'lucide-react';
 import { toast } from 'sonner';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
-import { GradientText } from '@/components/ui/GradientText';
+import { AnimatedGradientText } from '@/components/magicui/AnimatedGradientText';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
+import { BorderBeam } from '@/components/magicui/BorderBeam';
+import { FlipWords } from '@/components/magicui/FlipWords';
+import { Sparkles } from '@/components/magicui/Sparkles';
 import { useReducedMotion, useHaptics } from '@/lib/hooks';
 
 // ─── Game config — all 3 games at the SAME level ───────────
@@ -106,6 +109,8 @@ function GameCard({
       }}
       aria-label={`Jouer à ${game.title}`}
     >
+      {/* Animated border beam on hover */}
+      <BorderBeam colorFrom={game.color} colorTo={`${game.color}88`} duration={8 + index * 2} />
       {/* Badge */}
       <span
         className="absolute top-2.5 right-2.5 text-[10px] font-black tracking-[0.12em] px-2 py-[2px] rounded-full"
@@ -206,23 +211,33 @@ export default function HubPage() {
           transition={{ duration: 0.4 }}
         >
           <div className="flex items-center justify-center gap-3 mb-2">
-            <motion.span
-              className="text-3xl sm:text-4xl select-none"
-              animate={reducedMotion ? undefined : { rotate: [0, -10, 10, 0] }}
-              transition={{ duration: 3, repeat: Infinity, repeatDelay: 3 }}
-              role="img" aria-label="Red Flag"
-            >
-              🚩
-            </motion.span>
+            <Sparkles color="#EF4444" count={4}>
+              <motion.span
+                className="text-3xl sm:text-4xl select-none"
+                animate={reducedMotion ? undefined : { rotate: [0, -10, 10, 0] }}
+                transition={{ duration: 3, repeat: Infinity, repeatDelay: 3 }}
+                role="img" aria-label="Red Flag"
+              >
+                🚩
+              </motion.span>
+            </Sparkles>
             <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-none">
               <span style={{ color: 'var(--text-primary)' }}>Red </span>
-              <GradientText from="#EF4444" to="#F97316">FLAG</GradientText>
+              <AnimatedGradientText>FLAG</AnimatedGradientText>
               <span className="text-lg sm:text-xl font-bold ml-1.5" style={{ color: '#52525B' }}>Games</span>
             </h1>
           </div>
 
           <p className="text-sm font-medium" style={{ color: '#71717A' }}>
-            Le party game qui fait débat entre amis 🔥
+            <FlipWords
+              words={[
+                'Le party game qui fait débat entre amis 🔥',
+                'Ose juger, vote et compare tes potes 🎯',
+                'Red flag ou pas ? À toi de décider 🚩',
+                'Le jeu qui met tes opinions à l\'épreuve 💥',
+              ]}
+              duration={4000}
+            />
           </p>
 
           {/* Stats row */}

@@ -76,7 +76,7 @@ export default function AdminLoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-1 top-1/2 -translate-y-1/2 text-[#737373] hover:text-[#F5F5F5] transition-colors text-sm p-2 rounded-lg"
+                className="absolute right-1 top-1/2 -translate-y-1/2 text-[#737373] hover:text-[#F5F5F5] transition-colors text-sm p-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg"
                 tabIndex={-1}
               >
                 {showPassword ? '🙈' : '👁️'}
