@@ -84,7 +84,7 @@ export const viewport: Viewport = {
 };
 
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
-import { AnalyticsProvider } from '@/components/AnalyticsProvider';
+import { AnalyticsProvider } from '@/components/ui/AnalyticsProvider';
 import { Toaster } from 'sonner';
 
 // JSON-LD structured data for Google

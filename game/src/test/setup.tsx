@@ -87,6 +87,10 @@ vi.mock('framer-motion', async () => {
   return {
     ...actual,
     AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
+    // Mock useMotionValue / useTransform to return plain values (not MotionValue objects)
+    useMotionValue: (initial: number) => initial,
+    useTransform: (_value: unknown, fn?: (v: number) => string) => (fn ? fn(0) : '0'),
+    animate: vi.fn(() => ({ stop: vi.fn() })),
     motion: new Proxy(actual.motion, {
       get: (target, prop) => {
         if (typeof prop === 'string' && ['div', 'span', 'button', 'p', 'h1', 'h2', 'h3', 'a', 'section', 'ul', 'li'].includes(prop)) {

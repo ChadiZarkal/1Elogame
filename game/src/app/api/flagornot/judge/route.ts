@@ -1,11 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { withApiHandler, apiError } from '@/lib/apiHelpers';
 import { judgeWithGemini } from '@/lib/gemini';
-import { checkRateLimit } from '@/lib/rateLimit';
 import { sanitizeText } from '@/lib/sanitize';
-import { createServerClient } from '@/lib/supabase';
+import { saveSubmission } from '@/lib/repositories';
+import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
+
+// ---------------------------------------------------------------------------
+// System prompt for the AI judge
+// ---------------------------------------------------------------------------
 
 const SYSTEM_PROMPT = `Tu es un juge jeune, sarcastique et tranchant de Red Flags et Green Flags. Contexte: on joue dans une soirée/jeu social pour s'amuser et créer du débat amusant.
 
@@ -54,20 +59,23 @@ TONE FINAL:
 - Drôle = invente des angles amusants (BDSM pour corde par ex)
 - Pas révolutionnaire à chaque coin de rue`;
 
-async function tryGemini(text: string): Promise<{ verdict: 'red' | 'green'; justification: string }> {
+// ---------------------------------------------------------------------------
+// AI provider strategies (Gemini → OpenAI → local keyword fallback)
+// ---------------------------------------------------------------------------
+
+type JudgeResult = { verdict: 'red' | 'green'; justification: string };
+
+async function tryGemini(text: string): Promise<JudgeResult> {
   return judgeWithGemini(text, SYSTEM_PROMPT);
 }
 
-async function tryOpenAI(text: string): Promise<{ verdict: 'red' | 'green'; justification: string }> {
+async function tryOpenAI(text: string): Promise<JudgeResult> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error('OPENAI_API_KEY not set');
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
       model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
       messages: [
@@ -79,10 +87,7 @@ async function tryOpenAI(text: string): Promise<{ verdict: 'red' | 'green'; just
     }),
   });
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`OpenAI API error: ${res.status} ${err}`);
-  }
+  if (!res.ok) throw new Error(`OpenAI API error: ${res.status}`);
 
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content?.trim();
@@ -94,14 +99,10 @@ async function tryOpenAI(text: string): Promise<{ verdict: 'red' | 'green'; just
   const parsed = JSON.parse(jsonMatch[0]);
   if (!['red', 'green'].includes(parsed.verdict)) throw new Error('Invalid verdict');
 
-  return {
-    verdict: parsed.verdict,
-    justification: parsed.justification || 'Pas de justification.',
-  };
+  return { verdict: parsed.verdict, justification: parsed.justification || 'Pas de justification.' };
 }
 
-/** Keyword-based fallback when AI providers are unavailable. */
-function judgeLocally(text: string): { verdict: 'red' | 'green'; justification: string } {
+function judgeLocally(text: string): JudgeResult {
   const lower = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
   const redSignals = [
@@ -128,7 +129,6 @@ function judgeLocally(text: string): { verdict: 'red' | 'green'; justification: 
   let red = 0, green = 0;
   for (const kw of redSignals) if (lower.includes(kw)) red++;
   for (const kw of greenSignals) if (lower.includes(kw)) green++;
-
   red += Math.random() * 0.4;
   green += Math.random() * 0.4;
 
@@ -161,70 +161,45 @@ function judgeLocally(text: string): { verdict: 'red' | 'green'; justification: 
   };
 }
 
-/** Save to community store (fire-and-forget, non-blocking). */
-async function saveToCommunity(text: string, verdict: 'red' | 'green') {
-  try {
-    const isMockMode = process.env.NEXT_PUBLIC_MOCK_MODE === 'true';
-    if (isMockMode) return; // Skip in mock mode
+// ---------------------------------------------------------------------------
+// Route handler
+// ---------------------------------------------------------------------------
 
-    const supabase = createServerClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
-      .from('flagornot_submissions')
-      .insert({ text: text.slice(0, 280), verdict });
-  } catch {
-    // Non-blocking — community storage is optional
+export const POST = withApiHandler(async (request: NextRequest) => {
+  const body = await request.json();
+  const rawText = body?.text?.trim();
+
+  if (!rawText || typeof rawText !== 'string') {
+    return apiError('VALIDATION_ERROR', 'Le champ "text" est requis.', 400);
   }
-}
 
-export async function POST(request: NextRequest) {
-  try {
-    // Rate limit: 10 AI requests per minute
-    const rateLimited = checkRateLimit(request, 'ai');
-    if (rateLimited) return rateLimited;
-    
-    const body = await request.json();
-    const rawText = body?.text?.trim();
-
-    if (!rawText || typeof rawText !== 'string') {
-      return NextResponse.json({ error: 'Le champ "text" est requis.' }, { status: 400 });
-    }
-
-    // Sanitize input to prevent XSS and injection
-    const text = sanitizeText(rawText, 500);
-
-    if (text.length === 0) {
-      return NextResponse.json({ error: 'Le texte est vide après nettoyage.' }, { status: 400 });
-    }
-
-    if (rawText.length > 500) {
-      return NextResponse.json({ error: 'Texte trop long (max 500 caractères).' }, { status: 400 });
-    }
-
-    // Try Gemini first (Google service account)
-    try {
-      const result = await tryGemini(text);
-      // Fire-and-forget: Save to community store
-      saveToCommunity(text, result.verdict);
-      return NextResponse.json({ ...result, provider: 'gemini' });
-    } catch (geminiErr) {
-      console.warn('[FlagOrNot] Gemini failed:', geminiErr);
-    }
-
-    // Fallback to OpenAI
-    try {
-      const result = await tryOpenAI(text);
-      saveToCommunity(text, result.verdict);
-      return NextResponse.json({ ...result, provider: 'openai' });
-    } catch (openaiErr) {
-      console.warn('[FlagOrNot] OpenAI failed:', openaiErr);
-    }
-
-    // Final fallback: local keyword analysis
-    const result = judgeLocally(text);
-    saveToCommunity(text, result.verdict);
-    return NextResponse.json({ ...result, provider: 'local' });
-  } catch {
-    return NextResponse.json({ error: 'Erreur interne du serveur.' }, { status: 500 });
+  const text = sanitizeText(rawText, 500);
+  if (text.length === 0) {
+    return apiError('VALIDATION_ERROR', 'Le texte est vide après nettoyage.', 400);
   }
-}
+  if (rawText.length > 500) {
+    return apiError('VALIDATION_ERROR', 'Texte trop long (max 500 caractères).', 400);
+  }
+
+  // Try providers in order: Gemini → OpenAI → local fallback
+  const providers: Array<{ name: string; fn: () => Promise<JudgeResult> }> = [
+    { name: 'gemini', fn: () => tryGemini(text) },
+    { name: 'openai', fn: () => tryOpenAI(text) },
+  ];
+
+  for (const { name, fn } of providers) {
+    try {
+      const result = await fn();
+      // Fire-and-forget: save to community
+      saveSubmission(text, result.verdict).catch(() => {});
+      return NextResponse.json({ ...result, provider: name });
+    } catch (err) {
+      console.warn(`[FlagOrNot] ${name} failed:`, err);
+    }
+  }
+
+  // Final fallback: local keyword analysis
+  const result = judgeLocally(text);
+  saveSubmission(text, result.verdict).catch(() => {});
+  return NextResponse.json({ ...result, provider: 'local' });
+}, { rateLimit: true });

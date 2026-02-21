@@ -1,26 +1,10 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform, animate as fmAnimate } from 'framer-motion';
-import { VoteResult, Duel, ElementDTO } from '@/types/game';
-import { formatNumber } from '@/lib/utils';
-
-// Animated counter that rolls up from 0 to the final percentage
-function AnimatedPercent({ value, delay = 0.2, className }: { value: number; delay?: number; className?: string }) {
-  const count = useMotionValue(0);
-  const rounded = useTransform(count, (v) => `${Math.round(v)}%`);
-
-  useEffect(() => {
-    const ctrl = fmAnimate(count, value, {
-      duration: 0.8,
-      delay,
-      ease: 'easeOut',
-    });
-    return () => ctrl.stop();
-  }, [count, value, delay]);
-
-  return <motion.span className={className}>{rounded}</motion.span>;
-}
+import { motion, AnimatePresence } from 'framer-motion';
+import { VoteResult, Duel } from '@/types/game';
+import { ResultCard, type ElementStats } from './ResultCard';
+import { FeedbackBar } from './FeedbackBar';
 
 interface ResultDisplayProps {
   duel: Duel;
@@ -31,150 +15,6 @@ interface ResultDisplayProps {
   onStar: () => void;
   onThumbsUp: () => void;
   onThumbsDown: () => void;
-}
-
-interface ElementStats {
-  percentage: number;
-  votes: number;
-  isMoreRedFlag: boolean;
-  rank?: number;
-  totalElements?: number;
-}
-
-function ResultCard({ 
-  element, 
-  stats,
-  flexValue,
-  isOptimistic
-}: { 
-  element: ElementDTO; 
-  stats: ElementStats;
-  flexValue: number;
-  isOptimistic?: boolean;
-}) {
-  const isMoreRedFlag = stats.isMoreRedFlag;
-  
-  // En mode optimiste: fond neutre gris, pas de direction affichée
-  const bgClass = isOptimistic
-    ? 'bg-gradient-to-br from-[#2A2A2A] to-[#1A1A1A]'
-    : isMoreRedFlag 
-      ? 'bg-gradient-to-br from-[#DC2626] to-[#991B1B]'
-      : 'bg-gradient-to-br from-[#059669] to-[#047857]';
-  
-  return (
-    <motion.div
-      className={`relative flex items-center justify-center p-5 ${bgClass}`}
-      initial={{ flex: 1 }}
-      animate={{ flex: flexValue }}
-      transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-    >
-      {/* Flash effect — only when real data */}
-      {!isOptimistic && (
-        <motion.div 
-          className={`absolute inset-0 ${isMoreRedFlag ? 'bg-[#DC2626]' : 'bg-[#059669]'}`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 0.4, 0] }}
-          transition={{ duration: 0.4 }}
-        />
-      )}
-      
-      <div className="text-center z-10 max-w-md">
-        {/* Shimmer loading pour mode optimiste */}
-        {isOptimistic && (
-          <motion.div
-            className="mb-3"
-            initial={{ opacity: 0.4 }}
-            animate={{ opacity: [0.4, 0.8, 0.4] }}
-            transition={{ duration: 1.2, repeat: Infinity }}
-          >
-            <span className="inline-flex items-center gap-2 bg-white/10 text-white/60 px-4 py-1.5 rounded-lg text-sm font-medium">
-              <span>⏳</span>
-              <span>Calcul des votes...</span>
-            </span>
-          </motion.div>
-        )}
-
-        {/* Badge RED FLAG amélioré pour le plus red flag — hidden in optimistic mode */}
-        {!isOptimistic && isMoreRedFlag && (
-          <motion.div
-            className="mb-4"
-            initial={{ scale: 0, rotate: -10 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.1, type: 'spring', stiffness: 400, damping: 18 }}
-          >
-            <span className="inline-flex items-center gap-2 bg-white text-[#DC2626] px-5 py-2 rounded-lg text-base sm:text-lg font-black shadow-xl border-2 border-white/50">
-              <span className="text-xl">🚩</span>
-              <span>PLUS RED FLAG</span>
-              <span className="text-xl">🚩</span>
-            </span>
-          </motion.div>
-        )}
-        
-        {/* Texte de l'élément */}
-        <motion.p 
-          className={`font-bold text-white leading-tight mb-3 ${
-            isOptimistic ? 'text-lg sm:text-xl' : isMoreRedFlag ? 'text-xl sm:text-2xl md:text-3xl' : 'text-base sm:text-lg'
-          }`}
-          initial={{ opacity: 0.5 }}
-          animate={{ opacity: 1 }}
-        >
-          {element.texte}
-        </motion.p>
-        
-        {/* Pourcentage — hidden in optimistic mode */}
-        {!isOptimistic && (
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="space-y-1"
-          >
-            <p className={`font-black text-white ${isMoreRedFlag ? 'text-4xl sm:text-5xl' : 'text-xl sm:text-2xl'}`}>
-              <AnimatedPercent value={stats.percentage} delay={isMoreRedFlag ? 0.15 : 0.25} />
-            </p>
-            <p className="text-white/70 text-xs sm:text-sm">
-              {formatNumber(stats.votes)} votes
-            </p>
-          </motion.div>
-        )}
-
-        {/* Classement global — hidden in optimistic mode */}
-        {!isOptimistic && stats.rank && stats.totalElements && (
-          <motion.div
-            className="mt-3"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold ${
-              isMoreRedFlag 
-                ? 'bg-black/30 text-white' 
-                : 'bg-white/20 text-white'
-            }`}>
-              <span>🏆</span>
-              <span>#{stats.rank}</span>
-              <span className="text-white/60">/ {stats.totalElements}</span>
-            </span>
-          </motion.div>
-        )}
-
-        {/* Badge "Moins pire" pour le moins red flag — hidden in optimistic mode */}
-        {!isOptimistic && !isMoreRedFlag && (
-          <motion.div
-            className="mt-3"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-          >
-            <span className="inline-flex items-center gap-1.5 bg-white/20 text-white px-3 py-1 rounded-full text-xs font-medium">
-              <span>✓</span>
-              <span>Moins pire</span>
-            </span>
-          </motion.div>
-        )}
-      </div>
-    </motion.div>
-  );
 }
 
 export function ResultDisplay({
@@ -188,7 +28,6 @@ export function ResultDisplay({
   onThumbsDown,
 }: ResultDisplayProps) {
   const [showFeedback, setShowFeedback] = useState(false);
-  const [starGiven, setStarGiven] = useState(false);
   const [canClickToAdvance, setCanClickToAdvance] = useState(false);
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -294,13 +133,6 @@ export function ResultDisplay({
     }
   };
   
-  const handleStar = () => {
-    if (!starGiven) {
-      setStarGiven(true);
-      onStar();
-    }
-  };
-  
   return (
     <div 
       className="flex flex-col h-full w-full overflow-hidden bg-[#0D0D0D]"
@@ -361,91 +193,17 @@ export function ResultDisplay({
       
       <AnimatePresence>
         {showFeedback && (
-          <motion.div
-            className="bg-[#1A1A1A] border-t border-[#333] p-4 safe-area-bottom"
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            onClick={(e) => e.stopPropagation()} // Empêche le clic de passer à la suivante
-          >
-            {streak > 0 && (
-              <motion.div
-                className="text-center mb-3"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 400 }}
-              >
-                <span className="text-[#F5F5F5] text-lg font-bold">
-                  Streak: {streak} {streakEmoji}
-                </span>
-                {result.streak.matched && (
-                  <span className="ml-2 text-[#059669] text-sm font-semibold">+1 🎯</span>
-                )}
-              </motion.div>
-            )}
-            
-            <div className="flex justify-between items-center">
-              <div className="flex gap-2">
-                <motion.button
-                  onClick={handleStar}
-                  disabled={starGiven}
-                  whileTap={{ scale: 0.9 }}
-                  className={`p-2.5 rounded-xl transition-all ${
-                    starGiven
-                      ? 'bg-[#FCD34D] text-[#92400E]'
-                      : 'bg-[#2A2A2A] text-[#F5F5F5] hover:bg-[#333] border border-[#333]'
-                  }`}
-                  aria-label={starGiven ? 'Duel déjà noté' : 'Voter pour ce duel'}
-                >
-                  ⭐
-                </motion.button>
-                <motion.button
-                  onClick={onThumbsUp}
-                  whileTap={{ scale: 0.9 }}
-                  className="p-2.5 rounded-xl bg-[#2A2A2A] text-[#F5F5F5] hover:bg-[#333] border border-[#333] transition-all"
-                  aria-label="J'aime ce duel"
-                >
-                  👍
-                </motion.button>
-                <motion.button
-                  onClick={onThumbsDown}
-                  whileTap={{ scale: 0.9 }}
-                  className="p-2.5 rounded-xl bg-[#2A2A2A] text-[#F5F5F5] hover:bg-[#333] border border-[#333] transition-all"
-                  aria-label="Je n'aime pas ce duel"
-                >
-                  👎
-                </motion.button>
-                <motion.button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const moreRF = elementAStats.isMoreRedFlag ? duel.elementA.texte : duel.elementB.texte;
-                    const lessRF = !elementAStats.isMoreRedFlag ? duel.elementA.texte : duel.elementB.texte;
-                    const shareText = `🚩 Red Flag Games\n\n"${moreRF}" est voté plus Red Flag que "${lessRF}" par la communauté !\n\nJoue toi aussi → redflaggames.fr`;
-                    if (navigator.share) {
-                      navigator.share({ text: shareText }).catch(() => {});
-                    } else {
-                      navigator.clipboard.writeText(shareText).catch(() => {});
-                    }
-                  }}
-                  whileTap={{ scale: 0.9 }}
-                  className="p-2.5 rounded-xl bg-[#2A2A2A] text-[#F5F5F5] hover:bg-[#333] border border-[#333] transition-all"
-                  aria-label="Partager ce duel"
-                >
-                  📤
-                </motion.button>
-              </div>
-              
-              <motion.button
-                onClick={handleNext}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-6 py-2.5 bg-[#DC2626] hover:bg-[#EF4444] text-white rounded-xl font-bold shadow-[0_0_20px_rgba(220,38,38,0.3)] transition-all"
-              >
-                Suivant →
-              </motion.button>
-            </div>
-          </motion.div>
+          <FeedbackBar
+            duel={duel}
+            elementAStats={elementAStats}
+            streak={streak}
+            streakEmoji={streakEmoji}
+            streakMatched={result.streak.matched}
+            onNext={handleNext}
+            onStar={onStar}
+            onThumbsUp={onThumbsUp}
+            onThumbsDown={onThumbsDown}
+          />
         )}
       </AnimatePresence>
       

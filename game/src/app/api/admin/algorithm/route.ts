@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { authenticateAdmin } from '@/lib/adminAuth';
-import { createApiSuccess, createApiError } from '@/lib/utils';
+import { NextRequest } from 'next/server';
+import { withApiHandler, apiSuccess, apiError } from '@/lib/apiHelpers';
 import {
   getAlgorithmConfig,
   setAlgorithmConfig,
@@ -11,91 +10,50 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-/**
- * GET /api/admin/algorithm — Get current algorithm configuration.
- */
-export async function GET(request: NextRequest) {
-  const authError = authenticateAdmin(request);
-  if (authError) return authError;
-
+export const GET = withApiHandler(async () => {
   const config = getAlgorithmConfig();
   const isDefault = !globalThis.__algorithmConfig;
+  return apiSuccess({ config, isDefault, defaults: DEFAULT_ALGORITHM_CONFIG });
+}, { requireAdmin: true });
 
-  return NextResponse.json(
-    createApiSuccess({
-      config,
-      isDefault,
-      defaults: DEFAULT_ALGORITHM_CONFIG,
-    })
-  );
-}
+export const POST = withApiHandler(async (request: NextRequest) => {
+  const body = await request.json();
+  const { action, config } = body;
 
-/**
- * POST /api/admin/algorithm — Update algorithm configuration.
- * Body: { action: 'update' | 'reset', config?: AlgorithmConfig }
- */
-export async function POST(request: NextRequest) {
-  const authError = authenticateAdmin(request);
-  if (authError) return authError;
-
-  try {
-    const body = await request.json();
-    const { action, config } = body;
-
-    if (action === 'reset') {
-      resetAlgorithmConfig();
-      return NextResponse.json(
-        createApiSuccess({
-          config: DEFAULT_ALGORITHM_CONFIG,
-          isDefault: true,
-          message: 'Configuration réinitialisée aux valeurs par défaut.',
-        })
-      );
-    }
-
-    if (action === 'update' && config) {
-      // Validate the config shape
-      const validated = validateConfigShape(config);
-      if (!validated.valid) {
-        return NextResponse.json(
-          createApiError('VALIDATION_ERROR', validated.error!),
-          { status: 400 }
-        );
-      }
-
-      const result = setAlgorithmConfig(config as AlgorithmConfig);
-      if (!result.success) {
-        return NextResponse.json(
-          createApiError('VALIDATION_ERROR', result.error!),
-          { status: 400 }
-        );
-      }
-
-      return NextResponse.json(
-        createApiSuccess({
-          config: getAlgorithmConfig(),
-          isDefault: false,
-          message: 'Configuration mise à jour avec succès.',
-        })
-      );
-    }
-
-    return NextResponse.json(
-      createApiError('VALIDATION_ERROR', 'Action invalide. Utilisez "update" ou "reset".'),
-      { status: 400 }
-    );
-  } catch (error) {
-    console.error('Error in POST /api/admin/algorithm:', error);
-    return NextResponse.json(
-      createApiError('INTERNAL_ERROR', 'Erreur lors de la mise à jour de la configuration.'),
-      { status: 500 }
-    );
+  if (action === 'reset') {
+    resetAlgorithmConfig();
+    return apiSuccess({
+      config: DEFAULT_ALGORITHM_CONFIG,
+      isDefault: true,
+      message: 'Configuration réinitialisée aux valeurs par défaut.',
+    });
   }
-}
 
-/**
- * Validate the shape of an incoming config object.
- */
+  if (action === 'update' && config) {
+    const validated = validateConfigShape(config);
+    if (!validated.valid) {
+      return apiError('VALIDATION_ERROR', validated.error!, 400);
+    }
+
+    const result = setAlgorithmConfig(config as AlgorithmConfig);
+    if (!result.success) {
+      return apiError('VALIDATION_ERROR', result.error!, 400);
+    }
+
+    return apiSuccess({
+      config: getAlgorithmConfig(),
+      isDefault: false,
+      message: 'Configuration mise à jour avec succès.',
+    });
+  }
+
+  return apiError('VALIDATION_ERROR', 'Action invalide. Utilisez "update" ou "reset".', 400);
+}, { requireAdmin: true });
+
+// ---------------------------------------------------------------------------
+// Config shape validation (algorithm-specific)
+// ---------------------------------------------------------------------------
+
 function validateConfigShape(config: unknown): { valid: boolean; error?: string } {
   if (!config || typeof config !== 'object') {
     return { valid: false, error: 'La configuration doit être un objet.' };
@@ -103,7 +61,6 @@ function validateConfigShape(config: unknown): { valid: boolean; error?: string 
 
   const c = config as Record<string, unknown>;
 
-  // Check strategies
   if (!c.strategies || typeof c.strategies !== 'object') {
     return { valid: false, error: 'Les stratégies sont requises.' };
   }
@@ -122,12 +79,10 @@ function validateConfigShape(config: unknown): { valid: boolean; error?: string 
     }
   }
 
-  // Check ELO
   if (!c.elo || typeof c.elo !== 'object') {
     return { valid: false, error: 'La configuration ELO est requise.' };
   }
 
-  // Check antiRepeat
   if (!c.antiRepeat || typeof c.antiRepeat !== 'object') {
     return { valid: false, error: 'La configuration anti-repeat est requise.' };
   }
