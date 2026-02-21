@@ -1,9 +1,26 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, animate as fmAnimate } from 'framer-motion';
 import { VoteResult, Duel, ElementDTO } from '@/types/game';
 import { formatNumber } from '@/lib/utils';
+
+// Animated counter that rolls up from 0 to the final percentage
+function AnimatedPercent({ value, delay = 0.2, className }: { value: number; delay?: number; className?: string }) {
+  const count = useMotionValue(0);
+  const rounded = useTransform(count, (v) => `${Math.round(v)}%`);
+
+  useEffect(() => {
+    const ctrl = fmAnimate(count, value, {
+      duration: 0.8,
+      delay,
+      ease: 'easeOut',
+    });
+    return () => ctrl.stop();
+  }, [count, value, delay]);
+
+  return <motion.span className={className}>{rounded}</motion.span>;
+}
 
 interface ResultDisplayProps {
   duel: Duel;
@@ -116,7 +133,7 @@ function ResultCard({
             className="space-y-1"
           >
             <p className={`font-black text-white ${isMoreRedFlag ? 'text-4xl sm:text-5xl' : 'text-xl sm:text-2xl'}`}>
-              {stats.percentage}%
+              <AnimatedPercent value={stats.percentage} delay={isMoreRedFlag ? 0.15 : 0.25} />
             </p>
             <p className="text-white/70 text-xs sm:text-sm">
               {formatNumber(stats.votes)} votes

@@ -72,14 +72,31 @@ export function StreakDisplay({ streak, streakEmoji, duelCount }: StreakDisplayP
           <motion.div
             key={`streak-${streak}`}
             initial={{ scale: 0.7, opacity: 0 }}
-            animate={{ scale: isMilestone ? [1, 1.25, 1] : 1, opacity: 1 }}
+            animate={{ 
+              scale: isMilestone ? [1, 1.08, 1] : 1, 
+              opacity: 1,
+              boxShadow: isMilestone
+                ? [
+                    '0 0 8px rgba(239,68,68,0.2)',
+                    '0 0 20px rgba(239,68,68,0.5)',
+                    '0 0 8px rgba(239,68,68,0.2)',
+                  ]
+                : '0 0 0px rgba(0,0,0,0)',
+            }}
             exit={{ scale: 0.7, opacity: 0 }}
-            transition={{ duration: isMilestone ? 0.5 : 0.3, type: 'spring' }}
+            transition={{ 
+              scale: isMilestone 
+                ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' } 
+                : { duration: 0.3, type: 'spring' },
+              boxShadow: isMilestone 
+                ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' } 
+                : { duration: 0.3 },
+              opacity: { duration: 0.3 },
+            }}
             className="backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-1.5"
             style={{
               background: isMilestone ? 'rgba(239,68,68,0.18)' : 'rgba(26,26,26,0.8)',
               border: isMilestone ? '1px solid rgba(239,68,68,0.4)' : '1px solid #333',
-              boxShadow: isMilestone ? '0 0 20px rgba(239,68,68,0.25)' : 'none',
             }}
           >
             <span

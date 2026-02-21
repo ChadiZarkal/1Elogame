@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ElementDTO } from '@/types/game';
 import { getCategory } from '@/config/categories';
@@ -31,16 +32,17 @@ interface DuelInterfaceProps {
 }
 
 export function DuelInterface({ elementA, elementB, onVote, disabled }: DuelInterfaceProps) {
-  const handleClickA = () => {
-    if (!disabled) {
-      onVote(elementA.id, elementB.id);
-    }
-  };
-  
-  const handleClickB = () => {
-    if (!disabled) {
-      onVote(elementB.id, elementA.id);
-    }
+  const [selected, setSelected] = useState<'a' | 'b' | null>(null);
+
+  const handleClick = (side: 'a' | 'b') => {
+    if (disabled || selected) return;
+    setSelected(side);
+    setTimeout(() => {
+      onVote(
+        side === 'a' ? elementA.id : elementB.id,
+        side === 'a' ? elementB.id : elementA.id,
+      );
+    }, 350);
   };
 
   // Style NEUTRE pour les deux options - pas de biais couleur
@@ -57,14 +59,19 @@ export function DuelInterface({ elementA, elementB, onVote, disabled }: DuelInte
     <div className="flex flex-col flex-1 w-full bg-[#0D0D0D]">
       {/* Element A - Top half - NEUTRE */}
       <motion.button
-        onClick={handleClickA}
-        disabled={disabled}
+        onClick={() => handleClick('a')}
+        disabled={disabled || !!selected}
         className={neutralCardClass}
         initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-        whileHover={{ scale: disabled ? 1 : 1.01 }}
-        whileTap={{ scale: disabled ? 1 : 0.98 }}
+        animate={{ 
+          opacity: selected && selected !== 'a' ? 0.4 : 1, 
+          y: 0,
+          scale: selected === 'a' ? 1.03 : selected === 'b' ? 0.95 : 1,
+          borderColor: selected === 'a' ? '#DC2626' : '#333333',
+        }}
+        transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+        whileHover={{ scale: disabled || selected ? 1 : 1.01 }}
+        whileTap={{ scale: disabled || selected ? 1 : 0.98 }}
       >
         <div className="text-center max-w-lg">
           <motion.p 
@@ -95,14 +102,19 @@ export function DuelInterface({ elementA, elementB, onVote, disabled }: DuelInte
       
       {/* Element B - Bottom half - NEUTRE */}
       <motion.button
-        onClick={handleClickB}
-        disabled={disabled}
+        onClick={() => handleClick('b')}
+        disabled={disabled || !!selected}
         className={neutralCardClass}
         initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-        whileHover={{ scale: disabled ? 1 : 1.01 }}
-        whileTap={{ scale: disabled ? 1 : 0.98 }}
+        animate={{ 
+          opacity: selected && selected !== 'b' ? 0.4 : 1, 
+          y: 0,
+          scale: selected === 'b' ? 1.03 : selected === 'a' ? 0.95 : 1,
+          borderColor: selected === 'b' ? '#DC2626' : '#333333',
+        }}
+        transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+        whileHover={{ scale: disabled || selected ? 1 : 1.01 }}
+        whileTap={{ scale: disabled || selected ? 1 : 0.98 }}
       >
         <div className="text-center max-w-lg">
           <motion.p 
