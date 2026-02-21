@@ -1,90 +1,79 @@
 /**
  * @file adminAuth.test.ts
- * @description Tests unitaires pour le système d'authentification admin centralisé.
+ * @description Unit tests for the HMAC-based stateless admin auth system.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   generateAdminToken,
   validateAdminToken,
   revokeAdminToken,
 } from '@/lib/adminAuth';
 
-beforeEach(() => {
-  // Clear the global token store between tests
-  if (globalThis.__adminTokenStore) {
-    globalThis.__adminTokenStore.clear();
-  }
-});
-
 describe('generateAdminToken', () => {
-  it('génère un token avec le préfixe admin_', () => {
+  it('generates a token in <expiresAt>.<hmac> format', () => {
     const { token } = generateAdminToken();
-    expect(token).toMatch(/^admin_/);
+    expect(token).toContain('.');
+    const [expiresStr, sig] = token.split('.');
+    expect(Number(expiresStr)).toBeGreaterThan(Date.now());
+    expect(sig.length).toBeGreaterThan(0);
   });
 
-  it('génère des tokens uniques', () => {
-    const { token: token1 } = generateAdminToken();
-    const { token: token2 } = generateAdminToken();
-    expect(token1).not.toBe(token2);
+  it('generates unique tokens across time ticks', async () => {
+    const { token: t1 } = generateAdminToken();
+    // Ensure at least 1ms passes so Date.now() differs
+    await new Promise(r => setTimeout(r, 2));
+    const { token: t2 } = generateAdminToken();
+    expect(t1).not.toBe(t2);
   });
 
-  it('retourne un expiresIn en secondes (1h)', () => {
+  it('returns expiresIn in seconds (4h)', () => {
     const { expiresIn } = generateAdminToken();
-    expect(expiresIn).toBe(3600);
+    expect(expiresIn).toBe(4 * 3600);
   });
 
-  it('stocke le token dans le store', () => {
+  it('produces a valid token', () => {
     const { token } = generateAdminToken();
     expect(validateAdminToken(token)).toBe(true);
-  });
-
-  it('gère la limite de tokens actifs', () => {
-    // Generate many tokens
-    const tokens: string[] = [];
-    for (let i = 0; i < 110; i++) {
-      tokens.push(generateAdminToken().token);
-    }
-    // The most recent tokens should still be valid
-    const lastToken = tokens[tokens.length - 1];
-    expect(validateAdminToken(lastToken)).toBe(true);
   });
 });
 
 describe('validateAdminToken', () => {
-  it('valide un token fraîchement généré', () => {
+  it('validates a freshly generated token', () => {
     const { token } = generateAdminToken();
     expect(validateAdminToken(token)).toBe(true);
   });
 
-  it('rejette un token vide', () => {
+  it('rejects an empty token', () => {
     expect(validateAdminToken('')).toBe(false);
   });
 
-  it('rejette un token sans le préfixe admin_', () => {
-    expect(validateAdminToken('fake_token_123')).toBe(false);
+  it('rejects a token without a dot separator', () => {
+    expect(validateAdminToken('noseparator')).toBe(false);
   });
 
-  it('rejette un token admin_ inexistant dans le store', () => {
-    expect(validateAdminToken('admin_fake_nonexistent')).toBe(false);
-  });
-
-  it('rejette un token révoqué', () => {
+  it('rejects a token with invalid HMAC', () => {
     const { token } = generateAdminToken();
-    revokeAdminToken(token);
-    expect(validateAdminToken(token)).toBe(false);
+    const [expiresStr] = token.split('.');
+    expect(validateAdminToken(`${expiresStr}.fakesig`)).toBe(false);
+  });
+
+  it('rejects an expired token', () => {
+    const pastExpiry = Date.now() - 1000;
+    const fakeToken = `${pastExpiry}.anysig`;
+    expect(validateAdminToken(fakeToken)).toBe(false);
   });
 });
 
 describe('revokeAdminToken', () => {
-  it('révoque un token existant', () => {
+  it('is a no-op and does not throw', () => {
     const { token } = generateAdminToken();
-    expect(validateAdminToken(token)).toBe(true);
-    revokeAdminToken(token);
-    expect(validateAdminToken(token)).toBe(false);
+    expect(() => revokeAdminToken(token)).not.toThrow();
   });
 
-  it('ne crashe pas en révoquant un token inexistant', () => {
-    expect(() => revokeAdminToken('admin_nonexistent')).not.toThrow();
+  it('token remains valid after revoke (stateless design)', () => {
+    const { token } = generateAdminToken();
+    revokeAdminToken(token);
+    expect(validateAdminToken(token)).toBe(true);
   });
 });

@@ -1,111 +1,86 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { DuelInterface } from '../DuelInterface';
 
 const mockElementA = { id: 'a1', texte: 'Ghoster après le date', categorie: 'sexe' };
 const mockElementB = { id: 'b1', texte: 'Jouer aux jeux 10h', categorie: 'lifestyle' };
 
 describe('DuelInterface', () => {
-  it('should render both elements', () => {
+  it('renders both element texts', () => {
     render(
-      <DuelInterface
-        elementA={mockElementA}
-        elementB={mockElementB}
-        onVote={vi.fn()}
-      />
+      <DuelInterface elementA={mockElementA} elementB={mockElementB} onVote={vi.fn()} />
     );
     expect(screen.getByText('Ghoster après le date')).toBeInTheDocument();
     expect(screen.getByText('Jouer aux jeux 10h')).toBeInTheDocument();
   });
 
-  it('should display categories', () => {
+  it('renders category labels from config', () => {
     render(
-      <DuelInterface
-        elementA={mockElementA}
-        elementB={mockElementB}
-        onVote={vi.fn()}
-      />
+      <DuelInterface elementA={mockElementA} elementB={mockElementB} onVote={vi.fn()} />
     );
-    expect(screen.getByText('sexe')).toBeInTheDocument();
-    expect(screen.getByText('lifestyle')).toBeInTheDocument();
+    // CategoryBadge renders labelFr from categories config
+    expect(screen.getByText('Sexe & Kinks')).toBeInTheDocument();
+    expect(screen.getByText('Lifestyle')).toBeInTheDocument();
   });
 
-  it('should render VS divider', () => {
+  it('renders VS divider', () => {
     render(
-      <DuelInterface
-        elementA={mockElementA}
-        elementB={mockElementB}
-        onVote={vi.fn()}
-      />
+      <DuelInterface elementA={mockElementA} elementB={mockElementB} onVote={vi.fn()} />
     );
     expect(screen.getByText('VS')).toBeInTheDocument();
   });
 
-  it('should call onVote with A as winner when clicking A', () => {
+  it('calls onVote with A as winner after delay', async () => {
+    vi.useFakeTimers();
     const onVote = vi.fn();
     render(
-      <DuelInterface
-        elementA={mockElementA}
-        elementB={mockElementB}
-        onVote={onVote}
-      />
+      <DuelInterface elementA={mockElementA} elementB={mockElementB} onVote={onVote} />
     );
 
     fireEvent.click(screen.getByText('Ghoster après le date'));
+    expect(onVote).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(350);
     expect(onVote).toHaveBeenCalledWith('a1', 'b1');
+
+    vi.useRealTimers();
   });
 
-  it('should call onVote with B as winner when clicking B', () => {
+  it('calls onVote with B as winner after delay', async () => {
+    vi.useFakeTimers();
     const onVote = vi.fn();
     render(
-      <DuelInterface
-        elementA={mockElementA}
-        elementB={mockElementB}
-        onVote={onVote}
-      />
+      <DuelInterface elementA={mockElementA} elementB={mockElementB} onVote={onVote} />
     );
 
     fireEvent.click(screen.getByText('Jouer aux jeux 10h'));
+    vi.advanceTimersByTime(350);
     expect(onVote).toHaveBeenCalledWith('b1', 'a1');
+
+    vi.useRealTimers();
   });
 
-  it('should not call onVote when disabled', () => {
+  it('does not call onVote when disabled', () => {
     const onVote = vi.fn();
     render(
-      <DuelInterface
-        elementA={mockElementA}
-        elementB={mockElementB}
-        onVote={onVote}
-        disabled
-      />
+      <DuelInterface elementA={mockElementA} elementB={mockElementB} onVote={onVote} disabled />
     );
 
     fireEvent.click(screen.getByText('Ghoster après le date'));
     expect(onVote).not.toHaveBeenCalled();
   });
 
-  it('should render two buttons', () => {
+  it('renders two buttons', () => {
     render(
-      <DuelInterface
-        elementA={mockElementA}
-        elementB={mockElementB}
-        onVote={vi.fn()}
-      />
+      <DuelInterface elementA={mockElementA} elementB={mockElementB} onVote={vi.fn()} />
     );
-    const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(2);
+    expect(screen.getAllByRole('button')).toHaveLength(2);
   });
 
-  it('should disable buttons when disabled prop is true', () => {
+  it('disables buttons when disabled prop is true', () => {
     render(
-      <DuelInterface
-        elementA={mockElementA}
-        elementB={mockElementB}
-        onVote={vi.fn()}
-        disabled
-      />
+      <DuelInterface elementA={mockElementA} elementB={mockElementB} onVote={vi.fn()} disabled />
     );
-    const buttons = screen.getAllByRole('button');
-    buttons.forEach(btn => expect(btn).toBeDisabled());
+    screen.getAllByRole('button').forEach(btn => expect(btn).toBeDisabled());
   });
 });
