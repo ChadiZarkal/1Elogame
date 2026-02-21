@@ -48,6 +48,7 @@ export function DuelInterface({ elementA, elementB, onVote, disabled }: DuelInte
   // Style NEUTRE pour les deux options - pas de biais couleur
   const neutralCardClass = `
     flex-1 flex items-center justify-center p-6 
+    relative z-10
     bg-[#1A1A1A] border border-[#333333]
     hover:bg-[#242424] hover:border-[#DC2626] hover:shadow-[0_0_30px_rgba(220,38,38,0.3)]
     active:bg-[#2A2A2A] active:scale-[0.98]
