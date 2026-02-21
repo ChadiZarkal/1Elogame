@@ -36,12 +36,11 @@ interface ResultDisplayProps {
 interface ElementStats {
   percentage: number;
   votes: number;
-  isMoreRedFlag: boolean; // true = c'est le PLUS red flag (celui voté)
-  rank?: number; // Rang global
-  totalElements?: number; // Total des éléments
+  isMoreRedFlag: boolean;
+  rank?: number;
+  totalElements?: number;
 }
 
-// Composant pour afficher une option avec son résultat
 function ResultCard({ 
   element, 
   stats,
@@ -50,11 +49,9 @@ function ResultCard({
 }: { 
   element: ElementDTO; 
   stats: ElementStats;
-  flexValue: number; // Valeur de flex calculée proportionnellement
-  isOptimistic?: boolean; // Mode optimiste = affichage neutre en attente
+  flexValue: number;
+  isOptimistic?: boolean;
 }) {
-  // isMoreRedFlag = true → C'est le plus red flag → ROUGE + GRAND
-  // isMoreRedFlag = false → C'est le moins red flag → VERT + PETIT
   const isMoreRedFlag = stats.isMoreRedFlag;
   
   // En mode optimiste: fond neutre gris, pas de direction affichée
@@ -195,18 +192,10 @@ export function ResultDisplay({
   const [canClickToAdvance, setCanClickToAdvance] = useState(false);
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
   
-  // LOGIQUE CORRIGÉE:
-  // - result.winner = l'option que l'utilisateur a CLIQUÉE (son choix)
-  // - result.winner.percentage = le % de gens qui pensent que CE choix est le plus red flag
-  // - result.loser.percentage = le % de gens qui pensent que L'AUTRE option est le plus red flag
-  // 
-  // Si winner.percentage > 50% → L'utilisateur a deviné correctement (son choix EST le plus red flag)
-  // Si winner.percentage < 50% → L'utilisateur s'est trompé (l'autre option est le plus red flag)
+  // winner = user's pick, loser = other option
+  const userChoice = result.winner;
+  const otherOption = result.loser;
   
-  const userChoice = result.winner; // Ce que l'utilisateur a cliqué
-  const otherOption = result.loser; // L'autre option
-  
-  // Est-ce que le choix de l'utilisateur est VRAIMENT le plus red flag selon les stats ?
   const userGuessedCorrectly = userChoice.percentage >= 50;
   
   // Déterminer qui est elementA et elementB
@@ -252,36 +241,20 @@ export function ResultDisplay({
         totalElements: otherOption.totalElements,
       };
   
-  // CALCUL PROPORTIONNEL DES TAILLES
-  // Récupérer le pourcentage du plus grand (le red flag)
+  // Proportional flex: ratio capped at 3:1 for readability
   const higherPercent = Math.max(elementAStats.percentage, elementBStats.percentage);
   const lowerPercent = Math.min(elementAStats.percentage, elementBStats.percentage);
-  
-  // L'écart va de 0 (50/50) à 50 (100/0)
   const percentDiff = higherPercent - lowerPercent;
   
-  // Système de flex proportionnel avec limites pour la lisibilité:
-  // - 50/50 → flex 1 / 1 (égal)
-  // - 60/40 → légère différence
-  // - 80/20 → grande différence mais lisible
-  // 
-  // On utilise une échelle où:
-  // - Le plus grand va de 1.0 (à 50%) jusqu'à 1.8 max (à 100%)
-  // - Le plus petit va de 1.0 (à 50%) jusqu'à 0.6 min (à 0%)
-  // Cela donne un ratio max de 1.8/0.6 = 3:1, lisible
-  
-  const flexBig = 1 + (percentDiff / 50) * 0.8;   // Range: 1.0 → 1.8
-  const flexSmall = 1 - (percentDiff / 50) * 0.4; // Range: 1.0 → 0.6
+  const flexBig = 1 + (percentDiff / 50) * 0.8;
+  const flexSmall = 1 - (percentDiff / 50) * 0.4;
   
   const flexA = elementAIsMoreRedFlag ? flexBig : flexSmall;
   const flexB = !elementAIsMoreRedFlag ? flexBig : flexSmall;
   
   useEffect(() => {
-    // Afficher le feedback après 0.4s (was 1.2s)
     const animationTimer = setTimeout(() => setShowFeedback(true), 400);
-    // Permettre le clic pour avancer après 0.25s (was 0.8s)
     const clickTimer = setTimeout(() => setCanClickToAdvance(true), 250);
-    // Auto-advance après 4s (was 6s)
     autoAdvanceTimerRef.current = setTimeout(() => onNext(), 4000);
     
     return () => {

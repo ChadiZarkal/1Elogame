@@ -1,19 +1,4 @@
-/**
- * Duel Selection Algorithm v2
- * 
- * Selects duel pairs using configurable strategies with anti-repeat protection.
- * All parameters are tunable from the admin panel at /admin/algorithm.
- * 
- * Strategies (default weights):
- * - 50%: ELO close (configurable range) → Balanced debates
- * - 30%: Cross-category → Absurd, viral combinations
- * - 15%: Starred duels (if ≥N stars) → Popular content
- * - 5%: Random → Discovery, new elements
- * 
- * Anti-repeat:
- * - Tracks element appearances per session (max N times)
- * - Cooldown: elements seen in the last N rounds are deprioritized
- */
+/** Duel selection algorithm with configurable strategies and anti-repeat protection. */
 
 import { Element } from '@/types/database';
 import { SelectionStrategy, ElementDTO } from '@/types/game';
@@ -21,20 +6,12 @@ import { getEloDifference, isCloseElo } from './elo';
 import { getPairKey as getPairKeyUtil } from './utils';
 import { getAlgorithmConfig, AlgorithmConfig } from './algorithmConfig';
 
-// ─── Anti-repeat context passed from the client ─────────────────
-
 export interface AntiRepeatContext {
-  /** IDs of elements seen in the last N rounds (circular buffer) */
   recentElementIds: string[];
-  /** Map of elementId → number of appearances this session */
   elementAppearances: Record<string, number>;
 }
 
-// ─── Strategy selection ──────────────────────────────────────────
-
-/**
- * Select a random strategy based on the configured weight distribution.
- */
+/** Select a random strategy based on weight distribution. */
 export function selectStrategy(config?: AlgorithmConfig): SelectionStrategy {
   const cfg = config ?? getAlgorithmConfig();
   const random = Math.random() * 100;
@@ -55,11 +32,7 @@ export function selectStrategy(config?: AlgorithmConfig): SelectionStrategy {
   return 'random';
 }
 
-// ─── Utility functions ──────────────────────────────────────────
-
-/**
- * Fisher-Yates shuffle algorithm for randomizing arrays.
- */
+/** Fisher-Yates shuffle. */
 export function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -69,26 +42,12 @@ export function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-/**
- * Get a consistent pair key for checking seen duels.
- * @deprecated Use getPairKey from '@/lib/utils' directly.
- */
-export function getPairKey(idA: string, idB: string): string {
-  return getPairKeyUtil(idA, idB);
-}
-
-/**
- * Check if a pair has been seen.
- */
+/** Check if a pair has been seen. */
 export function isPairSeen(idA: string, idB: string, seenDuels: Set<string>): boolean {
-  return seenDuels.has(getPairKey(idA, idB));
+  return seenDuels.has(getPairKeyUtil(idA, idB));
 }
 
-// ─── Anti-repeat filtering ──────────────────────────────────────
-
-/**
- * Filter out elements that have exceeded their max appearances per session.
- */
+/** Filter out elements that exceeded max appearances per session. */
 export function filterByAntiRepeat(
   elements: Element[],
   context: AntiRepeatContext,
@@ -118,9 +77,7 @@ export function filterByAntiRepeat(
   return elements;
 }
 
-/**
- * Score elements by "freshness" — higher = more fresh = more desirable.
- */
+/** Score elements by freshness (higher = more desirable). */
 function getElementFreshnessScore(
   elementId: string,
   context: AntiRepeatContext,
@@ -144,9 +101,6 @@ function getElementFreshnessScore(
   return recency / maxRecency; // 0 (just seen) → 1 (cooldown expired)
 }
 
-/**
- * Sort elements by freshness, putting least-recently-seen first.
- */
 function sortByFreshness(
   elements: Element[],
   context: AntiRepeatContext,
@@ -170,11 +124,7 @@ function sortByFreshness(
   return scored.map(s => s.element);
 }
 
-// ─── Pair finding strategies ────────────────────────────────────
-
-/**
- * Find pairs with close ELO scores.
- */
+/** Find pairs with close ELO scores. */
 export function findCloseEloPairs(
   elements: Element[],
   seenDuels: Set<string>,
@@ -203,9 +153,7 @@ export function findCloseEloPairs(
   return pairs;
 }
 
-/**
- * Find pairs from different categories.
- */
+/** Find pairs from different categories. */
 export function findCrossCategoryPairs(
   elements: Element[],
   seenDuels: Set<string>,
@@ -234,9 +182,7 @@ export function findCrossCategoryPairs(
   return pairs;
 }
 
-/**
- * Find random pairs (freshest elements prioritized).
- */
+/** Find random pairs (freshest elements prioritized). */
 export function findRandomPairs(
   elements: Element[],
   seenDuels: Set<string>,
@@ -262,9 +208,7 @@ export function findRandomPairs(
   return pairs;
 }
 
-/**
- * Convert an Element to an ElementDTO (minimal data for client).
- */
+/** Convert Element to ElementDTO. */
 export function toElementDTO(element: Element): ElementDTO {
   return {
     id: element.id,
@@ -273,16 +217,7 @@ export function toElementDTO(element: Element): ElementDTO {
   };
 }
 
-/**
- * Main algorithm: Select the next duel pair.
- * 
- * @param elements - All active elements
- * @param seenDuels - Set of seen duel pair keys
- * @param antiRepeatContext - Recent element tracking for anti-repeat
- * @param starredPairs - Optional: pairs with ≥N stars (for starred strategy)
- * @param config - Optional: algorithm config override
- * @returns A pair of elements for the duel, or null if all duels exhausted
- */
+/** Select the next duel pair using configured strategy with anti-repeat and fallbacks. */
 export function selectDuelPair(
   elements: Element[],
   seenDuels: Set<string>,
@@ -361,18 +296,13 @@ export function selectDuelPair(
   return pairs[Math.floor(Math.random() * pairs.length)];
 }
 
-/**
- * Calculate the total number of possible duel combinations.
- * Formula: n * (n-1) / 2
- */
+/** Total possible duel combinations: n*(n-1)/2 */
 export function getTotalPossibleDuels(elementCount: number): number {
   if (elementCount < 2) return 0;
   return (elementCount * (elementCount - 1)) / 2;
 }
 
-/**
- * Check if all possible duels have been seen.
- */
+/** Check if all possible duels have been seen. */
 export function allDuelsExhausted(elementCount: number, seenCount: number): boolean {
   return seenCount >= getTotalPossibleDuels(elementCount);
 }

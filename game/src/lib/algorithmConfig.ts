@@ -1,14 +1,4 @@
-/**
- * Algorithm Configuration System
- * 
- * Centralized configuration for the duel selection algorithm.
- * All parameters are tunable from the admin panel at /admin/algorithm.
- * 
- * Storage: in-memory via globalThis (resets on server restart).
- * Defaults are production-ready and optimized for engagement.
- */
-
-// ─── Types ───────────────────────────────────────────────────────
+/** Centralized config for the duel selection algorithm. Tunable from /admin/algorithm. */
 
 export interface StrategyConfig {
   enabled: boolean;
@@ -18,7 +8,6 @@ export interface StrategyConfig {
 }
 
 export interface AlgorithmConfig {
-  /** Strategy distribution (weights must sum to 100 among enabled strategies) */
   strategies: {
     elo_close: StrategyConfig;
     cross_category: StrategyConfig;
@@ -26,28 +15,25 @@ export interface AlgorithmConfig {
     random: StrategyConfig;
   };
 
-  /** ELO proximity range for the "elo_close" strategy */
+  /** ELO proximity range */
   elo: {
     minDifference: number;
     maxDifference: number;
   };
 
-  /** Anti-repeat: prevent same elements from appearing too often */
   antiRepeat: {
     enabled: boolean;
-    /** Max times an element can appear in one session (0 = unlimited) */
     maxAppearancesPerSession: number;
-    /** Min rounds before a recently-seen element can reappear */
     cooldownRounds: number;
   };
 
-  /** Minimum stars for the "starred" strategy */
+  /** Minimum stars for "starred" strategy */
   starredMinStars: number;
 
   /** K-factor tiers for ELO calculation */
   kFactor: {
-    newThreshold: number;       // participations < this → new K
-    moderateThreshold: number;  // participations < this → moderate K
+    newThreshold: number;
+    moderateThreshold: number;
     newK: number;
     moderateK: number;
     establishedK: number;
@@ -56,8 +42,6 @@ export interface AlgorithmConfig {
   /** Max candidate pairs to evaluate per strategy */
   candidatePoolSize: number;
 }
-
-// ─── Defaults ────────────────────────────────────────────────────
 
 export const DEFAULT_ALGORITHM_CONFIG: AlgorithmConfig = {
   strategies: {
@@ -111,25 +95,17 @@ export const DEFAULT_ALGORITHM_CONFIG: AlgorithmConfig = {
   candidatePoolSize: 10,
 };
 
-// ─── Runtime storage (globalThis for cross-module sharing) ───────
-
 declare global {
   // eslint-disable-next-line no-var
   var __algorithmConfig: AlgorithmConfig | undefined;
 }
 
-/**
- * Get the current algorithm config.
- * Returns the admin-set config if available, otherwise defaults.
- */
+/** Get current algorithm config (admin-set or defaults). */
 export function getAlgorithmConfig(): AlgorithmConfig {
   return globalThis.__algorithmConfig ?? { ...DEFAULT_ALGORITHM_CONFIG };
 }
 
-/**
- * Set the algorithm config (from admin panel).
- * Validates weights before saving.
- */
+/** Set config from admin panel. Validates weights before saving. */
 export function setAlgorithmConfig(config: AlgorithmConfig): { success: boolean; error?: string } {
   // Validate strategy weights sum to 100 among enabled strategies
   const enabledStrategies = Object.values(config.strategies).filter(s => s.enabled);
@@ -159,52 +135,7 @@ export function setAlgorithmConfig(config: AlgorithmConfig): { success: boolean;
   return { success: true };
 }
 
-/**
- * Reset config to defaults.
- */
+/** Reset config to defaults. */
 export function resetAlgorithmConfig(): void {
   globalThis.__algorithmConfig = undefined;
-}
-
-/**
- * Normalize strategy weights so enabled strategies sum to 100.
- */
-export function normalizeWeights(config: AlgorithmConfig): AlgorithmConfig {
-  const result = { ...config, strategies: { ...config.strategies } };
-  const enabledEntries = Object.entries(result.strategies)
-    .filter(([, s]) => s.enabled) as [string, StrategyConfig][];
-
-  if (enabledEntries.length === 0) return result;
-
-  const total = enabledEntries.reduce((sum, [, s]) => sum + s.weight, 0);
-  if (total === 0) {
-    // Distribute equally
-    const each = Math.floor(100 / enabledEntries.length);
-    enabledEntries.forEach(([key]) => {
-      (result.strategies as Record<string, StrategyConfig>)[key] = {
-        ...(result.strategies as Record<string, StrategyConfig>)[key],
-        weight: each,
-      };
-    });
-    // Give remainder to first
-    const remainder = 100 - each * enabledEntries.length;
-    if (remainder > 0) {
-      (result.strategies as Record<string, StrategyConfig>)[enabledEntries[0][0]].weight += remainder;
-    }
-  } else {
-    enabledEntries.forEach(([key, s]) => {
-      (result.strategies as Record<string, StrategyConfig>)[key] = {
-        ...s,
-        weight: Math.round((s.weight / total) * 100),
-      };
-    });
-    // Fix rounding errors
-    const newTotal = enabledEntries.reduce((sum, [key]) =>
-      sum + (result.strategies as Record<string, StrategyConfig>)[key].weight, 0);
-    if (newTotal !== 100) {
-      (result.strategies as Record<string, StrategyConfig>)[enabledEntries[0][0]].weight += (100 - newTotal);
-    }
-  }
-
-  return result;
 }

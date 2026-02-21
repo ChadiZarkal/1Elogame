@@ -7,7 +7,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   selectStrategy,
   shuffleArray,
-  getPairKey,
   isPairSeen,
   findCloseEloPairs,
   findCrossCategoryPairs,
@@ -79,17 +78,6 @@ describe('shuffleArray', () => {
     const copy = [...arr];
     shuffleArray(arr);
     expect(arr).toEqual(copy);
-  });
-});
-
-describe('getPairKey', () => {
-  it('crée une clé cohérente', () => {
-    expect(getPairKey('a', 'b')).toBe('a-b');
-    expect(getPairKey('b', 'a')).toBe('a-b');
-  });
-
-  it('trie alphabétiquement', () => {
-    expect(getPairKey('z', 'a')).toBe('a-z');
   });
 });
 

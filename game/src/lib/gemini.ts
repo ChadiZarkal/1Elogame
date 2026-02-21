@@ -1,21 +1,9 @@
-/**
- * Gemini (Vertex AI) integration using official Google Cloud SDK.
- * Inspired by: https://cloud.google.com/vertex-ai/generative-ai/docs/learn/overview
- * 
- * Loads service account credentials from JSON file or env var, creates a VertexAI client,
- * and calls Gemini models with structured JSON output.
- * 
- * For Vercel: Pass GOOGLE_SERVICE_ACCOUNT_JSON as a JSON string in env vars.
- */
+/** Gemini (Vertex AI) integration for AI judge. */
 
 import { VertexAI, SchemaType } from '@google-cloud/vertexai';
 import { readFileSync, existsSync, readdirSync, writeFileSync, unlinkSync } from 'fs';
 import { resolve, join } from 'path';
 import { tmpdir } from 'os';
-
-// ═══════════════════════════════════════
-// Credentials loader (Vercel + local)
-// ═══════════════════════════════════════
 
 interface ServiceAccountCredentials {
   type: string;
@@ -74,17 +62,10 @@ function getServiceAccountCredentials(): ServiceAccountCredentials | null {
   return null;
 }
 
-// ═══════════════════════════════════════
-// VertexAI client singleton
-// ═══════════════════════════════════════
-
 let vertexaiInstance: VertexAI | null = null;
 let tempCredentialsFile: string | null = null;
 
-/**
- * Clean up temporary credentials file if it exists.
- * Safe to call multiple times.
- */
+/** Clean up temporary credentials file. */
 function cleanupTempCredentials(): void {
   if (tempCredentialsFile && existsSync(tempCredentialsFile)) {
     try {
@@ -137,10 +118,6 @@ if (typeof process !== 'undefined') {
   process.on('SIGINT', cleanup);
   process.on('SIGTERM', cleanup);
 }
-
-// ═══════════════════════════════════════
-// Gemini API call
-// ═══════════════════════════════════════
 
 export async function judgeWithGemini(
   text: string,
