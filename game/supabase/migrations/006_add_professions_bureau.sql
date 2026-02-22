@@ -34,16 +34,16 @@ INSERT INTO elements (texte, categorie, niveau_provocation) VALUES
 -- 🌙 La Nuit, les Arts & La Bohème
 -- (Clivage sur le mode de vie)
 -- ========================================
-('Être DJ en boîte de nuit', 'bureau', 2),
-('Être musicien indépendant', 'bureau', 2),
-('Être tatoueur / Perceur', 'bureau', 2),
-('Être barman / Mixologue', 'bureau', 2),
-('Être videur / Agent de sécurité', 'bureau', 2),
-('Être photographe de mode', 'bureau', 2),
-('Être mannequin', 'bureau', 2),
-('Être comédien de stand-up', 'bureau', 2),
-('Être intermittent du spectacle', 'bureau', 2),
-('Être écrivain / Romancier à son compte', 'bureau', 2),
+('Être DJ en boîte de nuit (horaires impossible pour fonder une famille)', 'bureau', 2),
+('Être musicien indépendant (galérien avec un rêve)', 'bureau', 2),
+('Être tatoueur / Perceur (carrière créative mais précaire)', 'bureau', 2),
+('Être barman / Mixologue (salaire de misère + mains baladeuses)', 'bureau', 2),
+('Être videur / Agent de sécurité (violence gratuite, bas salaire)', 'bureau', 2),
+('Être photographe de mode (carrière basée sur le réseau, pas stable)', 'bureau', 2),
+('Être mannequin (beauté éphémère, consommation émotionnelle)', 'bureau', 2),
+('Être comédien de stand-up (rejet constant, trac permanent)', 'bureau', 2),
+('Être intermittent du spectacle (sans assurance maladie, zéro stabilité)', 'bureau', 2),
+('Être écrivain / Romancier à son compte (endettement garanti)', 'bureau', 2),
 
 -- ========================================
 -- 🛡️ L'Uniforme, le Danger & Le Physique

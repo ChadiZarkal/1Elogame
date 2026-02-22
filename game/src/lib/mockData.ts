@@ -122,16 +122,16 @@ const _initialMockElements: Element[] = [
   createElement('56', "Être testeur de jeux vidéo", 'bureau', 2, 1060),
 
   // 🌙 La Nuit, les Arts & La Bohème
-  createElement('57', "Être DJ en boîte de nuit", 'bureau', 2, 1105),
-  createElement('58', "Être musicien indépendant", 'bureau', 2, 1100),
-  createElement('59', "Être tatoueur / Perceur", 'bureau', 2, 1095),
-  createElement('60', "Être barman / Mixologue", 'bureau', 2, 1090),
-  createElement('61', "Être videur / Agent de sécurité", 'bureau', 2, 1085),
-  createElement('62', "Être photographe de mode", 'bureau', 2, 1080),
-  createElement('63', "Être mannequin", 'bureau', 2, 1110),
-  createElement('64', "Être comédien de stand-up", 'bureau', 2, 1075),
-  createElement('65', "Être intermittent du spectacle", 'bureau', 2, 1070),
-  createElement('66', "Être écrivain / Romancier à son compte", 'bureau', 2, 1065),
+  createElement('57', "Être DJ en boîte de nuit (horaires impossible pour fonder une famille)", 'bureau', 2, 1105),
+  createElement('58', "Être musicien indépendant (galérien avec un rêve)", 'bureau', 2, 1100),
+  createElement('59', "Être tatoueur / Perceur (carrière créative mais précaire)", 'bureau', 2, 1095),
+  createElement('60', "Être barman / Mixologue (salaire de misère + mains baladeuses)", 'bureau', 2, 1090),
+  createElement('61', "Être videur / Agent de sécurité (violence gratuite, bas salaire)", 'bureau', 2, 1085),
+  createElement('62', "Être photographe de mode (carrière basée sur le réseau, pas stable)", 'bureau', 2, 1080),
+  createElement('63', "Être mannequin (beauté éphémère, consommation émotionnelle)", 'bureau', 2, 1110),
+  createElement('64', "Être comédien de stand-up (rejet constant, trac permanent)", 'bureau', 2, 1075),
+  createElement('65', "Être intermittent du spectacle (sans assurance maladie, zéro stabilité)", 'bureau', 2, 1070),
+  createElement('66', "Être écrivain / Romancier à son compte (endettement garanti)", 'bureau', 2, 1065),
 
   // 🛡️ L'Uniforme, le Danger & Le Physique
   createElement('67', "Être militaire", 'bureau', 2, 1120),
