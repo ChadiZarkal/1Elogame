@@ -100,6 +100,72 @@ const _initialMockElements: Element[] = [
   createElement('38', "Chauffer du poisson au micro-ondes", 'bureau', 4, 1045),
   createElement('39', "Être influenceur LinkedIn", 'bureau', 3, 1175),
   createElement('40', "Être politicien", 'bureau', 4, 1155),
+
+  // 💸 La "Hustle Culture" & L'Argent
+  createElement('41', "Être trader / Banquier d'affaires", 'bureau', 3, 1165),
+  createElement('42', "Être investisseur en cryptomonnaies (Crypto-bro)", 'bureau', 3, 1155),
+  createElement('43', "Être entrepreneur en dropshipping", 'bureau', 3, 1145),
+  createElement('44', "Être marchand de biens", 'bureau', 3, 1150),
+  createElement('45', "Être lobbyiste", 'bureau', 3, 1155),
+  createElement('46', "Être chasseur de têtes", 'bureau', 2, 1085),
+  createElement('47', "Être conseiller en gestion de patrimoine", 'bureau', 2, 1080),
+  createElement('48', "Être Business Angel (Investisseur)", 'bureau', 2, 1075),
+
+  // 📱 Le Numérique & L'Influence
+  createElement('49', "Être TikTokeur", 'bureau', 3, 1140),
+  createElement('50', "Être streamer / Gamer professionnel", 'bureau', 3, 1135),
+  createElement('51', "Être créateur de contenu sur MYM / OnlyFans", 'bureau', 4, 1160),
+  createElement('52', "Être développeur en Intelligence Artificielle", 'bureau', 2, 1090),
+  createElement('53', "Être expert en cybersécurité (Hacker éthique)", 'bureau', 2, 1095),
+  createElement('54', "Être monteur vidéo pour Youtubeurs", 'bureau', 2, 1070),
+  createElement('55', "Être concepteur de mondes virtuels / Métavers", 'bureau', 2, 1065),
+  createElement('56', "Être testeur de jeux vidéo", 'bureau', 2, 1060),
+
+  // 🌙 La Nuit, les Arts & La Bohème
+  createElement('57', "Être DJ en boîte de nuit", 'bureau', 2, 1105),
+  createElement('58', "Être musicien indépendant", 'bureau', 2, 1100),
+  createElement('59', "Être tatoueur / Perceur", 'bureau', 2, 1095),
+  createElement('60', "Être barman / Mixologue", 'bureau', 2, 1090),
+  createElement('61', "Être videur / Agent de sécurité", 'bureau', 2, 1085),
+  createElement('62', "Être photographe de mode", 'bureau', 2, 1080),
+  createElement('63', "Être mannequin", 'bureau', 2, 1110),
+  createElement('64', "Être comédien de stand-up", 'bureau', 2, 1075),
+  createElement('65', "Être intermittent du spectacle", 'bureau', 2, 1070),
+  createElement('66', "Être écrivain / Romancier à son compte", 'bureau', 2, 1065),
+
+  // 🛡️ L'Uniforme, le Danger & Le Physique
+  createElement('67', "Être militaire", 'bureau', 2, 1120),
+  createElement('68', "Être pompier", 'bureau', 2, 1115),
+  createElement('69', "Être gardien de prison", 'bureau', 2, 1100),
+  createElement('70', "Être marin pêcheur", 'bureau', 2, 1095),
+  createElement('71', "Être chauffeur de poids lourd", 'bureau', 2, 1090),
+  createElement('72', "Être mécanicien automobile", 'bureau', 2, 1085),
+  createElement('73', "Être ouvrier dans le BTP", 'bureau', 2, 1080),
+  createElement('74', "Être moniteur de ski / de surf", 'bureau', 2, 1075),
+  createElement('75', "Être agriculteur / Éleveur", 'bureau', 2, 1070),
+
+  // 🧘 Croyances, Bien-être "Alternatif" & Lifestyle
+  createElement('76', "Être astrologue / Tarologue", 'bureau', 3, 1140),
+  createElement('77', "Être naturopathe", 'bureau', 2, 1085),
+  createElement('78', "Être magnétiseur / Guérisseur", 'bureau', 3, 1130),
+  createElement('79', "Être professeur de yoga", 'bureau', 2, 1080),
+  createElement('80', "Être coach sportif / Personal Trainer", 'bureau', 2, 1090),
+  createElement('81', "Être chiropracteur", 'bureau', 2, 1075),
+  createElement('82', "Être conseiller en image / Relookeur", 'bureau', 2, 1070),
+  createElement('83', "Être guide spirituel", 'bureau', 3, 1125),
+  createElement('84', "Être décorateur d'intérieur", 'bureau', 2, 1065),
+  createElement('85', "Être organisateur d'événements (Wedding planner, etc.)", 'bureau', 2, 1060),
+
+  // ⚖️ Prestige, Pouvoir & Contraintes horaires
+  createElement('86', "Être chirurgien", 'bureau', 2, 1110),
+  createElement('87', "Être avocat pénaliste", 'bureau', 2, 1105),
+  createElement('88', "Être pilote de ligne", 'bureau', 2, 1100),
+  createElement('89', "Être hôtesse de l'air / Steward", 'bureau', 2, 1095),
+  createElement('90', "Être diplomate", 'bureau', 2, 1090),
+  createElement('91', "Être professeur d'université", 'bureau', 2, 1085),
+  createElement('92', "Être huissier de justice (Commissaire de justice)", 'bureau', 2, 1075),
+  createElement('93', "Être inspecteur des impôts", 'bureau', 2, 1065),
+  createElement('94', "Être journaliste d'investigation", 'bureau', 2, 1080),
 ];
 
 // Shared state via globalThis (persists across Turbopack module instances)
