@@ -15,6 +15,8 @@ export default function AdminCategoriesPage() {
   const [editEmoji, setEditEmoji] = useState('');
   const [showAddGuide, setShowAddGuide] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [defaultCategory, setDefaultCategory] = useState<string>('quotidien');
+  const [defaultSaved, setDefaultSaved] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -24,6 +26,10 @@ export default function AdminCategoriesPage() {
         return;
       }
     }
+    // Load default category from localStorage
+    const savedDefault = localStorage.getItem('default_game_category');
+    if (savedDefault) setDefaultCategory(savedDefault);
+
     // Load local overrides from localStorage
     const saved = localStorage.getItem('category_overrides');
     if (saved) {
@@ -45,6 +51,13 @@ export default function AdminCategoriesPage() {
   }, [router]);
 
   const categories = Object.values(localCategories);
+
+  const saveDefaultCategory = (catId: string) => {
+    setDefaultCategory(catId);
+    localStorage.setItem('default_game_category', catId);
+    setDefaultSaved(true);
+    setTimeout(() => setDefaultSaved(false), 2000);
+  };
 
   const startEdit = (cat: CategoryConfig) => {
     setEditingId(cat.id);
@@ -99,6 +112,46 @@ export default function AdminCategoriesPage() {
           </div>
         </div>
       </header>
+
+      {/* Default category picker */}
+      <div className="max-w-4xl mx-auto mb-8">
+        <div className="bg-[#1A1A1A] border border-[#F59E0B]/30 rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-bold text-[#F59E0B]">⭐ Catégorie par défaut</h2>
+              <p className="text-sm text-[#737373] mt-1">
+                Catégorie sélectionnée automatiquement quand un joueur arrive sur le jeu.
+              </p>
+            </div>
+            {defaultSaved && (
+              <span className="text-[#22C55E] text-sm font-medium">✓ Sauvegardé !</span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => saveDefaultCategory(cat.id)}
+                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                  defaultCategory === cat.id
+                    ? 'border-[#F59E0B] bg-[#F59E0B]/10 scale-105'
+                    : 'border-[#333] bg-[#0D0D0D] hover:border-[#555]'
+                }`}
+              >
+                <span className="text-2xl">{cat.emoji}</span>
+                <span className={`text-sm font-medium ${
+                  defaultCategory === cat.id ? 'text-[#F59E0B]' : 'text-[#A3A3A3]'
+                }`}>
+                  {cat.labelFr}
+                </span>
+                {defaultCategory === cat.id && (
+                  <span className="text-xs text-[#F59E0B] font-bold">PAR DÉFAUT</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
       <div className="max-w-4xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">

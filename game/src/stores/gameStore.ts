@@ -25,8 +25,16 @@ export interface GameModeSelection {
 
 export const DEFAULT_GAME_MODE: GameModeSelection = {
   mode: 'thematique',
-  category: 'lifestyle',
+  category: 'quotidien',
 };
+
+/** Reads the admin-configured default category from localStorage (client-side only). */
+export function getDefaultGameMode(): GameModeSelection {
+  if (typeof window === 'undefined') return DEFAULT_GAME_MODE;
+  const saved = localStorage.getItem('default_game_category');
+  if (saved) return { mode: 'thematique', category: saved };
+  return DEFAULT_GAME_MODE;
+}
 
 // History entry for scroll-back
 export interface DuelHistoryEntry {
@@ -120,8 +128,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   // Initialize from LocalStorage
   initializeFromStorage: () => {
     const session = getSession();
+    // Apply admin-configured default category
+    const defaultMode = getDefaultGameMode();
+    const updates: Partial<GameState> = { gameMode: defaultMode };
     if (session) {
-      set({
+      Object.assign(updates, {
         profile: session.profile,
         hasProfile: true,
         streak: session.streak,
@@ -129,6 +140,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         duelCount: session.duelCount,
       });
     }
+    set(updates);
   },
   
   // Set profile and initialize session
