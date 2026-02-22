@@ -5,7 +5,7 @@ import { aggregateRealDemographics } from '@/lib/demographics';
 export const dynamic = 'force-dynamic';
 
 export const GET = withApiHandler(async () => {
-  const sessions = getAnalyticsSessions();
+  const sessions = await getAnalyticsSessions();
   const data = aggregateRealDemographics(sessions);
   return apiSuccess(data);
 }, { requireAdmin: true });

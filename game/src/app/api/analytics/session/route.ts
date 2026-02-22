@@ -23,11 +23,11 @@ export const POST = withApiHandler(async (request: NextRequest) => {
     flushedAt: body.flushedAt || Date.now(),
   };
 
-  saveAnalyticsSession(session);
+  await saveAnalyticsSession(session);
   return apiSuccess({ success: true });
 });
 
 export const GET = withApiHandler(async () => {
-  const sessions = getAnalyticsSessions();
+  const sessions = await getAnalyticsSessions();
   return apiSuccess({ sessions, count: sessions.length });
 });
