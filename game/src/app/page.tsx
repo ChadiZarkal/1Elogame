@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Trophy, Share2, ArrowRight, ExternalLink } from 'lucide-react';
+import { Trophy, Share2, ArrowRight, ExternalLink, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { useHaptics } from '@/lib/hooks';
 
@@ -151,7 +151,7 @@ export default function HubPage() {
               onClick={() => { tap(); router.push('/classement'); }}
             >
               <Trophy size={13} strokeWidth={2.5} />
-              Classement
+              Statistique
             </button>
             <button
               className="hub__action"
@@ -160,6 +160,14 @@ export default function HubPage() {
             >
               <Share2 size={13} strokeWidth={2.5} />
               Partager
+            </button>
+            <button
+              className="hub__action"
+              onClick={() => { tap(); router.push('/ressources/violentometre'); }}
+              aria-label="Violentomètre"
+            >
+              <Shield size={13} strokeWidth={2.5} />
+              Violentomètre
             </button>
           </div>
 
