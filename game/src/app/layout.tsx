@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   display: "swap",
 });
@@ -132,7 +132,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
-      <body className={`${inter.className} antialiased min-h-full`}>
+      <body className={`${spaceGrotesk.className} antialiased min-h-full`}>
         <ErrorBoundary>
           <AnalyticsProvider>
             {children}

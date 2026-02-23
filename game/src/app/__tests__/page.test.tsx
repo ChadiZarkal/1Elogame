@@ -7,26 +7,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import HubPage from '@/app/page';
 
-vi.mock('@/components/ui/AnimatedBackground', () => ({
-  AnimatedBackground: () => null,
-}));
-
-vi.mock('@/components/magicui/AnimatedGradientText', () => ({
-  AnimatedGradientText: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
-}));
-
-vi.mock('@/components/magicui/BorderBeam', () => ({
-  BorderBeam: () => null,
-}));
-
-vi.mock('@/components/magicui/FlipWords', () => ({
-  FlipWords: ({ words }: { words: string[] }) => <span>{words[0]}</span>,
-}));
-
-vi.mock('@/components/magicui/Sparkles', () => ({
-  Sparkles: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
-
 vi.mock('sonner', () => ({
   toast: vi.fn(),
 }));
@@ -36,8 +16,6 @@ vi.mock('lucide-react', () => ({
   Share2: () => <span>Share2</span>,
   ArrowRight: () => <span>→</span>,
   ExternalLink: () => <span>↗</span>,
-  Users: () => <span>Users</span>,
-  Heart: () => <span>Heart</span>,
 }));
 
 const mockPush = vi.fn();
@@ -59,9 +37,10 @@ describe('HubPage', () => {
     const { container } = render(<HubPage />);
     const h1 = container.querySelector('h1');
     expect(h1).toBeDefined();
-    expect(h1!.textContent).toContain('Red');
+    expect(h1!.textContent).toContain('RED');
     expect(h1!.textContent).toContain('FLAG');
-    expect(h1!.textContent).toContain('Games');
+    // "Le jeu qui divise" is in the subtitle <p>, not in h1
+    expect(screen.getByText('Le jeu qui divise')).toBeDefined();
   });
 
   it('affiche les 3 cartes de jeu', () => {

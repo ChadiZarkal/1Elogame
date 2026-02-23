@@ -2,181 +2,170 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Trophy, Share2, Users, Heart } from 'lucide-react';
+import { Trophy, Share2, ArrowRight, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
-import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
-import { AnimatedGradientText } from '@/components/magicui/AnimatedGradientText';
-import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
-import { FlipWords } from '@/components/magicui/FlipWords';
-import { Sparkles } from '@/components/magicui/Sparkles';
-import { useReducedMotion, useHaptics } from '@/lib/hooks';
-import { GAMES, GameCard } from '@/components/game/GameCard';
+import { useHaptics } from '@/lib/hooks';
 
 // ─── Main Page ─────────────────────────────────────────────
 export default function HubPage() {
   const router = useRouter();
-  const reducedMotion = useReducedMotion();
   const { tap } = useHaptics();
   const [stats, setStats] = useState<{ totalVotes: number; estimatedPlayers: number } | null>(null);
-  const [statsLoaded, setStatsLoaded] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     fetch('/api/stats/public')
       .then(r => r.json())
       .then(d => { if (d.success) setStats(d.data); })
-      .catch(() => {})
-      .finally(() => setStatsLoaded(true));
+      .catch(() => {});
   }, []);
 
-  const handleNavigate = useCallback((href: string, external: boolean) => {
+  const go = useCallback((href: string, external = false) => {
+    tap();
     if (external) window.open(href, '_blank', 'noopener,noreferrer');
     else router.push(href);
-  }, [router]);
+  }, [tap, router]);
 
-  const handleShare = useCallback(async () => {
+  const share = useCallback(async () => {
     tap();
     if (navigator.share) {
       await navigator.share({
         title: 'Red Flag Games 🚩',
-        text: 'Viens jouer au party game qui fait débat entre amis !',
+        text: 'Le party game qui fait débat entre amis',
         url: window.location.href,
       }).catch(() => {});
     } else {
       await navigator.clipboard.writeText(window.location.href).catch(() => {});
-      toast('🔗 Lien copié !', { description: 'Partage avec tes amis', duration: 2000 });
+      toast('Lien copié', { description: 'Envoie-le à tes potes', duration: 2000 });
     }
   }, [tap]);
 
   return (
-    <div
-      className="relative flex flex-col items-center min-h-screen min-h-[100dvh] overflow-hidden"
-      style={{ background: 'var(--bg-primary)' }}
-    >
-      <AnimatedBackground variant="default" />
+    <div className="hub">
+      {/* Diagonal-line texture */}
+      <div className="hub__texture" aria-hidden="true" />
 
-      <main className="relative z-10 flex flex-col items-center w-full max-w-lg mx-auto px-4 sm:px-5 pt-10 pb-12 min-h-screen min-h-[100dvh]">
+      <main className={`hub__main ${mounted ? 'hub__main--visible' : ''}`}>
 
-        {/* ─── Header ─── */}
-        <motion.header
-          className="w-full text-center mb-8"
-          initial={reducedMotion ? undefined : { opacity: 0, y: -16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <Sparkles color="#EF4444" count={4}>
-              <motion.span
-                className="text-3xl sm:text-4xl select-none"
-                animate={reducedMotion ? undefined : { rotate: [0, -10, 10, 0] }}
-                transition={{ duration: 3, repeat: Infinity, repeatDelay: 3 }}
-                role="img" aria-label="Red Flag"
-              >
-                🚩
-              </motion.span>
-            </Sparkles>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-none">
-              <span style={{ color: 'var(--text-primary)' }}>Red </span>
-              <AnimatedGradientText>FLAG</AnimatedGradientText>
-              <span className="text-lg sm:text-xl font-bold ml-1.5" style={{ color: '#52525B' }}>Games</span>
-            </h1>
+        {/* ─── HERO ─── */}
+        <header className="hub__hero hub__enter hub__enter--1">
+          <h1 className="hub__title">
+            <span className="hub__title-red">RED</span>
+            <span className="hub__title-flag">FLAG</span>
+          </h1>
+          <p className="hub__subtitle">Le jeu qui divise</p>
+        </header>
+
+        {/* ─── SCROLLING TICKER ─── */}
+        <div className="hub__ticker hub__enter hub__enter--2" aria-hidden="true">
+          <div className="hub__ticker-track">
+            {[0, 1].map(i => (
+              <span key={i} className="hub__ticker-text">
+                &nbsp;RED FLAG OU PAS ? ★ VOTE ET COMPARE ★ FAIS DÉBAT ENTRE POTES ★ LE JEU QUI DIVISE ★ GRATUIT ★ SANS INSCRIPTION ★
+              </span>
+            ))}
           </div>
-
-          <p className="text-sm font-medium" style={{ color: '#71717A' }}>
-            <FlipWords
-              words={[
-                'Le party game qui fait débat entre amis 🔥',
-                'Ose juger, vote et compare tes potes 🎯',
-                'Red flag ou pas ? À toi de décider 🚩',
-                'Le jeu qui met tes opinions à l\'épreuve 💥',
-              ]}
-              duration={4000}
-            />
-          </p>
-
-          {/* Stats row */}
-          {statsLoaded && stats && (
-            <div className="flex items-center justify-center gap-4 mt-3">
-              <div className="flex items-center gap-1.5">
-                <Heart size={11} style={{ color: '#EF4444' }} />
-                <span className="text-xs font-bold" style={{ color: '#EF4444' }}>
-                  <AnimatedCounter value={stats.totalVotes} />
-                </span>
-                <span className="text-[10px]" style={{ color: '#52525B' }}>votes</span>
-              </div>
-              <div className="w-px h-3" style={{ background: 'rgba(255,255,255,0.08)' }} />
-              <div className="flex items-center gap-1.5">
-                <Users size={11} style={{ color: '#A1A1AA' }} />
-                <span className="text-xs font-bold" style={{ color: '#A1A1AA' }}>
-                  <AnimatedCounter value={stats.estimatedPlayers} />
-                </span>
-                <span className="text-[10px]" style={{ color: '#52525B' }}>joueurs</span>
-              </div>
-            </div>
-          )}
-        </motion.header>
-
-        {/* ─── All 3 games — EQUAL level ─── */}
-        <div className="w-full flex flex-col gap-3 mb-6" role="list" aria-label="Nos jeux">
-          {GAMES.map((game, i) => (
-            <GameCard
-              key={game.id}
-              game={game}
-              index={i}
-              onNavigate={handleNavigate}
-              reducedMotion={reducedMotion}
-            />
-          ))}
         </div>
 
-        {/* ─── Action bar ─── */}
-        <motion.div
-          className="flex items-center gap-3 w-full"
-          initial={reducedMotion ? undefined : { opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.4 }}
-        >
+        {/* ─── GAMES ─── */}
+        <div className="hub__games">
+
+          {/* Primary: Red Flag duel — full width, left-border accent */}
           <button
-            onClick={() => { tap(); router.push('/classement'); }}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm active:scale-[0.96]"
-            style={{
-              background: 'rgba(59,130,246,0.08)',
-              border: '1px solid rgba(59,130,246,0.20)',
-              color: '#3B82F6',
-              transition: 'all 0.2s ease',
-            }}
+            className="hub__card hub__card--main hub__enter hub__enter--3"
+            onClick={() => go('/jeu')}
+            aria-label="Jouer à Red Flag"
           >
-            <Trophy size={15} />
-            Classement
+            <div className="hub__card-header">
+              <span className="hub__card-emoji">🚩</span>
+              <span className="hub__card-tag hub__card-tag--red">DUEL</span>
+            </div>
+            <h2 className="hub__card-name">Red Flag</h2>
+            <p className="hub__card-pitch">
+              2 situations. 1 choix. C&apos;est lequel le pire ?
+            </p>
+            <span className="hub__card-go hub__card-go--red">
+              JOUER <ArrowRight size={13} strokeWidth={2.5} />
+            </span>
           </button>
 
-          <button
-            onClick={handleShare}
-            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm active:scale-[0.96]"
-            style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              color: '#52525B',
-              transition: 'all 0.2s ease',
-            }}
-            aria-label="Partager le jeu"
-          >
-            <Share2 size={15} />
-            Partager
-          </button>
-        </motion.div>
+          {/* Secondary: 2-column grid */}
+          <div className="hub__row">
+            <button
+              className="hub__card hub__card--half hub__card--green hub__enter hub__enter--4"
+              onClick={() => go('/flagornot')}
+              aria-label="Jouer à Flag or Not"
+            >
+              <div className="hub__card-header">
+                <span className="hub__card-emoji">🤖</span>
+                <span className="hub__card-tag hub__card-tag--green">IA</span>
+              </div>
+              <h3 className="hub__card-name hub__card-name--sm">Flag or Not</h3>
+              <p className="hub__card-pitch hub__card-pitch--sm">L&apos;IA juge ta situation</p>
+              <span className="hub__card-go hub__card-go--sm hub__card-go--green">
+                TESTER <ArrowRight size={11} strokeWidth={2.5} />
+              </span>
+            </button>
 
-        {/* ─── Footer ─── */}
-        <motion.footer
-          className="mt-6 text-center"
-          initial={reducedMotion ? undefined : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
-        >
-          <p className="text-[10px]" style={{ color: '#27272A' }}>
-            Red Flag Games — v4.0
-          </p>
-        </motion.footer>
+            <button
+              className="hub__card hub__card--half hub__card--purple hub__enter hub__enter--5"
+              onClick={() => go('https://redorgreen.fr/?quiz=quiz-sexualite', true)}
+              aria-label="Jouer à Red Flag Test"
+            >
+              <div className="hub__card-header">
+                <span className="hub__card-emoji">🧪</span>
+                <span className="hub__card-tag hub__card-tag--purple">QUIZ</span>
+              </div>
+              <h3 className="hub__card-name hub__card-name--sm">Red Flag Test</h3>
+              <p className="hub__card-pitch hub__card-pitch--sm">Es-tu un red flag ?</p>
+              <span className="hub__card-go hub__card-go--sm hub__card-go--purple">
+                QUIZ <ExternalLink size={11} strokeWidth={2.5} />
+              </span>
+            </button>
+          </div>
+
+        </div>
+
+        {/* ─── FOOTER ─── */}
+        <footer className="hub__footer hub__enter hub__enter--6">
+          <div className="hub__stats">
+            {stats && (
+              <>
+                <span className="hub__live-dot" />
+                <span className="hub__stats-num">
+                  {stats.estimatedPlayers.toLocaleString('fr-FR')} joueurs
+                </span>
+                <span className="hub__stats-sep">·</span>
+                <span className="hub__stats-num">
+                  {stats.totalVotes.toLocaleString('fr-FR')} votes
+                </span>
+              </>
+            )}
+          </div>
+
+          <div className="hub__actions">
+            <button
+              className="hub__action"
+              onClick={() => { tap(); router.push('/classement'); }}
+            >
+              <Trophy size={13} strokeWidth={2.5} />
+              Classement
+            </button>
+            <button
+              className="hub__action"
+              onClick={share}
+              aria-label="Partager le jeu"
+            >
+              <Share2 size={13} strokeWidth={2.5} />
+              Partager
+            </button>
+          </div>
+
+          <p className="hub__version">Red Flag Games — v4.0</p>
+        </footer>
+
       </main>
     </div>
   );
