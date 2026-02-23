@@ -46,13 +46,13 @@ describe('HubPage', () => {
   it('affiche les 3 cartes de jeu', () => {
     render(<HubPage />);
     expect(screen.getByText('Red Flag')).toBeDefined();
-    expect(screen.getByText('Flag or Not')).toBeDefined();
+    expect(screen.getByText("Demande à l'IA")).toBeDefined();
     expect(screen.getByText('Red Flag Test')).toBeDefined();
   });
 
   it('affiche les descriptions des jeux', () => {
     render(<HubPage />);
-    expect(screen.getByText(/2 situations/)).toBeDefined();
+    expect(screen.getByText(/lequel le pire/)).toBeDefined();
     expect(screen.getByText(/IA juge/)).toBeDefined();
     expect(screen.getByText(/Es-tu un red flag/)).toBeDefined();
   });
@@ -75,9 +75,9 @@ describe('HubPage', () => {
     expect(mockPush).toHaveBeenCalledWith('/jeu');
   });
 
-  it('navigue vers /flagornot au clic sur Flag or Not', () => {
+  it('navigue vers /flagornot au clic sur Demande à l\'IA', () => {
     render(<HubPage />);
-    fireEvent.click(screen.getByLabelText('Jouer à Flag or Not'));
+    fireEvent.click(screen.getByLabelText("Demande à l'IA"));
     expect(mockPush).toHaveBeenCalledWith('/flagornot');
   });
 

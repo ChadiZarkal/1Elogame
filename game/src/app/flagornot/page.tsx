@@ -34,7 +34,7 @@ export default function FlagOrNotPage() {
           ← Retour
         </button>
 
-        <h1 className="text-base font-bold text-[#FAFAFA] tracking-tight">Flag or Not</h1>
+        <h1 className="text-base font-bold text-[#FAFAFA] tracking-tight">Demande à l&apos;IA</h1>
 
         {game.history.length > 0 ? (
           <div className="flex items-center gap-2 text-xs min-w-[48px] justify-end font-medium">

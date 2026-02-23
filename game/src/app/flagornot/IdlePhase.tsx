@@ -65,7 +65,7 @@ export function IdlePhase({
         </motion.div>
 
         <h2 className="text-[28px] sm:text-[32px] font-black text-[#FAFAFA] text-center mb-2">
-          Flag or Not ?
+          Demande à l&apos;IA
         </h2>
         <p className="text-[#6B7280] text-sm text-center mb-4 max-w-xs">
           Écris un comportement ou une situation. L&apos;IA te dit si c&apos;est un red flag ou un

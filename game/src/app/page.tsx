@@ -63,7 +63,7 @@ export default function HubPage() {
           <div className="hub__ticker-track">
             {[0, 1].map(i => (
               <span key={i} className="hub__ticker-text">
-                &nbsp;RED FLAG OU PAS ? ★ VOTE ET COMPARE ★ FAIS DÉBAT ENTRE POTES ★ LE JEU QUI DIVISE ★ GRATUIT ★ SANS INSCRIPTION ★
+                &nbsp;OSE JUGER ★ VOTE ET COMPARE TES POTES ★ FAIS DÉBAT ★ C&apos;EST RED FLAG OU PAS ? ★ GRATUIT ★ SANS INSCRIPTION ★
               </span>
             ))}
           </div>
@@ -72,22 +72,22 @@ export default function HubPage() {
         {/* ─── GAMES ─── */}
         <div className="hub__games">
 
-          {/* Primary: Red Flag duel — full width, left-border accent */}
+          {/* Primary: Red Flag Test — full width, red accent */}
           <button
             className="hub__card hub__card--main hub__enter hub__enter--3"
-            onClick={() => go('/jeu')}
-            aria-label="Jouer à Red Flag"
+            onClick={() => go('https://redorgreen.fr/?quiz=quiz-sexualite', true)}
+            aria-label="Jouer à Red Flag Test"
           >
             <div className="hub__card-header">
-              <span className="hub__card-emoji">🚩</span>
-              <span className="hub__card-tag hub__card-tag--red">DUEL</span>
+              <span className="hub__card-emoji">🧪</span>
+              <span className="hub__card-tag hub__card-tag--red">QUIZ</span>
             </div>
-            <h2 className="hub__card-name">Red Flag</h2>
+            <h2 className="hub__card-name">Red Flag Test</h2>
             <p className="hub__card-pitch">
-              2 situations. 1 choix. C&apos;est lequel le pire ?
+              Es-tu un red flag ? Fais le test pour le découvrir
             </p>
             <span className="hub__card-go hub__card-go--red">
-              JOUER <ArrowRight size={13} strokeWidth={2.5} />
+              FAIRE LE TEST <ExternalLink size={13} strokeWidth={2.5} />
             </span>
           </button>
 
@@ -96,13 +96,13 @@ export default function HubPage() {
             <button
               className="hub__card hub__card--half hub__card--green hub__enter hub__enter--4"
               onClick={() => go('/flagornot')}
-              aria-label="Jouer à Flag or Not"
+              aria-label="Demande à l'IA"
             >
               <div className="hub__card-header">
                 <span className="hub__card-emoji">🤖</span>
                 <span className="hub__card-tag hub__card-tag--green">IA</span>
               </div>
-              <h3 className="hub__card-name hub__card-name--sm">Flag or Not</h3>
+              <h3 className="hub__card-name hub__card-name--sm">Demande à l&apos;IA</h3>
               <p className="hub__card-pitch hub__card-pitch--sm">L&apos;IA juge ta situation</p>
               <span className="hub__card-go hub__card-go--sm hub__card-go--green">
                 TESTER <ArrowRight size={11} strokeWidth={2.5} />
@@ -111,17 +111,17 @@ export default function HubPage() {
 
             <button
               className="hub__card hub__card--half hub__card--purple hub__enter hub__enter--5"
-              onClick={() => go('https://redorgreen.fr/?quiz=quiz-sexualite', true)}
-              aria-label="Jouer à Red Flag Test"
+              onClick={() => go('/jeu')}
+              aria-label="Jouer à Red Flag"
             >
               <div className="hub__card-header">
-                <span className="hub__card-emoji">🧪</span>
-                <span className="hub__card-tag hub__card-tag--purple">QUIZ</span>
+                <span className="hub__card-emoji">🚩</span>
+                <span className="hub__card-tag hub__card-tag--purple">DUEL</span>
               </div>
-              <h3 className="hub__card-name hub__card-name--sm">Red Flag Test</h3>
-              <p className="hub__card-pitch hub__card-pitch--sm">Es-tu un red flag ?</p>
+              <h3 className="hub__card-name hub__card-name--sm">Red Flag</h3>
+              <p className="hub__card-pitch hub__card-pitch--sm">C&apos;est lequel le pire ?</p>
               <span className="hub__card-go hub__card-go--sm hub__card-go--purple">
-                QUIZ <ExternalLink size={11} strokeWidth={2.5} />
+                JOUER <ArrowRight size={11} strokeWidth={2.5} />
               </span>
             </button>
           </div>

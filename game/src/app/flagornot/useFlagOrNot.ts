@@ -56,9 +56,16 @@ export function useFlagOrNot() {
 
   // ── Init effects ──
   useEffect(() => {
+    let stableHeight = 0;
+
     const updateHeight = () => {
-      const vh = window.visualViewport?.height || window.innerHeight;
-      document.documentElement.style.setProperty('--app-height', `${vh}px`);
+      // Use innerHeight which is stable across keyboard open/close on iOS.
+      // Only allow height to grow (never shrink when keyboard opens).
+      const vh = window.innerHeight;
+      if (vh > stableHeight || stableHeight === 0) {
+        stableHeight = vh;
+        document.documentElement.style.setProperty('--app-height', `${stableHeight}px`);
+      }
     };
 
     const saved = localStorage.getItem('flagornot_show_justification');
@@ -76,7 +83,6 @@ export function useFlagOrNot() {
 
     setIsMounted(true);
     updateHeight();
-    window.visualViewport?.addEventListener('resize', updateHeight);
     window.addEventListener('resize', updateHeight);
     fetchCommunitySubmissions();
 
@@ -88,7 +94,6 @@ export function useFlagOrNot() {
     window.addEventListener('storage', handleStorage);
 
     return () => {
-      window.visualViewport?.removeEventListener('resize', updateHeight);
       window.removeEventListener('resize', updateHeight);
       window.removeEventListener('storage', handleStorage);
     };
