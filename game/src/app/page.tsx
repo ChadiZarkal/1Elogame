@@ -38,7 +38,8 @@ export default function HubPage() {
         <header className="hub__hero hub__enter hub__enter--1">
           <h1 className="hub__title">
             <span className="hub__title-red">RED</span>
-            <span className="hub__title-flag">FLAG</span>
+            <span className="hub__title-or">or</span>
+            <span className="hub__title-green">GREEN</span>
           </h1>
           <p className="hub__subtitle">Le jeu qui divise</p>
         </header>
