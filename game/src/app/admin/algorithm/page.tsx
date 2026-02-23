@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loading } from '@/components/ui/Loading';
 import { AdminNav } from '@/components/admin/AdminNav';
-import { AlgorithmConfig, DEFAULT_ALGORITHM_CONFIG } from '@/lib/algorithmConfig';
+import { AlgorithmConfig, AntiRepeatMode, DEFAULT_ALGORITHM_CONFIG } from '@/lib/algorithmConfig';
 
 type StrategyKey = 'elo_close' | 'cross_category' | 'starred' | 'random';
 
@@ -45,7 +45,12 @@ export default function AdminAlgorithmPage() {
       }
       const data = await res.json();
       if (data.success) {
-        setConfig(data.data.config);
+        const loaded = data.data.config;
+        // Ensure mode field exists (migration from old config)
+        if (loaded.antiRepeat && !loaded.antiRepeat.mode) {
+          loaded.antiRepeat.mode = 'cooldown';
+        }
+        setConfig(loaded);
         setIsDefault(data.data.isDefault);
       } else {
         setError(data.error?.message || 'Erreur de chargement');
@@ -187,7 +192,7 @@ export default function AdminAlgorithmPage() {
                   🧠 Algorithme de matchmaking
                 </h1>
                 <p className="text-[#737373] mt-1 text-sm">
-                  Configurer les règles de sélection des duels. Les changements sont appliqués immédiatement.
+                  Configurer les règles de sélection des duels. Les changements sont <strong className="text-[#34D399]">persistés en base</strong> et survivent aux redéploiements.
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -225,6 +230,13 @@ export default function AdminAlgorithmPage() {
           <Section title="📊 Distribution des stratégies" delay={0.05}
             tip="Les poids déterminent la probabilité de chaque stratégie. Ils doivent totaliser 100% parmi les stratégies activées.">
             <div className="space-y-4">
+              {/* Inter-category notice */}
+              <div className="p-3 rounded-lg bg-[#3B82F6]/10 border border-[#3B82F6]/30 text-xs text-[#93C5FD] leading-relaxed">
+                <p className="font-semibold mb-1">💡 Que se passe-t-il quand un joueur choisit une catégorie ?</p>
+                <p>Si le joueur joue en mode <strong>thématique</strong> (une seule catégorie), la stratégie <strong>Inter-catégories</strong> est <strong>automatiquement ignorée</strong> — son poids est redistribué vers les autres stratégies activées.</p>
+                <p className="mt-1">Exemple : si Inter-catégories = 30%, les 70% restants sont renormalisés à 100%.</p>
+              </div>
+
               {(Object.keys(config.strategies) as StrategyKey[]).map((key) => {
                 const s = config.strategies[key];
                 return (
@@ -323,37 +335,104 @@ export default function AdminAlgorithmPage() {
 
               {config.antiRepeat.enabled && (
                 <>
-                  <NumberInput
-                    label="Max apparitions par session"
-                    description="Nombre max de fois qu'un élément peut apparaître dans une session. Après ça, il est exclu."
-                    recommendation="Recommandé : 2-3. Un élément qui apparaît 4+ fois fatigue le joueur."
-                    value={config.antiRepeat.maxAppearancesPerSession}
-                    min={1}
-                    max={20}
-                    onChange={(v) => {
-                      setConfig(prev => ({
-                        ...prev,
-                        antiRepeat: { ...prev.antiRepeat, maxAppearancesPerSession: v },
-                      }));
-                      setHasChanges(true);
-                    }}
-                  />
+                  {/* Mode selector: strict vs cooldown */}
+                  <div className="p-4 rounded-xl border border-[#333] bg-[#1A1A1A]">
+                    <h4 className="text-[#F5F5F5] font-semibold text-sm mb-3">Mode anti-répétition</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => {
+                          setConfig(prev => ({
+                            ...prev,
+                            antiRepeat: { ...prev.antiRepeat, mode: 'strict' as AntiRepeatMode, maxAppearancesPerSession: 1 },
+                          }));
+                          setHasChanges(true);
+                        }}
+                        className={`p-3 rounded-lg border-2 text-left transition-all ${
+                          config.antiRepeat.mode === 'strict'
+                            ? 'border-[#DC2626] bg-[#DC2626]/10'
+                            : 'border-[#333] hover:border-[#555]'
+                        }`}
+                      >
+                        <span className="text-lg">🚫</span>
+                        <p className={`font-semibold text-sm mt-1 ${
+                          config.antiRepeat.mode === 'strict' ? 'text-[#FCA5A5]' : 'text-[#A3A3A3]'
+                        }`}>Strict — Zéro répétition</p>
+                        <p className="text-[#737373] text-[10px] mt-1">
+                          Un élément ne peut apparaître qu&apos;une seule fois par session. Aucune exception.
+                          Quand tous les éléments sont épuisés, le jeu affiche &quot;session terminée&quot;.
+                        </p>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setConfig(prev => ({
+                            ...prev,
+                            antiRepeat: { ...prev.antiRepeat, mode: 'cooldown' as AntiRepeatMode },
+                          }));
+                          setHasChanges(true);
+                        }}
+                        className={`p-3 rounded-lg border-2 text-left transition-all ${
+                          config.antiRepeat.mode === 'cooldown'
+                            ? 'border-[#3B82F6] bg-[#3B82F6]/10'
+                            : 'border-[#333] hover:border-[#555]'
+                        }`}
+                      >
+                        <span className="text-lg">🔄</span>
+                        <p className={`font-semibold text-sm mt-1 ${
+                          config.antiRepeat.mode === 'cooldown' ? 'text-[#93C5FD]' : 'text-[#A3A3A3]'
+                        }`}>Cooldown — Rotation souple</p>
+                        <p className="text-[#737373] text-[10px] mt-1">
+                          Un élément peut réapparaître après N rounds de cooldown. Plus souple,
+                          permet des sessions infinies avec un pool limité.
+                        </p>
+                      </button>
+                    </div>
+                  </div>
 
-                  <NumberInput
-                    label="Cooldown (en rounds)"
-                    description="Nombre de rounds avant qu'un élément récent puisse réapparaître. Les éléments en cooldown sont dépiorisés."
-                    recommendation="Recommandé : 3-5. Évite de voir le même texte dans des duels consécutifs."
-                    value={config.antiRepeat.cooldownRounds}
-                    min={0}
-                    max={20}
-                    onChange={(v) => {
-                      setConfig(prev => ({
-                        ...prev,
-                        antiRepeat: { ...prev.antiRepeat, cooldownRounds: v },
-                      }));
-                      setHasChanges(true);
-                    }}
-                  />
+                  {config.antiRepeat.mode === 'strict' && (
+                    <div className="p-3 rounded-lg bg-[#DC2626]/10 border border-[#DC2626]/30">
+                      <p className="text-[#FCA5A5] text-xs">
+                        🚫 <strong>Mode strict actif</strong> — Chaque élément n&apos;apparaît qu&apos;1 seule fois.
+                        Avec {'{N}'} éléments actifs, le joueur peut faire {'{N*(N-1)/2}'} duels max avant épuisement.
+                        Le cooldown est désactivé dans ce mode.
+                      </p>
+                    </div>
+                  )}
+
+                  {config.antiRepeat.mode === 'cooldown' && (
+                    <>
+                      <NumberInput
+                        label="Max apparitions par session"
+                        description="Nombre max de fois qu'un élément peut apparaître dans une session. Après ça, il est exclu temporairement."
+                        recommendation="Recommandé : 2-3. Un élément qui apparaît 4+ fois fatigue le joueur."
+                        value={config.antiRepeat.maxAppearancesPerSession}
+                        min={1}
+                        max={20}
+                        onChange={(v) => {
+                          setConfig(prev => ({
+                            ...prev,
+                            antiRepeat: { ...prev.antiRepeat, maxAppearancesPerSession: v },
+                          }));
+                          setHasChanges(true);
+                        }}
+                      />
+
+                      <NumberInput
+                        label="Cooldown (en rounds)"
+                        description="Nombre de rounds avant qu'un élément récent puisse réapparaître. Les éléments en cooldown sont dépiorisés."
+                        recommendation="Recommandé : 3-5. Évite de voir le même texte dans des duels consécutifs."
+                        value={config.antiRepeat.cooldownRounds}
+                        min={0}
+                        max={20}
+                        onChange={(v) => {
+                          setConfig(prev => ({
+                            ...prev,
+                            antiRepeat: { ...prev.antiRepeat, cooldownRounds: v },
+                          }));
+                          setHasChanges(true);
+                        }}
+                      />
+                    </>
+                  )}
                 </>
               )}
             </div>

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { selectDuelPair, toElementDTO, AntiRepeatContext } from '@/lib/algorithm';
 import { withApiHandler, apiSuccess, apiError } from '@/lib/apiHelpers';
 import { getActiveElements, getStarredPairs } from '@/lib/repositories';
+import { loadAlgorithmConfig } from '@/lib/algorithmConfig';
 import { MAX_SEEN_DUELS_STRING_LENGTH } from '@/config/constants';
 
 export const dynamic = 'force-dynamic';
@@ -32,6 +33,9 @@ export const GET = withApiHandler(async (request: NextRequest) => {
     }
   }
 
+  // Load persisted algorithm config (Supabase in prod, cached in memory)
+  const algorithmConfig = await loadAlgorithmConfig();
+
   // Fetch data via repository (mock/prod abstracted away)
   const [elements, starredPairs] = await Promise.all([
     getActiveElements(categoryParam),
@@ -42,7 +46,7 @@ export const GET = withApiHandler(async (request: NextRequest) => {
     return apiError('INSUFFICIENT_ELEMENTS', 'Pas assez d\'éléments actifs pour créer un duel', 400);
   }
 
-  const pair = selectDuelPair(elements, seenDuels, antiRepeatContext, starredPairs);
+  const pair = selectDuelPair(elements, seenDuels, antiRepeatContext, starredPairs, algorithmConfig);
 
   if (!pair) {
     return apiSuccess({ elementA: null, elementB: null, allExhausted: true });

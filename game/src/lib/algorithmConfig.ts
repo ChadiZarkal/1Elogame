@@ -1,4 +1,12 @@
-/** Centralized config for the duel selection algorithm. Tunable from /admin/algorithm. */
+/**
+ * Centralized config for the duel selection algorithm.
+ * Tunable from /admin/algorithm.
+ * 
+ * Persistence strategy:
+ * - Production: stored in Supabase `algorithm_config` table (survives redeploys)
+ * - Mock mode: in-memory globalThis (for local dev)
+ * - In-memory cache in production to avoid hitting DB on every duel request
+ */
 
 export interface StrategyConfig {
   enabled: boolean;
@@ -6,6 +14,8 @@ export interface StrategyConfig {
   description: string;
   recommendation: string;
 }
+
+export type AntiRepeatMode = 'cooldown' | 'strict';
 
 export interface AlgorithmConfig {
   strategies: {
@@ -23,6 +33,11 @@ export interface AlgorithmConfig {
 
   antiRepeat: {
     enabled: boolean;
+    /**
+     * 'cooldown' — original behavior: elements deprioritized for N rounds
+     * 'strict'  — NO element can appear twice in a session, period
+     */
+    mode: AntiRepeatMode;
     maxAppearancesPerSession: number;
     cooldownRounds: number;
   };
@@ -78,7 +93,8 @@ export const DEFAULT_ALGORITHM_CONFIG: AlgorithmConfig = {
 
   antiRepeat: {
     enabled: true,
-    maxAppearancesPerSession: 2,
+    mode: 'strict',
+    maxAppearancesPerSession: 1,
     cooldownRounds: 3,
   },
 
@@ -95,18 +111,73 @@ export const DEFAULT_ALGORITHM_CONFIG: AlgorithmConfig = {
   candidatePoolSize: 10,
 };
 
+// ─── In-memory cache ──────────────────────────────────────────────────────────
+
 declare global {
   // eslint-disable-next-line no-var
   var __algorithmConfig: AlgorithmConfig | undefined;
+  // eslint-disable-next-line no-var
+  var __algorithmConfigLoaded: boolean | undefined;
 }
 
-/** Get current algorithm config (admin-set or defaults). */
+function isMockMode(): boolean {
+  return process.env.NEXT_PUBLIC_MOCK_MODE === 'true';
+}
+
+/** Migrate old configs that don't have the mode field */
+function ensureModeField(config: AlgorithmConfig): AlgorithmConfig {
+  if (!config.antiRepeat.mode) {
+    config.antiRepeat.mode = 'cooldown';
+  }
+  return config;
+}
+
+/** Get current algorithm config. Uses cache, falls back to defaults. */
 export function getAlgorithmConfig(): AlgorithmConfig {
-  return globalThis.__algorithmConfig ?? { ...DEFAULT_ALGORITHM_CONFIG };
+  return ensureModeField(globalThis.__algorithmConfig ?? { ...DEFAULT_ALGORITHM_CONFIG });
 }
 
-/** Set config from admin panel. Validates weights before saving. */
-export function setAlgorithmConfig(config: AlgorithmConfig): { success: boolean; error?: string } {
+/**
+ * Load config from Supabase (production) or return defaults (mock).
+ * Call this once at startup or on admin page load.
+ */
+export async function loadAlgorithmConfig(): Promise<AlgorithmConfig> {
+  // Return cache if already loaded
+  if (globalThis.__algorithmConfigLoaded && globalThis.__algorithmConfig) {
+    return ensureModeField(globalThis.__algorithmConfig);
+  }
+
+  if (isMockMode()) {
+    return getAlgorithmConfig();
+  }
+
+  try {
+    const { createServerClient } = await import('@/lib/supabase');
+    const supabase = createServerClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
+      .from('algorithm_config')
+      .select('config')
+      .eq('id', 'current')
+      .single();
+
+    if (!error && data?.config) {
+      const loaded = ensureModeField(data.config as AlgorithmConfig);
+      globalThis.__algorithmConfig = loaded;
+      globalThis.__algorithmConfigLoaded = true;
+      return loaded;
+    }
+  } catch (e) {
+    console.error('[algorithmConfig] Failed to load from Supabase:', e);
+  }
+
+  // No saved config → use defaults
+  globalThis.__algorithmConfigLoaded = true;
+  return getAlgorithmConfig();
+}
+
+/** Set config from admin panel. Validates weights, persists to Supabase. */
+export async function setAlgorithmConfig(config: AlgorithmConfig): Promise<{ success: boolean; error?: string }> {
   // Validate strategy weights sum to 100 among enabled strategies
   const enabledStrategies = Object.values(config.strategies).filter(s => s.enabled);
   if (enabledStrategies.length === 0) {
@@ -131,11 +202,54 @@ export function setAlgorithmConfig(config: AlgorithmConfig): { success: boolean;
     return { success: false, error: 'Le cooldown doit être ≥ 0.' };
   }
 
-  globalThis.__algorithmConfig = { ...config };
+  const validated = ensureModeField(config);
+
+  // Update in-memory cache
+  globalThis.__algorithmConfig = { ...validated };
+  globalThis.__algorithmConfigLoaded = true;
+
+  // Persist to Supabase (production only)
+  if (!isMockMode()) {
+    try {
+      const { createServerClient } = await import('@/lib/supabase');
+      const supabase = createServerClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from('algorithm_config')
+        .upsert({
+          id: 'current',
+          config: validated,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
+
+      if (error) {
+        console.error('[algorithmConfig] Failed to persist:', error.message);
+        // Non-fatal: cache is updated, next deploy will lose it
+      }
+    } catch (e) {
+      console.error('[algorithmConfig] Supabase persist error:', e);
+    }
+  }
+
   return { success: true };
 }
 
-/** Reset config to defaults. */
-export function resetAlgorithmConfig(): void {
+/** Reset config to defaults. Removes from Supabase. */
+export async function resetAlgorithmConfig(): Promise<void> {
   globalThis.__algorithmConfig = undefined;
+  globalThis.__algorithmConfigLoaded = true;
+
+  if (!isMockMode()) {
+    try {
+      const { createServerClient } = await import('@/lib/supabase');
+      const supabase = createServerClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any)
+        .from('algorithm_config')
+        .delete()
+        .eq('id', 'current');
+    } catch (e) {
+      console.error('[algorithmConfig] Failed to delete from Supabase:', e);
+    }
+  }
 }

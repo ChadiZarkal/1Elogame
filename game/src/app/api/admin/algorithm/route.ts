@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { withApiHandler, apiSuccess, apiError } from '@/lib/apiHelpers';
 import {
-  getAlgorithmConfig,
+  loadAlgorithmConfig,
   setAlgorithmConfig,
   resetAlgorithmConfig,
   DEFAULT_ALGORITHM_CONFIG,
@@ -11,7 +11,7 @@ import {
 export const dynamic = 'force-dynamic';
 
 export const GET = withApiHandler(async () => {
-  const config = getAlgorithmConfig();
+  const config = await loadAlgorithmConfig();
   const isDefault = !globalThis.__algorithmConfig;
   return apiSuccess({ config, isDefault, defaults: DEFAULT_ALGORITHM_CONFIG });
 }, { requireAdmin: true });
@@ -21,7 +21,7 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   const { action, config } = body;
 
   if (action === 'reset') {
-    resetAlgorithmConfig();
+    await resetAlgorithmConfig();
     return apiSuccess({
       config: DEFAULT_ALGORITHM_CONFIG,
       isDefault: true,
@@ -35,15 +35,15 @@ export const POST = withApiHandler(async (request: NextRequest) => {
       return apiError('VALIDATION_ERROR', validated.error!, 400);
     }
 
-    const result = setAlgorithmConfig(config as AlgorithmConfig);
+    const result = await setAlgorithmConfig(config as AlgorithmConfig);
     if (!result.success) {
       return apiError('VALIDATION_ERROR', result.error!, 400);
     }
 
     return apiSuccess({
-      config: getAlgorithmConfig(),
+      config: await loadAlgorithmConfig(),
       isDefault: false,
-      message: 'Configuration mise à jour avec succès.',
+      message: 'Configuration mise à jour et persistée.',
     });
   }
 

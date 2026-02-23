@@ -11,25 +11,40 @@ export interface AntiRepeatContext {
   elementAppearances: Record<string, number>;
 }
 
-/** Select a random strategy based on weight distribution. */
-export function selectStrategy(config?: AlgorithmConfig): SelectionStrategy {
+/**
+ * Select a random strategy based on weight distribution.
+ * @param config Algorithm config
+ * @param singleCategory If true, cross_category is skipped (useless when filtering by one category)
+ */
+export function selectStrategy(config?: AlgorithmConfig, singleCategory = false): SelectionStrategy {
   const cfg = config ?? getAlgorithmConfig();
-  const random = Math.random() * 100;
-  let cumulative = 0;
   
   const strategyNames: SelectionStrategy[] = ['elo_close', 'cross_category', 'starred', 'random'];
   
+  // Build effective weights, skipping disabled strategies and cross_category if single category
+  const effective: { name: SelectionStrategy; weight: number }[] = [];
   for (const name of strategyNames) {
     const strategy = cfg.strategies[name];
     if (!strategy.enabled) continue;
-    cumulative += strategy.weight;
+    if (name === 'cross_category' && singleCategory) continue;
+    effective.push({ name, weight: strategy.weight });
+  }
+
+  if (effective.length === 0) return 'random';
+
+  // Normalize weights to 100%
+  const totalWeight = effective.reduce((sum, s) => sum + s.weight, 0);
+  const random = Math.random() * totalWeight;
+  let cumulative = 0;
+  
+  for (const { name, weight } of effective) {
+    cumulative += weight;
     if (random < cumulative) {
       return name;
     }
   }
   
-  // Fallback to random
-  return 'random';
+  return effective[effective.length - 1].name;
 }
 
 /** Fisher-Yates shuffle. */
@@ -47,7 +62,10 @@ export function isPairSeen(idA: string, idB: string, seenDuels: Set<string>): bo
   return seenDuels.has(getPairKeyUtil(idA, idB));
 }
 
-/** Filter out elements that exceeded max appearances per session. */
+/** Filter out elements that exceeded max appearances per session.
+ *  - 'strict' mode: each element can appear at most maxAppearancesPerSession times (default 1 = zero repeats)
+ *  - 'cooldown' mode: same filtering, but freshness scoring still allows deprioritized repeats
+ */
 export function filterByAntiRepeat(
   elements: Element[],
   context: AntiRepeatContext,
@@ -67,7 +85,12 @@ export function filterByAntiRepeat(
       return count < maxAppearancesPerSession;
     });
     
-    // Only use filtered list if it has enough elements for a duel
+    // In strict mode: NEVER fall back to repeats, even if pool is tiny
+    if (cfg.antiRepeat.mode === 'strict') {
+      return filtered;
+    }
+    
+    // In cooldown mode: only use filtered list if it has enough elements for a duel
     if (filtered.length >= 2) {
       return filtered;
     }
@@ -239,7 +262,11 @@ export function selectDuelPair(
     return null;
   }
   
-  const strategy = selectStrategy(cfg);
+  // Detect single-category mode: all elements share the same category
+  const categories = new Set(filteredElements.map(e => e.categorie));
+  const singleCategory = categories.size <= 1;
+  
+  const strategy = selectStrategy(cfg, singleCategory);
   let pairs: Array<[Element, Element]> = [];
   
   switch (strategy) {
@@ -282,8 +309,8 @@ export function selectDuelPair(
     pairs = findRandomPairs(filteredElements, seenDuels, context, cfg);
   }
   
-  // Still no pairs? Try without anti-repeat filter
-  if (pairs.length === 0) {
+  // Still no pairs? Try without anti-repeat filter (only in cooldown mode)
+  if (pairs.length === 0 && cfg.antiRepeat.mode !== 'strict') {
     pairs = findRandomPairs(elements, seenDuels, context, cfg);
   }
   
