@@ -2,8 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Trophy, Share2, ArrowRight, ExternalLink, Shield } from 'lucide-react';
-import { toast } from 'sonner';
+import { Trophy, ArrowRight, ExternalLink, Shield } from 'lucide-react';
 import { useHaptics } from '@/lib/hooks';
 
 // ─── Main Page ─────────────────────────────────────────────
@@ -27,20 +26,6 @@ export default function HubPage() {
     if (external) window.open(href, '_blank', 'noopener,noreferrer');
     else router.push(href);
   }, [tap, router]);
-
-  const share = useCallback(async () => {
-    tap();
-    if (navigator.share) {
-      await navigator.share({
-        title: 'Red Flag Games 🚩',
-        text: 'Le party game qui fait débat entre amis',
-        url: window.location.href,
-      }).catch(() => {});
-    } else {
-      await navigator.clipboard.writeText(window.location.href).catch(() => {});
-      toast('Lien copié', { description: 'Envoie-le à tes potes', duration: 2000 });
-    }
-  }, [tap]);
 
   return (
     <div className="hub">
@@ -152,14 +137,6 @@ export default function HubPage() {
             >
               <Trophy size={13} strokeWidth={2.5} />
               Statistique
-            </button>
-            <button
-              className="hub__action"
-              onClick={share}
-              aria-label="Partager le jeu"
-            >
-              <Share2 size={13} strokeWidth={2.5} />
-              Partager
             </button>
             <button
               className="hub__action"
