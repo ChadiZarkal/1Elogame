@@ -39,7 +39,7 @@ export { sanitizeText } from './sanitize';
 export { isLocalStorageAvailable, getSession, initSession, saveSession, clearSession, hasProfile, getProfile, markDuelAsSeen, getSeenDuels, getSeenDuelsString, getRecentElementIds, getElementAppearances, getRecentElementIdsString, getElementAppearancesString, getStreak, updateStreak, getDuelCount, getStreakEmoji, getAdminToken, setAdminToken, clearAdminToken } from './session';
 
 // Supabase
-export { getSupabaseClient, createServerClient, typedInsert, typedUpdate } from './supabase';
+export { getSupabaseClient, createServerClient, typedInsert, typedUpdate, typedUpsert } from './supabase';
 
 // Utils
 export { cn, formatNumber, createApiError, createApiSuccess, getPairKey } from './utils';

@@ -78,3 +78,14 @@ export function typedUpdate<T extends Record<string, unknown>>(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return client.from(table).update(data as any);
 }
+
+/** Type-safe Supabase upsert with dynamically-computed field names. */
+export function typedUpsert<T extends Record<string, unknown>>(
+  client: SupabaseClient,
+  table: string,
+  data: T,
+  options?: { onConflict?: string }
+) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (client.from(table) as any).upsert(data, options);
+}

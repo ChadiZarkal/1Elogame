@@ -91,12 +91,9 @@ export async function saveAnalyticsSession(session: AnalyticsSessionData): Promi
     return;
   }
 
-  const { createServerClient } = await import('@/lib/supabase');
+  const { createServerClient, typedUpsert } = await import('@/lib/supabase');
   const supabase = createServerClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any)
-    .from('analytics_sessions')
-    .upsert(toRow(session), { onConflict: 'session_id' });
+  const { error } = await typedUpsert(supabase, 'analytics_sessions', toRow(session), { onConflict: 'session_id' });
 
   if (error) {
     // Non-fatal: log and swallow — analytics must not break the game
@@ -116,8 +113,7 @@ export async function getAnalyticsSessions(): Promise<AnalyticsSessionData[]> {
 
   const { createServerClient } = await import('@/lib/supabase');
   const supabase = createServerClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('analytics_sessions')
     .select('*')
     .order('started_at', { ascending: false })

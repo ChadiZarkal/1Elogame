@@ -116,6 +116,54 @@ export interface Database {
           verdict: 'red' | 'green';
         }>;
       };
+      analytics_sessions: {
+        Row: {
+          id: string;
+          session_id: string;
+          started_at: number;
+          flushed_at: number;
+          duration: number;
+          page_views: string[];
+          game_entries: unknown;
+          votes: number;
+          ai_requests: number;
+          choices_before_quit: number;
+          category: string | null;
+          sex: string | null;
+          age: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          started_at: number;
+          flushed_at: number;
+          duration?: number;
+          page_views?: string[];
+          game_entries?: unknown;
+          votes?: number;
+          ai_requests?: number;
+          choices_before_quit?: number;
+          category?: string | null;
+          sex?: string | null;
+          age?: string | null;
+          created_at?: string | null;
+        };
+        Update: Partial<{
+          session_id: string;
+          started_at: number;
+          flushed_at: number;
+          duration: number;
+          page_views: string[];
+          game_entries: unknown;
+          votes: number;
+          ai_requests: number;
+          choices_before_quit: number;
+          category: string | null;
+          sex: string | null;
+          age: string | null;
+        }>;
+      };
     };
   };
 }
