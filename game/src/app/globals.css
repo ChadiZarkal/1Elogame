@@ -225,13 +225,13 @@ button:focus-visible {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: clamp(0.5rem, 2vw, 0.75rem);
+  gap: clamp(0.3rem, 1.5vw, 0.6rem);
   line-height: 1;
   margin: 0;
 }
 
 .hub__title-red {
-  font-size: clamp(4.5rem, 20vw, 7rem);
+  font-size: clamp(2.8rem, 13vw, 6rem);
   font-weight: 900;
   color: #FF2D2D;
   letter-spacing: -0.04em;
@@ -242,7 +242,7 @@ button:focus-visible {
 }
 
 .hub__title-flag {
-  font-size: clamp(4.5rem, 20vw, 7rem);
+  font-size: clamp(2.8rem, 13vw, 6rem);
   font-weight: 900;
   color: transparent;
   -webkit-text-stroke: 2.5px #FF2D2D;
@@ -251,16 +251,16 @@ button:focus-visible {
 }
 
 .hub__title-or {
-  font-size: clamp(4.5rem, 20vw, 7rem);
+  font-size: clamp(2.8rem, 13vw, 6rem);
   font-weight: 900;
   color: transparent;
-  -webkit-text-stroke: 2.5px #F97316;
+  -webkit-text-stroke: 2px #555;
   letter-spacing: -0.04em;
   text-transform: uppercase;
 }
 
 .hub__title-green {
-  font-size: clamp(4.5rem, 20vw, 7rem);
+  font-size: clamp(2.8rem, 13vw, 6rem);
   font-weight: 900;
   color: #22C55E;
   letter-spacing: -0.04em;
