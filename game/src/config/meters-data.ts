@@ -606,8 +606,244 @@ const incestometre: Meter = {
   ],
 };
 
+// ─── HARCÉLOMÈTRE ───────────────────────────────────────────
+// Source : Outils de prévention du harcèlement scolaire
+const harcelometre: Meter = {
+  slug: 'harcelometre',
+  name: `Harcélomètre`,
+  emoji: '🎯',
+  tagline: 'Es-tu victime de harcèlement ?',
+  description:
+    `Un outil pour évaluer si tu subis du harcèlement à l'école, en ligne ou dans ton quotidien.`,
+  intro:
+    `Lis chaque situation et réponds par Oui ou Non selon ce que tu vis. Il n'y a pas de mauvaise réponse : c'est un outil pour t'aider à y voir plus clair.`,
+  questionPrefix: 'Est-ce que cette situation te concerne ?',
+  questions: [
+    // ── GREEN: Profite, tout va bien ──
+    { id: 1, text: `Tu échanges des messages amicaux`, level: 'green' },
+    { id: 2, text: `On te soutient dans les moments difficiles`, level: 'green' },
+    { id: 3, text: `Tu fais du sport et tu as des loisirs`, level: 'green' },
+    { id: 4, text: `Les amis ou camarades sont des ressources pour toi`, level: 'green' },
+    { id: 5, text: `Tu maîtrises internet et tu sais t'en passer`, level: 'green' },
+
+    // ── YELLOW: Fais attention, dis stop ──
+    { id: 6, text: `On fait de temps en temps des blagues sur toi`, level: 'yellow' },
+    { id: 7, text: `On te choisit en dernier pour les activités de groupe`, level: 'yellow' },
+    { id: 8, text: `On se moque de toi (surnom…)`, level: 'yellow' },
+    { id: 9, text: `On dégrade tes affaires scolaires`, level: 'yellow' },
+    { id: 10, text: `On t'ignore, on t'isole`, level: 'yellow' },
+
+    // ── ORANGE: C'est du harcèlement en ligne ──
+    { id: 11, text: `On te photographie à ton insu`, level: 'orange' },
+    { id: 12, text: `On t'insulte sur les réseaux sociaux`, level: 'orange' },
+    { id: 13, text: `Tu entends des rumeurs sur toi`, level: 'orange' },
+    { id: 14, text: `On t'interdit de parler aux autres`, level: 'orange' },
+
+    // ── RED: Alerte, demande de l'aide ──
+    { id: 15, text: `On met des photos de toi sur internet sans ton accord`, level: 'red' },
+    { id: 16, text: `On t'incite à te faire du mal`, level: 'red' },
+    { id: 17, text: `On te pousse à bout, on essaie de te mettre en colère`, level: 'red' },
+    { id: 18, text: `On t'humilie sexuellement (surnom, photomontage…)`, level: 'red' },
+    { id: 19, text: `On te touche les parties intimes pour se moquer`, level: 'red' },
+    { id: 20, text: `On te menace sur internet (Snapchat, Instagram, TikTok…)`, level: 'red' },
+    { id: 21, text: `On te pousse à faire des choses que tu ne veux pas`, level: 'red' },
+    { id: 22, text: `On te rackette ou on te menace de violences`, level: 'red' },
+    { id: 23, text: `On te donne des coups, on te frappe`, level: 'red' },
+  ],
+  levels: {
+    green: {
+      label: 'Sain',
+      title: `Pas de souci, continue comme ça 💚`,
+      message:
+        `Tes relations semblent saines. Tu as des amis qui te soutiennent et tu profites de tes activités.`,
+      advice:
+        `Continue à parler avec tes amis et tes professeurs si tu as un doute. Rester vigilant·e est toujours une bonne idée.`,
+      color: '#10B981',
+      bgColor: '#10B981',
+      emoji: '💚',
+    },
+    yellow: {
+      label: 'Attention',
+      title: `Fais attention, dis stop ⚠️`,
+      message:
+        `Certaines situations que tu vis ne sont pas normales. Se moquer de toi, t'isoler ou te choisir en dernier, ce n'est pas anodin.`,
+      advice:
+        `Parles-en à une personne de confiance : un·e ami·e, un·e prof, tes parents, l'infirmier·e scolaire. Tu n'as pas à subir ça.`,
+      color: '#F59E0B',
+      bgColor: '#F59E0B',
+      emoji: '💛',
+    },
+    orange: {
+      label: 'Cyberharcèlement',
+      title: `C'est du harcèlement, réagis 🧡`,
+      message:
+        `Ce que tu décris relève du harcèlement, notamment en ligne. Être photographié·e à son insu, insulté·e sur les réseaux ou isolé·e volontairement : ce n'est pas acceptable.`,
+      advice:
+        `Ne reste pas seul·e. Signale les contenus en ligne, bloque les personnes concernées et parles-en à un adulte de confiance. Tu peux aussi appeler le 3020.`,
+      color: '#F97316',
+      bgColor: '#F97316',
+      emoji: '🧡',
+    },
+    red: {
+      label: 'Danger',
+      title: `Tu es harcelé·e, demande de l'aide 🔴`,
+      message:
+        `Les situations que tu décris sont graves. Tu subis du harcèlement. Ce n'est pas de ta faute et tu as le droit d'être aidé·e.`,
+      advice:
+        `Demande de l'aide rapidement ! Parle à un professeur, un CPE, un infirmier scolaire, tes parents ou un membre de ta famille. Tu peux aussi contacter un policier ou un gendarme formé sur le tchat du 3018.`,
+      color: '#EF4444',
+      bgColor: '#EF4444',
+      emoji: '❤️',
+    },
+  },
+  resources: [
+    {
+      name: '3020 — Non au harcèlement',
+      number: '3020',
+      description: `Numéro national contre le harcèlement scolaire, gratuit et confidentiel.`,
+    },
+    {
+      name: '3018 — Net Écoute',
+      number: '3018',
+      url: 'https://www.netecoute.fr',
+      description: `Numéro contre le cyberharcèlement. Aussi disponible en tchat sur netecoute.fr.`,
+    },
+    {
+      name: '119 — Allô Enfance en Danger',
+      number: '119',
+      description: `Numéro d'écoute national pour les enfants et adolescents en danger, 24h/24.`,
+    },
+    ...COMMON_RESOURCES,
+    {
+      name: 'e-Enfance',
+      url: 'https://e-enfance.org',
+      description: `Association de protection des mineurs en ligne.`,
+    },
+  ],
+};
+
+// ─── DISCRIMINOMÈTRE ────────────────────────────────────────
+// Source : Outil de prévention des discriminations (image)
+const discriminometre: Meter = {
+  slug: 'discriminometre',
+  name: `Discriminomètre`,
+  emoji: '⚖️',
+  tagline: 'Mesure les discriminations que tu vis',
+  description:
+    `Un outil pour identifier les comportements discriminatoires que tu peux vivre au quotidien, de la micro-agression à la violence.`,
+  intro:
+    `Pour chaque situation, indique si tu l'as déjà vécue. Tes réponses sont anonymes et restent sur ton appareil.`,
+  questionPrefix: `Est-ce que cette situation t'est déjà arrivée ?`,
+  questions: [
+    // ── GREEN: Tout va bien ──
+    { id: 1, text: `On respecte ce que je suis`, level: 'green' },
+    { id: 2, text: `On respecte ma différence`, level: 'green' },
+    { id: 3, text: `On respecte mes choix`, level: 'green' },
+    { id: 4, text: `On respecte ma culture`, level: 'green' },
+
+    // ── YELLOW: Vigilance ──
+    { id: 5, text: `Mes ami·e·s font des blagues sur mon nom`, level: 'yellow' },
+    { id: 6, text: `Un·e passant·e m'a fait une remarque désagréable sur ma jupe`, level: 'yellow' },
+    { id: 7, text: `Tête en l'air, on me demande si je suis mongolien·ne`, level: 'yellow' },
+    { id: 8, text: `On me dit que je suis un "garçon manqué"`, level: 'yellow' },
+
+    // ── ORANGE: Dis stop ──
+    { id: 9, text: `Présentant un projet, on me dit que c'est du "travail d'arabe"`, level: 'orange' },
+    { id: 10, text: `Perçu·e comme radin·e, on m'appelle "le/la feuj de service"`, level: 'orange' },
+    { id: 11, text: `Énervée, on me dit : "t'as tes règles ou quoi ?!"`, level: 'orange' },
+    { id: 12, text: `Maladroit·e, on me dit : "t'es handicapé·e ou quoi ?!"`, level: 'orange' },
+    { id: 13, text: `Bénéficiaire de la C.M.U., on m'a refusé un rendez-vous chez le médecin`, level: 'orange' },
+    { id: 14, text: `En me voyant, on m'a refusé l'entrée dans un bar`, level: 'orange' },
+    { id: 15, text: `Après avoir dit mon nom, on m'a refusé la visite d'un logement`, level: 'orange' },
+    { id: 16, text: `On m'a refusé une promotion parce que je suis enceinte`, level: 'orange' },
+
+    // ── RED: Tu es en danger ──
+    { id: 17, text: `On m'insulte de : sale PD, pute, arabe, juif·ve, triso…`, level: 'red' },
+    { id: 18, text: `Je subis des humiliations, des brimades à l'école ou au travail`, level: 'red' },
+    { id: 19, text: `Je subis des bousculades, des coups…`, level: 'red' },
+    { id: 20, text: `Je subis des mains aux fesses, des baisers forcés, des rapports non consentis…`, level: 'red' },
+  ],
+  levels: {
+    green: {
+      label: 'Sain',
+      title: `Tout va bien, continue ✨`,
+      message:
+        `Les situations que tu décris montrent que tu es respecté·e dans ta différence. C'est la base d'un environnement sain.`,
+      advice:
+        `Continue à défendre le respect de chacun·e. Si tu es témoin de discriminations autour de toi, n'hésite pas à réagir ou à en parler.`,
+      color: '#10B981',
+      bgColor: '#10B981',
+      emoji: '💚',
+    },
+    yellow: {
+      label: 'Vigilance',
+      title: `Vigilance, ne laisse pas passer ⚠️`,
+      message:
+        `Les blagues et remarques que tu subis sont des micro-agressions. Même si elles semblent "anodines", elles ne sont pas acceptables.`,
+      advice:
+        `Tu as le droit de dire que ça te blesse. Parles-en à un·e ami·e, un·e prof ou un·e adulte de confiance. Ces remarques ne sont pas normales.`,
+      color: '#F59E0B',
+      bgColor: '#F59E0B',
+      emoji: '💛',
+    },
+    orange: {
+      label: 'Discrimination',
+      title: `Dis stop, c'est de la discrimination 🧡`,
+      message:
+        `Ce que tu vis constitue une discrimination. Refuser un service, un logement, un emploi ou se moquer de ton identité : c'est interdit par la loi.`,
+      advice:
+        `Tu peux saisir le Défenseur des droits (defenseurdesdroits.fr) ou contacter SOS Racisme. Parle de ta situation à une personne de confiance.`,
+      color: '#F97316',
+      bgColor: '#F97316',
+      emoji: '🧡',
+    },
+    red: {
+      label: 'Danger',
+      title: `Tu es en danger, demande de l'aide 🔴`,
+      message:
+        `Les insultes, humiliations, coups et agressions que tu subis sont des délits ou des crimes. Tu as le droit d'être protégé·e.`,
+      advice:
+        `Appelle le 17 (police) ou le 112 en cas de danger immédiat. Tu peux aussi contacter SOS Racisme (01 40 35 36 55) ou le Défenseur des droits. Porte plainte : c'est ton droit.`,
+      color: '#EF4444',
+      bgColor: '#EF4444',
+      emoji: '❤️',
+    },
+  },
+  resources: [
+    {
+      name: 'Défenseur des droits',
+      number: '3928',
+      url: 'https://www.defenseurdesdroits.fr',
+      description: `Autorité indépendante pour lutter contre les discriminations. Aussi joignable au 09 69 39 00 00.`,
+    },
+    {
+      name: 'SOS Racisme',
+      number: '01 40 35 36 55',
+      url: 'https://sos-racisme.org',
+      description: `Association de lutte contre le racisme et les discriminations.`,
+    },
+    {
+      name: 'LICRA',
+      url: 'https://www.licra.org',
+      description: `Ligue internationale contre le racisme et l'antisémitisme.`,
+    },
+    ...COMMON_RESOURCES,
+    {
+      name: 'SOS Homophobie',
+      number: '01 48 06 42 41',
+      url: 'https://www.sos-homophobie.org',
+      description: `Ligne d'écoute contre les LGBTphobies, anonyme et confidentielle.`,
+    },
+    {
+      name: 'DILCRAH',
+      url: 'https://www.dilcrah.fr',
+      description: `Délégation interministérielle à la lutte contre le racisme, l'antisémitisme et la haine anti-LGBT.`,
+    },
+  ],
+};
+
 // ─── Export ────────────────────────────────────────────────
-export const METERS: Meter[] = [violentometre, consentometre, incestometre];
+export const METERS: Meter[] = [violentometre, consentometre, incestometre, harcelometre, discriminometre];
 
 export function getMeterBySlug(slug: string): Meter | undefined {
   return METERS.find((m) => m.slug === slug);

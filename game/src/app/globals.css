@@ -594,15 +594,15 @@ button:focus-visible {
 /* Floating access button (bottom-right) */
 .res-fab {
   position: fixed;
-  bottom: max(16px, env(safe-area-inset-bottom));
-  right: 16px;
+  bottom: calc(max(20px, env(safe-area-inset-bottom)) + 12px);
+  right: 14px;
   z-index: 50;
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 10px 16px;
   border-radius: 100px;
-  background: rgba(20, 20, 20, 0.9);
+  background: rgba(20, 20, 20, 0.92);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(239, 68, 68, 0.15);
@@ -613,14 +613,35 @@ button:focus-visible {
   transition: all 0.2s ease;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
+@media (max-width: 480px) {
+  .res-fab {
+    bottom: calc(max(16px, env(safe-area-inset-bottom)) + 60px);
+    right: 12px;
+    padding: 8px 14px;
+    font-size: 11px;
+  }
+}
 .res-fab:hover {
   border-color: rgba(239, 68, 68, 0.35);
   color: #EF4444;
   transform: translateY(-2px);
   box-shadow: 0 6px 25px rgba(239, 68, 68, 0.1);
 }
+.res-fab:focus-visible {
+  outline: 2px solid #EF4444;
+  outline-offset: 2px;
+}
 .res-fab:active {
   transform: scale(0.95);
+}
+.res-fab::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 100px;
+  border: 1.5px solid rgba(239, 68, 68, 0.2);
+  animation: res-fabPulse 3s ease-in-out infinite;
+  pointer-events: none;
 }
 .res-fab__label {
   white-space: nowrap;
@@ -630,22 +651,26 @@ button:focus-visible {
 .res-card {
   display: block;
   width: 100%;
-  padding: 20px;
-  border-radius: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
   background: #111;
   border: 1px solid #1E1E1E;
   cursor: pointer;
   transition: all 0.2s ease;
-  animation: res-fadeUp 0.4s ease both;
+  animation: res-fadeUp 0.35s ease both;
 }
 .res-card:hover {
   border-color: rgba(239, 68, 68, 0.25);
-  background: #141414;
+  background: #131313;
   transform: translateY(-1px);
   box-shadow: 0 4px 20px rgba(239, 68, 68, 0.05);
 }
 .res-card:active {
   transform: scale(0.98);
+}
+.res-card:focus-visible {
+  outline: 2px solid #EF4444;
+  outline-offset: 2px;
 }
 
 /* Quiz question card */
@@ -658,6 +683,7 @@ button:focus-visible {
   border: 1px solid #1E1E1E;
   position: relative;
   overflow: hidden;
+  transition: box-shadow 0.3s ease;
 }
 .quiz-card__level-indicator {
   position: absolute;
@@ -666,6 +692,7 @@ button:focus-visible {
   right: 0;
   height: 3px;
   border-radius: 0 0 3px 3px;
+  transition: background-color 0.3s ease;
 }
 .quiz-card--enter {
   animation: quiz-slideIn 0.25s ease-out both;
@@ -677,6 +704,11 @@ button:focus-visible {
 @keyframes res-fadeUp {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes res-fabPulse {
+  0%, 100% { opacity: 0; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
 }
 
 @keyframes quiz-slideIn {
