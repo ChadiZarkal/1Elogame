@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Space_Grotesk } from "next/font/google";
+import { ResourceButton } from "@/components/ResourceButton";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -136,6 +137,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <AnalyticsProvider>
             {children}
+            <ResourceButton />
           </AnalyticsProvider>
         </ErrorBoundary>
         <Toaster

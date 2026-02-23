@@ -587,3 +587,105 @@ button:focus-visible {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   RESSOURCES — Floating button, cards, quiz
+   ═══════════════════════════════════════════════════════════ */
+
+/* Floating access button (bottom-right) */
+.res-fab {
+  position: fixed;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  right: 16px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 100px;
+  background: rgba(20, 20, 20, 0.9);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  color: #9CA3AF;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+.res-fab:hover {
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #EF4444;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(239, 68, 68, 0.1);
+}
+.res-fab:active {
+  transform: scale(0.95);
+}
+.res-fab__label {
+  white-space: nowrap;
+}
+
+/* Hub card for meter selection */
+.res-card {
+  display: block;
+  width: 100%;
+  padding: 20px;
+  border-radius: 16px;
+  background: #111;
+  border: 1px solid #1E1E1E;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  animation: res-fadeUp 0.4s ease both;
+}
+.res-card:hover {
+  border-color: rgba(239, 68, 68, 0.25);
+  background: #141414;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.05);
+}
+.res-card:active {
+  transform: scale(0.98);
+}
+
+/* Quiz question card */
+.quiz-card {
+  width: 100%;
+  max-width: 380px;
+  padding: 32px 24px;
+  border-radius: 20px;
+  background: #111;
+  border: 1px solid #1E1E1E;
+  position: relative;
+  overflow: hidden;
+}
+.quiz-card__level-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+}
+.quiz-card--enter {
+  animation: quiz-slideIn 0.25s ease-out both;
+}
+.quiz-card--exit {
+  animation: quiz-slideOut 0.15s ease-in both;
+}
+
+@keyframes res-fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes quiz-slideIn {
+  from { opacity: 0; transform: translateX(30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes quiz-slideOut {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(-30px); }
+}
+
+
