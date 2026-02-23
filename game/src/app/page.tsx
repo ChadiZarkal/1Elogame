@@ -140,7 +140,7 @@ export default function HubPage() {
             </button>
             <button
               className="hub__action"
-              onClick={() => { tap(); router.push('/ressources/violentometre'); }}
+              onClick={() => { tap(); router.push('/ressources'); }}
               aria-label="Violentomètre"
             >
               <Shield size={13} strokeWidth={2.5} />
