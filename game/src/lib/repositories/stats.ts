@@ -29,17 +29,21 @@ export async function getPublicStats(): Promise<PublicStats> {
 
   const { createServerClient } = await import('@/lib/supabase');
   const supabase = createServerClient();
-  const { data, error } = await supabase
-    .from('elements')
-    .select('nb_participations')
-    .eq('actif', true);
-  if (error) throw new Error(`DB error fetching stats: ${error.message}`);
 
-  const totalVotes = (data || []).reduce((sum: number, e: { nb_participations: number }) => sum + (e.nb_participations || 0), 0);
+  // Count directly from the votes table — same source as admin dashboard
+  const [
+    { count: totalVotes },
+    { count: totalElements },
+  ] = await Promise.all([
+    supabase.from('votes').select('*', { count: 'exact', head: true }),
+    supabase.from('elements').select('*', { count: 'exact', head: true }).eq('actif', true),
+  ]);
+
+  const votes = totalVotes ?? 0;
   return {
-    totalVotes,
-    totalElements: (data || []).length,
-    estimatedPlayers: Math.max(1, Math.floor(totalVotes / 15)),
+    totalVotes: votes,
+    totalElements: totalElements ?? 0,
+    estimatedPlayers: Math.max(1, Math.floor(votes / 15)),
   };
 }
 
