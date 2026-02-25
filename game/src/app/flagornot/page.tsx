@@ -84,6 +84,8 @@ export default function FlagOrNotPage() {
               inputRef={game.inputRef}
               onSubmit={game.handleSubmit}
               onKeyDown={game.handleKeyDown}
+              privateMode={game.privateMode}
+              setPrivateMode={game.setPrivateMode}
             />
           )}
         </AnimatePresence>

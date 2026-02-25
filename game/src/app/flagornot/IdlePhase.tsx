@@ -17,6 +17,8 @@ interface IdlePhaseProps {
   inputRef: RefObject<HTMLInputElement | null>;
   onSubmit: () => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
+  privateMode: boolean;
+  setPrivateMode: (v: boolean) => void;
 }
 
 export function IdlePhase({
@@ -30,6 +32,8 @@ export function IdlePhase({
   inputRef,
   onSubmit,
   onKeyDown,
+  privateMode,
+  setPrivateMode,
 }: IdlePhaseProps) {
   return (
     <motion.div
@@ -229,6 +233,33 @@ export function IdlePhase({
             </svg>
           </motion.button>
         </div>
+
+        {/* Privacy toggle */}
+        <button
+          type="button"
+          onClick={() => setPrivateMode(!privateMode)}
+          className="mt-2.5 flex items-center gap-2 w-full group"
+          aria-pressed={privateMode}
+        >
+          <span
+            className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center border transition-all ${
+              privateMode
+                ? 'bg-[#6B7280] border-[#6B7280]'
+                : 'bg-transparent border-[#333] group-hover:border-[#555]'
+            }`}
+          >
+            {privateMode && (
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path d="M1.5 5l2.5 2.5L8.5 2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </span>
+          <span className={`text-[11px] transition-colors ${
+            privateMode ? 'text-[#9CA3AF]' : 'text-[#4B5563] group-hover:text-[#6B7280]'
+          }`}>
+            Ne pas partager dans l&apos;historique communautaire
+          </span>
+        </button>
       </div>
     </motion.div>
   );

@@ -23,6 +23,7 @@ export function useFlagOrNot() {
   const [showCommunityTab, setShowCommunityTab] = useState(false);
   const [globalRedCount, setGlobalRedCount] = useState(0);
   const [globalGreenCount, setGlobalGreenCount] = useState(0);
+  const [privateMode, setPrivateMode] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
@@ -160,7 +161,7 @@ export function useFlagOrNot() {
       const res = await fetch('/api/flagornot/judge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, private: privateMode }),
       });
       if (!res.ok) throw new Error('API error');
       const data: JudgmentResult = await res.json();
@@ -189,7 +190,7 @@ export function useFlagOrNot() {
       setPhase('reveal');
       if (navigator.vibrate) navigator.vibrate(40);
     }
-  }, [input, phase, fetchCommunitySubmissions]);
+  }, [input, phase, privateMode, fetchCommunitySubmissions, fetchGlobalCounts]);
 
   const handleNext = useCallback(() => {
     setResult(null);
@@ -258,5 +259,8 @@ export function useFlagOrNot() {
     handleNext,
     handleKeyDown,
     handleShare,
+    // Privacy
+    privateMode,
+    setPrivateMode,
   };
 }
