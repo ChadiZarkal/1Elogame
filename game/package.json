@@ -15,6 +15,7 @@
   "dependencies": {
     "@google-cloud/vertexai": "^1.10.0",
     "@supabase/supabase-js": "^2.90.1",
+    "@vercel/analytics": "^1.6.1",
     "bcryptjs": "^3.0.3",
     "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
@@ -46,7 +47,7 @@
     "jsdom": "^28.1.0",
     "puppeteer": "^24.37.3",
     "tailwindcss": "^4",
-    "typescript": "^5",
+    "typescript": "5.9.3",
     "vitest": "^4.0.18"
   }
 }

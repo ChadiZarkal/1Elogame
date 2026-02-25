@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Space_Grotesk } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 
 import "./globals.css";
 
@@ -146,6 +147,7 @@ export default function RootLayout({
             style: { background: '#1A1A1A', border: '1px solid #333', color: '#F5F5F5' },
           }}
         />
+        <Analytics />
       </body>
     </html>
   );
