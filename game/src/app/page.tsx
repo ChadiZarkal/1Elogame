@@ -61,7 +61,7 @@ export default function HubPage() {
           {/* Primary: Red Flag Test — full width, red accent */}
           <button
             className="hub__card hub__card--main hub__enter hub__enter--3"
-            onClick={() => go('https://redorgreen.fr/?quiz=quiz-sexualite', true)}
+            onClick={() => go('https://redflagtest.redorgreen.fr/', true)}
             aria-label="Jouer à Red Flag Test"
           >
             <div className="hub__card-header">
@@ -81,33 +81,33 @@ export default function HubPage() {
           <div className="hub__row">
             <button
               className="hub__card hub__card--half hub__card--green hub__enter hub__enter--4"
-              onClick={() => go('/flagornot')}
-              aria-label="Demande à l'IA"
+              onClick={() => go('/jeu')}
+              aria-label="Jouer à Red or Green"
             >
               <div className="hub__card-header">
-                <span className="hub__card-emoji">🤖</span>
-                <span className="hub__card-tag hub__card-tag--green">IA</span>
+                <span className="hub__card-emoji">🚩</span>
+                <span className="hub__card-tag hub__card-tag--green">DUEL</span>
               </div>
-              <h3 className="hub__card-name hub__card-name--sm">Demande à l&apos;IA</h3>
-              <p className="hub__card-pitch hub__card-pitch--sm">L&apos;IA juge ta situation</p>
+              <h3 className="hub__card-name hub__card-name--sm">Red or Green</h3>
+              <p className="hub__card-pitch hub__card-pitch--sm">C&apos;est lequel le pire ?</p>
               <span className="hub__card-go hub__card-go--sm hub__card-go--green">
-                TESTER <ArrowRight size={11} strokeWidth={2.5} />
+                JOUER <ArrowRight size={11} strokeWidth={2.5} />
               </span>
             </button>
 
             <button
               className="hub__card hub__card--half hub__card--purple hub__enter hub__enter--5"
-              onClick={() => go('/jeu')}
-              aria-label="Jouer à Red Flag"
+              onClick={() => go('/flagornot')}
+              aria-label="Jouer à Oracle"
             >
               <div className="hub__card-header">
-                <span className="hub__card-emoji">🚩</span>
-                <span className="hub__card-tag hub__card-tag--purple">DUEL</span>
+                <span className="hub__card-emoji">🔮</span>
+                <span className="hub__card-tag hub__card-tag--purple">ORACLE</span>
               </div>
-              <h3 className="hub__card-name hub__card-name--sm">Red Flag</h3>
-              <p className="hub__card-pitch hub__card-pitch--sm">C&apos;est lequel le pire ?</p>
+              <h3 className="hub__card-name hub__card-name--sm">Oracle</h3>
+              <p className="hub__card-pitch hub__card-pitch--sm">Soumets ta situation</p>
               <span className="hub__card-go hub__card-go--sm hub__card-go--purple">
-                JOUER <ArrowRight size={11} strokeWidth={2.5} />
+                TESTER <ArrowRight size={11} strokeWidth={2.5} />
               </span>
             </button>
           </div>
