@@ -20,13 +20,15 @@ export function useFlagOrNot() {
   const [showJustification, setShowJustification] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
   const [communitySubmissions, setCommunitySubmissions] = useState<CommunitySubmission[]>([]);
-  const [showCommunityTab, setShowCommunityTab] = useState(true);
+  const [showCommunityTab, setShowCommunityTab] = useState(false);
+  const [globalRedCount, setGlobalRedCount] = useState(0);
+  const [globalGreenCount, setGlobalGreenCount] = useState(0);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
 
-  const redCount = useMemo(() => history.filter((h) => h.verdict === 'red').length, [history]);
-  const greenCount = useMemo(() => history.filter((h) => h.verdict === 'green').length, [history]);
+  const redCount = globalRedCount;
+  const greenCount = globalGreenCount;
 
   const displaySuggestions = useMemo(() => {
     if (communitySubmissions.length >= 4) {
@@ -48,6 +50,21 @@ export function useFlagOrNot() {
       const data = await res.json();
       if (data.success && data.data?.submissions) {
         setCommunitySubmissions(data.data.submissions);
+      }
+    } catch {
+      /* silent */
+    }
+  }, []);
+
+  // ── Fetch global verdict counts ──
+  const fetchGlobalCounts = useCallback(async () => {
+    try {
+      const res = await fetch('/api/flagornot/counts');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.success && data.data) {
+        setGlobalRedCount(data.data.red ?? 0);
+        setGlobalGreenCount(data.data.green ?? 0);
       }
     } catch {
       /* silent */
@@ -85,6 +102,7 @@ export function useFlagOrNot() {
     updateHeight();
     window.addEventListener('resize', updateHeight);
     fetchCommunitySubmissions();
+    fetchGlobalCounts();
 
     const handleStorage = (e: StorageEvent) => {
       if (e.key === 'flagornot_show_justification' && e.newValue !== null) {
@@ -97,7 +115,7 @@ export function useFlagOrNot() {
       window.removeEventListener('resize', updateHeight);
       window.removeEventListener('storage', handleStorage);
     };
-  }, [fetchCommunitySubmissions]);
+  }, [fetchCommunitySubmissions, fetchGlobalCounts]);
 
   useEffect(() => {
     if (history.length > 0) {
@@ -159,10 +177,11 @@ export function useFlagOrNot() {
         navigator.vibrate(data.verdict === 'red' ? [80, 40, 80] : [60]);
       }
       fetchCommunitySubmissions();
+      fetchGlobalCounts();
     } catch {
       const fallback: JudgmentResult = {
         verdict: Math.random() > 0.5 ? 'red' : 'green',
-        justification: "L'IA a bugué… mais on a deviné quand même 😅",
+        justification: "L'Oracle a bugué… mais on a deviné quand même 😅",
       };
       await ensureMinDelay();
       setResult(fallback);
@@ -188,10 +207,10 @@ export function useFlagOrNot() {
 
   const handleShare = useCallback(async () => {
     if (!result || !submittedText) return;
-    const shareText = `${result.verdict === 'red' ? '🚩 RED FLAG' : '🟢 GREEN FLAG'}: "${submittedText}" — Joue sur Red Flag Games !`;
+    const shareText = `${result.verdict === 'red' ? '🚩 RED FLAG' : '🟢 GREEN FLAG'}: "${submittedText}" — Joue sur Red or Green !`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Red Flag Games — Flag or Not', text: shareText });
+        await navigator.share({ title: 'Red or Green — Oracle', text: shareText });
       } catch {
         /* user cancelled */
       }

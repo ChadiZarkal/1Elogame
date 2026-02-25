@@ -34,13 +34,13 @@ export default function FlagOrNotPage() {
           ← Retour
         </button>
 
-        <h1 className="text-base font-bold text-[#FAFAFA] tracking-tight">Demande à l&apos;IA</h1>
+        <h1 className="text-base font-bold text-[#FAFAFA] tracking-tight">Oracle</h1>
 
-        {game.history.length > 0 ? (
+        {(game.redCount > 0 || game.greenCount > 0) ? (
           <div className="flex items-center gap-2 text-xs min-w-[48px] justify-end font-medium">
-            <span className="text-[#EF4444]">🚩 {game.redCount}</span>
+            <span className="text-[#EF4444]">🚩 {game.redCount.toLocaleString('fr-FR')}</span>
             <span className="text-[#6B7280]">·</span>
-            <span className="text-[#10B981]">🟢 {game.greenCount}</span>
+            <span className="text-[#10B981]">🟢 {game.greenCount.toLocaleString('fr-FR')}</span>
           </div>
         ) : (
           <div className="min-w-[48px]" />

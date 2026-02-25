@@ -94,12 +94,10 @@ export function ResultDisplay({
   useEffect(() => {
     const animationTimer = setTimeout(() => setShowFeedback(true), 400);
     const clickTimer = setTimeout(() => setCanClickToAdvance(true), 250);
-    autoAdvanceTimerRef.current = setTimeout(() => onNext(), 4000);
     
     return () => {
       clearTimeout(animationTimer);
       clearTimeout(clickTimer);
-      if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
     };
   }, [onNext]);
 

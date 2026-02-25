@@ -87,7 +87,7 @@ export function ProfileForm() {
           🚩
         </motion.div>
         <h1 className="text-4xl font-black text-[#F5F5F7] tracking-tight mb-1">
-          Red <span style={{ color: '#EF4444' }}>Flag</span>
+          Red <span style={{ color: '#EF4444' }}>or</span> Green
         </h1>
         <p className="text-sm font-medium" style={{ color: '#52525B' }}>
           2 infos rapides avant de jouer
@@ -212,33 +212,23 @@ export function ProfileForm() {
         Données 100% anonymes — juste pour les stats
       </p>
 
-      {/* How to play — contextual for this game */}
+      {/* How to play — compact inline under the form */}
       <motion.div
-        className="w-full max-w-sm mt-5"
+        className="w-full max-w-sm mt-4 mb-4"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
       >
-        <p className="text-[10px] font-bold tracking-[0.12em] uppercase text-center mb-2" style={{ color: '#3F3F46' }}>
-          Comment ça marche
-        </p>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="flex items-center gap-3 justify-center">
           {[
-            { emoji: '🚩', title: 'Choisis', desc: 'Le plus red flag' },
-            { emoji: '📊', title: 'Compare', desc: 'Avec les autres' },
-            { emoji: '🔥', title: 'Enchaîne', desc: 'Le streak monte' },
+            { emoji: '🚩', label: 'Choisis le pire' },
+            { emoji: '📊', label: 'Compare' },
+            { emoji: '🔥', label: 'Enchaîne' },
           ].map((step, i) => (
-            <div
-              key={step.title}
-              className="flex flex-col items-center text-center py-2.5 px-1 rounded-xl"
-              style={{
-                background: 'rgba(255,255,255,0.02)',
-                border: '1px solid rgba(255,255,255,0.04)',
-              }}
-            >
-              <span className="text-xl mb-1">{step.emoji}</span>
-              <span className="text-[10px] font-bold" style={{ color: '#A1A1AA' }}>{step.title}</span>
-              <span className="text-[10px] mt-0.5 leading-tight" style={{ color: '#52525B' }}>{step.desc}</span>
+            <div key={step.label} className="flex items-center gap-1.5">
+              {i > 0 && <span className="text-[#333] text-xs mr-1">→</span>}
+              <span className="text-sm">{step.emoji}</span>
+              <span className="text-[10px] font-medium" style={{ color: '#52525B' }}>{step.label}</span>
             </div>
           ))}
         </div>

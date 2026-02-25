@@ -45,15 +45,15 @@ describe('HubPage', () => {
 
   it('affiche les 3 cartes de jeu', () => {
     render(<HubPage />);
-    expect(screen.getByText('Red Flag')).toBeDefined();
-    expect(screen.getByText("Demande à l'IA")).toBeDefined();
+    expect(screen.getByText('Red or Green')).toBeDefined();
+    expect(screen.getByText('Oracle')).toBeDefined();
     expect(screen.getByText('Red Flag Test')).toBeDefined();
   });
 
   it('affiche les descriptions des jeux', () => {
     render(<HubPage />);
     expect(screen.getByText(/lequel le pire/)).toBeDefined();
-    expect(screen.getByText(/IA juge/)).toBeDefined();
+    expect(screen.getByText(/Soumets ta situation/)).toBeDefined();
     expect(screen.getByText(/Es-tu un red flag/)).toBeDefined();
   });
 
@@ -69,15 +69,15 @@ describe('HubPage', () => {
     expect(mockPush).toHaveBeenCalledWith('/classement');
   });
 
-  it('navigue vers /jeu au clic sur Red Flag', () => {
+  it('navigue vers /jeu au clic sur Red or Green', () => {
     render(<HubPage />);
-    fireEvent.click(screen.getByLabelText('Jouer à Red Flag'));
+    fireEvent.click(screen.getByLabelText('Jouer à Red or Green'));
     expect(mockPush).toHaveBeenCalledWith('/jeu');
   });
 
-  it('navigue vers /flagornot au clic sur Demande à l\'IA', () => {
+  it('navigue vers /flagornot au clic sur Oracle', () => {
     render(<HubPage />);
-    fireEvent.click(screen.getByLabelText("Demande à l'IA"));
+    fireEvent.click(screen.getByLabelText('Jouer à Oracle'));
     expect(mockPush).toHaveBeenCalledWith('/flagornot');
   });
 

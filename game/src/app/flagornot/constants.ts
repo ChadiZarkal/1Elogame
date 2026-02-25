@@ -37,14 +37,14 @@ export const FALLBACK_SUGGESTIONS = [
 ];
 
 export const LOADING_PHRASES: string[] = [
-  "L'IA analyse ton truc… 🔍",
+  'Analyse en cours… 🔍',
   'Hmm, laisse-moi réfléchir… 🤔',
   'Consultation du tribunal des flags… ⚖️',
   "C'est chaud là, je calcule… 🔥",
   'Le verdict arrive… 🧠',
-  "L'IA délibère… ⏳",
+  "L'Oracle délibère… ⏳",
   'Ça sent le flag… 👃',
-  'Analyse comportementale en cours… 🤖',
+  'Analyse comportementale en cours… 🔮',
 ];
 
 export const PLACEHOLDERS: string[] = [

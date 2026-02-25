@@ -9,5 +9,5 @@ export { processVote } from './votes';
 export type { VoteResultData } from './votes';
 export { upsertFeedback } from './feedback';
 export { getPublicStats, getAdminStats } from './stats';
-export { getRecentSubmissions, saveSubmission } from './community';
+export { getRecentSubmissions, saveSubmission, getGlobalVerdictCounts } from './community';
 export { saveAnalyticsSession, getAnalyticsSessions } from './analytics';

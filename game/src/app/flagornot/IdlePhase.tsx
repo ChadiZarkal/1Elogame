@@ -3,7 +3,7 @@
 import { RefObject } from 'react';
 import { motion } from 'framer-motion';
 import type { HistoryItem, CommunitySubmission } from './constants';
-import { FALLBACK_SUGGESTIONS, PLACEHOLDERS } from './constants';
+import { PLACEHOLDERS } from './constants';
 
 interface IdlePhaseProps {
   input: string;
@@ -26,7 +26,6 @@ export function IdlePhase({
   communitySubmissions,
   showCommunityTab,
   setShowCommunityTab,
-  displaySuggestions,
   placeholderIdx,
   inputRef,
   onSubmit,
@@ -65,138 +64,120 @@ export function IdlePhase({
         </motion.div>
 
         <h2 className="text-[28px] sm:text-[32px] font-black text-[#FAFAFA] text-center mb-2">
-          Demande à l&apos;IA
+          Oracle
         </h2>
         <p className="text-[#6B7280] text-sm text-center mb-4 max-w-xs">
-          Écris un comportement ou une situation. L&apos;IA te dit si c&apos;est un red flag ou un
-          green flag.
+          Écris un comportement ou une situation et découvre le verdict : red flag ou green flag.
         </p>
 
-        {/* History pills */}
-        {history.length > 0 && (
+        {/* Tabs: Mon historique / D'autres ont testé */}
+        {(history.length > 0 || communitySubmissions.length > 0) && (
           <motion.div
-            className="mt-3 flex flex-wrap gap-1.5 justify-center max-w-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            {history.slice(0, 5).map((h, i) => (
-              <button
-                key={i}
-                onClick={() => setInput(h.text)}
-                className={`text-[11px] px-2.5 py-1 rounded-full border cursor-pointer hover:brightness-150 transition-all ${
-                  h.verdict === 'red'
-                    ? 'border-[#EF4444]/15 text-[#EF4444]/60 bg-[#EF4444]/5'
-                    : 'border-[#10B981]/15 text-[#10B981]/60 bg-[#10B981]/5'
-                }`}
-              >
-                {h.verdict === 'red' ? '🚩' : '🟢'} {h.text.slice(0, 22)}
-                {h.text.length > 22 ? '…' : ''}
-              </button>
-            ))}
-          </motion.div>
-        )}
-
-        {/* Community feed */}
-        {communitySubmissions.length > 0 && (
-          <motion.div
-            className="mt-5 w-full max-w-sm"
+            className="mt-3 w-full max-w-sm"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.2 }}
           >
-            <div className="flex items-center gap-2 mb-2.5">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#4B5563]">
-                D&apos;autres ont testé
-              </span>
-              <span className="flex-1 h-px bg-[#1E1E1E]" />
-            </div>
-            <div className="space-y-1.5 max-h-[120px] overflow-y-auto scrollbar-hide">
-              {communitySubmissions.slice(0, 8).map((sub, i) => (
-                <motion.button
-                  key={sub.id || i}
-                  onClick={() => setInput(sub.text)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#111] border border-[#1A1A1A] hover:border-[#333] transition-all text-left group cursor-pointer"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.35 + i * 0.04 }}
+            {/* Tab buttons — only when both have data */}
+            {history.length > 0 && communitySubmissions.length > 0 && (
+              <div className="flex gap-2 mb-3">
+                <button
+                  onClick={() => setShowCommunityTab(false)}
+                  className={`text-[11px] px-3 py-1.5 rounded-full font-medium transition-all ${
+                    !showCommunityTab
+                      ? 'bg-[#FAFAFA]/10 text-[#FAFAFA] border border-[#FAFAFA]/20'
+                      : 'text-[#6B7280] hover:text-[#9CA3AF]'
+                  }`}
                 >
-                  <span
-                    className={`text-xs flex-shrink-0 ${sub.verdict === 'red' ? 'text-[#EF4444]' : 'text-[#10B981]'}`}
+                  📋 Mon historique ({history.length})
+                </button>
+                <button
+                  onClick={() => setShowCommunityTab(true)}
+                  className={`text-[11px] px-3 py-1.5 rounded-full font-medium transition-all ${
+                    showCommunityTab
+                      ? 'bg-[#FAFAFA]/10 text-[#FAFAFA] border border-[#FAFAFA]/20'
+                      : 'text-[#6B7280] hover:text-[#9CA3AF]'
+                  }`}
+                >
+                  👥 D&apos;autres ont testé ({communitySubmissions.length})
+                </button>
+              </div>
+            )}
+
+            {/* Single label when only one has data */}
+            {history.length > 0 && communitySubmissions.length === 0 && (
+              <div className="flex items-center gap-2 mb-2.5">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#4B5563]">
+                  📋 Mon historique
+                </span>
+                <span className="flex-1 h-px bg-[#1E1E1E]" />
+              </div>
+            )}
+            {history.length === 0 && communitySubmissions.length > 0 && (
+              <div className="flex items-center gap-2 mb-2.5">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#4B5563]">
+                  👥 D&apos;autres ont testé
+                </span>
+                <span className="flex-1 h-px bg-[#1E1E1E]" />
+              </div>
+            )}
+
+            {/* Tab content: Mon historique */}
+            {!showCommunityTab && history.length > 0 && (
+              <div className="space-y-1.5 max-h-[140px] overflow-y-auto scrollbar-hide">
+                {history.slice(0, 10).map((h, i) => (
+                  <motion.button
+                    key={i}
+                    onClick={() => setInput(h.text)}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#111] border border-[#1A1A1A] hover:border-[#333] transition-all text-left group cursor-pointer"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.05 + i * 0.03 }}
                   >
-                    {sub.verdict === 'red' ? '🚩' : '🟢'}
-                  </span>
-                  <span className="text-[12px] text-[#9CA3AF] group-hover:text-[#D1D5DB] truncate flex-1 transition-colors">
-                    {sub.text}
-                  </span>
-                  <span className="text-[9px] text-[#3D3D3D] flex-shrink-0">{sub.timeAgo}</span>
-                </motion.button>
-              ))}
-            </div>
+                    <span
+                      className={`text-xs flex-shrink-0 ${h.verdict === 'red' ? 'text-[#EF4444]' : 'text-[#10B981]'}`}
+                    >
+                      {h.verdict === 'red' ? '🚩' : '🟢'}
+                    </span>
+                    <span className="text-[12px] text-[#9CA3AF] group-hover:text-[#D1D5DB] truncate flex-1 transition-colors">
+                      {h.text}
+                    </span>
+                  </motion.button>
+                ))}
+              </div>
+            )}
+
+            {/* Tab content: D'autres ont testé */}
+            {(showCommunityTab || history.length === 0) && communitySubmissions.length > 0 && (
+              <div className="space-y-1.5 max-h-[140px] overflow-y-auto scrollbar-hide">
+                {communitySubmissions.slice(0, 10).map((sub, i) => (
+                  <motion.button
+                    key={sub.id || i}
+                    onClick={() => setInput(sub.text)}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#111] border border-[#1A1A1A] hover:border-[#333] transition-all text-left group cursor-pointer"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.05 + i * 0.03 }}
+                  >
+                    <span
+                      className={`text-xs flex-shrink-0 ${sub.verdict === 'red' ? 'text-[#EF4444]' : 'text-[#10B981]'}`}
+                    >
+                      {sub.verdict === 'red' ? '🚩' : '🟢'}
+                    </span>
+                    <span className="text-[12px] text-[#9CA3AF] group-hover:text-[#D1D5DB] truncate flex-1 transition-colors">
+                      {sub.text}
+                    </span>
+                    <span className="text-[9px] text-[#3D3D3D] flex-shrink-0">{sub.timeAgo}</span>
+                  </motion.button>
+                ))}
+              </div>
+            )}
           </motion.div>
         )}
       </div>
 
       {/* Bottom input zone */}
       <div className="px-4 pb-[max(12px,env(safe-area-inset-bottom))]">
-        {/* Suggestions */}
-        {!input && (
-          <motion.div
-            className="mb-3 -mx-4 px-4"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-          >
-            {communitySubmissions.length > 0 && (
-              <div className="flex gap-2 mb-2">
-                <button
-                  onClick={() => setShowCommunityTab(true)}
-                  className={`text-[11px] px-3 py-1 rounded-full font-medium transition-all ${
-                    showCommunityTab
-                      ? 'bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/20'
-                      : 'text-[#6B7280] hover:text-[#9CA3AF]'
-                  }`}
-                >
-                  🔥 Tendances ({communitySubmissions.length})
-                </button>
-                <button
-                  onClick={() => setShowCommunityTab(false)}
-                  className={`text-[11px] px-3 py-1 rounded-full font-medium transition-all ${
-                    !showCommunityTab
-                      ? 'bg-[#6B7280]/10 text-[#9CA3AF] border border-[#6B7280]/20'
-                      : 'text-[#6B7280] hover:text-[#9CA3AF]'
-                  }`}
-                >
-                  💡 Suggestions
-                </button>
-              </div>
-            )}
-
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
-              {(showCommunityTab && communitySubmissions.length > 0
-                ? displaySuggestions
-                : FALLBACK_SUGGESTIONS.map((s) => ({ ...s, isCommunity: false, timeAgo: '' }))
-              ).map((s, i) => (
-                <button
-                  key={i}
-                  onClick={() => setInput(s.text)}
-                  className={`flex-none snap-start flex items-center gap-1.5 text-[12px] px-3 py-2.5 rounded-xl border text-[#9CA3AF] hover:text-[#FAFAFA] active:scale-[0.96] transition-all duration-150 whitespace-nowrap ${
-                    s.isCommunity
-                      ? 'bg-[#141414] border-[#EF4444]/10 hover:border-[#EF4444]/30'
-                      : 'bg-[#141414] border-[#1E1E1E] hover:border-[#EF4444]/30 active:bg-[#1A1A1A]'
-                  }`}
-                >
-                  <span className="text-sm">{s.emoji}</span>
-                  <span>{s.text.length > 35 ? s.text.slice(0, 35) + '…' : s.text}</span>
-                  {s.isCommunity && s.timeAgo && (
-                    <span className="text-[9px] text-[#4B5563] ml-1">{s.timeAgo}</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
         {/* Input + send */}
         <div className="flex gap-2.5 items-center">
           <div className="flex-1 relative">

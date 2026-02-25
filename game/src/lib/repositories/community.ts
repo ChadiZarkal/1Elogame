@@ -56,3 +56,25 @@ export async function saveSubmission(text: string, verdict: 'red' | 'green'): Pr
   if (error) throw new Error(`DB error saving submission: ${error.message}`);
   return { id: `new-${Date.now()}`, text: sanitized, verdict, timestamp: Date.now() };
 }
+
+/** Get global red/green verdict counts. */
+export async function getGlobalVerdictCounts(): Promise<{ red: number; green: number }> {
+  if (isMockMode()) {
+    const red = mockCommunityStore.filter((s) => s.verdict === 'red').length;
+    const green = mockCommunityStore.filter((s) => s.verdict === 'green').length;
+    return { red, green };
+  }
+
+  const { createServerClient } = await import('@/lib/supabase');
+  const supabase = createServerClient();
+
+  const [redRes, greenRes] = await Promise.all([
+    supabase.from('flagornot_submissions').select('*', { count: 'exact', head: true }).eq('verdict', 'red'),
+    supabase.from('flagornot_submissions').select('*', { count: 'exact', head: true }).eq('verdict', 'green'),
+  ]);
+
+  if (redRes.error) throw new Error(`DB error counting red: ${redRes.error.message}`);
+  if (greenRes.error) throw new Error(`DB error counting green: ${greenRes.error.message}`);
+
+  return { red: redRes.count ?? 0, green: greenRes.count ?? 0 };
+}

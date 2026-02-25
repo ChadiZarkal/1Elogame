@@ -140,7 +140,7 @@ function judgeLocally(text: string): JudgeResult {
       "Ça sent le red flag à 10 km, cours tant qu'il est encore temps 🏃",
       "Non mais allô ? C'est le festival des red flags là 🚩🚩🚩",
       "Si c'était un pays, ça serait la République des Red Flags 🚩",
-      "L'IA a dit non. La science a parlé. Next 🚩",
+      "L'Oracle a dit non. La science a parlé. Next 🚩",
       "Même ton chat te jugerait pour ça, et il a aucune morale 🚩",
       "C'est tellement red flag que même ton GPS te dirait de faire demi-tour 🚩",
     ],
