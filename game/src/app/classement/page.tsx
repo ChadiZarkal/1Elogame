@@ -112,7 +112,6 @@ export default function LeaderboardPage() {
     );
   }
 
-  const visibleFilters = VIEW_CONFIG.filter(v => v.group === filterType);
   const top3 = sorted.slice(0, 3);
   const rest = sorted.slice(3);
 
@@ -165,49 +164,45 @@ export default function LeaderboardPage() {
             </div>
           </div>
 
-          {/* Sexe / Âge */}
-          <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
-            {['gender', 'age'].map((ft) => (
-              <button
-                key={ft}
-                onClick={() => { setFilterType(ft as 'gender' | 'age'); setView(ft === 'gender' ? 'global' : '16-18'); }}
-                className="text-xs px-3.5 py-2 rounded-full font-medium transition-all"
-                style={filterType === ft
-                  ? { background: 'rgba(255,255,255,0.1)', color: '#FAFAFA', border: '1px solid rgba(255,255,255,0.2)' }
-                  : { color: '#6B7280', border: '1px solid transparent' }}
-              >
-                {ft === 'gender' ? '👤 Sexe' : '📊 Âge'}
-              </button>
-            ))}
-            <span className="text-[#333] text-sm">|</span>
-            {visibleFilters.map((v) => (
-              <button
-                key={v.value}
-                onClick={() => setView(v.value)}
-                className="text-xs px-3.5 py-2 rounded-full font-medium transition-all"
-                style={view === v.value
-                  ? { background: accentDim, color: accent, border: `1px solid ${accentBorder}` }
-                  : { color: '#6B7280', border: '1px solid transparent' }}
-              >
-                {v.emoji} {v.label}
-              </button>
-            ))}
+          {/* View filters — single scrollable row */}
+          <div className="mt-4 -mx-4 px-4 overflow-x-auto [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
+            <div className="flex items-center gap-1.5 w-max mx-auto">
+              {VIEW_CONFIG.map((v, i) => (
+                <span key={v.value} className="contents">
+                  {/* Separator between gender/age groups */}
+                  {i > 0 && VIEW_CONFIG[i - 1].group !== v.group && (
+                    <span className="text-[#333] text-sm mx-1 select-none">|</span>
+                  )}
+                  <button
+                    onClick={() => { setFilterType(v.group); setView(v.value); }}
+                    className="text-xs px-3 py-1.5 rounded-full font-medium transition-all whitespace-nowrap flex-shrink-0"
+                    style={view === v.value
+                      ? { background: accentDim, color: accent, border: `1px solid ${accentBorder}` }
+                      : { color: '#6B7280', border: '1px solid transparent' }}
+                  >
+                    {v.emoji} {v.label}
+                  </button>
+                </span>
+              ))}
+            </div>
           </div>
 
-          {/* Category */}
-          <div className="flex justify-center gap-2 mt-2 flex-wrap">
-            {CATEGORY_FILTERS.map((cat) => (
-              <button
-                key={cat.value}
-                onClick={() => setCategoryFilter(cat.value)}
-                className="text-xs px-3 py-1.5 rounded-full font-medium transition-all"
-                style={categoryFilter === cat.value
-                  ? { background: accentDim, color: accent, border: `1px solid ${accentBorder}` }
-                  : { color: '#555', border: '1px solid transparent' }}
-              >
-                {cat.emoji} {cat.label}
-              </button>
-            ))}
+          {/* Category — scrollable row */}
+          <div className="mt-2 -mx-4 px-4 overflow-x-auto [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
+            <div className="flex items-center gap-1.5 w-max mx-auto">
+              {CATEGORY_FILTERS.map((cat) => (
+                <button
+                  key={cat.value}
+                  onClick={() => setCategoryFilter(cat.value)}
+                  className="text-xs px-3 py-1.5 rounded-full font-medium transition-all whitespace-nowrap flex-shrink-0"
+                  style={categoryFilter === cat.value
+                    ? { background: accentDim, color: accent, border: `1px solid ${accentBorder}` }
+                    : { color: '#555', border: '1px solid transparent' }}
+                >
+                  {cat.emoji} {cat.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

@@ -174,16 +174,12 @@ export default function JouerPage() {
         </div>
         
         {/* First duel hint */}
-        {duelCount < 3 && !showingResult && (
-          <motion.div
-            className="absolute top-20 left-1/2 -translate-x-1/2 z-10 bg-[#DC2626]/90 text-white text-xs font-bold px-4 py-2 rounded-full"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ delay: 0.5 }}
+        {duelCount < 3 && !showingResult && currentDuel && (
+          <div
+            className="absolute top-20 left-1/2 -translate-x-1/2 z-10 bg-[#DC2626]/90 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-red-900/30 pointer-events-none"
           >
             👆 Choisis le plus red flag 🚩
-          </motion.div>
+          </div>
         )}
         
         {showingResult && lastResult ? (

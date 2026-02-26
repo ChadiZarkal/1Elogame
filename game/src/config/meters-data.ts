@@ -857,23 +857,39 @@ export const SEVERITY_ORDER: Record<SeverityLevel, number> = {
   red: 3,
 };
 
-/** Retourne le niveau le plus élevé parmi les réponses "Oui" */
+/** Retourne le niveau le plus élevé parmi les réponses problématiques.
+ * - Questions jaunes/orange/rouges : "Oui" = problème
+ * - Questions vertes (positives) : "Non" = problème (traité comme vigilance/jaune)
+ */
 export function getHighestSeverity(
   answers: Map<number, boolean>,
   questions: MeterQuestion[],
 ): SeverityLevel {
   let highest: SeverityLevel = 'green';
   for (const [qId, isYes] of answers) {
-    if (!isYes) continue;
     const question = questions.find((q) => q.id === qId);
-    if (question && SEVERITY_ORDER[question.level] > SEVERITY_ORDER[highest]) {
+    if (!question) continue;
+
+    // Green questions are positive: "Non" is the problem
+    if (question.level === 'green') {
+      if (!isYes && SEVERITY_ORDER['yellow'] > SEVERITY_ORDER[highest]) {
+        highest = 'yellow';
+      }
+      continue;
+    }
+
+    // Other levels: "Oui" is the problem
+    if (isYes && SEVERITY_ORDER[question.level] > SEVERITY_ORDER[highest]) {
       highest = question.level;
     }
   }
   return highest;
 }
 
-/** Retourne les questions répondues "Oui", groupées par niveau */
+/** Retourne les réponses problématiques groupées par niveau.
+ * - Questions jaunes/orange/rouges : celles répondues "Oui"
+ * - Questions vertes (positives) : celles répondues "Non" (classées en "yellow")
+ */
 export function getYesAnswersByLevel(
   answers: Map<number, boolean>,
   questions: MeterQuestion[],
@@ -885,9 +901,17 @@ export function getYesAnswersByLevel(
     red: [],
   };
   for (const [qId, isYes] of answers) {
-    if (!isYes) continue;
     const question = questions.find((q) => q.id === qId);
-    if (question) result[question.level].push(question);
+    if (!question) continue;
+
+    // Green questions are positive: "Non" is problematic → classify as yellow
+    if (question.level === 'green') {
+      if (!isYes) result.yellow.push(question);
+      continue;
+    }
+
+    // Other levels: "Oui" is problematic
+    if (isYes) result[question.level].push(question);
   }
   return result;
 }
