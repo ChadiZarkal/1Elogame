@@ -221,6 +221,15 @@ button:focus-visible {
   margin-bottom: 0.25rem;
 }
 
+.hub__logo {
+  width: clamp(220px, 60vw, 340px);
+  height: auto;
+  margin: 0 auto;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
 .hub__title {
   display: flex;
   align-items: baseline;

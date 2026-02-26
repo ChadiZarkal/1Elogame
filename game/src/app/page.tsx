@@ -36,11 +36,12 @@ export default function HubPage() {
 
         {/* ─── HERO ─── */}
         <header className="hub__hero hub__enter hub__enter--1">
-          <h1 className="hub__title">
-            <span className="hub__title-red">RED</span>
-            <span className="hub__title-or">OR</span>
-            <span className="hub__title-green">GREEN</span>
-          </h1>
+          <img
+            src="/logo-rog-new.svg"
+            alt="Red or Green"
+            className="hub__logo"
+            draggable={false}
+          />
           <p className="hub__subtitle">Le jeu qui divise</p>
         </header>
 
