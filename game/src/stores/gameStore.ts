@@ -137,7 +137,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         hasProfile: true,
         streak: session.streak,
         streakEmoji: getStreakEmoji(session.streak),
-        duelCount: session.duelCount,
+        duelCount: 0,
       });
     }
     set(updates);

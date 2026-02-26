@@ -138,7 +138,7 @@ export default function HubPage() {
               onClick={() => { tap(); router.push('/classement'); }}
             >
               <Trophy size={13} strokeWidth={2.5} />
-              Statistique
+              Statistiques
             </button>
             <button
               className="hub__action"

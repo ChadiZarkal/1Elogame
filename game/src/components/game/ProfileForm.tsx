@@ -74,7 +74,7 @@ export function ProfileForm() {
 
       {/* Logo */}
       <motion.div
-        className="mb-8 text-center"
+        className="mb-6 text-center pt-10"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
@@ -88,7 +88,7 @@ export function ProfileForm() {
           <img
             src="/logo-rog-new.svg"
             alt="Red or Green"
-            style={{ width: 240, height: 'auto' }}
+            className="w-[180px] sm:w-[220px]"
             draggable={false}
           />
         </motion.div>
