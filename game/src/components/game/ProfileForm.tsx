@@ -80,15 +80,18 @@ export function ProfileForm() {
         transition={{ delay: 0.1 }}
       >
         <motion.div
-          className="text-5xl mb-4 select-none block"
-          animate={{ rotate: [0, -10, 10, 0] }}
-          transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 4 }}
+          initial={{ opacity: 0, scale: 0.9, y: -10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="flex items-center justify-center mb-3"
         >
-          🚩
+          <img
+            src="/logo-rog-new.svg"
+            alt="Red or Green"
+            style={{ width: 240, height: 'auto' }}
+            draggable={false}
+          />
         </motion.div>
-        <h1 className="text-4xl font-black text-[#F5F5F7] tracking-tight mb-1">
-          Red <span style={{ color: '#EF4444' }}>or</span> Green
-        </h1>
         <p className="text-sm font-medium" style={{ color: '#52525B' }}>
           2 infos rapides avant de jouer
         </p>
