@@ -360,7 +360,7 @@ export default function MeterQuizPage() {
                     <div className="space-y-1 pl-3.5 border-l border-[#1E1E1E]">
                       {items.map((q) => (
                         <p key={q.id} className="text-[12px] text-[#9CA3AF] leading-relaxed pl-2">
-                          {q.text}
+                          {q.negatedText || q.text}
                         </p>
                       ))}
                     </div>

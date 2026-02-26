@@ -15,6 +15,8 @@ export interface MeterQuestion {
   id: number;
   text: string;
   level: SeverityLevel;
+  /** Texte négatif affiché dans le récap quand une question positive (green) est répondue "Non" */
+  negatedText?: string;
 }
 
 export interface MeterLevelInfo {
@@ -95,29 +97,33 @@ const consentometre: Meter = {
   questionPrefix: 'Est-ce que cette situation te concerne ?',
   questions: [
     // ── GREEN: C'est ok, la situation est saine ──
-    { id: 1, text: "J'exprime clairement mes désirs, mes choix et mes limites", level: 'green' },
-    { id: 2, text: `On respecte mes décisions, mes désirs et mes goûts`, level: 'green' },
+    { id: 1, text: "J'exprime clairement mes désirs, mes choix et mes limites", level: 'green', negatedText: "Je n'exprime pas clairement mes désirs, mes choix et mes limites" },
+    { id: 2, text: `On respecte mes décisions, mes désirs et mes goûts`, level: 'green', negatedText: `On ne respecte pas mes décisions, mes désirs ni mes goûts` },
     {
       id: 3,
       text: "Mon tuteur ou ma tutrice de stage s'intéresse à mon bien-être et à mon intégration dans l'équipe",
       level: 'green',
+      negatedText: "Mon tuteur ou ma tutrice de stage ne s'intéresse pas à mon bien-être ni à mon intégration",
     },
     {
       id: 4,
       text: `Quand je refuse un verre en soirée, on me laisse tranquille`,
       level: 'green',
+      negatedText: `Quand je refuse un verre en soirée, on ne me laisse pas tranquille`,
     },
     {
       id: 5,
       text: `Mon ou ma partenaire accepte mon environnement, mon réseau social et ma famille`,
       level: 'green',
+      negatedText: `Mon ou ma partenaire n'accepte pas mon environnement, mon réseau social ni ma famille`,
     },
     {
       id: 6,
       text: "La personne s'assure de mon accord pour tout ce que nous faisons ensemble",
       level: 'green',
+      negatedText: "La personne ne s'assure pas de mon accord pour tout ce que nous faisons ensemble",
     },
-    { id: 7, text: "L'autre est content·e de mes réussites", level: 'green' },
+    { id: 7, text: "L'autre est content·e de mes réussites", level: 'green', negatedText: "L'autre n'est pas content·e de mes réussites" },
 
     // ── YELLOW: Attention c'est limite, je suis vigilant·e ──
     {
@@ -306,15 +312,16 @@ const violentometre: Meter = {
   questionPrefix: 'Dans ta relation, est-ce que ton ou ta partenaire…',
   questions: [
     // ── GREEN: Profite, ta relation est saine ──
-    { id: 1, text: `Respecte tes décisions, tes désirs et tes goûts`, level: 'green' },
-    { id: 2, text: `A confiance en toi`, level: 'green' },
+    { id: 1, text: `Respecte tes décisions, tes désirs et tes goûts`, level: 'green', negatedText: `Ne respecte pas tes décisions, tes désirs ni tes goûts` },
+    { id: 2, text: `A confiance en toi`, level: 'green', negatedText: `N'a pas confiance en toi` },
     {
       id: 3,
       text: "S'assure de ton accord pour tout ce que vous faites ensemble",
       level: 'green',
+      negatedText: "Ne s'assure pas de ton accord pour tout ce que vous faites ensemble",
     },
-    { id: 4, text: `Accepte tes ami·e·s et ta famille`, level: 'green' },
-    { id: 5, text: `Est content·e de tes réussites`, level: 'green' },
+    { id: 4, text: `Accepte tes ami·e·s et ta famille`, level: 'green', negatedText: `N'accepte pas tes ami·e·s ni ta famille` },
+    { id: 5, text: `Est content·e de tes réussites`, level: 'green', negatedText: `N'est pas content·e de tes réussites` },
 
     // ── YELLOW: Vigilance, dis stop ──
     { id: 6, text: `Se moque de toi en public`, level: 'yellow' },
@@ -432,21 +439,24 @@ const incestometre: Meter = {
   questionPrefix: `Est-ce qu'un membre de ta famille ou un proche…`,
   questions: [
     // ── GREEN: La relation est saine ──
-    { id: 1, text: `Respecte ton intimité (frappe avant d'entrer, etc.)`, level: 'green' },
+    { id: 1, text: `Respecte ton intimité (frappe avant d'entrer, etc.)`, level: 'green', negatedText: `Ne respecte pas ton intimité` },
     {
       id: 2,
       text: `Te laisse choisir comment tu t'habilles`,
       level: 'green',
+      negatedText: `Ne te laisse pas choisir comment tu t'habilles`,
     },
     {
       id: 3,
       text: `Ne fait pas de commentaires gênants sur ton corps`,
       level: 'green',
+      negatedText: `Fait des commentaires gênants sur ton corps`,
     },
     {
       id: 4,
       text: `Respecte ton espace personnel et tes limites`,
       level: 'green',
+      negatedText: `Ne respecte pas ton espace personnel ni tes limites`,
     },
 
     // ── YELLOW: Attention, c'est limite ──
@@ -620,11 +630,11 @@ const harcelometre: Meter = {
   questionPrefix: 'Est-ce que cette situation te concerne ?',
   questions: [
     // ── GREEN: Profite, tout va bien ──
-    { id: 1, text: `Tu échanges des messages amicaux`, level: 'green' },
-    { id: 2, text: `On te soutient dans les moments difficiles`, level: 'green' },
-    { id: 3, text: `Tu fais du sport et tu as des loisirs`, level: 'green' },
-    { id: 4, text: `Les amis ou camarades sont des ressources pour toi`, level: 'green' },
-    { id: 5, text: `Tu maîtrises internet et tu sais t'en passer`, level: 'green' },
+    { id: 1, text: `Tu échanges des messages amicaux`, level: 'green', negatedText: `Tu n'échanges pas de messages amicaux` },
+    { id: 2, text: `On te soutient dans les moments difficiles`, level: 'green', negatedText: `On ne te soutient pas dans les moments difficiles` },
+    { id: 3, text: `Tu fais du sport et tu as des loisirs`, level: 'green', negatedText: `Tu ne fais pas de sport et tu n'as pas de loisirs` },
+    { id: 4, text: `Les amis ou camarades sont des ressources pour toi`, level: 'green', negatedText: `Les amis ou camarades ne sont pas des ressources pour toi` },
+    { id: 5, text: `Tu maîtrises internet et tu sais t'en passer`, level: 'green', negatedText: `Tu ne maîtrises pas internet et tu ne sais pas t'en passer` },
 
     // ── YELLOW: Fais attention, dis stop ──
     { id: 6, text: `On fait de temps en temps des blagues sur toi`, level: 'yellow' },
