@@ -12,7 +12,7 @@ const spaceGrotesk = Space_Grotesk({
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redflaggames.fr';
 const SITE_NAME = 'Red Flag Games';
-const SITE_DESCRIPTION = 'Red Flag, Green Flag... Choisis ton jeu et amuse-toi entre amis ! Party games mobiles gratuits, sans inscription, jouables instantanément. Découvre si tu es un Red Flag avec l\'IA !';
+const SITE_DESCRIPTION = 'Red Flag, Green Flag... Choisis ton jeu et amuse-toi entre amis ! Party games mobiles gratuits, sans inscription, jouables instantanément. Quel comportement est le plus gros Red Flag ?';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     'red flag', 'green flag', 'party game', 'jeu entre amis', 'jeu mobile',
     'red flag test', 'flag or not', 'jeu gratuit', 'jeu en ligne', 'débat',
     'jeu de société', 'icebreaker', 'jeu soirée', 'quiz couple',
-    'red flag definition', 'green flag definition', 'jeu IA',
+    'red flag definition', 'green flag definition', 'oracle jeu',
     'classement red flag', 'comportement red flag',
   ],
   authors: [{ name: SITE_NAME, url: SITE_URL }],
