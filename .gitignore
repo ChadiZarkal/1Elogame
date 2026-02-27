@@ -2,6 +2,12 @@
 ai-agent-*.json
 *service*account*.json
 
+# Dev artifacts
+Screenshots/
+logo-rog-new.svg
+test-models*.js
+test-models*.mjs
+
 # Node / IDE
 node_modules/
 .DS_Store

@@ -129,7 +129,7 @@ export async function judgeWithGemini(
   systemPrompt: string,
 ): Promise<{ verdict: 'red' | 'green'; justification: string }> {
   const client = getGenAIClient();
-  const model = process.env.VERTEX_AI_MODEL || 'gemini-3-flash-preview';
+  const model = process.env.VERTEX_AI_MODEL || 'gemini-2.5-flash';
 
   try {
     const response = await client.models.generateContent({
@@ -148,6 +148,8 @@ export async function judgeWithGemini(
           },
           required: ['verdict', 'justification'],
         },
+        // Disable thinking for fast responses (~750ms vs ~2000ms)
+        thinkingConfig: { thinkingBudget: 0 },
       },
     });
 
