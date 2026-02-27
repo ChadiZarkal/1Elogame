@@ -93,7 +93,7 @@ npm run build
 | `NEXT_PUBLIC_MOCK_MODE` | Set to `true` for local dev without Supabase |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | Vertex AI service account (JSON string) |
 | `VERTEX_AI_LOCATION` | GCP region (default: `us-central1`) |
-| `VERTEX_AI_MODEL` | Gemini model (default: `gemini-2.0-flash-001`) |
+| `VERTEX_AI_MODEL` | Gemini model (default: `gemini-2.5-flash`) |
 | `ADMIN_PASSWORD` | Admin panel password |
 
 ## Database Migrations

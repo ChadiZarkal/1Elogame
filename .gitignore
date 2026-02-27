@@ -4,6 +4,9 @@ ai-agent-*.json
 
 # Dev artifacts
 Screenshots/
+RAPPORTS/
+Rapports_IA/
+metre/
 logo-rog-new.svg
 test-models*.js
 test-models*.mjs
@@ -11,5 +14,14 @@ test-models*.mjs
 # Node / IDE
 node_modules/
 .DS_Store
+*.log
+.env
+.env.*
 .env.local
 .env.local.example
+.vercel
+
+# OS
+Thumbs.db
+*.swp
+*~
