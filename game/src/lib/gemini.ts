@@ -1,9 +1,17 @@
-/** Gemini (Vertex AI) integration for AI judge. */
+/**
+ * Gemini integration for AI judge.
+ * Uses @google/genai SDK (unified Google GenAI library) with Vertex AI backend
+ * and service account JSON credentials.
+ */
 
-import { VertexAI, SchemaType } from '@google-cloud/vertexai';
+import { GoogleGenAI } from '@google/genai';
 import { readFileSync, existsSync, readdirSync, writeFileSync, unlinkSync } from 'fs';
 import { resolve, join } from 'path';
 import { tmpdir } from 'os';
+
+// ---------------------------------------------------------------------------
+// Service Account credentials loading (unchanged — supports JSON env, file, auto-discovery)
+// ---------------------------------------------------------------------------
 
 interface ServiceAccountCredentials {
   type: string;
@@ -34,8 +42,7 @@ function getServiceAccountCredentials(): ServiceAccountCredentials | null {
     const p = resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS);
     if (existsSync(p)) {
       try {
-        const content = readFileSync(p, 'utf-8');
-        return JSON.parse(content);
+        return JSON.parse(readFileSync(p, 'utf-8'));
       } catch (e) {
         console.warn('Failed to read GOOGLE_APPLICATION_CREDENTIALS file:', e);
         return null;
@@ -43,75 +50,41 @@ function getServiceAccountCredentials(): ServiceAccountCredentials | null {
     }
   }
 
-  // Priority 3: Search for ai-agent JSON file in cwd only (not parent)
-  // Security: Only check current working directory
+  // Priority 3: Search for ai-agent JSON file in cwd only
   try {
     const files = readdirSync(process.cwd());
     const saFile = files.find((f) => f.endsWith('.json') && f.includes('ai-agent'));
     if (saFile) {
       const p = join(process.cwd(), saFile);
-      if (existsSync(p)) {
-        const content = readFileSync(p, 'utf-8');
-        return JSON.parse(content);
-      }
+      if (existsSync(p)) return JSON.parse(readFileSync(p, 'utf-8'));
     }
-  } catch (e) {
+  } catch {
     // ignore
   }
 
   return null;
 }
 
-let vertexaiInstance: VertexAI | null = null;
+// ---------------------------------------------------------------------------
+// Temp credentials file (needed for ADC-based auth on Vercel)
+// ---------------------------------------------------------------------------
+
 let tempCredentialsFile: string | null = null;
 
-/** Clean up temporary credentials file. */
 function cleanupTempCredentials(): void {
   if (tempCredentialsFile && existsSync(tempCredentialsFile)) {
-    try {
-      unlinkSync(tempCredentialsFile);
-      tempCredentialsFile = null;
-    } catch {
-      // ignore cleanup errors
-    }
+    try { unlinkSync(tempCredentialsFile); tempCredentialsFile = null; } catch { /* ignore */ }
   }
 }
 
-function getVertexAIClient(): VertexAI {
-  if (vertexaiInstance) return vertexaiInstance;
-
-  const credentials = getServiceAccountCredentials();
-  if (!credentials) {
-    throw new Error(
-      'GCP service account credentials not found. Provide GOOGLE_SERVICE_ACCOUNT_JSON env var or place ai-agent-*.json in project root.'
-    );
-  }
-
-  // On Vercel/serverless, we write credentials to a deterministic temp file
-  // to avoid accumulating files across cold starts
-  try {
-    // Use a deterministic filename to avoid orphan files
-    const tempFile = join(tmpdir(), 'gcp-sa-redflaggames.json');
-    
-    // Clean up any previous file first
-    cleanupTempCredentials();
-    
-    writeFileSync(tempFile, JSON.stringify(credentials), { mode: 0o600 });
-    process.env.GOOGLE_APPLICATION_CREDENTIALS = tempFile;
-    tempCredentialsFile = tempFile;
-  } catch (e) {
-    console.warn('Failed to write temp credentials file, trying without:', e);
-  }
-
-  vertexaiInstance = new VertexAI({
-    project: credentials.project_id,
-    location: process.env.VERTEX_AI_LOCATION || 'us-central1',
-  });
-
-  return vertexaiInstance;
+function ensureCredentialsFile(credentials: ServiceAccountCredentials): void {
+  const tempFile = join(tmpdir(), 'gcp-sa-redflaggames.json');
+  cleanupTempCredentials();
+  writeFileSync(tempFile, JSON.stringify(credentials), { mode: 0o600 });
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = tempFile;
+  tempCredentialsFile = tempFile;
 }
 
-// Cleanup on exit (best-effort for non-serverless)
 if (typeof process !== 'undefined') {
   const cleanup = () => cleanupTempCredentials();
   process.on('exit', cleanup);
@@ -119,59 +92,73 @@ if (typeof process !== 'undefined') {
   process.on('SIGTERM', cleanup);
 }
 
-export async function judgeWithGemini(
-  text: string,
-  systemPrompt: string
-): Promise<{ verdict: 'red' | 'green'; justification: string }> {
-  const client = getVertexAIClient();
-  const model = process.env.VERTEX_AI_MODEL || 'gemini-2.0-flash-001';
+// ---------------------------------------------------------------------------
+// @google/genai client (Vertex AI mode with service account)
+// ---------------------------------------------------------------------------
 
-  const generativeModel = client.getGenerativeModel({
-    model,
-    systemInstruction: systemPrompt,
-    generationConfig: {
-      temperature: 0.9,
-      maxOutputTokens: 250,
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: SchemaType.OBJECT,
-        properties: {
-          verdict: {
-            type: SchemaType.STRING,
-            enum: ['red', 'green'],
-          },
-          justification: {
-            type: SchemaType.STRING,
-          },
-        },
-        required: ['verdict', 'justification'],
-      },
-    },
+let genaiInstance: GoogleGenAI | null = null;
+
+function getGenAIClient(): GoogleGenAI {
+  if (genaiInstance) return genaiInstance;
+
+  const credentials = getServiceAccountCredentials();
+  if (!credentials) {
+    throw new Error(
+      'GCP service account credentials not found. Provide GOOGLE_SERVICE_ACCOUNT_JSON env var or place ai-agent-*.json in project root.',
+    );
+  }
+
+  // Write credentials to temp file so the SDK can pick them up via ADC
+  ensureCredentialsFile(credentials);
+
+  genaiInstance = new GoogleGenAI({
+    vertexai: true,
+    project: credentials.project_id,
+    location: process.env.VERTEX_AI_LOCATION || 'us-central1',
   });
 
+  return genaiInstance;
+}
+
+// ---------------------------------------------------------------------------
+// Public API — judgeWithGemini
+// ---------------------------------------------------------------------------
+
+export async function judgeWithGemini(
+  text: string,
+  systemPrompt: string,
+): Promise<{ verdict: 'red' | 'green'; justification: string }> {
+  const client = getGenAIClient();
+  const model = process.env.VERTEX_AI_MODEL || 'gemini-3-flash-preview';
+
   try {
-    const result = await generativeModel.generateContent(`Juge cette phrase: "${text}"`);
-    const response = result.response;
+    const response = await client.models.generateContent({
+      model,
+      contents: `Juge cette phrase: "${text}"`,
+      config: {
+        systemInstruction: systemPrompt,
+        temperature: 0.9,
+        maxOutputTokens: 250,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'OBJECT' as const,
+          properties: {
+            verdict: { type: 'STRING' as const, enum: ['red', 'green'] },
+            justification: { type: 'STRING' as const },
+          },
+          required: ['verdict', 'justification'],
+        },
+      },
+    });
 
-    if (!response || !response.candidates || response.candidates.length === 0) {
-      throw new Error('Empty response from Gemini');
-    }
+    const textContent = response.text?.trim();
+    if (!textContent) throw new Error('Empty response from Gemini');
 
-    const content = response.candidates[0].content?.parts?.[0];
-    if (!content || content.text === undefined) {
-      throw new Error('No text content in Gemini response');
-    }
-
-    const text_content = content.text.trim();
-
-    // Parse JSON
-    const jsonMatch = text_content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('No JSON found in Gemini response');
-    }
+    // Parse JSON from response
+    const jsonMatch = textContent.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON found in Gemini response');
 
     const parsed = JSON.parse(jsonMatch[0]);
-
     if (!['red', 'green'].includes(parsed.verdict)) {
       throw new Error(`Invalid verdict from Gemini: ${parsed.verdict}`);
     }

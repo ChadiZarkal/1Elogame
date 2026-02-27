@@ -1,6 +1,6 @@
 /**
  * @file gemini.test.ts
- * @description Tests unitaires pour le module Gemini (Vertex AI).
+ * @description Tests unitaires pour le module Gemini (@google/genai).
  * Couvre: judgeWithGemini, credential loading, error handling.
  * Note: On mock les appels externes. Le vrai appel API sera testé en e2e.
  */
@@ -12,7 +12,14 @@ vi.mock(import('fs'), async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
-    default: actual,
+    default: {
+      ...actual,
+      readFileSync: vi.fn(),
+      existsSync: vi.fn().mockReturnValue(false),
+      readdirSync: vi.fn().mockReturnValue([]),
+      writeFileSync: vi.fn(),
+      unlinkSync: vi.fn(),
+    },
     readFileSync: vi.fn(),
     existsSync: vi.fn().mockReturnValue(false),
     readdirSync: vi.fn().mockReturnValue([]),
@@ -25,26 +32,20 @@ vi.mock(import('os'), async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
-    default: actual,
-    tmpdir: vi.fn().mockReturnValue('/tmp'),
+    default: { ...actual, tmpdir: () => '/tmp' },
+    tmpdir: () => '/tmp',
   };
 });
 
-// Mock @google-cloud/vertexai with a stable generateContent ref
+// Mock @google/genai with a stable generateContent ref
 const { mockGenerateContent } = vi.hoisted(() => ({
   mockGenerateContent: vi.fn(),
 }));
 
-vi.mock('@google-cloud/vertexai', () => {
+vi.mock('@google/genai', () => {
   return {
-    VertexAI: class MockVertexAI {
-      getGenerativeModel() {
-        return { generateContent: mockGenerateContent };
-      }
-    },
-    SchemaType: {
-      OBJECT: 'OBJECT',
-      STRING: 'STRING',
+    GoogleGenAI: class MockGoogleGenAI {
+      models = { generateContent: mockGenerateContent };
     },
   };
 });
@@ -73,13 +74,7 @@ describe('judgeWithGemini', () => {
 
   it('retourne un verdict red avec justification', async () => {
     mockGenerateContent.mockResolvedValueOnce({
-      response: {
-        candidates: [{
-          content: {
-            parts: [{ text: '{"verdict":"red","justification":"C\'est toxique."}' }],
-          },
-        }],
-      },
+      text: '{"verdict":"red","justification":"C\'est toxique."}',
     });
 
     const result = await judgeWithGemini('Ghoster quelqu\'un', 'Tu es un juge...');
@@ -89,13 +84,7 @@ describe('judgeWithGemini', () => {
 
   it('retourne un verdict green avec justification', async () => {
     mockGenerateContent.mockResolvedValueOnce({
-      response: {
-        candidates: [{
-          content: {
-            parts: [{ text: '{"verdict":"green","justification":"C\'est sain."}' }],
-          },
-        }],
-      },
+      text: '{"verdict":"green","justification":"C\'est sain."}',
     });
 
     const result = await judgeWithGemini('Écouter activement', 'Tu es un juge...');
@@ -104,9 +93,7 @@ describe('judgeWithGemini', () => {
 
   it('lance une erreur si la réponse est vide', async () => {
     mockGenerateContent.mockResolvedValueOnce({
-      response: {
-        candidates: [],
-      },
+      text: null,
     });
 
     await expect(judgeWithGemini('test', 'prompt')).rejects.toThrow('Gemini API error');
@@ -114,13 +101,7 @@ describe('judgeWithGemini', () => {
 
   it('lance une erreur si le verdict est invalide', async () => {
     mockGenerateContent.mockResolvedValueOnce({
-      response: {
-        candidates: [{
-          content: {
-            parts: [{ text: '{"verdict":"yellow","justification":"hmm"}' }],
-          },
-        }],
-      },
+      text: '{"verdict":"yellow","justification":"hmm"}',
     });
 
     await expect(judgeWithGemini('test', 'prompt')).rejects.toThrow('Gemini API error');
@@ -128,13 +109,7 @@ describe('judgeWithGemini', () => {
 
   it('lance une erreur sur JSON malformé', async () => {
     mockGenerateContent.mockResolvedValueOnce({
-      response: {
-        candidates: [{
-          content: {
-            parts: [{ text: 'not json at all' }],
-          },
-        }],
-      },
+      text: 'not json at all',
     });
 
     await expect(judgeWithGemini('test', 'prompt')).rejects.toThrow('Gemini API error');
@@ -142,13 +117,7 @@ describe('judgeWithGemini', () => {
 
   it('fournit une justification par défaut si absente', async () => {
     mockGenerateContent.mockResolvedValueOnce({
-      response: {
-        candidates: [{
-          content: {
-            parts: [{ text: '{"verdict":"red"}' }],
-          },
-        }],
-      },
+      text: '{"verdict":"red"}',
     });
 
     const result = await judgeWithGemini('test', 'prompt');
@@ -161,18 +130,20 @@ describe('judgeWithGemini', () => {
     await expect(judgeWithGemini('test', 'prompt')).rejects.toThrow('Gemini API error');
   });
 
-  it('valide que generateContent est appelé avec le bon texte', async () => {
+  it('valide que generateContent est appelé avec le bon modèle et contenu', async () => {
     mockGenerateContent.mockResolvedValueOnce({
-      response: {
-        candidates: [{
-          content: {
-            parts: [{ text: '{"verdict":"green","justification":"ok"}' }],
-          },
-        }],
-      },
+      text: '{"verdict":"green","justification":"ok"}',
     });
 
     await judgeWithGemini('Ma phrase test', 'Mon prompt');
-    expect(mockGenerateContent).toHaveBeenCalledWith('Juge cette phrase: "Ma phrase test"');
+    expect(mockGenerateContent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: expect.any(String),
+        contents: 'Juge cette phrase: "Ma phrase test"',
+        config: expect.objectContaining({
+          systemInstruction: 'Mon prompt',
+        }),
+      }),
+    );
   });
 });
