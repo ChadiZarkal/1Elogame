@@ -13,9 +13,9 @@ export function AllDuelsExhausted({ duelCount, onReset }: AllDuelsExhaustedProps
   const handleShare = () => {
     const text = `🚩 J'ai participé à ${duelCount} duels sur Red or Green !\nEt toi, tu as combien de Red Flags ? 👀`;
     if (navigator.share) {
-      navigator.share({ text, url: 'https://redorgreen.fr/jeu' }).catch(() => {});
+      navigator.share({ text, url: 'https://redorgreen.fr/jeu?ref=share' }).catch(() => {});
     } else {
-      navigator.clipboard.writeText(text).catch(() => {});
+      navigator.clipboard.writeText(text + '\nhttps://redorgreen.fr/jeu?ref=share').catch(() => {});
     }
   };
 

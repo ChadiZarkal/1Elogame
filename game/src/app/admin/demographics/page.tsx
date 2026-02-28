@@ -251,11 +251,11 @@ export default function AdminDemographicsPage() {
     fetchData(token);
   }, [router, fetchData]);
 
-  // Auto-refresh every 30s
+  // Auto-refresh every 60s
   useEffect(() => {
     const token = sessionStorage.getItem('adminToken');
     if (!token) return;
-    const interval = setInterval(() => fetchData(token), 30000);
+    const interval = setInterval(() => fetchData(token), 60000);
     return () => clearInterval(interval);
   }, [fetchData]);
 

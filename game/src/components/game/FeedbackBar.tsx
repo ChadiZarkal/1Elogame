@@ -47,9 +47,9 @@ export function FeedbackBar({
     const lessRF = !elementAStats.isMoreRedFlag ? duel.elementA.texte : duel.elementB.texte;
     const shareText = `🚩 Red or Green\n\n"${moreRF}" est voté plus Red Flag que "${lessRF}" par la communauté !\n\nJoue toi aussi →`;
     if (navigator.share) {
-      navigator.share({ text: shareText, url: 'https://redorgreen.fr/jeu' }).catch(() => {});
+      navigator.share({ text: shareText, url: 'https://redorgreen.fr/jeu?ref=share' }).catch(() => {});
     } else {
-      navigator.clipboard.writeText(shareText).catch(() => {});
+      navigator.clipboard.writeText(shareText + ' https://redorgreen.fr/jeu?ref=share').catch(() => {});
     }
   };
 

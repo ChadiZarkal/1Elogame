@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loading } from '@/components/ui/Loading';
 import { AdminNav } from '@/components/admin/AdminNav';
 
 interface FeedbackItem {
+  id?: number;
   element_a_texte: string;
   element_b_texte: string;
   stars_count: number;
@@ -13,36 +14,27 @@ interface FeedbackItem {
   thumbs_down_count: number;
 }
 
-// Sample mock data
-const mockFeedbackData: FeedbackItem[] = [
-  {
-    element_a_texte: "Il te dit qu'il t'aime après le premier date",
-    element_b_texte: "Elle regarde ton téléphone quand tu as le dos tourné",
-    stars_count: 45,
-    thumbs_up_count: 120,
-    thumbs_down_count: 3,
-  },
-  {
-    element_a_texte: "Il veut connaître tous tes mots de passe",
-    element_b_texte: "Elle te track avec une app de localisation",
-    stars_count: 89,
-    thumbs_up_count: 234,
-    thumbs_down_count: 1,
-  },
-  {
-    element_a_texte: "Il dit que toutes ses ex étaient 'folles'",
-    element_b_texte: "Elle t'interdit de parler à d'autres filles",
-    stars_count: 67,
-    thumbs_up_count: 189,
-    thumbs_down_count: 5,
-  },
-];
-
 export default function AdminModerationPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [error, setError] = useState('');
+
+  const fetchFeedback = useCallback(async (token: string) => {
+    try {
+      const response = await fetch('/api/admin/feedback', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Erreur serveur');
+      const result = await response.json();
+      setFeedback(result.data || []);
+      setError('');
+    } catch {
+      setError('Erreur de connexion au serveur');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const token = sessionStorage.getItem('adminToken');
@@ -50,26 +42,16 @@ export default function AdminModerationPage() {
       router.push('/admin');
       return;
     }
-    
-    // Fetch data asynchronously
-    const fetchData = async () => {
-      try {
-        // In mock mode, use sample data
-        if (process.env.NEXT_PUBLIC_MOCK_MODE === 'true') {
-          setFeedback(mockFeedbackData);
-        } else {
-          // Production mode would fetch from API
-          // const response = await fetch('/api/admin/feedback', {...});
-        }
-      } catch {
-        setError('Erreur de connexion');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, [router]);
+    fetchFeedback(token);
+  }, [router, fetchFeedback]);
+
+  // Auto-refresh every 60s
+  useEffect(() => {
+    const token = sessionStorage.getItem('adminToken');
+    if (!token) return;
+    const interval = setInterval(() => fetchFeedback(token), 60000);
+    return () => clearInterval(interval);
+  }, [fetchFeedback]);
 
   if (isLoading) {
     return (
@@ -161,15 +143,6 @@ export default function AdminModerationPage() {
           </div>
         )}
       </section>
-
-      {/* Mock Mode Notice */}
-      {process.env.NEXT_PUBLIC_MOCK_MODE === 'true' && (
-        <div className="max-w-4xl mx-auto mt-8">
-          <div className="bg-[#DC2626]/20 border border-[#DC2626]/50 rounded-xl p-4 text-[#EF4444] text-sm">
-            <strong>Mode démo</strong> - Les données de feedback sont simulées.
-          </div>
-        </div>
-      )}
       </div>
     </div>
   );

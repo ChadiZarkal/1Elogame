@@ -168,6 +168,9 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className={`${spaceGrotesk.className} antialiased min-h-full`}>
+        <a href="#main-content" className="skip-to-content">
+          Aller au contenu principal
+        </a>
         <ErrorBoundary>
           <AnalyticsProvider>
             {children}

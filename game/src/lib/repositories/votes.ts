@@ -115,22 +115,62 @@ async function processProductionVote(
     winner[ageField as keyof Element] as number, loser[ageField as keyof Element] as number, kFactor,
   );
 
+  // Use deltas for atomic updates (avoids race conditions with concurrent votes)
+  const winnerEloDelta = newWinnerELO - winner.elo_global;
+  const loserEloDelta = newLoserELO - loser.elo_global;
+  const winnerSexDelta = winnerSexELO - (winner[sexField as keyof Element] as number);
+  const loserSexDelta = loserSexELO - (loser[sexField as keyof Element] as number);
+  const winnerAgeDelta = winnerAgeELO - (winner[ageField as keyof Element] as number);
+  const loserAgeDelta = loserAgeELO - (loser[ageField as keyof Element] as number);
+
+  // Try atomic RPC first, fallback to direct updates
+  let useRpc = true;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rpcTest = await (supabase.rpc as any)('apply_elo_delta', {
+      p_element_id: winnerId,
+      p_elo_global_delta: winnerEloDelta,
+      p_seg_field: sexField,
+      p_seg_delta: winnerSexDelta,
+      p_part_field_sex: sexPartField,
+      p_part_field_age: agePartField,
+    });
+    if (rpcTest.error) useRpc = false;
+  } catch { useRpc = false; }
+
   // Record vote + update ELO + get rankings — all in parallel
   const [, , , , , winnerRank, loserRank, totalResult] = await Promise.all([
     typedInsert(supabase, 'votes', { element_gagnant_id: winnerId, element_perdant_id: loserId, sexe_votant: sexe, age_votant: age }),
-    typedUpdate(supabase, 'elements', {
-      elo_global: newWinnerELO, [sexField]: winnerSexELO, [ageField]: winnerAgeELO,
-      nb_participations: winner.nb_participations + 1, updated_at: new Date().toISOString(),
-    }).eq('id', winnerId),
-    typedUpdate(supabase, 'elements', {
-      elo_global: newLoserELO, [sexField]: loserSexELO, [ageField]: loserAgeELO,
-      nb_participations: loser.nb_participations + 1, updated_at: new Date().toISOString(),
-    }).eq('id', loserId),
-    typedUpdate(supabase, 'elements', {
+    // Winner ELO update
+    useRpc
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ? (supabase.rpc as any)('apply_elo_delta', {
+          p_element_id: winnerId, p_elo_global_delta: winnerEloDelta,
+          p_seg_field: ageField, p_seg_delta: winnerAgeDelta,
+          p_part_field_sex: sexPartField, p_part_field_age: agePartField,
+        })
+      : typedUpdate(supabase, 'elements', {
+          elo_global: newWinnerELO, [sexField]: winnerSexELO, [ageField]: winnerAgeELO,
+          nb_participations: winner.nb_participations + 1, updated_at: new Date().toISOString(),
+        }).eq('id', winnerId),
+    // Loser ELO update
+    useRpc
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ? (supabase.rpc as any)('apply_elo_delta', {
+          p_element_id: loserId, p_elo_global_delta: loserEloDelta,
+          p_seg_field: ageField, p_seg_delta: loserAgeDelta,
+          p_part_field_sex: sexPartField, p_part_field_age: agePartField,
+        })
+      : typedUpdate(supabase, 'elements', {
+          elo_global: newLoserELO, [sexField]: loserSexELO, [ageField]: loserAgeELO,
+          nb_participations: loser.nb_participations + 1, updated_at: new Date().toISOString(),
+        }).eq('id', loserId),
+    // Segmented participation updates (only needed in non-RPC mode, RPC handles it)
+    useRpc ? Promise.resolve() : typedUpdate(supabase, 'elements', {
       [sexPartField]: ((winner[sexPartField as keyof Element] as number) || 0) + 1,
       [agePartField]: ((winner[agePartField as keyof Element] as number) || 0) + 1,
     }).eq('id', winnerId).then(() => {}),
-    typedUpdate(supabase, 'elements', {
+    useRpc ? Promise.resolve() : typedUpdate(supabase, 'elements', {
       [sexPartField]: ((loser[sexPartField as keyof Element] as number) || 0) + 1,
       [agePartField]: ((loser[agePartField as keyof Element] as number) || 0) + 1,
     }).eq('id', loserId).then(() => {}),

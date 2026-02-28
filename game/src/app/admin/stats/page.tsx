@@ -99,11 +99,11 @@ export default function AdminStatsPage() {
     fetchRankings(token);
   }, [router, fetchRankings]);
 
-  // Auto-refresh every 10 seconds
+  // Auto-refresh every 30 seconds
   useEffect(() => {
     const token = sessionStorage.getItem('adminToken');
     if (!token) return;
-    const interval = setInterval(() => fetchRankings(token), 10000);
+    const interval = setInterval(() => fetchRankings(token), 30000);
     return () => clearInterval(interval);
   }, [fetchRankings]);
 

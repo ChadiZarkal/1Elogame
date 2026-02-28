@@ -51,7 +51,36 @@ export async function upsertFeedback(
   // Sort IDs for consistent pair key
   const [sortedA, sortedB] = elementAId < elementBId ? [elementAId, elementBId] : [elementBId, elementAId];
 
-  // Try upsert: increment the relevant counter
+  // Try atomic RPC first (avoids race conditions)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: rpcResult, error: rpcError } = await (supabase as any).rpc('increment_feedback', {
+    p_element_a_id: sortedA,
+    p_element_b_id: sortedB,
+    p_column: column,
+  });
+
+  if (!rpcError && rpcResult && rpcResult.length > 0) {
+    return rpcResult[0];
+  }
+
+  // Fallback: upsert with ON CONFLICT (still better than select-then-update)
+  const newRecord = {
+    element_a_id: sortedA,
+    element_b_id: sortedB,
+    stars_count: type === 'star' ? 1 : 0,
+    thumbs_up_count: type === 'thumbs_up' ? 1 : 0,
+    thumbs_down_count: type === 'thumbs_down' ? 1 : 0,
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: upserted } = await (supabase.from('duel_feedback') as any)
+    .upsert(newRecord, { onConflict: 'element_a_id,element_b_id' })
+    .select('stars_count, thumbs_up_count, thumbs_down_count')
+    .single();
+
+  if (upserted) return upserted;
+
+  // Final fallback: original select-then-update
   const { data: existing } = await supabase
     .from('duel_feedback')
     .select('id, stars_count, thumbs_up_count, thumbs_down_count')
@@ -66,14 +95,6 @@ export async function upsertFeedback(
     return { stars_count: existing.stars_count, thumbs_up_count: existing.thumbs_up_count, thumbs_down_count: existing.thumbs_down_count, [column]: newValue };
   }
 
-  // Insert new record
-  const newRecord = {
-    element_a_id: sortedA,
-    element_b_id: sortedB,
-    stars_count: type === 'star' ? 1 : 0,
-    thumbs_up_count: type === 'thumbs_up' ? 1 : 0,
-    thumbs_down_count: type === 'thumbs_down' ? 1 : 0,
-  };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from('duel_feedback') as any).insert(newRecord);
   return { stars_count: newRecord.stars_count, thumbs_up_count: newRecord.thumbs_up_count, thumbs_down_count: newRecord.thumbs_down_count };

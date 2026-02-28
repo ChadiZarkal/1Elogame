@@ -26,7 +26,7 @@ export default function HubPage() {
       {/* Diagonal-line texture */}
       <div className="hub__texture" aria-hidden="true" />
 
-      <main className="hub__main hub__main--visible">
+      <main id="main-content" className="hub__main hub__main--visible">
 
         {/* ─── HERO ─── */}
         <header className="hub__hero hub__enter hub__enter--1">
@@ -137,6 +137,7 @@ export default function HubPage() {
               href="/classement"
               className="hub__action"
               onClick={handleTap}
+              aria-label="Voir le classement des red flags"
             >
               <Trophy size={13} strokeWidth={2.5} />
               Classement
@@ -153,6 +154,12 @@ export default function HubPage() {
           </nav>
 
           <p className="hub__version">Red or Green — v4.0</p>
+
+          <nav className="hub__legal-links" aria-label="Pages légales">
+            <a href="/mentions-legales" className="hub__legal-link">Mentions légales</a>
+            <a href="/confidentialite" className="hub__legal-link">Confidentialité</a>
+            <a href="/cgu" className="hub__legal-link">CGU</a>
+          </nav>
 
           <section className="hub__seo">
             <h2 className="hub__seo-title">Red or Green — Le party game des Red Flags</h2>

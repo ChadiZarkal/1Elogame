@@ -230,6 +230,17 @@ export default function MeterQuizPage() {
               {totalQuestions} questions · ~{Math.ceil(totalQuestions / 4)} min · 100% anonyme
             </p>
           </div>
+
+          {/* Disclaimer & age warning */}
+          <div className="mt-4 w-full max-w-xs mx-auto space-y-2">
+            <p className="text-[10px] text-[#4B5563] text-center leading-relaxed">
+              ⚠️ Cet outil est fourni à <strong className="text-[#6B7280]">titre informatif uniquement</strong>.
+              Il ne constitue en aucun cas un diagnostic médical, psychologique ou juridique et ne remplace pas l&apos;avis d&apos;un professionnel.
+            </p>
+            <p className="text-[10px] text-[#4B5563] text-center">
+              🔞 Réservé aux personnes de <strong className="text-[#6B7280]">16 ans et plus</strong>.
+            </p>
+          </div>
         </main>
       )}
 
@@ -471,9 +482,13 @@ export default function MeterQuizPage() {
             </a>
           </div>
 
-          <p className="text-[10px] text-[#4B5563] text-center mb-4 flex items-center justify-center gap-1">
+          <p className="text-[10px] text-[#4B5563] text-center mb-2 flex items-center justify-center gap-1">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#10B981]" />
             Tes réponses restent sur ton appareil. Rien n&apos;a été envoyé.
+          </p>
+          <p className="text-[10px] text-[#4B5563] text-center mb-4 max-w-sm mx-auto leading-relaxed">
+            ⚠️ Ce test est à titre informatif uniquement. Il ne remplace pas un diagnostic professionnel.
+            Si tu es en danger, appelle le <strong className="text-[#6B7280]">17</strong> ou le <strong className="text-[#6B7280]">3919</strong>.
           </p>
         </main>
       )}
