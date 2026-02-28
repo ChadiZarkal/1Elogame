@@ -73,15 +73,8 @@ Arrive sur le jeu → Soumet sa propre situation → Boucle
 **Actuellement :** La boucle se casse à l'étape "Partage le résultat" car il n'y a pas d'image générée.
 
 ### 5. Boucle virale des Meters (violentomètre, etc.)
-```
-Utilisateur → Fait le test → Score X/20
-    ↓
-Partage "Mon résultat violentomètre" (image)
-    ↓
-Ami curieux → Fait le test → Partage à son tour
-```
 
-**Actuellement :** Le résultat du test n'est pas partageable. Aucun bouton de partage sur l'écran de résultat des meters.
+> **Décision :** Partage intentionnellement désactivé pour les mètres. Ces outils traitent de sujets sensibles (violences, inceste, consentement) — imposer un partage serait éthiquement inapproprié et potentiellement dangereux pour les utilisateurs en situation de vulnérabilité. Le partage Oracle reste actif car le contenu y est soumis librement par l'utilisateur.
 
 ### 6. Boucle virale Red or Green (duels)
 ```
@@ -156,8 +149,8 @@ Ami → Essaie de battre le score → Challenge
 ## 📋 Checklist viralité avant lancement
 
 - [ ] Créer une image OG statique `/og-image.png` dans `/public/`
-- [ ] Implémenter la génération d'images de résultats partageables (Oracle, Duels, Meters)
-- [ ] Ajouter des boutons de partage dédiés sur chaque écran de résultat
+- [x] Implémenter la génération d'images de résultats partageables (Oracle ✅ — Meters : intentionnellement exclus)
+- [x] Ajouter des boutons de partage dédiés sur chaque écran de résultat (Oracle ✅ — Meters : intentionnellement exclus)
 - [ ] Créer des OG images dynamiques par page
 - [ ] Ajouter des deeplinks vers les résultats (ex: `/share/oracle/[id]`)
 - [ ] Ajouter le tracking `?ref=share` sur tous les liens partagés

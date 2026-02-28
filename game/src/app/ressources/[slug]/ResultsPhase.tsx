@@ -10,7 +10,6 @@ import type {
 
 interface ResultsPhaseProps {
   meter: Meter;
-  answers: Map<number, boolean>;
   resultLevel: SeverityLevel;
   yesByLevel: {
     green: MeterQuestion[];
@@ -20,17 +19,14 @@ interface ResultsPhaseProps {
   };
   problemCount: number;
   onRestart: () => void;
-  slug: string;
 }
 
 export function ResultsPhase({
   meter,
-  answers,
   resultLevel,
   yesByLevel,
   problemCount,
   onRestart,
-  slug,
 }: ResultsPhaseProps) {
   const resultsRef = useRef<HTMLElement>(null);
   const levelInfo = meter.levels[resultLevel];
@@ -52,26 +48,6 @@ export function ResultsPhase({
       link.click();
     } catch {
       window.print();
-    }
-  };
-
-  const handleShareImage = async () => {
-    const totalAnswered = answers.size;
-    const shareUrl = `https://redorgreen.fr/api/og/meter?slug=${slug}&level=${resultLevel}&count=${problemCount}&total=${totalAnswered}`;
-    const shareText = `${levelInfo.emoji} ${levelInfo.title} — J'ai fait le ${meter.name} sur Red or Green !`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Red or Green — ${meter.name}`,
-          text: shareText,
-          url: `https://redorgreen.fr/ressources/${slug}?ref=share`,
-        });
-      } catch {
-        /* user cancelled */
-      }
-    } else {
-      await navigator.clipboard.writeText(`${shareText}\nhttps://redorgreen.fr/ressources/${slug}?ref=share`);
     }
   };
 
@@ -237,12 +213,6 @@ export function ResultsPhase({
           className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-all shadow-[0_0_20px_rgba(59,130,246,0.15)]"
         >
           <Download size={16} /> Sauvegarder mon résultat
-        </button>
-        <button
-          onClick={handleShareImage}
-          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-all shadow-[0_0_20px_rgba(139,92,246,0.15)]"
-        >
-          📤 Partager mon résultat
         </button>
         <button
           onClick={onRestart}

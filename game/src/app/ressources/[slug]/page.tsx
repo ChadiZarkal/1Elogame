@@ -156,12 +156,10 @@ export default function MeterQuizPage() {
         <Suspense fallback={<PhaseFallback />}>
           <ResultsPhase
             meter={meter}
-            answers={answers}
             resultLevel={resultLevel}
             yesByLevel={yesByLevel}
             problemCount={problemCount}
             onRestart={handleRestart}
-            slug={slug}
           />
         </Suspense>
       )}
