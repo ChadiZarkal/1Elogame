@@ -174,9 +174,15 @@ export default function MeterQuizPage() {
           <p className="text-[#9CA3AF] text-sm text-center max-w-xs mb-2 leading-relaxed">
             {meter.description}
           </p>
-          <p className="text-[#6B7280] text-[12px] text-center max-w-xs mb-6 leading-relaxed">
+          <p className="text-[#6B7280] text-[12px] text-center max-w-xs mb-4 leading-relaxed">
             {meter.intro}
           </p>
+
+          {/* Social proof */}
+          <div className="flex items-center justify-center gap-1.5 mb-6 text-[11px] text-[#4B5563]">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+            <span>Déjà fait par des milliers de personnes</span>
+          </div>
 
           {/* What to expect indicators */}
           <div className="flex items-center gap-4 mb-6">

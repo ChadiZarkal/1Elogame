@@ -81,18 +81,78 @@ export default function JouerPage() {
     }
   }, [duelHistory.length, showingResult, currentDuel]);
 
-  // Streak milestone toasts
+  // Streak milestone toasts with viral challenge CTA
   const prevStreakRef = useRef(0);
   useEffect(() => {
     const prev = prevStreakRef.current;
     prevStreakRef.current = streak;
     if (streak > prev) {
       if (streak === 3) toast('🔥 3 de suite !', { description: 'Tu es chaud·e ce soir !', duration: 2500 });
-      else if (streak === 5) toast('⚡ Streak x5 !', { description: 'Incroyable, continue !', duration: 3000 });
-      else if (streak === 10) toast('🏆 Streak x10 !', { description: 'Tu es inarrêtable !', duration: 3500 });
-      else if (streak >= 15 && streak % 5 === 0) toast(`🎯 Streak x${streak}`, { description: 'Légendaire !', duration: 3500 });
+      else if (streak === 5) {
+        toast('⚡ Streak x5 !', {
+          description: 'Défie un ami !',
+          duration: 4000,
+          action: {
+            label: '📤 Défier',
+            onClick: () => {
+              const text = `🔥 J'ai une streak de 5 sur Red or Green ! Tu penses faire mieux ?`;
+              if (navigator.share) navigator.share({ text, url: 'https://redflaggames.fr/jeu' }).catch(() => {});
+              else navigator.clipboard.writeText(`${text} → redflaggames.fr/jeu`).catch(() => {});
+            },
+          },
+        });
+      }
+      else if (streak === 10) {
+        toast('🏆 Streak x10 !', {
+          description: 'Incroyable ! Partage ta performance !',
+          duration: 5000,
+          action: {
+            label: '📤 Partager',
+            onClick: () => {
+              const text = `🏆 Streak de 10 sur Red or Green ! Qui peut me battre ?`;
+              if (navigator.share) navigator.share({ text, url: 'https://redflaggames.fr/jeu' }).catch(() => {});
+              else navigator.clipboard.writeText(`${text} → redflaggames.fr/jeu`).catch(() => {});
+            },
+          },
+        });
+      }
+      else if (streak >= 15 && streak % 5 === 0) {
+        toast(`🎯 Streak x${streak}`, {
+          description: 'Légendaire ! Partage ton exploit !',
+          duration: 5000,
+          action: {
+            label: '📤 Partager',
+            onClick: () => {
+              const text = `🎯 Streak de ${streak} sur Red or Green ! Je suis inarrêtable !`;
+              if (navigator.share) navigator.share({ text, url: 'https://redflaggames.fr/jeu' }).catch(() => {});
+              else navigator.clipboard.writeText(`${text} → redflaggames.fr/jeu`).catch(() => {});
+            },
+          },
+        });
+      }
     }
   }, [streak]);
+
+  // Duel count milestones — viral CTA every 10 duels
+  const prevDuelCountRef = useRef(0);
+  useEffect(() => {
+    const prev = prevDuelCountRef.current;
+    prevDuelCountRef.current = duelCount;
+    if (duelCount > prev && duelCount > 0 && duelCount % 10 === 0) {
+      toast(`🎮 ${duelCount} duels joués !`, {
+        description: 'Invite tes amis à jouer !',
+        duration: 5000,
+        action: {
+          label: '📤 Inviter',
+          onClick: () => {
+            const text = `🎮 J'ai fait ${duelCount} duels sur Red or Green ! Viens jouer aussi →`;
+            if (navigator.share) navigator.share({ text, url: 'https://redflaggames.fr/jeu' }).catch(() => {});
+            else navigator.clipboard.writeText(`${text} redflaggames.fr/jeu`).catch(() => {});
+          },
+        },
+      });
+    }
+  }, [duelCount]);
   
   const handleReset = useCallback(() => { resetGame(); router.push('/jeu'); }, [resetGame, router]);
   

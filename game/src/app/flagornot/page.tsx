@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFlagOrNot } from './useFlagOrNot';
 import { LoadingPhase } from './LoadingPhase';
@@ -8,7 +7,6 @@ import { RevealPhase } from './RevealPhase';
 import { IdlePhase } from './IdlePhase';
 
 export default function FlagOrNotPage() {
-  const router = useRouter();
   const game = useFlagOrNot();
 
   return (
@@ -26,13 +24,13 @@ export default function FlagOrNotPage() {
 
       {/* Top bar */}
       <div className="relative z-20 flex items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top))] pb-2">
-        <button
-          onClick={() => router.push('/')}
+        <a
+          href="/"
           className="text-[#6B7280] hover:text-white transition-colors text-sm flex items-center gap-1 min-w-[48px] min-h-[48px] justify-start active:scale-95"
           aria-label="Retour à l'accueil"
         >
           ← Retour
-        </button>
+        </a>
 
         <h1 className="text-base font-bold text-[#FAFAFA] tracking-tight">Oracle</h1>
 
