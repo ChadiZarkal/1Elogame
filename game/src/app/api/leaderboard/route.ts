@@ -28,5 +28,13 @@ export const GET = withApiHandler(async (request: NextRequest) => {
 
   const totalVotes = elements.reduce((sum, e) => sum + (e.nb_participations || 0), 0);
 
-  return apiSuccess({ rankings, totalElements: elements.length, totalVotes });
+  const response = apiSuccess({ rankings, totalElements: elements.length, totalVotes });
+  
+  // Cache for 30s on CDN, serve stale for 5 min while revalidating
+  response.headers.set(
+    'Cache-Control',
+    'public, s-maxage=30, stale-while-revalidate=300'
+  );
+  
+  return response;
 }, { rateLimit: true });

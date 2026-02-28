@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Phone, ExternalLink, RotateCcw, ChevronRight } from 'lucide-react';
 import {
   getMeterBySlug,
@@ -23,14 +23,11 @@ export default function MeterQuizPage() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Map<number, boolean>>(new Map());
   const [animDir, setAnimDir] = useState<'in' | 'out'>('in');
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => { setMounted(true); }, []);
 
   // ── Redirect if unknown slug ──
   useEffect(() => {
-    if (mounted && !meter) router.replace('/ressources');
-  }, [mounted, meter, router]);
+    if (!meter) router.replace('/ressources');
+  }, [meter, router]);
 
   if (!meter) {
     return (
@@ -162,7 +159,7 @@ export default function MeterQuizPage() {
 
       {/* ═══ INTRO ═══ */}
       {phase === 'intro' && (
-        <main className={`flex-1 flex flex-col items-center justify-center px-6 transition-opacity duration-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+        <main className="flex-1 flex flex-col items-center justify-center px-6 animate-page-in">
           <span className="text-6xl mb-6">{meter.emoji}</span>
           <h2 className="text-[24px] font-black text-center mb-3">{meter.name}</h2>
           <p className="text-[#9CA3AF] text-sm text-center max-w-xs mb-2 leading-relaxed">

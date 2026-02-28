@@ -10,9 +10,6 @@ export default function HubPage() {
   const router = useRouter();
   const { tap } = useHaptics();
   const [stats, setStats] = useState<{ totalVotes: number; estimatedPlayers: number } | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     fetch('/api/stats/public')
@@ -32,7 +29,7 @@ export default function HubPage() {
       {/* Diagonal-line texture */}
       <div className="hub__texture" aria-hidden="true" />
 
-      <main className={`hub__main ${mounted ? 'hub__main--visible' : ''}`}>
+      <main className="hub__main hub__main--visible">
 
         {/* ─── HERO ─── */}
         <header className="hub__hero hub__enter hub__enter--1">

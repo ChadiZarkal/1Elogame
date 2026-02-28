@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useGameStore } from '@/stores/gameStore';
 import { SexeVotant, AgeVotant } from '@/types/database';
-import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
+import { AnimatedBackgroundCSS } from '@/components/ui/AnimatedBackgroundCSS';
 
 const sexOptions: { value: SexeVotant; label: string; emoji: string }[] = [
   { value: 'homme', label: 'Homme', emoji: '♂️' },
@@ -47,7 +47,7 @@ export function ProfileForm() {
       className="relative flex flex-col items-center justify-center overflow-hidden px-3"
       style={{ minHeight: '100dvh', background: '#0A0A0B' }}
     >
-      <AnimatedBackground variant="default" />
+      <AnimatedBackgroundCSS variant="default" />
       <div
         className="absolute pointer-events-none"
         style={{

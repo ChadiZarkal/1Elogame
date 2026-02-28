@@ -127,6 +127,42 @@ button:focus-visible {
 
 /* ========== Animations ========== */
 
+/* Page transition (replaces Framer Motion in template.tsx) */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-in {
+  animation: page-in 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+/* AnimatedBackgroundCSS — floating orbs (replaces Framer Motion version) */
+@keyframes orb-float-1 {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(30px, -20px); }
+  66% { transform: translate(-20px, 30px); }
+}
+@keyframes orb-float-2 {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(-20px, 30px); }
+  66% { transform: translate(30px, -20px); }
+}
+@keyframes orb-float-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(40px, -30px) scale(1.1); }
+  66% { transform: translate(-30px, 40px) scale(0.9); }
+}
+.animate-orb-1 { animation: orb-float-1 20s ease-in-out infinite; will-change: transform; }
+.animate-orb-2 { animation: orb-float-2 25s ease-in-out infinite; will-change: transform; }
+.animate-orb-3 { animation: orb-float-3 30s ease-in-out infinite; will-change: transform; }
+
 @keyframes shimmer {
   0% {
     transform: translateX(-100%);

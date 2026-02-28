@@ -1,15 +1,13 @@
-'use client';
-
-import { motion } from 'framer-motion';
-
+/**
+ * Template — page transition wrapper.
+ * Uses pure CSS animation instead of Framer Motion to avoid pulling
+ * ~40 KB of JS into every route's critical bundle.
+ * Respects prefers-reduced-motion via the global CSS rule.
+ */
 export default function Template({ children }: { children: React.ReactNode }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-    >
+    <div className="animate-page-in">
       {children}
-    </motion.div>
+    </div>
   );
 }

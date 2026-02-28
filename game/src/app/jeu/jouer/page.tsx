@@ -4,14 +4,17 @@ import { useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import dynamic from 'next/dynamic';
 import { useGameStore } from '@/stores/gameStore';
 import { DuelInterface } from '@/components/game/DuelInterface';
-import { ResultDisplay } from '@/components/game/ResultDisplay';
 import { StreakDisplay } from '@/components/game/StreakDisplay';
-import { AllDuelsExhausted } from '@/components/game/AllDuelsExhausted';
 import { GameModeMenu } from '@/components/game/GameModeMenu';
-import { CompactResult } from '@/components/game/CompactResult';
 import { FullPageLoading } from '@/components/ui/Loading';
+
+// Lazy-load components only needed after first vote or rarely
+const ResultDisplay = dynamic(() => import('@/components/game/ResultDisplay').then(m => m.ResultDisplay), { ssr: false });
+const AllDuelsExhausted = dynamic(() => import('@/components/game/AllDuelsExhausted').then(m => m.AllDuelsExhausted), { ssr: false });
+const CompactResult = dynamic(() => import('@/components/game/CompactResult').then(m => m.CompactResult), { ssr: false });
 
 export default function JouerPage() {
   const router = useRouter();
@@ -43,6 +46,12 @@ export default function JouerPage() {
   // Initialize from storage and fetch first duel
   useEffect(() => {
     initializeFromStorage();
+    
+    // Precache canvas-confetti during idle time to avoid micro-freeze on first confetti
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const id = requestIdleCallback(() => { import('canvas-confetti').catch(() => {}); });
+      return () => cancelIdleCallback(id);
+    }
   }, [initializeFromStorage]);
   
   // Redirect if no profile
@@ -157,14 +166,14 @@ export default function JouerPage() {
             >
               ←
             </button>
-            {/* Streak */}
-            {!showingResult && (
+            {/* Streak — hidden instead of unmounted to prevent CLS */}
+            <div style={{ visibility: showingResult ? 'hidden' : 'visible' }}>
               <StreakDisplay 
                 streak={streak} 
                 streakEmoji={streakEmoji} 
                 duelCount={duelCount} 
               />
-            )}
+            </div>
           </div>
           {/* Game Mode Menu */}
           <GameModeMenu

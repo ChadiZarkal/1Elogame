@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
 
+  // Tree-shake barrel imports (lucide-react already optimized by default)
+  experimental: {
+    optimizePackageImports: ['framer-motion'],
+  },
+
   // Image optimization
   images: {
     formats: ['image/avif', 'image/webp'],
