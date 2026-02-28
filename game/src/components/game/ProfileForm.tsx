@@ -1,10 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/stores/gameStore';
 import { SexeVotant, AgeVotant } from '@/types/database';
-import { AnimatedBackgroundCSS } from '@/components/ui/AnimatedBackgroundCSS';
+import dynamic from 'next/dynamic';
+
+// Lazy-load animated background — renders AFTER first paint to unblock FCP
+const AnimatedBackgroundCSS = dynamic(
+  () => import('@/components/ui/AnimatedBackgroundCSS').then(m => ({ default: m.AnimatedBackgroundCSS })),
+  { ssr: false },
+);
 
 const sexOptions: { value: SexeVotant; label: string; emoji: string }[] = [
   { value: 'homme', label: 'Homme', emoji: '♂️' },
@@ -26,6 +32,13 @@ export function ProfileForm() {
   const [sex, setSex] = useState<SexeVotant | null>(null);
   const [age, setAge] = useState<AgeVotant | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showBg, setShowBg] = useState(false);
+
+  // Defer animated background to after first paint to unblock FCP
+  useEffect(() => {
+    // Use requestAnimationFrame to ensure the first paint has occurred
+    requestAnimationFrame(() => setShowBg(true));
+  }, []);
   
   const handleSubmit = () => {
     if (!sex) {
@@ -46,7 +59,7 @@ export function ProfileForm() {
       className="relative flex flex-col items-center justify-center overflow-hidden px-3"
       style={{ minHeight: '100dvh', background: '#0A0A0B' }}
     >
-      <AnimatedBackgroundCSS variant="default" />
+      {showBg && <AnimatedBackgroundCSS variant="default" />}
       <div
         className="absolute pointer-events-none"
         style={{

@@ -7,12 +7,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Loading } from '@/components/ui/Loading';
 import { AdminNav } from '@/components/admin/AdminNav';
 
+interface DailyVoteStat {
+  date: string;
+  count: number;
+}
+
 interface DashboardStats {
   totalElements: number;
   activeElements: number;
   totalVotes: number;
   todayVotes: number;
   topElement: { texte: string; elo_global: number } | null;
+  dailyVotes?: DailyVoteStat[];
 }
 
 interface RankEntry {
@@ -213,7 +219,7 @@ export default function AdminDashboardPage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
             className="bg-[#1A1A1A] border border-[#333] rounded-xl p-5">
             <h3 className="text-[#F5F5F5] font-semibold text-sm mb-4">📈 Activité récente (7 derniers jours)</h3>
-            <ActivityChart todayVotes={stats?.todayVotes ?? 0} totalVotes={stats?.totalVotes ?? 0} />
+            <ActivityChart dailyVotes={stats?.dailyVotes} />
           </motion.div>
         </div>
 
@@ -316,20 +322,23 @@ export default function AdminDashboardPage() {
   );
 }
 
-// Activity chart - CSS-based bar chart with simulated 7-day data
-function ActivityChart({ todayVotes, totalVotes }: { todayVotes: number; totalVotes: number }) {
-  // Generate simulated 7-day data based on today's votes
-  const avgDaily = totalVotes > 0 ? Math.floor(totalVotes / 30) : 50;
-  const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-  const todayIdx = new Date().getDay();
-  const adjustedIdx = todayIdx === 0 ? 6 : todayIdx - 1;
+// Activity chart - CSS-based bar chart with real 7-day data from Supabase
+function ActivityChart({ dailyVotes }: { dailyVotes?: DailyVoteStat[] }) {
+  const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+  const todayStr = new Date().toISOString().split('T')[0];
 
-  const data = days.map((day, i) => {
-    if (i === adjustedIdx) return { day, votes: todayVotes };
-    // Simulated variation around average
-    const variance = 0.5 + Math.random();
-    return { day, votes: Math.floor(avgDaily * variance) };
+  const data = (dailyVotes ?? []).map((d) => {
+    const date = new Date(d.date + 'T12:00:00');
+    return {
+      day: dayNames[date.getDay()],
+      votes: d.count,
+      isToday: d.date === todayStr,
+    };
   });
+
+  if (data.length === 0) {
+    return <p className="text-[#737373] text-xs text-center py-8">Aucune donnée disponible</p>;
+  }
 
   const maxVotes = Math.max(...data.map(d => d.votes), 1);
 
@@ -337,13 +346,12 @@ function ActivityChart({ todayVotes, totalVotes }: { todayVotes: number; totalVo
     <div className="flex items-end gap-2 h-32">
       {data.map((d, i) => {
         const pct = (d.votes / maxVotes) * 100;
-        const isToday = i === adjustedIdx;
         return (
-          <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
+          <div key={`${d.day}-${i}`} className="flex-1 flex flex-col items-center gap-1">
             <span className="text-[#737373] text-[10px]">{d.votes}</span>
             <motion.div
               className={`w-full rounded-t-md ${
-                isToday
+                d.isToday
                   ? 'bg-gradient-to-t from-[#DC2626] to-[#EF4444]'
                   : 'bg-gradient-to-t from-[#333] to-[#444]'
               }`}
@@ -352,7 +360,7 @@ function ActivityChart({ todayVotes, totalVotes }: { todayVotes: number; totalVo
               transition={{ delay: 0.2 + i * 0.05, duration: 0.5 }}
               style={{ minHeight: 4 }}
             />
-            <span className={`text-[10px] ${isToday ? 'text-[#DC2626] font-bold' : 'text-[#737373]'}`}>
+            <span className={`text-[10px] ${d.isToday ? 'text-[#DC2626] font-bold' : 'text-[#737373]'}`}>
               {d.day}
             </span>
           </div>

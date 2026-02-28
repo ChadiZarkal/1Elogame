@@ -209,14 +209,15 @@ export function useFlagOrNot() {
   const handleShare = useCallback(async () => {
     if (!result || !submittedText) return;
     const shareText = `${result.verdict === 'red' ? '🚩 RED FLAG' : '🟢 GREEN FLAG'}: "${submittedText}" — Teste toi aussi sur Red or Green !`;
+    const shareUrl = `https://redorgreen.fr/flagornot?ref=share`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Red or Green — Oracle', text: shareText, url: 'https://redorgreen.fr/flagornot' });
+        await navigator.share({ title: 'Red or Green — Oracle', text: shareText, url: shareUrl });
       } catch {
         /* user cancelled */
       }
     } else {
-      await navigator.clipboard.writeText(shareText);
+      await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
     }
   }, [result, submittedText]);
 

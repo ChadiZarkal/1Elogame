@@ -153,7 +153,7 @@ export default function HubPage() {
             </a>
           </nav>
 
-          <p className="hub__version">Red or Green — v4.0</p>
+          <p className="hub__version">Red or Green — v3.8</p>
 
           <nav className="hub__legal-links" aria-label="Pages légales">
             <a href="/mentions-legales" className="hub__legal-link">Mentions légales</a>
