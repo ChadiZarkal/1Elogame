@@ -80,7 +80,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
         </div>
 
         <p style={{ color: '#525252', fontSize: '16px', marginTop: '24px' }}>
-          redflaggames.fr/ressources/{slug}
+          redorgreen.fr/ressources/{slug}
         </p>
       </div>
     ),

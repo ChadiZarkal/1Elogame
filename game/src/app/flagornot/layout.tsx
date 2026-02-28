@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   alternates: { canonical: '/flagornot' },
 };
 
-const SITE_URL = 'https://redflaggames.fr';
+const SITE_URL = 'https://redorgreen.fr';
 
 export default function FlagOrNotLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -44,7 +44,7 @@ export default function FlagOrNotLayout({ children }: { children: React.ReactNod
             },
             isPartOf: {
               '@type': 'WebSite',
-              name: 'Red Flag Games',
+              name: 'Red or Green',
               url: SITE_URL,
             },
           }),

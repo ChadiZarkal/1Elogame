@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-const SITE_URL = 'https://redflaggames.fr';
+const SITE_URL = 'https://redorgreen.fr';
 
 export const metadata: Metadata = {
   title: 'Red Flag — Le party game qui fait débat 🚩',
@@ -55,7 +55,7 @@ export default function RedFlagLayout({
             },
             isPartOf: {
               '@type': 'WebSite',
-              name: 'Red Flag Games',
+              name: 'Red or Green',
               url: SITE_URL,
             },
           }),

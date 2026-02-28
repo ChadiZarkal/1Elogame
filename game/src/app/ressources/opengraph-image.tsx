@@ -74,7 +74,7 @@ export default async function Image() {
         </div>
 
         <p style={{ color: '#525252', fontSize: '16px', marginTop: '24px' }}>
-          redflaggames.fr/ressources
+          redorgreen.fr/ressources
         </p>
       </div>
     ),

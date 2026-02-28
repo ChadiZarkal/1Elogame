@@ -34,4 +34,4 @@ export const POST = withApiHandler(async (request: NextRequest) => {
 
   await saveSubmission(text, verdict);
   return apiSuccess({ saved: true });
-});
+}, { rateLimit: 'public' });

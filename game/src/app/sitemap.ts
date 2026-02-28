@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { METERS } from '@/config/meters-data';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://redflaggames.fr';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
   const now = new Date();
 
   const meterPages: MetadataRoute.Sitemap = METERS.map((meter) => ({

@@ -10,8 +10,8 @@ const spaceGrotesk = Space_Grotesk({
   display: "swap",
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redflaggames.fr';
-const SITE_NAME = 'Red Flag Games';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
+const SITE_NAME = 'Red or Green';
 const SITE_DESCRIPTION = 'Red or Green, Red Flag, Green Flag... Choisis ton jeu et amuse-toi entre amis ! Party games mobiles gratuits, sans inscription, jouables instantanément. Violentomètre, consentomètre et outils d\'auto-évaluation inclus.';
 
 export const metadata: Metadata = {
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
       url: '/opengraph-image',
       width: 1200,
       height: 630,
-      alt: 'Red or Green — Red Flag Games, party game mobile gratuit',
+      alt: 'Red or Green — Party game mobile gratuit',
     }],
   },
   twitter: {
@@ -122,7 +122,7 @@ function JsonLd() {
       {
         '@type': 'WebSite',
         name: SITE_NAME,
-        alternateName: ['Red or Green', 'RedOrGreen', 'Red Flag Games', 'redflaggames.fr'],
+        alternateName: ['RedOrGreen', 'redorgreen.fr', 'Red Flag Games'],
         url: SITE_URL,
         inLanguage: 'fr-FR',
       },

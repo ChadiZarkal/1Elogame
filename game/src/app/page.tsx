@@ -32,11 +32,11 @@ export default function HubPage() {
         <header className="hub__hero hub__enter hub__enter--1">
           <img
             src="/logo-rog-new.svg"
-            alt="Red or Green — Red Flag Games, le party game gratuit"
+            alt="Red or Green — Le party game gratuit"
             className="hub__logo"
             draggable={false}
           />
-          <h1 className="sr-only">Red or Green — Red Flag Games | Jeu de société en ligne gratuit</h1>
+          <h1 className="sr-only">Red or Green | Jeu de société en ligne gratuit pour débattre entre amis</h1>
           <p className="hub__subtitle">Le jeu qui divise</p>
         </header>
 
@@ -165,7 +165,7 @@ export default function HubPage() {
             </a>
           </nav>
 
-          <p className="hub__version">Red Flag Games — v4.0</p>
+          <p className="hub__version">Red or Green — v4.0</p>
         </footer>
 
       </main>

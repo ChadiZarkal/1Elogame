@@ -96,8 +96,8 @@ export default function JouerPage() {
             label: '📤 Défier',
             onClick: () => {
               const text = `🔥 J'ai une streak de 5 sur Red or Green ! Tu penses faire mieux ?`;
-              if (navigator.share) navigator.share({ text, url: 'https://redflaggames.fr/jeu' }).catch(() => {});
-              else navigator.clipboard.writeText(`${text} → redflaggames.fr/jeu`).catch(() => {});
+              if (navigator.share) navigator.share({ text, url: 'https://redorgreen.fr/jeu' }).catch(() => {});
+              else navigator.clipboard.writeText(`${text} → redorgreen.fr/jeu`).catch(() => {});
             },
           },
         });
@@ -110,8 +110,8 @@ export default function JouerPage() {
             label: '📤 Partager',
             onClick: () => {
               const text = `🏆 Streak de 10 sur Red or Green ! Qui peut me battre ?`;
-              if (navigator.share) navigator.share({ text, url: 'https://redflaggames.fr/jeu' }).catch(() => {});
-              else navigator.clipboard.writeText(`${text} → redflaggames.fr/jeu`).catch(() => {});
+              if (navigator.share) navigator.share({ text, url: 'https://redorgreen.fr/jeu' }).catch(() => {});
+              else navigator.clipboard.writeText(`${text} → redorgreen.fr/jeu`).catch(() => {});
             },
           },
         });
@@ -124,8 +124,8 @@ export default function JouerPage() {
             label: '📤 Partager',
             onClick: () => {
               const text = `🎯 Streak de ${streak} sur Red or Green ! Je suis inarrêtable !`;
-              if (navigator.share) navigator.share({ text, url: 'https://redflaggames.fr/jeu' }).catch(() => {});
-              else navigator.clipboard.writeText(`${text} → redflaggames.fr/jeu`).catch(() => {});
+              if (navigator.share) navigator.share({ text, url: 'https://redorgreen.fr/jeu' }).catch(() => {});
+              else navigator.clipboard.writeText(`${text} → redorgreen.fr/jeu`).catch(() => {});
             },
           },
         });
@@ -146,8 +146,8 @@ export default function JouerPage() {
           label: '📤 Inviter',
           onClick: () => {
             const text = `🎮 J'ai fait ${duelCount} duels sur Red or Green ! Viens jouer aussi →`;
-            if (navigator.share) navigator.share({ text, url: 'https://redflaggames.fr/jeu' }).catch(() => {});
-            else navigator.clipboard.writeText(`${text} redflaggames.fr/jeu`).catch(() => {});
+            if (navigator.share) navigator.share({ text, url: 'https://redorgreen.fr/jeu' }).catch(() => {});
+            else navigator.clipboard.writeText(`${text} redorgreen.fr/jeu`).catch(() => {});
           },
         },
       });

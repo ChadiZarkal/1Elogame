@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, Phone, ExternalLink, RotateCcw, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { ArrowLeft, Phone, ExternalLink, RotateCcw, ChevronRight, Download } from 'lucide-react';
 import {
   getMeterBySlug,
   getHighestSeverity,
@@ -64,12 +64,26 @@ export default function MeterQuizPage() {
     setPhase('intro');
   };
 
-  const handleShareResult = () => {
-    const shareText = `${meter.emoji} J'ai fait le ${meter.name} sur Red or Green !\nRésultat : ${levelInfo.title}\n\nFais le test toi aussi →`;
-    if (navigator.share) {
-      navigator.share({ text: shareText, url: `https://redflaggames.fr/ressources/${slug}` }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(`${shareText} https://redflaggames.fr/ressources/${slug}`).catch(() => {});
+  const resultsRef = useRef<HTMLElement>(null);
+
+  const handleSaveResult = async () => {
+    const el = resultsRef.current;
+    if (!el) return;
+    try {
+      const html2canvas = (await import('html2canvas-pro')).default;
+      const canvas = await html2canvas(el, {
+        backgroundColor: '#0A0A0B',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      const link = document.createElement('a');
+      link.download = `${meter.name.replace(/\s+/g, '-').toLowerCase()}-résultat.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch {
+      // Fallback: print the page
+      window.print();
     }
   };
 
@@ -277,7 +291,7 @@ export default function MeterQuizPage() {
 
       {/* ═══ RESULTS ═══ */}
       {phase === 'results' && yesByLevel && (
-        <main className="flex-1 overflow-y-auto px-5 pb-[max(20px,env(safe-area-inset-bottom))] scroll-smooth">
+        <main ref={resultsRef} className="flex-1 overflow-y-auto px-5 pb-[max(20px,env(safe-area-inset-bottom))] scroll-smooth">
           {/* Result header */}
           <div className="text-center mt-6 mb-6">
             <div className="relative inline-block mb-4">
@@ -438,10 +452,10 @@ export default function MeterQuizPage() {
           {/* Action buttons */}
           <div className="flex flex-col gap-2.5 max-w-md mx-auto mb-4">
             <button
-              onClick={handleShareResult}
+              onClick={handleSaveResult}
               className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-all shadow-[0_0_20px_rgba(59,130,246,0.15)]"
             >
-              📤 Partager mon résultat
+              <Download size={16} /> Sauvegarder mon résultat
             </button>
             <button
               onClick={handleRestart}

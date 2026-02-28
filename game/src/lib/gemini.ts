@@ -78,7 +78,7 @@ function cleanupTempCredentials(): void {
 }
 
 function ensureCredentialsFile(credentials: ServiceAccountCredentials): void {
-  const tempFile = join(tmpdir(), 'gcp-sa-redflaggames.json');
+  const tempFile = join(tmpdir(), `gcp-sa-${process.pid}-${Date.now()}.json`);
   cleanupTempCredentials();
   writeFileSync(tempFile, JSON.stringify(credentials), { mode: 0o600 });
   process.env.GOOGLE_APPLICATION_CREDENTIALS = tempFile;

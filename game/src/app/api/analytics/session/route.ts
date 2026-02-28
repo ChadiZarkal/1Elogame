@@ -25,9 +25,9 @@ export const POST = withApiHandler(async (request: NextRequest) => {
 
   await saveAnalyticsSession(session);
   return apiSuccess({ success: true });
-});
+}, { rateLimit: 'public' });
 
 export const GET = withApiHandler(async () => {
   const sessions = await getAnalyticsSessions();
   return apiSuccess({ sessions, count: sessions.length });
-});
+}, { requireAdmin: true });

@@ -31,7 +31,7 @@ export default function NotFound() {
             className="px-8 py-3 rounded-xl bg-[#1A1A1A] border border-[#333] text-[#A3A3A3] font-medium hover:border-[#059669] hover:text-[#059669] transition-all text-center"
             whileTap={{ scale: 0.97 }}
           >
-            Essaye Flag or Not
+            Essaye l'Oracle
           </motion.a>
         </div>
       </motion.div>

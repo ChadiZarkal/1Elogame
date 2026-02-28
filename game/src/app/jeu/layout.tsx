@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   alternates: { canonical: '/jeu' },
 };
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redflaggames.fr';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
 
 function JeuJsonLd() {
   const jsonLd = {
@@ -36,7 +36,7 @@ function JeuJsonLd() {
     gamePlatform: 'Web Browser',
     inLanguage: 'fr-FR',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR', availability: 'https://schema.org/InStock' },
-    author: { '@type': 'Organization', name: 'Red Flag Games', url: SITE_URL },
+    author: { '@type': 'Organization', name: 'Red or Green', url: SITE_URL },
   };
   return (
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />

@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 
-export const alt = 'Red Flag Games - Party game mobile gratuit';
+export const alt = 'Red or Green - Party game mobile gratuit';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -67,7 +67,7 @@ export default async function Image() {
             fontSize: '20px',
             fontWeight: 600,
           }}>
-            🤖 Flag or Not
+            🤖 Oracle
           </div>
           <div style={{
             background: 'rgba(249, 115, 22, 0.2)',

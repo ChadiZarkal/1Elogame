@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { METERS } from '@/config/meters-data';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redflaggames.fr';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -123,7 +123,7 @@ function MeterJsonLd({ slug }: { slug: string }) {
       numberOfQuestions: meter.questions.length,
       inLanguage: 'fr-FR',
       isAccessibleForFree: true,
-      author: { '@type': 'Organization', name: 'Red Flag Games', url: SITE_URL },
+      author: { '@type': 'Organization', name: 'Red or Green', url: SITE_URL },
     },
     {
       '@type': 'BreadcrumbList',

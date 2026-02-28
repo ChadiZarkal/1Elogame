@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { METERS } from '@/config/meters-data';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redflaggames.fr';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
 
 export const metadata: Metadata = {
   title: 'Violentomètre, Consentomètre & Auto-évaluation — Outils gratuits',

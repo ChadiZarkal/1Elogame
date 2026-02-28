@@ -18,23 +18,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { createApiError } from '@/lib/utils';
+import { ADMIN_TOKEN_SECRET, validateEnv } from '@/lib/env';
 
 /** Token TTL in milliseconds (4 hours — generous to avoid accidental logouts) */
 const TOKEN_TTL_MS = 4 * 60 * 60 * 1000;
 
-/**
- * Signing secret — falls back to a deterministic dev key so tokens survive
- * HMR restarts in development.  In production set ADMIN_TOKEN_SECRET.
- */
-const SECRET =
-  process.env.ADMIN_TOKEN_SECRET ||
-  process.env.ADMIN_PASSWORD_HASH ||
-  'dev-admin-secret-k3y-do-not-use-in-prod';
+/** Signing secret — resolved lazily to avoid build-time errors. */
+function getSecret(): string {
+  validateEnv(); // ensures env vars are checked on first use
+  return ADMIN_TOKEN_SECRET;
+}
 
 /* ────────────────────────── helpers ────────────────────────── */
 
 function hmac(data: string): string {
-  return createHmac('sha256', SECRET).update(data).digest('hex');
+  return createHmac('sha256', getSecret()).update(data).digest('hex');
 }
 
 function safeEqual(a: string, b: string): boolean {
@@ -103,6 +101,7 @@ export function extractBearerToken(request: NextRequest): string | null {
  * Authenticate an admin request.  Returns `null` if OK, or a 401 response.
  */
 export function authenticateAdmin(request: NextRequest): NextResponse | null {
+  const isProduction = process.env.NODE_ENV === 'production';
   const isMockMode = process.env.NEXT_PUBLIC_MOCK_MODE === 'true';
   const token = extractBearerToken(request);
 
@@ -113,8 +112,9 @@ export function authenticateAdmin(request: NextRequest): NextResponse | null {
     );
   }
 
-  // In mock mode, also accept the static mock token
-  if (isMockMode && token === 'mock-admin-token') {
+  // In mock mode (dev only), also accept the static mock token
+  // NEVER allow mock tokens in production
+  if (!isProduction && isMockMode && token === 'mock-admin-token') {
     return null;
   }
 

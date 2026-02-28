@@ -1,4 +1,4 @@
-/** Client-side analytics tracking for Red Flag Games. */
+/** Client-side analytics tracking for Red or Green. */
 
 // Session-level analytics state
 interface AnalyticsSession {

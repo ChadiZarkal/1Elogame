@@ -104,7 +104,7 @@ export default function RessourcesPage() {
         {/* SEO-rich footer section with internal links */}
         <section className="mt-6 max-w-md mx-auto w-full px-1">
           <p className="text-[11px] text-[#3D3D3D] leading-relaxed text-center">
-            Ces outils d&apos;auto-évaluation sont proposés par <a href="/" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">Red or Green (Red Flag Games)</a>.
+            Ces outils d&apos;auto-évaluation sont proposés par <a href="/" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">Red or Green</a>.
             Utilise-les pour évaluer ta situation et identifier d&apos;éventuels{' '}
             <a href="/redflag" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">red flags</a> dans tes relations.
             Tu peux aussi jouer au{' '}

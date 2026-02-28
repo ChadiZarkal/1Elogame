@@ -1,7 +1,7 @@
 {
-  "name": "Red Flag Games",
-  "short_name": "Red Flag",
-  "description": "Party games mobiles gratuits — Red Flag, Flag or Not, et plus encore !",
+  "name": "Red or Green",
+  "short_name": "Red or Green",
+  "description": "Party games mobiles gratuits — Red Flag, Oracle, et plus encore !",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0D0D0D",

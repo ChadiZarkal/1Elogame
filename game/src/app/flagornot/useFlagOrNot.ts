@@ -211,7 +211,7 @@ export function useFlagOrNot() {
     const shareText = `${result.verdict === 'red' ? '🚩 RED FLAG' : '🟢 GREEN FLAG'}: "${submittedText}" — Teste toi aussi sur Red or Green !`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Red or Green — Oracle', text: shareText, url: 'https://redflaggames.fr/flagornot' });
+        await navigator.share({ title: 'Red or Green — Oracle', text: shareText, url: 'https://redorgreen.fr/flagornot' });
       } catch {
         /* user cancelled */
       }

@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   alternates: { canonical: '/classement' },
 };
 
-const SITE_URL = 'https://redflaggames.fr';
+const SITE_URL = 'https://redorgreen.fr';
 
 export default function ClassementLayout({ children }: { children: React.ReactNode }) {
   return (

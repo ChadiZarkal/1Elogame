@@ -10,7 +10,7 @@ export const runtime = 'edge';
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const title = searchParams.get('title') || 'Red or Green';
-  const subtitle = searchParams.get('subtitle') || 'Red Flag Games';
+  const subtitle = searchParams.get('subtitle') || 'Red or Green';
   const emoji = searchParams.get('emoji') || '🚩';
   const theme = searchParams.get('theme') || 'red';
 
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
           fontSize: '18px',
           fontWeight: 600,
         }}>
-          redflaggames.fr
+          redorgreen.fr
         </div>
       </div>
     ),

@@ -100,11 +100,11 @@ export default function LeaderboardPage() {
   const handleShareClassement = useCallback(() => {
     const top = sorted[0];
     const topText = top ? ` Le n°1 : "${top.texte}"` : '';
-    const text = `🏆 Classement Red Flag Games !${topText}\nViens voter et compare tes résultats →`;
+    const text = `🏆 Classement Red or Green !${topText}\nViens voter et compare tes résultats →`;
     if (navigator.share) {
-      navigator.share({ text, url: 'https://redflaggames.fr/classement' }).catch(() => {});
+      navigator.share({ text, url: 'https://redorgreen.fr/classement' }).catch(() => {});
     } else {
-      navigator.clipboard.writeText(`${text} redflaggames.fr/classement`).catch(() => {});
+      navigator.clipboard.writeText(`${text} redorgreen.fr/classement`).catch(() => {});
     }
   }, [sorted]);
 

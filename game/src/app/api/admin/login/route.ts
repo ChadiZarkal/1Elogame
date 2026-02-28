@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs';
 export const dynamic = 'force-dynamic';
 
 const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
+const isProduction = process.env.NODE_ENV === 'production';
 
 export const POST = withApiHandler(async (request: NextRequest) => {
   const body = await request.json();
@@ -15,8 +16,8 @@ export const POST = withApiHandler(async (request: NextRequest) => {
 
   const { password } = data;
 
-  // Mock mode: accept "admin" as password
-  if (isMockMode()) {
+  // Mock mode: accept "admin" as password — NEVER in production
+  if (!isProduction && isMockMode()) {
     if (password === 'admin') {
       const { token, expiresIn } = generateAdminToken();
       return apiSuccess({ token, expiresIn });
@@ -36,4 +37,4 @@ export const POST = withApiHandler(async (request: NextRequest) => {
 
   const { token, expiresIn } = generateAdminToken();
   return apiSuccess({ token, expiresIn });
-}, { rateLimit: true });
+}, { rateLimit: 'auth' });
