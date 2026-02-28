@@ -3,6 +3,15 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Oracle — Red Flag ou Green Flag ?',
   description: 'Écris un comportement, une situation ou un objet et découvre le verdict : Red Flag ou Green Flag ? Gratuit et anonyme.',
+  keywords: [
+    'red flag ou green flag',
+    'oracle red flag',
+    'flag or not',
+    'red or green oracle',
+    'est-ce un red flag',
+    'red flag test',
+    'green flag test',
+  ],
   openGraph: {
     title: 'Oracle — Red Flag ou Green Flag ?',
     description: 'Soumets n\'importe quoi et découvre si c\'est un Red Flag ou un Green Flag. Rejoins la communauté !',

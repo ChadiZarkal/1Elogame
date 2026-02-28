@@ -3,6 +3,15 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Classement Red Flag — Top des pires comportements',
   description: 'Découvre le classement des plus gros Red Flags votés par la communauté. Filtres par sexe, tranche d\'âge. Classement ELO en temps réel.',
+  keywords: [
+    'classement red flag',
+    'top red flags',
+    'pires red flags',
+    'red flag classement',
+    'red or green classement',
+    'meilleurs green flags',
+    'classement elo',
+  ],
   openGraph: {
     title: 'Classement Red Flag — Top des pires comportements',
     description: 'Quels sont les pires Red Flags selon la communauté ? Découvre le classement en temps réel.',

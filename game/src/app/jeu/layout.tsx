@@ -3,6 +3,16 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Red or Green — Quel est le plus gros Red Flag ?',
   description: 'Joue au jeu Red or Green : choisis entre deux comportements, lequel est le pire ? Vote, compare tes réponses et débats avec tes amis. Classement en temps réel.',
+  keywords: [
+    'red or green',
+    'red flag game',
+    'jeu de red flags',
+    'jeu en ligne gratuit',
+    'party game',
+    'red flag ou green flag',
+    'jeu de société en ligne',
+    'red or green jeu',
+  ],
   openGraph: {
     title: 'Red or Green — Quel est le plus gros Red Flag ?',
     description: 'Choisis entre deux comportements : lequel est le plus gros Red Flag ? Un party game addictif et gratuit.',
