@@ -108,7 +108,7 @@ export default function MeterQuizPage() {
             } else if (phase === 'results') {
               setPhase('intro');
             } else {
-              router.push('/ressources');
+              window.location.href = '/ressources';
             }
           }}
           className="text-[#6B7280] hover:text-white transition-colors text-sm flex items-center gap-1 min-w-[48px] min-h-[48px] justify-start active:scale-95"
@@ -122,14 +122,14 @@ export default function MeterQuizPage() {
         </h1>
 
         {/* Quick exit button */}
-        <button
-          onClick={() => router.push('/')}
+        <a
+          href="/"
           className="text-[10px] text-[#4B5563] hover:text-[#EF4444] transition-colors min-w-[48px] min-h-[48px] flex items-center justify-end active:scale-95"
           aria-label="Quitter rapidement"
           title="Quitter rapidement"
         >
           ✕ Quitter
-        </button>
+        </a>
       </div>
 
       {/* Progress bar (quiz only) */}

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loading } from '@/components/ui/Loading';
 
@@ -53,7 +52,6 @@ function getEloForView(r: RankEntry, view: ViewMode): number {
 }
 
 export default function LeaderboardPage() {
-  const router = useRouter();
   const [redRankings, setRedRankings] = useState<RankEntry[]>([]);
   const [greenRankings, setGreenRankings] = useState<RankEntry[]>([]);
   const [totalElements, setTotalElements] = useState(0);
@@ -99,6 +97,17 @@ export default function LeaderboardPage() {
     });
   }, [rankings, view, mode]);
 
+  const handleShareClassement = useCallback(() => {
+    const top = sorted[0];
+    const topText = top ? ` Le n°1 : "${top.texte}"` : '';
+    const text = `🏆 Classement Red Flag Games !${topText}\nViens voter et compare tes résultats →`;
+    if (navigator.share) {
+      navigator.share({ text, url: 'https://redflaggames.fr/classement' }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(`${text} redflaggames.fr/classement`).catch(() => {});
+    }
+  }, [sorted]);
+
   const isRed = mode === 'redflag';
   const accent = isRed ? '#EF4444' : '#10B981';
   const accentDim = isRed ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)';
@@ -122,12 +131,12 @@ export default function LeaderboardPage() {
       <div className="px-4 pt-[max(16px,env(safe-area-inset-top))] pb-5"
         style={{ background: `linear-gradient(180deg, ${accentDim} 0%, transparent 100%)` }}>
         <div className="max-w-lg mx-auto">
-          <button
-            onClick={() => router.push('/')}
+          <a
+            href="/"
             className="text-[#6B7280] hover:text-[#FAFAFA] text-sm mb-4 flex items-center gap-1 transition-colors py-1"
           >
             ← Accueil
-          </button>
+          </a>
 
           <div className="text-center">
             <h1 className="text-[28px] font-black text-[#FAFAFA] tracking-tight">
@@ -363,16 +372,22 @@ export default function LeaderboardPage() {
                 </div>
               )}
 
-              {/* CTA */}
-              <div className="mt-8 text-center">
-                <motion.button
-                  onClick={() => router.push('/jeu')}
-                  className="px-8 py-3.5 rounded-2xl font-black text-base text-white transition-transform active:scale-95"
+              {/* CTA + Share */}
+              <div className="mt-8 flex flex-col items-center gap-3">
+                <motion.a
+                  href="/jeu"
+                  className="inline-block px-8 py-3.5 rounded-2xl font-black text-base text-white transition-transform active:scale-95 text-center"
                   style={{ background: accent, boxShadow: `0 0 30px ${isRed ? 'rgba(239,68,68,0.35)' : 'rgba(16,185,129,0.35)'}` }}
                   whileTap={{ scale: 0.96 }}
                 >
                   {isRed ? '🚩 Jouer et voter !' : '🟢 Jouer et voter !'}
-                </motion.button>
+                </motion.a>
+                <button
+                  onClick={handleShareClassement}
+                  className="text-[#6B7280] hover:text-[#FAFAFA] text-sm flex items-center gap-1.5 transition-colors py-2 px-4"
+                >
+                  📤 Partager le classement
+                </button>
               </div>
 
             </motion.div>

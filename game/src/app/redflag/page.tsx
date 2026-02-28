@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { AnimatedGradientText } from '@/components/magicui/AnimatedGradientText';
@@ -9,7 +8,6 @@ import { Sparkles } from '@/components/magicui/Sparkles';
 import { useGameStore } from '@/stores/gameStore';
 
 export default function RedFlagHome() {
-  const router = useRouter();
   const { clearProfile } = useGameStore();
 
   // Always clear profile on page load to force re-entry
@@ -17,9 +15,7 @@ export default function RedFlagHome() {
     clearProfile();
   }, [clearProfile]);
 
-  const handlePlay = () => {
-    router.push('/jeu');
-  };
+
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen min-h-[100dvh] bg-[#0D0D0D] px-6 py-6">
@@ -83,14 +79,15 @@ export default function RedFlagHome() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
         >
-          <Button
-            onClick={handlePlay}
-            variant="primary"
-            size="lg"
-            className="w-full text-xl py-6"
-          >
-            🚩 C'EST PARTI
-          </Button>
+          <a href="/jeu" className="block">
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full text-xl py-6"
+            >
+              🚩 C'EST PARTI
+            </Button>
+          </a>
 
           {/* No persistent session message since we always ask */}
         </motion.div>

@@ -11,6 +11,37 @@ export const metadata: Metadata = {
   alternates: { canonical: '/flagornot' },
 };
 
+const SITE_URL = 'https://redflaggames.fr';
+
 export default function FlagOrNotLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebApplication',
+            name: 'Oracle — Red Flag ou Green Flag',
+            url: `${SITE_URL}/flagornot`,
+            description:
+              'Soumets un comportement et découvre le verdict de l\'Oracle : Red Flag ou Green Flag ? Propulsé par IA.',
+            applicationCategory: 'Entertainment',
+            operatingSystem: 'Web Browser',
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'EUR',
+            },
+            isPartOf: {
+              '@type': 'WebSite',
+              name: 'Red Flag Games',
+              url: SITE_URL,
+            },
+          }),
+        }}
+      />
+      {children}
+    </>
+  );
 }
