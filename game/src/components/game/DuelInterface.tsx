@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { ElementDTO } from '@/types/game';
 import { CategoryBadge } from '@/components/ui/CategoryBadge';
 
@@ -26,90 +25,58 @@ export function DuelInterface({ elementA, elementB, onVote, disabled }: DuelInte
     }, 350);
   };
 
-  // Style NEUTRE pour les deux options - pas de biais couleur
-  const neutralCardClass = `
-    flex-1 flex items-center justify-center p-6 
-    relative z-10
-    bg-[#1A1A1A] border border-[#333333]
-    hover:bg-[#242424] hover:border-[#DC2626] hover:shadow-[0_0_30px_rgba(220,38,38,0.3)]
-    active:bg-[#2A2A2A] active:scale-[0.98]
-    transition-all duration-200 
-    disabled:opacity-50 disabled:cursor-not-allowed
-  `;
-  
+  const cardClass = (side: 'a' | 'b') => {
+    const isSelected = selected === side;
+    const isOther = selected !== null && !isSelected;
+    return [
+      'flex-1 flex items-center justify-center p-6 relative z-10 bg-[#1A1A1A] border transition-all duration-[250ms]',
+      !selected && 'hover:bg-[#242424] hover:border-[#DC2626] hover:shadow-[0_0_30px_rgba(220,38,38,0.3)] active:bg-[#2A2A2A] active:scale-[0.98] cursor-pointer',
+      selected && 'cursor-default',
+      isSelected && 'scale-[1.03] border-[#DC2626]',
+      isOther && 'scale-95 opacity-40 border-[#333333]',
+      !isSelected && !isOther && 'border-[#333333]',
+      side === 'a' ? 'animate-card-a' : 'animate-card-b',
+    ].filter(Boolean).join(' ');
+  };
+
   return (
     <div className="flex flex-col flex-1 w-full bg-[#0D0D0D]">
-      {/* Element A - Top half - NEUTRE */}
-      <motion.button
+      {/* Element A - Top half */}
+      <button
         onClick={() => handleClick('a')}
         disabled={disabled || !!selected}
-        className={neutralCardClass}
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ 
-          opacity: selected && selected !== 'a' ? 0.4 : 1, 
-          y: 0,
-          scale: selected === 'a' ? 1.03 : selected === 'b' ? 0.95 : 1,
-          borderColor: selected === 'a' ? '#DC2626' : '#333333',
-        }}
-        transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-        whileHover={{ scale: disabled || selected ? 1 : 1.01 }}
-        whileTap={{ scale: disabled || selected ? 1 : 0.98 }}
+        className={cardClass('a')}
       >
         <div className="text-center max-w-lg">
-          <motion.p 
-            className="text-xl sm:text-2xl md:text-3xl font-bold text-[#F5F5F5] leading-tight px-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.05 }}
-          >
+          <p className="text-xl sm:text-2xl md:text-3xl font-bold text-[#F5F5F5] leading-tight px-4 animate-fade-in-fast">
             {elementA.texte}
-          </motion.p>
+          </p>
           <CategoryBadge categorie={elementA.categorie} />
         </div>
-      </motion.button>
+      </button>
       
       {/* Divider VS */}
       <div className="relative h-0 z-20">
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <motion.div 
-            className="bg-[#DC2626] rounded-full w-14 h-14 flex items-center justify-center shadow-[0_0_30px_rgba(220,38,38,0.5)]"
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 22, delay: 0.1 }}
-          >
+          <div className="bg-[#DC2626] rounded-full w-14 h-14 flex items-center justify-center shadow-[0_0_30px_rgba(220,38,38,0.5)] animate-vs-pop">
             <span className="text-lg font-black text-white tracking-tight">VS</span>
-          </motion.div>
+          </div>
         </div>
       </div>
       
-      {/* Element B - Bottom half - NEUTRE */}
-      <motion.button
+      {/* Element B - Bottom half */}
+      <button
         onClick={() => handleClick('b')}
         disabled={disabled || !!selected}
-        className={neutralCardClass}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ 
-          opacity: selected && selected !== 'b' ? 0.4 : 1, 
-          y: 0,
-          scale: selected === 'b' ? 1.03 : selected === 'a' ? 0.95 : 1,
-          borderColor: selected === 'b' ? '#DC2626' : '#333333',
-        }}
-        transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-        whileHover={{ scale: disabled || selected ? 1 : 1.01 }}
-        whileTap={{ scale: disabled || selected ? 1 : 0.98 }}
+        className={cardClass('b')}
       >
         <div className="text-center max-w-lg">
-          <motion.p 
-            className="text-xl sm:text-2xl md:text-3xl font-bold text-[#F5F5F5] leading-tight px-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.05 }}
-          >
+          <p className="text-xl sm:text-2xl md:text-3xl font-bold text-[#F5F5F5] leading-tight px-4 animate-fade-in-fast">
             {elementB.texte}
-          </motion.p>
+          </p>
           <CategoryBadge categorie={elementB.categorie} />
         </div>
-      </motion.button>
+      </button>
     </div>
   );
 }

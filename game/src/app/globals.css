@@ -172,6 +172,93 @@ button:focus-visible {
   }
 }
 
+/* ========== Component animations (replacing Framer Motion) ========== */
+
+/* Generic entrance keyframes */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fade-slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-slide-down {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-scale-in {
+  from { opacity: 0; transform: scale(0.9) translateY(-10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes fade-slide-left {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes fade-slide-up-sm {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* DuelInterface VS badge */
+@keyframes vs-pop-in {
+  from { transform: scale(0) rotate(-180deg); }
+  to { transform: scale(1) rotate(0deg); }
+}
+
+/* StreakDisplay milestone pulse */
+@keyframes milestone-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(239,68,68,0.2); }
+  50% { transform: scale(1.08); box-shadow: 0 0 20px rgba(239,68,68,0.5); }
+}
+
+/* StreakDisplay badge entrance */
+@keyframes streak-pop-in {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* GameModeMenu pulse attention */
+@keyframes menu-attention-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(168, 85, 247, 0); }
+}
+
+/* GameModeMenu dropdown */
+@keyframes dropdown-enter {
+  from { opacity: 0; transform: translateY(-10px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Generic animation utility classes */
+.animate-fade-in { animation: fade-in 0.5s ease both; }
+.animate-fade-in-fast { animation: fade-in 0.2s ease 0.05s both; }
+.animate-fade-slide-up { animation: fade-slide-up 0.25s ease both; }
+.animate-fade-slide-down { animation: fade-slide-down 0.25s ease both; }
+.animate-fade-scale-in { animation: fade-scale-in 0.6s ease-out both; }
+.animate-fade-slide-left { animation: fade-slide-left 0.3s ease 0.3s both; }
+.animate-fade-slide-up-sm { animation: fade-slide-up-sm 0.4s ease both; }
+
+/* ProfileForm staggered entrance classes */
+.animate-pf-logo { animation: fade-slide-down 0.4s ease 0.1s both; }
+.animate-pf-logo-img { animation: fade-scale-in 0.6s ease-out both; }
+.animate-pf-form { animation: fade-slide-up 0.4s ease 0.2s both; }
+.animate-pf-howto { animation: fade-slide-up-sm 0.4s ease 0.4s both; }
+
+/* DuelInterface classes */
+.animate-vs-pop { animation: vs-pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both; }
+.animate-card-a { animation: fade-slide-down 0.25s ease both; }
+.animate-card-b { animation: fade-slide-up 0.25s ease both; }
+
+/* StreakDisplay classes */
+.animate-streak-container { animation: fade-slide-left 0.3s ease 0.3s both; }
+.animate-streak-pop { animation: streak-pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.animate-milestone-pulse { animation: milestone-pulse 1.5s ease-in-out infinite; }
+
+/* GameModeMenu classes */
+.animate-menu-pulse { animation: menu-attention-pulse 2s infinite; }
+.animate-dropdown-enter { animation: dropdown-enter 0.15s ease both; }
+
 /* ═══════════════════════════════════════ */
 /* ═══ HUB / HOMEPAGE - COMPLETE CSS ═══ */
 /* ═══════════════════════════════════════ */

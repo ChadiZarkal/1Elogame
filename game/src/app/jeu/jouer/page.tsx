@@ -2,7 +2,6 @@
 
 import { useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { useGameStore } from '@/stores/gameStore';

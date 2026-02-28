@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { CATEGORIES_CONFIG, CategoryConfig } from '@/config/categories';
 import type { GameModeSelection } from '@/stores/gameStore';
 
@@ -58,25 +57,17 @@ export function GameModeMenu({ currentSelection, onSelectionChange }: GameModeMe
   return (
     <div className="relative">
       {/* Bouton principal avec label + nom catégorie */}
-      <motion.button
+      <button
         onClick={() => { setIsOpen(!isOpen); setShowPulse(false); }}
         className={`
           relative px-3 py-2 rounded-xl backdrop-blur-md transition-all flex items-center gap-1.5
+          hover:scale-105 active:scale-95
           ${isFiltered 
             ? 'bg-purple-500/30 ring-2 ring-purple-400 shadow-lg shadow-purple-500/20' 
             : 'bg-white/10 hover:bg-white/20 border border-white/20'
           }
+          ${showPulse ? 'animate-menu-pulse' : ''}
         `}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        animate={showPulse ? {
-          boxShadow: [
-            '0 0 0 0 rgba(168, 85, 247, 0.4)',
-            '0 0 0 10px rgba(168, 85, 247, 0)',
-            '0 0 0 0 rgba(168, 85, 247, 0)'
-          ]
-        } : {}}
-        transition={showPulse ? { duration: 2, repeat: Infinity } : {}}
         title="Changer de catégorie"
       >
         <span className="text-lg">{currentLabel.emoji}</span>
@@ -84,70 +75,55 @@ export function GameModeMenu({ currentSelection, onSelectionChange }: GameModeMe
         
         {/* Indicateur de filtre actif */}
         {isFiltered && (
-          <motion.span 
-            className="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 500 }}
-          />
+          <span className="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full animate-streak-pop" />
         )}
         
         {/* Flèche indicatrice */}
-        <motion.span
-          className="text-white/60 text-xs"
-          animate={isOpen ? { rotate: 180 } : { rotate: 0 }}
+        <span
+          className="text-white/60 text-xs transition-transform duration-200"
+          style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
         >
           ▼
-        </motion.span>
-      </motion.button>
+        </span>
+      </button>
 
       {/* Menu déroulant */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Overlay pour fermer */}
-            <motion.div
-              className="fixed inset-0 z-[55]"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
-            />
+      {isOpen && (
+        <>
+          {/* Overlay pour fermer */}
+          <div
+            className="fixed inset-0 z-[55]"
+            onClick={() => setIsOpen(false)}
+          />
 
-            {/* Menu */}
-            <motion.div
-              className="absolute right-0 mt-2 w-64 bg-[#1A1A1A] rounded-2xl shadow-2xl border border-white/10 z-[60] overflow-hidden"
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ duration: 0.15 }}
-            >
-              {/* Header */}
-              <div className="px-4 py-3 border-b border-white/10 bg-white/5">
-                <h3 className="text-white font-bold text-sm">🎮 Mode de jeu</h3>
-              </div>
+          {/* Menu */}
+          <div className="absolute right-0 mt-2 w-64 bg-[#1A1A1A] rounded-2xl shadow-2xl border border-white/10 z-[60] overflow-hidden animate-dropdown-enter">
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-white/10 bg-white/5">
+              <h3 className="text-white font-bold text-sm">🎮 Mode de jeu</h3>
+            </div>
 
-              <div className="py-2">
-                {/* Mode Default */}
-                <button
-                  onClick={handleDefaultMode}
-                  className={`
-                    w-full px-4 py-3 flex items-center gap-3 transition-colors
-                    ${currentSelection.mode === 'default'
-                      ? 'bg-purple-500/20 text-purple-300'
-                      : 'text-white/80 hover:bg-white/5'
-                    }
-                  `}
-                >
-                  <span className="text-xl">🌍</span>
-                  <div className="text-left">
-                    <p className="font-medium">Classique</p>
-                    <p className="text-xs text-white/50">Toutes les catégories mélangées</p>
-                  </div>
-                  {currentSelection.mode === 'default' && (
-                    <span className="ml-auto text-purple-400">✓</span>
-                  )}
-                </button>
+            <div className="py-2">
+              {/* Mode Default */}
+              <button
+                onClick={handleDefaultMode}
+                className={`
+                  w-full px-4 py-3 flex items-center gap-3 transition-colors
+                  ${currentSelection.mode === 'default'
+                    ? 'bg-purple-500/20 text-purple-300'
+                    : 'text-white/80 hover:bg-white/5'
+                  }
+                `}
+              >
+                <span className="text-xl">🌍</span>
+                <div className="text-left">
+                  <p className="font-medium">Classique</p>
+                  <p className="text-xs text-white/50">Toutes les catégories mélangées</p>
+                </div>
+                {currentSelection.mode === 'default' && (
+                  <span className="ml-auto text-purple-400">✓</span>
+                )}
+              </button>
 
                 {/* Divider */}
                 <div className="my-2 mx-4 border-t border-white/10" />
@@ -192,10 +168,9 @@ export function GameModeMenu({ currentSelection, onSelectionChange }: GameModeMe
                   </button>
                 </div>
               )}
-            </motion.div>
+            </div>
           </>
         )}
-      </AnimatePresence>
     </div>
   );
 }

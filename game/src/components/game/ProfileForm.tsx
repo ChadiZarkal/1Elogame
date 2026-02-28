@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useGameStore } from '@/stores/gameStore';
 import { SexeVotant, AgeVotant } from '@/types/database';
 import { AnimatedBackgroundCSS } from '@/components/ui/AnimatedBackgroundCSS';
@@ -56,12 +55,7 @@ export function ProfileForm() {
           background: 'radial-gradient(circle, rgba(239,68,68,0.08) 0%, transparent 70%)',
         }}
       />
-      <motion.div
-        className="relative z-10 flex flex-col items-center justify-center w-full p-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
+      <div className="relative z-10 flex flex-col items-center justify-center w-full p-6 animate-fade-in">
       {/* Back button */}
       <div className="fixed top-4 left-4 z-50">
         <button
@@ -73,36 +67,23 @@ export function ProfileForm() {
       </div>
 
       {/* Logo */}
-      <motion.div
-        className="mb-6 text-center pt-10"
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.1 }}
-      >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: -10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="flex items-center justify-center mb-3"
-        >
+      <div className="mb-6 text-center pt-10 animate-pf-logo">
+        <div className="flex items-center justify-center mb-3 animate-pf-logo-img">
           <img
             src="/logo-rog-new.svg"
             alt="Red or Green"
             className="w-[180px] sm:w-[220px]"
             draggable={false}
           />
-        </motion.div>
+        </div>
         <p className="text-sm font-medium" style={{ color: '#52525B' }}>
           2 infos rapides avant de jouer
         </p>
-      </motion.div>
+      </div>
       
       {/* Form container */}
-      <motion.div
-        className="w-full max-w-sm"
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2 }}
+      <div
+        className="w-full max-w-sm animate-pf-form"
         style={{
           background: 'rgba(20,20,23,0.9)',
           border: '1px solid rgba(255,255,255,0.06)',
@@ -123,14 +104,13 @@ export function ProfileForm() {
             {sexOptions.map((opt) => {
               const selected = sex === opt.value;
               return (
-                <motion.button
+                <button
                   key={opt.value}
                   onClick={() => { setSex(opt.value); setError(null); }}
-                  whileTap={{ scale: 0.94 }}
                   role="radio"
                   aria-checked={selected}
                   aria-label={opt.label}
-                  className="flex flex-col items-center justify-center py-4 px-2 rounded-xl font-bold text-sm transition-all duration-200"
+                  className="flex flex-col items-center justify-center py-4 px-2 rounded-xl font-bold text-sm transition-all duration-200 active:scale-[0.94]"
                   style={{
                     background: selected ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.03)',
                     border: `1.5px solid ${selected ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.08)'}`,
@@ -140,7 +120,7 @@ export function ProfileForm() {
                 >
                   <span className="text-2xl mb-1">{opt.emoji}</span>
                   <span className="text-xs font-bold">{opt.label}</span>
-                </motion.button>
+                </button>
               );
             })}
           </div>
@@ -155,14 +135,13 @@ export function ProfileForm() {
             {ageOptions.map((opt) => {
               const selected = age === opt.value;
               return (
-                <motion.button
+                <button
                   key={opt.value}
                   onClick={() => { setAge(opt.value); setError(null); }}
-                  whileTap={{ scale: 0.94 }}
                   role="radio"
                   aria-checked={selected}
                   aria-label={`${opt.label} ans`}
-                  className="flex flex-col items-center justify-center py-3.5 px-1 rounded-xl font-bold transition-all duration-200"
+                  className="flex flex-col items-center justify-center py-3.5 px-1 rounded-xl font-bold transition-all duration-200 active:scale-[0.94]"
                   style={{
                     background: selected ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.03)',
                     border: `1.5px solid ${selected ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.08)'}`,
@@ -172,32 +151,23 @@ export function ProfileForm() {
                 >
                   <span className="text-lg mb-0.5">{opt.vibe}</span>
                   <span className="text-[11px] font-black">{opt.label}</span>
-                </motion.button>
+                </button>
               );
             })}
           </div>
         </fieldset>
         
         {/* Error */}
-        <AnimatePresence>
-          {error && (
-            <motion.p
-              key="err"
-              className="text-[#FCA5A5] text-center text-xs font-medium"
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-            >
-              ⚠️ {error}
-            </motion.p>
-          )}
-        </AnimatePresence>
+        {error && (
+          <p className="text-[#FCA5A5] text-center text-xs font-medium animate-fade-slide-up-sm">
+            ⚠️ {error}
+          </p>
+        )}
 
         {/* CTA */}
-        <motion.button
+        <button
           onClick={handleSubmit}
-          whileTap={{ scale: 0.97 }}
-          className="w-full py-4 rounded-xl font-black text-base tracking-wide transition-all duration-200"
+          className="w-full py-4 rounded-xl font-black text-base tracking-wide transition-all duration-200 active:scale-[0.97]"
           style={{
             background: sex && age ? 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)' : 'rgba(255,255,255,0.04)',
             border: sex && age ? '1px solid #EF4444' : '1px solid rgba(255,255,255,0.06)',
@@ -207,21 +177,16 @@ export function ProfileForm() {
           }}
         >
           {sex && age ? "🚩 C'EST PARTI" : 'Sélectionne sexe + âge'}
-        </motion.button>
+        </button>
         </div>
-      </motion.div>
+      </div>
 
       <p className="text-center mt-5 text-[10px]" style={{ color: '#3F3F46' }}>
         Données 100% anonymes — juste pour les stats
       </p>
 
       {/* How to play — compact inline under the form */}
-      <motion.div
-        className="w-full max-w-sm mt-4 mb-4"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-      >
+      <div className="w-full max-w-sm mt-4 mb-4 animate-pf-howto">
         <div className="flex items-center gap-3 justify-center">
           {[
             { emoji: '🚩', label: 'Choisis le pire' },
@@ -235,9 +200,9 @@ export function ProfileForm() {
             </div>
           ))}
         </div>
-      </motion.div>
+      </div>
 
-      </motion.div>
+      </div>
     </div>
   );
 }
