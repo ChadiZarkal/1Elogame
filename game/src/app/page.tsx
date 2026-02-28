@@ -115,19 +115,6 @@ export default function HubPage() {
 
         </div>
 
-        {/* ─── SEO CONTENT (visible, compact) ─── */}
-        <section className="hub__seo hub__enter hub__enter--6">
-          <h2 className="hub__seo-title">Red or Green — Le party game des Red Flags</h2>
-          <p className="hub__seo-text">
-            Joue gratuitement à <strong>Red or Green</strong>, le jeu en ligne où tu votes pour le pire comportement.
-            Découvre aussi l&apos;<strong>Oracle</strong> pour savoir si une situation est un Red Flag ou un Green Flag,
-            et nos outils d&apos;auto-évaluation : <a href="/ressources/violentometre" className="hub__seo-link">violentomètre</a>,{' '}
-            <a href="/ressources/consentometre" className="hub__seo-link">consentomètre</a>,{' '}
-            <a href="/ressources/harcelometre" className="hub__seo-link">harcèlomètre</a> et plus encore.
-            Sans inscription, sans téléchargement — jouable instantanément sur mobile et desktop.
-          </p>
-        </section>
-
         {/* ─── FOOTER ─── */}
         <footer className="hub__footer hub__enter hub__enter--7">
           <div className="hub__stats">
@@ -166,6 +153,18 @@ export default function HubPage() {
           </nav>
 
           <p className="hub__version">Red or Green — v4.0</p>
+
+          <section className="hub__seo">
+            <h2 className="hub__seo-title">Red or Green — Le party game des Red Flags</h2>
+            <p className="hub__seo-text">
+              Joue gratuitement à <strong>Red or Green</strong>, le jeu en ligne où tu votes pour le pire comportement.
+              Découvre aussi l&apos;<strong>Oracle</strong> pour savoir si une situation est un Red Flag ou un Green Flag,
+              et nos outils d&apos;auto-évaluation : <a href="/ressources/violentometre" className="hub__seo-link">violentomètre</a>,{' '}
+              <a href="/ressources/consentometre" className="hub__seo-link">consentomètre</a>,{' '}
+              <a href="/ressources/harcelometre" className="hub__seo-link">harcèlomètre</a> et plus encore.
+              Sans inscription, sans téléchargement — jouable instantanément sur mobile et desktop.
+            </p>
+          </section>
         </footer>
 
       </main>
