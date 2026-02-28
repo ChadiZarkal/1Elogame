@@ -33,11 +33,17 @@ export function ProfileForm() {
   const [age, setAge] = useState<AgeVotant | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showBg, setShowBg] = useState(false);
+  // mounted = false during SSR → éléments rendus à opacity:1 (pas de classe animation)
+  // mounted = true après hydration → classes animation ajoutées → effet de transition
+  const [mounted, setMounted] = useState(false);
 
-  // Defer animated background to after first paint to unblock FCP
+  // Defer animated background + animation classes to after first paint to unblock FCP
   useEffect(() => {
     // Use requestAnimationFrame to ensure the first paint has occurred
-    requestAnimationFrame(() => setShowBg(true));
+    requestAnimationFrame(() => {
+      setShowBg(true);
+      setMounted(true);
+    });
   }, []);
   
   const handleSubmit = () => {
@@ -68,7 +74,7 @@ export function ProfileForm() {
           background: 'radial-gradient(circle, rgba(239,68,68,0.08) 0%, transparent 70%)',
         }}
       />
-      <div className="relative z-10 flex flex-col items-center justify-center w-full p-6 animate-fade-in">
+      <div className={`relative z-10 flex flex-col items-center justify-center w-full p-6${mounted ? ' animate-fade-in' : ''}`}>
       {/* Back button */}
       <div className="fixed top-4 left-4 z-50">
         <button
@@ -80,8 +86,8 @@ export function ProfileForm() {
       </div>
 
       {/* Logo */}
-      <div className="mb-6 text-center pt-10 animate-pf-logo">
-        <div className="flex items-center justify-center mb-3 animate-pf-logo-img">
+      <div className={`mb-6 text-center pt-10${mounted ? ' animate-pf-logo' : ''}`}>
+        <div className={`flex items-center justify-center mb-3${mounted ? ' animate-pf-logo-img' : ''}`}>
           <img
             src="/logo-rog-new.svg"
             alt="Red or Green"
@@ -96,7 +102,7 @@ export function ProfileForm() {
       
       {/* Form container */}
       <div
-        className="w-full max-w-sm animate-pf-form"
+        className={`w-full max-w-sm${mounted ? ' animate-pf-form' : ''}`}
         style={{
           background: 'rgba(20,20,23,0.9)',
           border: '1px solid rgba(255,255,255,0.06)',
@@ -199,7 +205,7 @@ export function ProfileForm() {
       </p>
 
       {/* How to play — compact inline under the form */}
-      <div className="w-full max-w-sm mt-4 mb-4 animate-pf-howto">
+      <div className={`w-full max-w-sm mt-4 mb-4${mounted ? ' animate-pf-howto' : ''}`}>
         <div className="flex items-center gap-3 justify-center">
           {[
             { emoji: '🚩', label: 'Choisis le pire' },
