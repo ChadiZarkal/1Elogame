@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { ArrowRight, ArrowLeft, Shield } from 'lucide-react';
 import { METERS } from '@/config/meters-data';
@@ -14,7 +13,6 @@ const METER_COLORS: Record<string, string> = {
 };
 
 export default function RessourcesPage() {
-  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
@@ -25,13 +23,13 @@ export default function RessourcesPage() {
       <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-[#F97316]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top))] pb-2">
-        <button
-          onClick={() => router.push('/')}
+        <a
+          href="/"
           className="text-[#6B7280] hover:text-white transition-colors text-sm flex items-center gap-1 min-w-[48px] min-h-[48px] justify-start active:scale-95"
           aria-label="Retour à l'accueil"
         >
           <ArrowLeft size={16} /> Retour
-        </button>
+        </a>
       </div>
 
       <main className={`flex-1 flex flex-col px-5 pb-8 transition-opacity duration-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
@@ -52,9 +50,9 @@ export default function RessourcesPage() {
         {/* Meter cards */}
         <div className="flex flex-col gap-2.5 max-w-md mx-auto w-full" role="list">
           {METERS.map((meter, idx) => (
-            <button
+            <a
               key={meter.slug}
-              onClick={() => router.push(`/ressources/${meter.slug}`)}
+              href={`/ressources/${meter.slug}`}
               className="res-card group text-left"
               role="listitem"
               style={{
@@ -82,7 +80,7 @@ export default function RessourcesPage() {
                   />
                 </div>
               </div>
-            </button>
+            </a>
           ))}
         </div>
 
@@ -102,6 +100,18 @@ export default function RessourcesPage() {
           Ces outils ne remplacent pas un accompagnement professionnel.
           Aucune donnée n&apos;est collectée — tout reste sur ton appareil.
         </p>
+
+        {/* SEO-rich footer section with internal links */}
+        <section className="mt-6 max-w-md mx-auto w-full px-1">
+          <p className="text-[11px] text-[#3D3D3D] leading-relaxed text-center">
+            Ces outils d&apos;auto-évaluation sont proposés par <a href="/" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">Red or Green (Red Flag Games)</a>.
+            Utilise-les pour évaluer ta situation et identifier d&apos;éventuels{' '}
+            <a href="/redflag" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">red flags</a> dans tes relations.
+            Tu peux aussi jouer au{' '}
+            <a href="/jeu" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">jeu Red or Green</a> ou tester l&apos;
+            <a href="/flagornot" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">Oracle</a> pour évaluer n&apos;importe quelle situation.
+          </p>
+        </section>
       </main>
     </div>
   );

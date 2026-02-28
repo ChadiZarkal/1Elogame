@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 
@@ -10,12 +9,11 @@ interface AllDuelsExhaustedProps {
 }
 
 export function AllDuelsExhausted({ duelCount, onReset }: AllDuelsExhaustedProps) {
-  const router = useRouter();
 
   const handleShare = () => {
-    const text = `🚩 J'ai participé à ${duelCount} duels sur Red Flag Games !\nEt toi, tu as combien de Red Flags ? 👀\n\n→ redflaggames.fr`;
+    const text = `🚩 J'ai participé à ${duelCount} duels sur Red Flag Games !\nEt toi, tu as combien de Red Flags ? 👀`;
     if (navigator.share) {
-      navigator.share({ text }).catch(() => {});
+      navigator.share({ text, url: 'https://redflaggames.fr/jeu' }).catch(() => {});
     } else {
       navigator.clipboard.writeText(text).catch(() => {});
     }
@@ -56,12 +54,12 @@ export function AllDuelsExhausted({ duelCount, onReset }: AllDuelsExhaustedProps
           <Button onClick={onReset} variant="primary" size="lg">
             🔄 Recommencer
           </Button>
-          <button
-            onClick={() => router.push('/classement')}
-            className="px-6 py-3 rounded-xl bg-[#1A1A1A] border border-[#333] text-[#A3A3A3] font-medium hover:border-[#FCD34D] hover:text-[#FCD34D] transition-all"
+          <a
+            href="/classement"
+            className="px-6 py-3 rounded-xl bg-[#1A1A1A] border border-[#333] text-[#A3A3A3] font-medium hover:border-[#FCD34D] hover:text-[#FCD34D] transition-all text-center"
           >
             🏆 Voir le classement
-          </button>
+          </a>
           <button
             onClick={handleShare}
             className="px-6 py-3 rounded-xl bg-[#1A1A1A] border border-[#333] text-[#A3A3A3] font-medium hover:border-[#059669] hover:text-[#059669] transition-all"

@@ -12,21 +12,23 @@ const spaceGrotesk = Space_Grotesk({
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redflaggames.fr';
 const SITE_NAME = 'Red Flag Games';
-const SITE_DESCRIPTION = 'Red Flag, Green Flag... Choisis ton jeu et amuse-toi entre amis ! Party games mobiles gratuits, sans inscription, jouables instantanément. Quel comportement est le plus gros Red Flag ?';
+const SITE_DESCRIPTION = 'Red or Green, Red Flag, Green Flag... Choisis ton jeu et amuse-toi entre amis ! Party games mobiles gratuits, sans inscription, jouables instantanément. Violentomètre, consentomètre et outils d\'auto-évaluation inclus.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} - Le jeu des Red Flags entre amis`,
+    default: `Red or Green — ${SITE_NAME} | Jeu de Red Flags gratuit en ligne`,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
   keywords: [
+    'red or green', 'red or green.fr', 'redorgreen', 'red flag games',
     'red flag', 'green flag', 'party game', 'jeu entre amis', 'jeu mobile',
     'red flag test', 'flag or not', 'jeu gratuit', 'jeu en ligne', 'débat',
     'jeu de société', 'icebreaker', 'jeu soirée', 'quiz couple',
     'red flag definition', 'green flag definition', 'oracle jeu',
     'classement red flag', 'comportement red flag',
+    'violentomètre', 'consentomètre', 'violentometre en ligne',
   ],
   authors: [{ name: SITE_NAME, url: SITE_URL }],
   creator: SITE_NAME,
@@ -41,20 +43,20 @@ export const metadata: Metadata = {
     locale: 'fr_FR',
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: `${SITE_NAME} - Le jeu des Red Flags entre amis`,
+    title: `Red or Green — ${SITE_NAME} | Jeu de Red Flags gratuit`,
     description: SITE_DESCRIPTION,
     images: [{
-      url: '/og-image.png',
+      url: '/opengraph-image',
       width: 1200,
       height: 630,
-      alt: 'Red Flag Games - Party game mobile gratuit',
+      alt: 'Red or Green — Red Flag Games, party game mobile gratuit',
     }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: `${SITE_NAME} - Le jeu des Red Flags entre amis`,
+    title: `Red or Green — ${SITE_NAME} | Jeu de Red Flags gratuit`,
     description: SITE_DESCRIPTION,
-    images: ['/og-image.png'],
+    images: ['/opengraph-image'],
   },
   robots: {
     index: true,
@@ -94,24 +96,54 @@ import { Toaster } from 'sonner';
 function JsonLd() {
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'WebApplication',
-    name: SITE_NAME,
-    url: SITE_URL,
-    description: SITE_DESCRIPTION,
-    applicationCategory: 'GameApplication',
-    operatingSystem: 'Web',
-    offers: {
-      '@type': 'Offer',
-      price: '0',
-      priceCurrency: 'EUR',
-    },
-    inLanguage: 'fr-FR',
-    browserRequirements: 'Requires JavaScript',
-    softwareVersion: '3.7',
-    author: {
-      '@type': 'Organization',
-      name: SITE_NAME,
-    },
+    '@graph': [
+      {
+        '@type': 'WebApplication',
+        name: SITE_NAME,
+        alternateName: 'Red or Green',
+        url: SITE_URL,
+        description: SITE_DESCRIPTION,
+        applicationCategory: 'GameApplication',
+        operatingSystem: 'Web',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'EUR',
+        },
+        inLanguage: 'fr-FR',
+        browserRequirements: 'Requires JavaScript',
+        softwareVersion: '4.0',
+        author: {
+          '@type': 'Organization',
+          name: SITE_NAME,
+          url: SITE_URL,
+        },
+      },
+      {
+        '@type': 'WebSite',
+        name: SITE_NAME,
+        alternateName: ['Red or Green', 'RedOrGreen', 'Red Flag Games', 'redflaggames.fr'],
+        url: SITE_URL,
+        inLanguage: 'fr-FR',
+      },
+      {
+        '@type': 'Organization',
+        name: SITE_NAME,
+        alternateName: 'Red or Green',
+        url: SITE_URL,
+        logo: `${SITE_URL}/logo-rog-new.svg`,
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Accueil', item: SITE_URL },
+          { '@type': 'ListItem', position: 2, name: 'Red or Green', item: `${SITE_URL}/jeu` },
+          { '@type': 'ListItem', position: 3, name: 'Oracle', item: `${SITE_URL}/flagornot` },
+          { '@type': 'ListItem', position: 4, name: 'Classement', item: `${SITE_URL}/classement` },
+          { '@type': 'ListItem', position: 5, name: 'Ressources', item: `${SITE_URL}/ressources` },
+        ],
+      },
+    ],
   };
 
   return (

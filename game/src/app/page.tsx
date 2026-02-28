@@ -1,13 +1,11 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { Trophy, ArrowRight, ExternalLink, Shield } from 'lucide-react';
 import { useHaptics } from '@/lib/hooks';
 
 // ─── Main Page ─────────────────────────────────────────────
 export default function HubPage() {
-  const router = useRouter();
   const { tap } = useHaptics();
   const [stats, setStats] = useState<{ totalVotes: number; estimatedPlayers: number } | null>(null);
 
@@ -18,11 +16,10 @@ export default function HubPage() {
       .catch(() => {});
   }, []);
 
-  const go = useCallback((href: string, external = false) => {
+  const handleTap = useCallback((e: React.MouseEvent) => {
     tap();
-    if (external) window.open(href, '_blank', 'noopener,noreferrer');
-    else router.push(href);
-  }, [tap, router]);
+    // Let the native <a> navigation happen
+  }, [tap]);
 
   return (
     <div className="hub">
@@ -35,10 +32,11 @@ export default function HubPage() {
         <header className="hub__hero hub__enter hub__enter--1">
           <img
             src="/logo-rog-new.svg"
-            alt="Red or Green"
+            alt="Red or Green — Red Flag Games, le party game gratuit"
             className="hub__logo"
             draggable={false}
           />
+          <h1 className="sr-only">Red or Green — Red Flag Games | Jeu de société en ligne gratuit</h1>
           <p className="hub__subtitle">Le jeu qui divise</p>
         </header>
 
@@ -57,10 +55,13 @@ export default function HubPage() {
         <div className="hub__games">
 
           {/* Primary: Red Flag Test — full width, red accent */}
-          <button
+          <a
+            href="https://redflagtest.redorgreen.fr/"
+            target="_blank"
+            rel="noopener noreferrer"
             className="hub__card hub__card--main hub__enter hub__enter--3"
-            onClick={() => go('https://redflagtest.redorgreen.fr/', true)}
-            aria-label="Jouer à Red Flag Test"
+            onClick={handleTap}
+            aria-label="Jouer à Red Flag Test — Es-tu un red flag ?"
           >
             <div className="hub__card-header">
               <span className="hub__card-emoji">🧪</span>
@@ -73,14 +74,15 @@ export default function HubPage() {
             <span className="hub__card-go hub__card-go--red">
               FAIRE LE TEST <ExternalLink size={13} strokeWidth={2.5} />
             </span>
-          </button>
+          </a>
 
           {/* Secondary: 2-column grid */}
           <div className="hub__row">
-            <button
+            <a
+              href="/jeu"
               className="hub__card hub__card--half hub__card--green hub__enter hub__enter--4"
-              onClick={() => go('/jeu')}
-              aria-label="Jouer à Red or Green"
+              onClick={handleTap}
+              aria-label="Jouer à Red or Green — Quel est le plus gros Red Flag ?"
             >
               <div className="hub__card-header">
                 <span className="hub__card-emoji">🚩</span>
@@ -91,12 +93,13 @@ export default function HubPage() {
               <span className="hub__card-go hub__card-go--sm hub__card-go--green">
                 JOUER <ArrowRight size={11} strokeWidth={2.5} />
               </span>
-            </button>
+            </a>
 
-            <button
+            <a
+              href="/flagornot"
               className="hub__card hub__card--half hub__card--purple hub__enter hub__enter--5"
-              onClick={() => go('/flagornot')}
-              aria-label="Jouer à Oracle"
+              onClick={handleTap}
+              aria-label="Jouer à Oracle — Red Flag ou Green Flag ?"
             >
               <div className="hub__card-header">
                 <span className="hub__card-emoji">🔮</span>
@@ -107,13 +110,26 @@ export default function HubPage() {
               <span className="hub__card-go hub__card-go--sm hub__card-go--purple">
                 TESTER <ArrowRight size={11} strokeWidth={2.5} />
               </span>
-            </button>
+            </a>
           </div>
 
         </div>
 
+        {/* ─── SEO CONTENT (visible, compact) ─── */}
+        <section className="hub__seo hub__enter hub__enter--6">
+          <h2 className="hub__seo-title">Red or Green — Le party game des Red Flags</h2>
+          <p className="hub__seo-text">
+            Joue gratuitement à <strong>Red or Green</strong>, le jeu en ligne où tu votes pour le pire comportement.
+            Découvre aussi l&apos;<strong>Oracle</strong> pour savoir si une situation est un Red Flag ou un Green Flag,
+            et nos outils d&apos;auto-évaluation : <a href="/ressources/violentometre" className="hub__seo-link">violentomètre</a>,{' '}
+            <a href="/ressources/consentometre" className="hub__seo-link">consentomètre</a>,{' '}
+            <a href="/ressources/harcelometre" className="hub__seo-link">harcèlomètre</a> et plus encore.
+            Sans inscription, sans téléchargement — jouable instantanément sur mobile et desktop.
+          </p>
+        </section>
+
         {/* ─── FOOTER ─── */}
-        <footer className="hub__footer hub__enter hub__enter--6">
+        <footer className="hub__footer hub__enter hub__enter--7">
           <div className="hub__stats">
             {stats && (
               <>
@@ -129,23 +145,25 @@ export default function HubPage() {
             )}
           </div>
 
-          <div className="hub__actions">
-            <button
+          <nav className="hub__actions" aria-label="Navigation secondaire">
+            <a
+              href="/classement"
               className="hub__action"
-              onClick={() => { tap(); router.push('/classement'); }}
+              onClick={handleTap}
             >
               <Trophy size={13} strokeWidth={2.5} />
-              Statistiques
-            </button>
-            <button
+              Classement
+            </a>
+            <a
+              href="/ressources"
               className="hub__action"
-              onClick={() => { tap(); router.push('/ressources'); }}
-              aria-label="Violentomètre"
+              onClick={handleTap}
+              aria-label="Violentomètre et outils d'auto-évaluation"
             >
               <Shield size={13} strokeWidth={2.5} />
               Violentomètre
-            </button>
-          </div>
+            </a>
+          </nav>
 
           <p className="hub__version">Red Flag Games — v4.0</p>
         </footer>

@@ -7,10 +7,23 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: '/',
+        allow: [
+          '/',
+          '/jeu',
+          '/flagornot',
+          '/classement',
+          '/redflag',
+          '/ressources',
+          '/ressources/violentometre',
+          '/ressources/consentometre',
+          '/ressources/incestometre',
+          '/ressources/harcelometre',
+          '/ressources/discriminometre',
+        ],
         disallow: ['/admin/', '/api/'],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
+    host: baseUrl,
   };
 }

@@ -208,10 +208,10 @@ export function useFlagOrNot() {
 
   const handleShare = useCallback(async () => {
     if (!result || !submittedText) return;
-    const shareText = `${result.verdict === 'red' ? '🚩 RED FLAG' : '🟢 GREEN FLAG'}: "${submittedText}" — Joue sur Red or Green !`;
+    const shareText = `${result.verdict === 'red' ? '🚩 RED FLAG' : '🟢 GREEN FLAG'}: "${submittedText}" — Teste toi aussi sur Red or Green !`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Red or Green — Oracle', text: shareText });
+        await navigator.share({ title: 'Red or Green — Oracle', text: shareText, url: 'https://redflaggames.fr/flagornot' });
       } catch {
         /* user cancelled */
       }

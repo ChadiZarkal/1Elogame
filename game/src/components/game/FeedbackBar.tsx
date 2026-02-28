@@ -45,9 +45,9 @@ export function FeedbackBar({
     e.stopPropagation();
     const moreRF = elementAStats.isMoreRedFlag ? duel.elementA.texte : duel.elementB.texte;
     const lessRF = !elementAStats.isMoreRedFlag ? duel.elementA.texte : duel.elementB.texte;
-    const shareText = `🚩 Red Flag Games\n\n"${moreRF}" est voté plus Red Flag que "${lessRF}" par la communauté !\n\nJoue toi aussi → redflaggames.fr`;
+    const shareText = `🚩 Red Flag Games\n\n"${moreRF}" est voté plus Red Flag que "${lessRF}" par la communauté !\n\nJoue toi aussi →`;
     if (navigator.share) {
-      navigator.share({ text: shareText }).catch(() => {});
+      navigator.share({ text: shareText, url: 'https://redflaggames.fr/jeu' }).catch(() => {});
     } else {
       navigator.clipboard.writeText(shareText).catch(() => {});
     }

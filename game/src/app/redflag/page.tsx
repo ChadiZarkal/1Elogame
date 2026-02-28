@@ -24,15 +24,15 @@ export default function RedFlagHome() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen min-h-[100dvh] bg-[#0D0D0D] px-6 py-6">
       {/* Back to Hub */}
-      <motion.button
-        onClick={() => router.push('/')}
+      <motion.a
+        href="/"
         className="absolute top-4 left-4 text-[#737373] hover:text-[#F5F5F5] transition-colors text-sm flex items-center gap-1 px-3 py-2.5 min-h-[44px] rounded-lg hover:bg-white/5"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
       >
         ← Accueil
-      </motion.button>
+      </motion.a>
 
       <motion.div
         className="text-center space-y-8 max-w-md"
@@ -117,12 +117,19 @@ export default function RedFlagHome() {
       </motion.div>
 
       <motion.footer
-        className="absolute bottom-4 text-[#737373] text-xs"
+        className="absolute bottom-4 text-[#737373] text-xs text-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
       >
-        Aucun compte requis • Données anonymes
+        <p>Aucun compte requis • Données anonymes</p>
+        <p className="mt-1 text-[10px] text-[#4B4B4B]">
+          <a href="/classement" className="hover:text-[#A3A3A3] transition-colors">Classement</a>
+          {' · '}
+          <a href="/flagornot" className="hover:text-[#A3A3A3] transition-colors">Oracle</a>
+          {' · '}
+          <a href="/ressources" className="hover:text-[#A3A3A3] transition-colors">Violentomètre</a>
+        </p>
       </motion.footer>
     </div>
   );

@@ -740,6 +740,52 @@ button:focus-visible {
   }
 }
 
+/* ── Accessibility: screen reader only ── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ── SEO content section ─────────────── */
+.hub__seo {
+  max-width: 400px;
+  margin: 1.5rem auto 0;
+  padding: 0 0.5rem;
+  text-align: center;
+}
+
+.hub__seo-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #888;
+  margin-bottom: 0.5rem;
+}
+
+.hub__seo-text {
+  font-size: 0.7rem;
+  color: #555;
+  line-height: 1.6;
+}
+
+.hub__seo-link {
+  color: #888;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.15);
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+.hub__seo-link:hover {
+  color: #EF4444;
+}
+
 /* ═══════════════════════════════════════════════════════════
    RESSOURCES — Floating button, cards, quiz
    ═══════════════════════════════════════════════════════════ */

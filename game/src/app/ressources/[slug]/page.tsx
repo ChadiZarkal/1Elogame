@@ -64,6 +64,15 @@ export default function MeterQuizPage() {
     setPhase('intro');
   };
 
+  const handleShareResult = () => {
+    const shareText = `${meter.emoji} J'ai fait le ${meter.name} sur Red or Green !\nRésultat : ${levelInfo.title}\n\nFais le test toi aussi →`;
+    if (navigator.share) {
+      navigator.share({ text: shareText, url: `https://redflaggames.fr/ressources/${slug}` }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(`${shareText} https://redflaggames.fr/ressources/${slug}`).catch(() => {});
+    }
+  };
+
   const resultLevel = phase === 'results' ? getHighestSeverity(answers, meter.questions) : 'green';
   const levelInfo = meter.levels[resultLevel];
   const yesByLevel = phase === 'results' ? getYesAnswersByLevel(answers, meter.questions) : null;
@@ -423,17 +432,23 @@ export default function MeterQuizPage() {
           {/* Action buttons */}
           <div className="flex flex-col gap-2.5 max-w-md mx-auto mb-4">
             <button
+              onClick={handleShareResult}
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-all shadow-[0_0_20px_rgba(59,130,246,0.15)]"
+            >
+              📤 Partager mon résultat
+            </button>
+            <button
               onClick={handleRestart}
               className="w-full py-3.5 rounded-2xl bg-[#1A1A1A] border border-[#2A2A2A] text-[#FAFAFA] font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:border-[#3A3A3A]"
             >
               <RotateCcw size={14} /> Recommencer
             </button>
-            <button
-              onClick={() => router.push('/ressources')}
+            <a
+              href="/ressources"
               className="w-full py-3 rounded-2xl text-[#9CA3AF] font-medium text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:text-white"
             >
               Essayer un autre test <ChevronRight size={14} />
-            </button>
+            </a>
           </div>
 
           <p className="text-[10px] text-[#4B5563] text-center mb-4 flex items-center justify-center gap-1">
