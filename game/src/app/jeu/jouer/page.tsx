@@ -7,13 +7,13 @@ import dynamic from 'next/dynamic';
 import { useGameStore } from '@/stores/gameStore';
 import { DuelInterface } from '@/components/game/DuelInterface';
 import { StreakDisplay } from '@/components/game/StreakDisplay';
-import { GameModeMenu } from '@/components/game/GameModeMenu';
 import { FullPageLoading } from '@/components/ui/Loading';
 
 // Lazy-load components only needed after first vote or rarely
 const ResultDisplay = dynamic(() => import('@/components/game/ResultDisplay').then(m => m.ResultDisplay), { ssr: false });
 const AllDuelsExhausted = dynamic(() => import('@/components/game/AllDuelsExhausted').then(m => m.AllDuelsExhausted), { ssr: false });
 const CompactResult = dynamic(() => import('@/components/game/CompactResult').then(m => m.CompactResult), { ssr: false });
+const PartySetup = dynamic(() => import('@/components/game/PartySetup').then(m => m.PartySetup), { ssr: false });
 
 export default function JouerPage() {
   const router = useRouter();
@@ -30,8 +30,10 @@ export default function JouerPage() {
     allDuelsExhausted,
     isLoadingDuel,
     error,
-    gameMode,
     duelHistory,
+    partyActive,
+    partyConfig,
+    partyComplete,
     initializeFromStorage,
     fetchNextDuel,
     submitVote,
@@ -39,14 +41,13 @@ export default function JouerPage() {
     showNextDuel,
     resetGame,
     clearError,
-    setGameMode,
   } = useGameStore();
   
-  // Initialize from storage and fetch first duel
+  // Initialize from storage
   useEffect(() => {
     initializeFromStorage();
     
-    // Precache canvas-confetti during idle time to avoid micro-freeze on first confetti
+    // Precache canvas-confetti during idle time
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
       const id = requestIdleCallback(() => { import('canvas-confetti').catch(() => {}); });
       return () => cancelIdleCallback(id);
@@ -63,13 +64,12 @@ export default function JouerPage() {
     return () => clearTimeout(timer);
   }, [hasProfile, router]);
   
-  // Fetch first duel when profile is loaded
-  // Guard: !error prevents infinite retry loop when API fails (429 / 500)
+  // Fetch first duel when party is active and profile loaded
   useEffect(() => {
-    if (hasProfile && !currentDuel && !isLoadingDuel && !allDuelsExhausted && !error) {
+    if (hasProfile && partyActive && !currentDuel && !isLoadingDuel && !allDuelsExhausted && !error) {
       fetchNextDuel();
     }
-  }, [hasProfile, currentDuel, isLoadingDuel, allDuelsExhausted, error, fetchNextDuel]);
+  }, [hasProfile, partyActive, currentDuel, isLoadingDuel, allDuelsExhausted, error, fetchNextDuel]);
   
   // Auto-scroll to bottom when new content appears
   useEffect(() => {
@@ -81,83 +81,54 @@ export default function JouerPage() {
     }
   }, [duelHistory.length, showingResult, currentDuel]);
 
-  // Streak milestone toasts with viral challenge CTA
+  // Redirect to recap when party is complete
+  useEffect(() => {
+    if (partyComplete) {
+      router.push('/jeu/recap');
+    }
+  }, [partyComplete, router]);
+
+  // Streak milestone toasts
   const prevStreakRef = useRef(0);
   useEffect(() => {
     const prev = prevStreakRef.current;
     prevStreakRef.current = streak;
     if (streak > prev) {
-      if (streak === 3) toast('🔥 3 de suite !', { description: 'Tu es chaud·e ce soir !', duration: 2500 });
+      if (streak === 3) toast('🔥 3 de suite !', { description: 'Tu es chaud·e !', duration: 2500 });
       else if (streak === 5) {
-        toast('⚡ Streak x5 !', {
-          description: 'Défie un ami !',
-          duration: 4000,
-          action: {
-            label: '📤 Défier',
-            onClick: () => {
-              const text = `🔥 J'ai une streak de 5 sur Red or Green ! Tu penses faire mieux ?`;
-              if (navigator.share) navigator.share({ text, url: 'https://redorgreen.fr/jeu' }).catch(() => {});
-              else navigator.clipboard.writeText(`${text} → redorgreen.fr/jeu`).catch(() => {});
-            },
-          },
+        toast('⚡ Streak x5 !', { description: 'Défie un ami !', duration: 4000,
+          action: { label: '📤 Défier', onClick: () => {
+            const text = `🔥 J'ai une streak de 5 sur Red or Green ! Tu penses faire mieux ?`;
+            if (navigator.share) navigator.share({ text, url: 'https://redorgreen.fr/jeu' }).catch(() => {});
+            else navigator.clipboard.writeText(`${text} → redorgreen.fr/jeu`).catch(() => {});
+          }},
         });
       }
       else if (streak === 10) {
-        toast('🏆 Streak x10 !', {
-          description: 'Incroyable ! Partage ta performance !',
-          duration: 5000,
-          action: {
-            label: '📤 Partager',
-            onClick: () => {
-              const text = `🏆 Streak de 10 sur Red or Green ! Qui peut me battre ?`;
-              if (navigator.share) navigator.share({ text, url: 'https://redorgreen.fr/jeu' }).catch(() => {});
-              else navigator.clipboard.writeText(`${text} → redorgreen.fr/jeu`).catch(() => {});
-            },
-          },
+        toast('🏆 Streak x10 !', { description: 'Partage ton exploit !', duration: 5000,
+          action: { label: '📤 Partager', onClick: () => {
+            const text = `🏆 Streak de 10 sur Red or Green ! Qui peut me battre ?`;
+            if (navigator.share) navigator.share({ text, url: 'https://redorgreen.fr/jeu' }).catch(() => {});
+            else navigator.clipboard.writeText(`${text} → redorgreen.fr/jeu`).catch(() => {});
+          }},
         });
       }
       else if (streak >= 15 && streak % 5 === 0) {
-        toast(`🎯 Streak x${streak}`, {
-          description: 'Légendaire ! Partage ton exploit !',
-          duration: 5000,
-          action: {
-            label: '📤 Partager',
-            onClick: () => {
-              const text = `🎯 Streak de ${streak} sur Red or Green ! Je suis inarrêtable !`;
-              if (navigator.share) navigator.share({ text, url: 'https://redorgreen.fr/jeu' }).catch(() => {});
-              else navigator.clipboard.writeText(`${text} → redorgreen.fr/jeu`).catch(() => {});
-            },
-          },
-        });
+        toast(`🎯 Streak x${streak}`, { description: 'Légendaire !', duration: 5000 });
       }
     }
   }, [streak]);
-
-  // Duel count milestones — viral CTA every 10 duels
-  const prevDuelCountRef = useRef(0);
-  useEffect(() => {
-    const prev = prevDuelCountRef.current;
-    prevDuelCountRef.current = duelCount;
-    if (duelCount > prev && duelCount > 0 && duelCount % 10 === 0) {
-      toast(`🎮 ${duelCount} duels joués !`, {
-        description: 'Invite tes amis à jouer !',
-        duration: 5000,
-        action: {
-          label: '📤 Inviter',
-          onClick: () => {
-            const text = `🎮 J'ai fait ${duelCount} duels sur Red or Green ! Viens jouer aussi →`;
-            if (navigator.share) navigator.share({ text, url: 'https://redorgreen.fr/jeu' }).catch(() => {});
-            else navigator.clipboard.writeText(`${text} redorgreen.fr/jeu`).catch(() => {});
-          },
-        },
-      });
-    }
-  }, [duelCount]);
   
   const handleReset = useCallback(() => { resetGame(); router.push('/jeu'); }, [resetGame, router]);
   
   if (!hasProfile) {
     return <FullPageLoading text="Chargement..." />;
+  }
+  
+  // ── Party Setup Phase ──
+  // If no party is active and party is not complete, show setup
+  if (!partyActive && !partyComplete) {
+    return <PartySetup />;
   }
   
   if (allDuelsExhausted) {
@@ -190,12 +161,15 @@ export default function JouerPage() {
     return <FullPageLoading text="Chargement du duel..." />;
   }
   
+  // Party progress for the progress bar
+  const partyTotal = partyConfig?.size ?? 0;
+  const progressPercent = partyTotal > 0 ? Math.min((duelCount / partyTotal) * 100, 100) : 0;
+  
   return (
     <div ref={scrollRef} className="h-screen w-screen overflow-y-auto relative bg-[#0D0D0D]">
       {/* History: past duel results */}
       {duelHistory.length > 0 && (
         <div className="pt-4 pb-2">
-          {/* Scroll-up hint */}
           <div className="text-center text-[#555] text-xs mb-3 flex items-center justify-center gap-2">
             <span className="inline-block w-8 h-px bg-[#333]" />
             <span>{duelHistory.length} duel{duelHistory.length > 1 ? 's' : ''} précédent{duelHistory.length > 1 ? 's' : ''}</span>
@@ -214,7 +188,7 @@ export default function JouerPage() {
       
       {/* Current active duel/result - takes full screen height */}
       <div className="h-screen w-full relative flex flex-col">
-        {/* Top bar: home + streak + mode */}
+        {/* Top bar: home + streak + progress */}
         <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {/* Home button */}
@@ -225,7 +199,7 @@ export default function JouerPage() {
             >
               ←
             </a>
-            {/* Streak — hidden instead of unmounted to prevent CLS */}
+            {/* Streak */}
             <div style={{ visibility: showingResult ? 'hidden' : 'visible' }}>
               <StreakDisplay 
                 streak={streak} 
@@ -234,11 +208,20 @@ export default function JouerPage() {
               />
             </div>
           </div>
-          {/* Game Mode Menu */}
-          <GameModeMenu
-            currentSelection={gameMode}
-            onSelectionChange={setGameMode}
-          />
+          {/* Party progress indicator */}
+          {partyConfig && (
+            <div className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-[#333] rounded-full px-3 py-1.5 flex items-center gap-2">
+              <span className="text-xs font-bold text-white">
+                {duelCount >= partyTotal ? '✅' : `${duelCount}/${partyTotal}`}
+              </span>
+              <div className="w-16 h-1.5 bg-[#333] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-[#DC2626] to-[#EF4444] rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
         
         {/* First duel hint */}

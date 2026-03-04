@@ -40,9 +40,38 @@ export function getDefaultGameMode(): GameModeSelection {
 export interface DuelHistoryEntry {
   duel: Duel;
   result: VoteResult;
+  /** Time in ms the user took to pick (from duel shown to tap) */
+  reactionTimeMs?: number;
 }
 
 const MAX_HISTORY = 10;
+
+// ── Party Mode ──────────────────────────────────────────────────────────
+
+export type PartySize = 10 | 15 | 20;
+
+export interface PartyConfig {
+  size: number;              // total duels target (grows via continueParty)
+  originalSize: PartySize;   // user's original selection (10|15|20)
+  category: string | null;   // null = classique (toutes)
+}
+
+export interface PartyStats {
+  /** All duels played in this party */
+  results: DuelHistoryEntry[];
+  /** Best streak reached during this party */
+  bestStreak: number;
+  /** Total correct guesses (user pick matched majority) */
+  correctGuesses: number;
+  /** Party start timestamp */
+  startedAt: number;
+  /** Party end timestamp */
+  endedAt: number;
+  /** Category played */
+  category: string | null;
+  /** Party size (may have grown via continue) */
+  size: number;
+}
 
 /** Shared initial state for reset operations. */
 const INITIAL_GAME_STATE = {
@@ -55,6 +84,18 @@ const INITIAL_GAME_STATE = {
   streakEmoji: '',
   duelCount: 0,
   allDuelsExhausted: false,
+};
+
+const INITIAL_PARTY_STATE = {
+  partyConfig: null as PartyConfig | null,
+  partyActive: false,
+  partyResults: [] as DuelHistoryEntry[],
+  partyBestStreak: 0,
+  partyCorrectGuesses: 0,
+  partyStartedAt: 0,
+  partyComplete: false,
+  partyStats: null as PartyStats | null,
+  duelShownAt: 0, // timestamp when current duel was shown (for reaction time)
 };
 
 interface GameState {
@@ -85,6 +126,17 @@ interface GameState {
   duelCount: number;
   allDuelsExhausted: boolean;
   
+  // ── Party Mode ──
+  partyConfig: PartyConfig | null;
+  partyActive: boolean;
+  partyResults: DuelHistoryEntry[];
+  partyBestStreak: number;
+  partyCorrectGuesses: number;
+  partyStartedAt: number;
+  partyComplete: boolean;
+  partyStats: PartyStats | null;
+  duelShownAt: number;
+  
   // Errors
   error: string | null;
   
@@ -103,6 +155,11 @@ interface GameState {
   
   // Game mode actions
   setGameMode: (selection: GameModeSelection) => Promise<void>;
+  
+  // ── Party Mode Actions ──
+  startParty: (config: PartyConfig) => void;
+  continueParty: (extraSize: number) => void;
+  endParty: () => void;
 }
 
 // AbortController for in-flight duel fetch requests
@@ -124,6 +181,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   allDuelsExhausted: false,
   error: null,
   gameMode: DEFAULT_GAME_MODE,
+  // Party mode
+  ...INITIAL_PARTY_STATE,
   
   // Initialize from LocalStorage
   initializeFromStorage: () => {
@@ -212,8 +271,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       const { currentDuel } = get();
       
       if (!currentDuel) {
-        // First duel - set as current
-        set({ currentDuel: data.data, isLoadingDuel: false });
+        // First duel - set as current (start reaction timer)
+        set({ currentDuel: data.data, isLoadingDuel: false, duelShownAt: Date.now() });
       } else {
         // Preload as next duel
         set({ nextDuel: data.data, isLoadingDuel: false });
@@ -233,9 +292,13 @@ export const useGameStore = create<GameState>((set, get) => ({
   
   // Submit a vote — OPTIMISTIC UI: show instant result, refine with API data
   submitVote: async (winnerId: string, loserId: string) => {
-    const { profile, currentDuel } = get();
+    const { profile, currentDuel, duelShownAt } = get();
     
     if (!profile || !currentDuel) return;
+    if (get().showingResult) return; // double-tap guard
+    
+    // Capture reaction time
+    const reactionTimeMs = duelShownAt > 0 ? Date.now() - duelShownAt : undefined;
     
     set({ error: null });
     
@@ -271,14 +334,28 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Show result INSTANTLY — don't wait for API
     // NOTE: Do NOT call updateStreak here — wait for API to confirm match
     // This prevents the streak from incrementing by 2 (once optimistic, once real)
+    const newDuelCount = get().duelCount + 1;
     set({
       lastResult: optimisticResult,
       showingResult: true,
-      duelCount: get().duelCount + 1,
+      duelCount: newDuelCount,
     });
     
+    // ── Party tracking: store the duel result immediately ──
+    const { partyActive, partyConfig } = get();
+    if (partyActive && currentDuel) {
+      const entry: DuelHistoryEntry = { duel: currentDuel, result: optimisticResult, reactionTimeMs };
+      set(state => ({
+        partyResults: [...state.partyResults, entry],
+      }));
+    }
+    
     // Preload next duel in parallel with vote submission
-    if (!get().nextDuel) {
+    // In party mode, only preload if we haven't reached the limit
+    const shouldPreload = partyActive && partyConfig
+      ? newDuelCount < partyConfig.size
+      : true;
+    if (!get().nextDuel && shouldPreload) {
       get().fetchNextDuel();
     }
     
@@ -310,6 +387,26 @@ export const useGameStore = create<GameState>((set, get) => ({
         streak: realStreak,
         streakEmoji: getStreakEmoji(realStreak),
       });
+      
+      // ── Party: update with real data ──
+      if (get().partyActive) {
+        const correct = data.data.winner.percentage >= 50;
+        set(state => {
+          // Update the last party result with real data
+          const updatedResults = [...state.partyResults];
+          if (updatedResults.length > 0) {
+            updatedResults[updatedResults.length - 1] = {
+              ...updatedResults[updatedResults.length - 1],
+              result: data.data,
+            };
+          }
+          return {
+            partyResults: updatedResults,
+            partyBestStreak: Math.max(state.partyBestStreak, realStreak),
+            partyCorrectGuesses: state.partyCorrectGuesses + (correct ? 1 : 0),
+          };
+        });
+      }
     } catch (error) {
       // Keep optimistic result — don't disrupt UX for network errors 
       console.warn('Vote submission error:', error instanceof Error ? error.message : error);
@@ -340,7 +437,27 @@ export const useGameStore = create<GameState>((set, get) => ({
   
   // Show the next duel (called after viewing result)
   showNextDuel: () => {
-    const { nextDuel, currentDuel, lastResult, duelHistory } = get();
+    const { nextDuel, currentDuel, lastResult, duelHistory, partyActive, partyConfig, duelCount } = get();
+    
+    // ── Party mode: check if we've reached the target ──
+    if (partyActive && partyConfig && duelCount >= partyConfig.size) {
+      // Party complete! Build final stats
+      const state = get();
+      set({
+        partyComplete: true,
+        partyActive: false,
+        partyStats: {
+          results: state.partyResults,
+          bestStreak: state.partyBestStreak,
+          correctGuesses: state.partyCorrectGuesses,
+          startedAt: state.partyStartedAt,
+          endedAt: Date.now(),
+          category: partyConfig.category,
+          size: partyConfig.size,
+        },
+      });
+      return;
+    }
     
     // Push current duel+result to history (keep last MAX_HISTORY)
     if (currentDuel && lastResult) {
@@ -355,13 +472,18 @@ export const useGameStore = create<GameState>((set, get) => ({
         nextDuel: null,
         lastResult: null,
         showingResult: false,
+        duelShownAt: Date.now(),
       });
-      // Start preloading the next one
-      get().fetchNextDuel();
+      // Start preloading the next one (if party allows)
+      const newCount = get().duelCount;
+      if (!partyActive || !partyConfig || newCount < partyConfig.size) {
+        get().fetchNextDuel();
+      }
     } else {
       set({
         lastResult: null,
         showingResult: false,
+        duelShownAt: Date.now(),
       });
       // Fetch new duel
       get().fetchNextDuel();
@@ -375,6 +497,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       profile: null,
       hasProfile: false,
       ...INITIAL_GAME_STATE,
+      ...INITIAL_PARTY_STATE,
       error: null,
       gameMode: DEFAULT_GAME_MODE,
     });
@@ -403,5 +526,71 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (selection.category) trackCategoryChange(selection.category);
 
     await get().fetchNextDuel();
+  },
+  
+  // ── Party Mode Actions ──────────────────────────────────────────────
+  
+  /** Start a new party with the given config. */
+  startParty: (config: PartyConfig) => {
+    // Set game mode to match party category
+    const gameModeSelection: GameModeSelection = config.category
+      ? { mode: 'thematique', category: config.category }
+      : { mode: 'default', category: null };
+    
+    set({
+      ...INITIAL_GAME_STATE,
+      ...INITIAL_PARTY_STATE,
+      gameMode: gameModeSelection,
+      partyConfig: config,
+      partyActive: true,
+      partyStartedAt: Date.now(),
+      partyComplete: false,
+      partyStats: null,
+    });
+    
+    // Fetch first duel
+    get().fetchNextDuel();
+  },
+  
+  /** Continue the current party with N more duels. */
+  continueParty: (extraSize: number) => {
+    const { partyConfig } = get();
+    if (!partyConfig) return;
+    
+    const newSize = partyConfig.size + extraSize;
+    
+    set({
+      partyConfig: { ...partyConfig, size: newSize },
+      partyActive: true,
+      partyComplete: false,
+      partyStats: null,
+      showingResult: false,
+      lastResult: null,
+      currentDuel: null,
+      nextDuel: null,
+    });
+    
+    // Fetch next duel
+    get().fetchNextDuel();
+  },
+  
+  /** End party and compute final stats. */
+  endParty: () => {
+    const state = get();
+    if (!state.partyConfig) return;
+    
+    set({
+      partyComplete: true,
+      partyActive: false,
+      partyStats: {
+        results: state.partyResults,
+        bestStreak: state.partyBestStreak,
+        correctGuesses: state.partyCorrectGuesses,
+        startedAt: state.partyStartedAt,
+        endedAt: Date.now(),
+        category: state.partyConfig.category,
+        size: state.partyConfig.size,
+      },
+    });
   },
 }));

@@ -7,6 +7,8 @@ export { AllDuelsExhausted } from './AllDuelsExhausted';
 export { CompactResult } from './CompactResult';
 export { DuelInterface } from './DuelInterface';
 export { GameModeMenu } from './GameModeMenu';
+export { GameRecap } from './GameRecap';
+export { PartySetup } from './PartySetup';
 export { ProfileForm } from './ProfileForm';
 export { ResultDisplay } from './ResultDisplay';
 export { StreakDisplay } from './StreakDisplay';
