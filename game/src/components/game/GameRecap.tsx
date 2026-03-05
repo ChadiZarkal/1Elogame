@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useGameStore, type PartyStats } from '@/stores/gameStore';
 import { CATEGORIES_CONFIG } from '@/config/categories';
 
-// ── Personality Archetypes ──────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════════════
+   ARCHETYPE SYSTEM
+   ═══════════════════════════════════════════════════════════════════════ */
 
 interface Archetype {
   title: string;
@@ -20,71 +22,21 @@ function getArchetype(accuracy: number, bestStreak: number, avgReactionMs: numbe
   const hotStreak = bestStreak >= 5;
 
   if (pct >= 90) {
-    if (fast) return {
-      title: 'Sniper Absolu',
-      emoji: '🎯',
-      description: 'Rapide ET précis·e. Tu détectes les red flags en un clin d\'œil.',
-      tagline: 'Sniper Absolu. Je vois les red flags avant qu\'ils n\'existent.',
-    };
-    return {
-      title: 'Radar Absolu',
-      emoji: '🛸',
-      description: 'Tu vois les red flags avant même qu\'ils existent.',
-      tagline: 'Radar Absolu. Personne ne peut mentir devant moi.',
-    };
+    if (fast) return { title: 'Sniper Absolu', emoji: '🎯', description: 'Rapide ET précis·e. Tu détectes les red flags en un clin d\'œil.', tagline: 'Je vois les red flags avant qu\'ils n\'existent.' };
+    return { title: 'Radar Absolu', emoji: '🛸', description: 'Tu vois les red flags avant même qu\'ils existent.', tagline: 'Personne ne peut mentir devant moi.' };
   }
   if (pct >= 75) {
-    if (fast && hotStreak) return {
-      title: 'Instinct de Chasseur·se',
-      emoji: '🦊',
-      description: 'Réflexes affûtés et intuition redoutable.',
-      tagline: 'Instinct de Chasseur·se. Mon intuition ne me trompe jamais.',
-    };
-    if (hotStreak) return {
-      title: 'Machine à Streak',
-      emoji: '🔥',
-      description: 'Quand tu es lancé·e, rien ne t\'arrête.',
-      tagline: 'Machine à Streak. Rien ne m\'arrête.',
-    };
-    return {
-      title: 'Détecteur·rice Pro',
-      emoji: '🔍',
-      description: 'Tu as un sixième sens pour les red flags.',
-      tagline: 'Détecteur·rice Pro. Mon instinct est redoutable.',
-    };
+    if (fast && hotStreak) return { title: 'Instinct de Chasseur·se', emoji: '🦊', description: 'Réflexes affûtés et intuition redoutable.', tagline: 'Mon intuition ne me trompe jamais.' };
+    if (hotStreak) return { title: 'Machine à Streak', emoji: '🔥', description: 'Quand tu es lancé·e, rien ne t\'arrête.', tagline: 'Rien ne m\'arrête.' };
+    return { title: 'Détecteur·rice Pro', emoji: '🔍', description: 'Tu as un sixième sens pour les red flags.', tagline: 'Mon instinct est redoutable.' };
   }
   if (pct >= 60) {
-    if (fast) return {
-      title: 'Réflexe Instinctif',
-      emoji: '⚡',
-      description: 'Tu tires vite — parfois juste, parfois non.',
-      tagline: 'Réflexe Instinctif. Je tire d\'abord, je réfléchis après.',
-    };
-    return {
-      title: 'Sentinelle',
-      emoji: '🛡️',
-      description: 'Tu repères la plupart des red flags. Solidement au-dessus de la moyenne.',
-      tagline: 'Sentinelle. Vigilant·e mais pas infaillible.',
-    };
+    if (fast) return { title: 'Réflexe Instinctif', emoji: '⚡', description: 'Tu tires vite — parfois juste, parfois non.', tagline: 'Je tire d\'abord, je réfléchis après.' };
+    return { title: 'Sentinelle', emoji: '🛡️', description: 'Tu repères la plupart des red flags. Au-dessus de la moyenne.', tagline: 'Vigilant·e mais pas infaillible.' };
   }
-  if (pct >= 45) return {
-    title: 'Électron Libre',
-    emoji: '🎲',
-    description: 'Tes réponses divisent la communauté. Un regard unique.',
-    tagline: 'Électron Libre. Mes opinions divisent.',
-  };
-  if (pct >= 30) return {
-    title: 'Optimiste Invétéré·e',
-    emoji: '🌈',
-    description: 'Tu vois le meilleur chez les gens — même quand il n\'y en a pas.',
-    tagline: 'Optimiste Invétéré·e. Je vois du green flag partout.',
-  };
-  return {
-    title: 'Anti-conformiste',
-    emoji: '🎭',
-    description: 'Tu votes à l\'opposé de la majorité. Visionnaire ou chaotique.',
-    tagline: 'Anti-conformiste. En désaccord avec tout le monde.',
-  };
+  if (pct >= 45) return { title: 'Électron Libre', emoji: '🎲', description: 'Tes réponses divisent la communauté. Un regard unique.', tagline: 'Mes opinions divisent.' };
+  if (pct >= 30) return { title: 'Optimiste Invétéré·e', emoji: '🌈', description: 'Tu vois le meilleur chez les gens — même quand il n\'y en a pas.', tagline: 'Je vois du green flag partout.' };
+  return { title: 'Anti-conformiste', emoji: '🎭', description: 'Tu votes à l\'opposé de la majorité. Visionnaire ou chaotique.', tagline: 'En désaccord avec tout le monde.' };
 }
 
 function getSpeedProfile(avgMs: number): { label: string; emoji: string } {
@@ -94,7 +46,9 @@ function getSpeedProfile(avgMs: number): { label: string; emoji: string } {
   return { label: 'Philosophe', emoji: '🧠' };
 }
 
-// ── Stats computation ───────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════════════
+   STATS COMPUTATION
+   ═══════════════════════════════════════════════════════════════════════ */
 
 function computeDetailedStats(stats: PartyStats) {
   const totalDuels = stats.results.length;
@@ -104,34 +58,19 @@ function computeDetailedStats(stats: PartyStats) {
     .map(r => r.reactionTimeMs)
     .filter((t): t is number => t !== undefined && t > 0);
   const avgReactionMs = reactionTimes.length > 0
-    ? reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length
-    : 5000;
+    ? reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length : 5000;
 
-  let mostPopular = { textA: '', textB: '', winner: '', percentage: 0 };
-  let mostControversial = { textA: '', textB: '', winner: '', percentage: 100 };
+  // Find most popular & most controversial
+  let mostPopular = { text: '', percentage: 0 };
+  let mostControversial = { text: '', percentage: 100 };
 
   for (const entry of stats.results) {
     if (entry.result.isOptimistic) continue;
     const pct = entry.result.winner.percentage;
     const winnerText = entry.result.winner.id === entry.duel.elementA.id
       ? entry.duel.elementA.texte : entry.duel.elementB.texte;
-
-    if (pct > mostPopular.percentage) {
-      mostPopular = {
-        textA: entry.duel.elementA.texte,
-        textB: entry.duel.elementB.texte,
-        winner: winnerText,
-        percentage: pct,
-      };
-    }
-    if (pct < mostControversial.percentage) {
-      mostControversial = {
-        textA: entry.duel.elementA.texte,
-        textB: entry.duel.elementB.texte,
-        winner: winnerText,
-        percentage: pct,
-      };
-    }
+    if (pct > mostPopular.percentage) mostPopular = { text: winnerText, percentage: pct };
+    if (pct < mostControversial.percentage) mostControversial = { text: winnerText, percentage: pct };
   }
 
   // Category breakdown
@@ -142,12 +81,10 @@ function computeDetailedStats(stats: PartyStats) {
     const cat = winnerEl.categorie;
     if (!categoryVotes[cat]) categoryVotes[cat] = { total: 0, correct: 0 };
     categoryVotes[cat].total++;
-    if (!entry.result.isOptimistic && entry.result.winner.percentage >= 50) {
-      categoryVotes[cat].correct++;
-    }
+    if (!entry.result.isOptimistic && entry.result.winner.percentage >= 50) categoryVotes[cat].correct++;
   }
 
-  // Agreement rate (how often user agrees with community majority)
+  // Agreement rate
   let agreementCount = 0;
   let nonOptimistic = 0;
   for (const entry of stats.results) {
@@ -158,39 +95,42 @@ function computeDetailedStats(stats: PartyStats) {
   const agreementRate = nonOptimistic > 0 ? Math.round((agreementCount / nonOptimistic) * 100) : 0;
 
   const durationMs = stats.endedAt - stats.startedAt;
-  const durationMin = Math.floor(durationMs / 60000);
-  const durationSec = Math.floor((durationMs % 60000) / 1000);
+  const durationSec = Math.floor(durationMs / 1000);
   const fastestMs = reactionTimes.length > 0 ? Math.min(...reactionTimes) : 0;
-  const slowestMs = reactionTimes.length > 0 ? Math.max(...reactionTimes) : 0;
+
+  // Key duels: most popular, most controversial, one where user was in minority
+  const keyDuels: { entry: typeof stats.results[0]; tag: string; tagColor: string }[] = [];
+  const sorted = [...stats.results].filter(e => !e.result.isOptimistic);
+
+  // Find the most consensus duel
+  const popular = sorted.sort((a, b) => b.result.winner.percentage - a.result.winner.percentage)[0];
+  if (popular) keyDuels.push({ entry: popular, tag: '🎯 + Populaire', tagColor: '#10B981' });
+
+  // Find where user was most in minority
+  const minority = sorted.filter(e => e.result.winner.percentage < 50).sort((a, b) => a.result.winner.percentage - b.result.winner.percentage)[0];
+  if (minority) keyDuels.push({ entry: minority, tag: '😈 Minoritaire', tagColor: '#EF4444' });
+
+  // Find the closest duel
+  const closest = sorted.filter(e => e !== popular && e !== minority).sort((a, b) => Math.abs(50 - a.result.winner.percentage) - Math.abs(50 - b.result.winner.percentage))[0];
+  if (closest) keyDuels.push({ entry: closest, tag: '⚖️ Serré', tagColor: '#F59E0B' });
 
   return {
     totalDuels, accuracy, accuracyPct: Math.round(accuracy * 100),
     avgReactionMs, mostPopular, mostControversial, categoryVotes,
-    durationMin, durationSec, fastestMs, slowestMs, agreementRate,
+    durationSec, fastestMs, agreementRate, keyDuels,
   };
 }
 
-// ── Shared CSS-in-JS helpers ────────────────────────────────────────────
-
-const card = (accent?: string): React.CSSProperties => ({
-  background: '#0C0C0E',
-  border: `1px solid ${accent ? `rgba(${accent},0.2)` : 'rgba(255,255,255,0.06)'}`,
-  borderRadius: 10,
-  padding: '0.75rem',
-});
-
-const labelStyle: React.CSSProperties = {
-  fontSize: '0.55rem', fontWeight: 900, letterSpacing: '0.14em',
-  textTransform: 'uppercase', color: '#555', marginBottom: '0.4rem', display: 'block',
-};
-
-// ── Main Component ──────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════════════
+   MAIN COMPONENT
+   ═══════════════════════════════════════════════════════════════════════ */
 
 export function GameRecap() {
   const router = useRouter();
   const { partyStats, partyConfig, resetGame, continueParty, profile } = useGameStore();
   const [mounted, setMounted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const [showAllDuels, setShowAllDuels] = useState(false);
 
   useEffect(() => {
@@ -208,10 +148,7 @@ export function GameRecap() {
     if (!partyStats) router.push('/jeu/jouer');
   }, [partyStats, router]);
 
-  const stats = useMemo(() => {
-    if (!partyStats) return null;
-    return computeDetailedStats(partyStats);
-  }, [partyStats]);
+  const stats = useMemo(() => partyStats ? computeDetailedStats(partyStats) : null, [partyStats]);
 
   if (!partyStats || !stats) return null;
 
@@ -219,12 +156,12 @@ export function GameRecap() {
   const speedProfile = getSpeedProfile(stats.avgReactionMs);
   const categoryLabel = partyStats.category
     ? CATEGORIES_CONFIG[partyStats.category]?.labelFr || partyStats.category
-    : 'Toutes catégories';
+    : 'Toutes';
 
   const shareText = [
     `🚩 Red or Green`,
     `${archetype.emoji} ${archetype.title}`,
-    `📊 ${stats.accuracyPct}% · 🔥 Streak ${partyStats.bestStreak} · ${speedProfile.emoji} ${(stats.avgReactionMs / 1000).toFixed(1)}s`,
+    `📊 ${stats.accuracyPct}% · 🔥 ${partyStats.bestStreak} streak · ${speedProfile.emoji} ${(stats.avgReactionMs / 1000).toFixed(1)}s`,
     `« ${archetype.tagline} »`,
     `Et toi ? 👀 → redorgreen.fr/jeu`,
   ].join('\n');
@@ -239,19 +176,12 @@ export function GameRecap() {
     }
   };
 
-  const handleContinue = () => {
-    continueParty(partyConfig?.originalSize ?? 15);
-    router.push('/jeu/jouer');
-  };
-
+  const handleContinue = () => { continueParty(partyConfig?.originalSize ?? 15); router.push('/jeu/jouer'); };
   const handleNewParty = () => {
     resetGame();
     if (profile) useGameStore.getState().setProfile(profile);
     router.push('/jeu/jouer');
   };
-
-  // Duels to show in the recap review
-  const duelsToShow = showAllDuels ? partyStats.results : partyStats.results.slice(0, 5);
 
   return (
     <div className="hub" style={{ minHeight: '100dvh' }}>
@@ -259,359 +189,392 @@ export function GameRecap() {
 
       <main
         className={`hub__main ${mounted ? 'hub__main--visible' : ''}`}
-        style={{ padding: 'clamp(0.75rem, 3vw, 1.5rem) 1.25rem 1.5rem' }}
+        style={{ padding: 'clamp(0.6rem, 2.5vw, 1.2rem) 1.25rem 1.5rem' }}
       >
-        {/* ═══════════════════════════════════════════════════════════ */}
-        {/* SCREENSHOT CARD                                           */}
-        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* ══════════════════════════════════════════════════════════════
+            ZONE 1 — HERO : Card screenshot + Share CTA
+            Must be entirely above the fold (852px viewport)
+            ══════════════════════════════════════════════════════════════ */}
+
         <div
           id="recap-card"
           style={{
             background: 'linear-gradient(180deg, #0E0E11 0%, #0A0A0C 100%)',
-            border: '1.5px solid rgba(255,45,45,0.2)',
-            borderRadius: 12,
+            border: '1.5px solid rgba(255,45,45,0.18)',
+            borderRadius: 14,
             overflow: 'hidden',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
           }}
         >
-          {/* Brand + Archetype header */}
+          {/* Logo + Brand */}
+          <div style={{ padding: '0.7rem 0.75rem 0', textAlign: 'center' }}>
+            <img
+              src="/logo-rog-new.svg"
+              alt="Red or Green"
+              style={{ width: 100, height: 'auto', margin: '0 auto 0.15rem', display: 'block', opacity: 0.9 }}
+              draggable={false}
+            />
+          </div>
+
+          {/* Archetype hero */}
           <div style={{
-            padding: '0.75rem 0.75rem 0.6rem',
+            padding: '0.25rem 0.75rem 0.5rem',
             textAlign: 'center',
-            background: 'linear-gradient(180deg, rgba(255,45,45,0.08) 0%, transparent 100%)',
+            background: 'linear-gradient(180deg, rgba(255,45,45,0.06) 0%, transparent 100%)',
           }}>
-            <p style={{ fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.15em', color: '#888', margin: '0 0 0.4rem' }}>
-              🚩 RED <span style={{ color: '#FF2D2D' }}>OR</span> GREEN
-            </p>
-            <span style={{ fontSize: '2.2rem', display: 'block', lineHeight: 1 }}>{archetype.emoji}</span>
-            <h1 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#F5F5F7', margin: '0.25rem 0 0.15rem', letterSpacing: '-0.02em' }}>
+            <span style={{ fontSize: '2rem', display: 'block', lineHeight: 1 }}>{archetype.emoji}</span>
+            <h1 style={{
+              fontSize: '1.1rem', fontWeight: 900, color: '#F5F5F7',
+              margin: '0.2rem 0 0.1rem', letterSpacing: '-0.02em',
+            }}>
               {archetype.title}
             </h1>
-            <p style={{ fontSize: '0.65rem', color: '#999', margin: 0, lineHeight: 1.4 }}>
+            <p style={{ fontSize: '0.62rem', color: '#888', margin: 0, lineHeight: 1.35 }}>
               {archetype.description}
             </p>
           </div>
 
-          {/* Stats row — 3 compact boxes */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.35rem', padding: '0 0.6rem 0.5rem' }}>
-            <StatBox value={`${stats.accuracyPct}%`} label="Précision" accent={stats.accuracyPct >= 60 ? '16,185,129' : '255,45,45'} />
-            <StatBox value={`${partyStats.bestStreak}🔥`} label="Best streak" accent="255,45,45" />
-            <StatBox value={`${(stats.avgReactionMs / 1000).toFixed(1)}s`} label={speedProfile.label} accent="59,130,246" />
+          {/* 3 stat pills — compact row */}
+          <div style={{ display: 'flex', gap: '0.3rem', padding: '0 0.6rem 0.4rem', justifyContent: 'center' }}>
+            <StatPill value={`${stats.accuracyPct}%`} label="Précision" color={stats.accuracyPct >= 60 ? '#10B981' : '#FF6B6B'} />
+            <StatPill value={`${partyStats.bestStreak}`} label="Streak 🔥" color="#FF6B6B" />
+            <StatPill value={`${(stats.avgReactionMs / 1000).toFixed(1)}s`} label={speedProfile.label} color="#3B82F6" />
           </div>
 
-          {/* Party meta */}
+          {/* Tagline — viral quote */}
           <div style={{
-            margin: '0 0.6rem 0.5rem', padding: '0.3rem 0.5rem',
-            background: 'rgba(255,255,255,0.02)', borderRadius: 6,
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            border: '1px solid rgba(255,255,255,0.04)',
-          }}>
-            <span style={{ fontSize: '0.6rem', color: '#666', fontWeight: 600 }}>
-              {stats.totalDuels} duels · {categoryLabel}
-            </span>
-            <span style={{ fontSize: '0.6rem', color: '#666', fontWeight: 600 }}>
-              {stats.durationMin > 0 ? `${stats.durationMin}min ` : ''}{stats.durationSec}s
-            </span>
-          </div>
-
-          {/* Tagline — the viral one-liner */}
-          <div style={{
-            margin: '0 0.6rem 0.6rem', padding: '0.5rem',
+            margin: '0 0.6rem 0.5rem', padding: '0.4rem 0.5rem',
             borderRadius: 8,
-            background: 'linear-gradient(135deg, rgba(255,45,45,0.05) 0%, rgba(124,58,237,0.05) 100%)',
-            border: '1px solid rgba(255,45,45,0.1)',
+            background: 'linear-gradient(135deg, rgba(255,45,45,0.04), rgba(124,58,237,0.04))',
+            border: '1px solid rgba(255,45,45,0.08)',
             textAlign: 'center',
           }}>
-            <p style={{ fontSize: '0.72rem', color: '#ddd', fontWeight: 700, fontStyle: 'italic', margin: 0, lineHeight: 1.4 }}>
+            <p style={{ fontSize: '0.68rem', color: '#ccc', fontWeight: 700, fontStyle: 'italic', margin: 0, lineHeight: 1.35 }}>
               « {archetype.tagline} »
             </p>
-            <p style={{ fontSize: '0.5rem', color: '#555', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase' as const, marginTop: '0.25rem' }}>
-              redorgreen.fr 🚩
-            </p>
+          </div>
+
+          {/* Meta line */}
+          <div style={{
+            padding: '0.25rem 0.75rem 0.45rem',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            <span style={{ fontSize: '0.5rem', color: '#555', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' as const }}>
+              {stats.totalDuels} duels · {categoryLabel}
+            </span>
+            <span style={{ fontSize: '0.5rem', color: '#444', fontWeight: 800, letterSpacing: '0.12em' }}>
+              redorgreen.fr
+            </span>
           </div>
         </div>
 
-        {/* Share prompt */}
-        <p style={{ textAlign: 'center', fontSize: '0.6rem', color: '#555', margin: '0.4rem 0' }}>
-          📸 Screenshot ou partage ton profil
+        {/* SHARE CTA — immediately after card, above fold */}
+        <button
+          onClick={handleShare}
+          style={{
+            width: '100%', marginTop: '0.5rem', padding: '0.65rem',
+            borderRadius: 10,
+            background: copied
+              ? 'linear-gradient(135deg, #059669, #10B981)'
+              : 'linear-gradient(135deg, #DC2626, #EF4444)',
+            border: 'none',
+            color: '#fff', fontSize: '0.78rem', fontWeight: 900,
+            letterSpacing: '0.05em', textTransform: 'uppercase' as const,
+            cursor: 'pointer',
+            boxShadow: copied
+              ? '0 4px 20px rgba(16,185,129,0.3)'
+              : '0 4px 20px rgba(255,45,45,0.3)',
+            animation: copied ? 'none' : 'pulse-share 2s infinite',
+          }}
+        >
+          {copied ? '✅ Copié !' : '📤 PARTAGER MON RÉSULTAT'}
+        </button>
+        <p style={{ textAlign: 'center', fontSize: '0.55rem', color: '#444', margin: '0.25rem 0 0' }}>
+          📸 ou screenshot ta card !
         </p>
 
-        {/* ═══════════════════════════════════════════════════════════ */}
-        {/* ANALYSIS SECTION                                          */}
-        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* ══════════════════════════════════════════════════════════════
+            ZONE 2 — STATS SUMMARY (compact, scannable)
+            ══════════════════════════════════════════════════════════════ */}
 
-        {/* Highlights — most popular & controversial */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', marginBottom: '0.5rem' }}>
-          {stats.mostPopular.winner && (
-            <div style={{ ...card('16,185,129') }}>
-              <p style={{ ...labelStyle, color: '#059669' }}>🎯 + Populaire</p>
-              <p style={{ fontSize: '0.68rem', color: '#ddd', fontWeight: 700, lineHeight: 1.3, margin: 0 }}>
-                &ldquo;{stats.mostPopular.winner}&rdquo;
-              </p>
-              <p style={{ fontSize: '0.55rem', color: '#6EE7B7', marginTop: '0.2rem' }}>
-                {stats.mostPopular.percentage}% d&apos;accord
-              </p>
-            </div>
-          )}
-          {stats.mostControversial.winner && stats.mostControversial.percentage < 50 && (
-            <div style={{ ...card('255,45,45') }}>
-              <p style={{ ...labelStyle, color: '#EF4444' }}>🔥 + Clivant</p>
-              <p style={{ fontSize: '0.68rem', color: '#ddd', fontWeight: 700, lineHeight: 1.3, margin: 0 }}>
-                &ldquo;{stats.mostControversial.winner}&rdquo;
-              </p>
-              <p style={{ fontSize: '0.55rem', color: '#FCA5A5', marginTop: '0.2rem' }}>
-                {stats.mostControversial.percentage}% seulement
-              </p>
-            </div>
-          )}
-        </div>
+        <div style={{ marginTop: '0.7rem' }}>
+          <SectionLabel text="Ton analyse" />
 
-        {/* Analysis cards row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', marginBottom: '0.5rem' }}>
-          {/* Agreement rate */}
-          <div style={card()}>
-            <p style={labelStyle}>🤝 Accord communauté</p>
-            <p style={{ fontSize: '1.1rem', fontWeight: 900, color: stats.agreementRate >= 60 ? '#10B981' : '#FF6B6B', margin: 0 }}>
-              {stats.agreementRate}%
-            </p>
-            <p style={{ fontSize: '0.55rem', color: '#666', marginTop: '0.1rem' }}>
-              {stats.agreementRate >= 75 ? 'Très consensuel·le' : stats.agreementRate >= 50 ? 'Dans la norme' : 'Esprit rebelle'}
-            </p>
+          {/* Compact 2-col summary */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem' }}>
+            {/* Agreement */}
+            <MiniCard>
+              <span style={{ fontSize: '0.5rem', fontWeight: 800, color: '#555', textTransform: 'uppercase' as const, letterSpacing: '0.1em' }}>
+                🤝 Accord
+              </span>
+              <span style={{
+                fontSize: '1.05rem', fontWeight: 900, lineHeight: 1,
+                color: stats.agreementRate >= 60 ? '#10B981' : '#FF6B6B',
+              }}>
+                {stats.agreementRate}%
+              </span>
+              <span style={{ fontSize: '0.5rem', color: '#555' }}>
+                {stats.agreementRate >= 75 ? 'Très consensuel·le' : stats.agreementRate >= 50 ? 'Dans la norme' : 'Esprit rebelle'}
+              </span>
+            </MiniCard>
+
+            {/* Speed */}
+            <MiniCard>
+              <span style={{ fontSize: '0.5rem', fontWeight: 800, color: '#555', textTransform: 'uppercase' as const, letterSpacing: '0.1em' }}>
+                ⏱️ Vitesse
+              </span>
+              <span style={{ fontSize: '1.05rem', fontWeight: 900, color: '#ddd', lineHeight: 1 }}>
+                {(stats.avgReactionMs / 1000).toFixed(1)}s
+              </span>
+              <span style={{ fontSize: '0.5rem', color: '#555' }}>
+                moy. · {stats.fastestMs > 0 ? `${(stats.fastestMs / 1000).toFixed(1)}s best` : '—'}
+              </span>
+            </MiniCard>
           </div>
 
-          {/* Speed analysis */}
-          <div style={card()}>
-            <p style={labelStyle}>⏱️ Vitesse</p>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
-              <div>
-                <p style={{ fontSize: '0.9rem', fontWeight: 900, color: '#ddd', margin: 0 }}>
-                  {(stats.avgReactionMs / 1000).toFixed(1)}s
-                </p>
-                <p style={{ fontSize: '0.5rem', color: '#555' }}>moy.</p>
-              </div>
-              <div>
-                <p style={{ fontSize: '0.75rem', fontWeight: 800, color: '#3B82F6', margin: 0 }}>
-                  {stats.fastestMs > 0 ? `${(stats.fastestMs / 1000).toFixed(1)}s` : '—'}
-                </p>
-                <p style={{ fontSize: '0.5rem', color: '#555' }}>rapide</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Category breakdown */}
-        {Object.keys(stats.categoryVotes).length > 1 && (
-          <div style={{ ...card(), marginBottom: '0.5rem' }}>
-            <p style={labelStyle}>📊 Par catégorie</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-              {Object.entries(stats.categoryVotes)
-                .sort(([, a], [, b]) => b.total - a.total)
-                .map(([catId, data]) => {
-                  const cat = CATEGORIES_CONFIG[catId];
-                  const pct = Math.round((data.total / stats.totalDuels) * 100);
-                  const correctPct = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
-                  return (
-                    <div key={catId} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                      <span style={{ fontSize: '0.75rem', width: 18, textAlign: 'center' }}>{cat?.emoji || '📦'}</span>
-                      <span style={{ fontSize: '0.65rem', color: '#999', width: 55, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {cat?.labelFr || catId}
-                      </span>
-                      <div style={{ flex: 1, height: 5, background: '#1A1A1A', borderRadius: 3, overflow: 'hidden' }}>
-                        <div style={{
-                          height: '100%', borderRadius: 3, width: `${pct}%`,
-                          background: correctPct >= 60 ? '#10B981' : '#EF4444',
-                        }} />
+          {/* Key duels — only 2-3 interesting ones */}
+          {stats.keyDuels.length > 0 && (
+            <div style={{ marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+              {stats.keyDuels.map((kd, i) => {
+                const isA = kd.entry.result.winner.id === kd.entry.duel.elementA.id;
+                const winnerText = isA ? kd.entry.duel.elementA.texte : kd.entry.duel.elementB.texte;
+                const loserText = isA ? kd.entry.duel.elementB.texte : kd.entry.duel.elementA.texte;
+                const pct = kd.entry.result.winner.percentage;
+                return (
+                  <div key={i} style={{
+                    background: '#0C0C0E', borderRadius: 8, padding: '0.45rem 0.55rem',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
+                      <span style={{ fontSize: '0.52rem', fontWeight: 800, color: kd.tagColor }}>{kd.tag}</span>
+                      <span style={{ fontSize: '0.52rem', color: '#555', fontWeight: 700 }}>{pct}%</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.3rem' }}>
+                      <div style={{ flex: 1, fontSize: '0.6rem', color: '#ccc', fontWeight: 600, lineHeight: 1.3, borderLeft: '2px solid #FF2D2D', paddingLeft: '0.35rem' }}>
+                        {winnerText}
                       </div>
-                      <span style={{ fontSize: '0.55rem', color: '#666', width: 28, textAlign: 'right' }}>
-                        {correctPct}%
+                      <span style={{ fontSize: '0.55rem', color: '#333', alignSelf: 'center', flexShrink: 0 }}>vs</span>
+                      <div style={{ flex: 1, fontSize: '0.6rem', color: '#666', fontWeight: 500, lineHeight: 1.3, borderLeft: '2px solid #222', paddingLeft: '0.35rem' }}>
+                        {loserText}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════════
+            ZONE 3 — DETAILS (expandable)
+            ══════════════════════════════════════════════════════════════ */}
+
+        <button
+          onClick={() => setShowDetails(!showDetails)}
+          style={{
+            width: '100%', marginTop: '0.5rem', padding: '0.45rem',
+            background: '#0C0C0E', border: '1px solid rgba(255,255,255,0.06)',
+            borderRadius: 8, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem',
+            color: '#777', fontSize: '0.62rem', fontWeight: 700,
+          }}
+        >
+          <span>{showDetails ? '▲' : '▼'}</span>
+          <span>{showDetails ? 'Masquer les détails' : 'Voir tous les détails'}</span>
+        </button>
+
+        {showDetails && (
+          <div style={{ marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            {/* Category breakdown */}
+            {Object.keys(stats.categoryVotes).length > 1 && (
+              <div style={{ background: '#0C0C0E', borderRadius: 8, padding: '0.5rem 0.6rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <p style={{ fontSize: '0.5rem', fontWeight: 800, color: '#555', textTransform: 'uppercase' as const, letterSpacing: '0.12em', margin: '0 0 0.35rem' }}>
+                  📊 Par catégorie
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {Object.entries(stats.categoryVotes)
+                    .sort(([, a], [, b]) => b.total - a.total)
+                    .map(([catId, data]) => {
+                      const cat = CATEGORIES_CONFIG[catId];
+                      const pct = Math.round((data.total / stats.totalDuels) * 100);
+                      const correctPct = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
+                      return (
+                        <div key={catId} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <span style={{ fontSize: '0.7rem', width: 16, textAlign: 'center' }}>{cat?.emoji || '📦'}</span>
+                          <span style={{ fontSize: '0.58rem', color: '#888', width: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {cat?.labelFr || catId}
+                          </span>
+                          <div style={{ flex: 1, height: 6, background: '#1A1A1A', borderRadius: 3, overflow: 'hidden' }}>
+                            <div style={{
+                              height: '100%', borderRadius: 3, width: `${pct}%`,
+                              background: correctPct >= 60 ? '#10B981' : '#EF4444',
+                              transition: 'width 0.5s ease',
+                            }} />
+                          </div>
+                          <span style={{ fontSize: '0.52rem', color: correctPct >= 60 ? '#6EE7B7' : '#FCA5A5', width: 28, textAlign: 'right', fontWeight: 700 }}>
+                            {correctPct}%
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
+            {/* Full duel review */}
+            <div style={{ background: '#0C0C0E', borderRadius: 8, padding: '0.5rem 0.6rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <p style={{ fontSize: '0.5rem', fontWeight: 800, color: '#555', textTransform: 'uppercase' as const, letterSpacing: '0.12em', margin: '0 0 0.35rem' }}>
+                🆚 Tous les duels ({stats.totalDuels})
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                {(showAllDuels ? partyStats.results : partyStats.results.slice(0, 5)).map((entry, i) => {
+                  const correct = !entry.result.isOptimistic && entry.result.winner.percentage >= 50;
+                  const isA = entry.result.winner.id === entry.duel.elementA.id;
+                  const winnerText = isA ? entry.duel.elementA.texte : entry.duel.elementB.texte;
+                  const loserText = isA ? entry.duel.elementB.texte : entry.duel.elementA.texte;
+                  const pct = entry.result.isOptimistic ? null : entry.result.winner.percentage;
+                  return (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', gap: '0.3rem',
+                      padding: '0.3rem 0.4rem', borderRadius: 5,
+                      background: correct ? 'rgba(16,185,129,0.03)' : 'rgba(255,45,45,0.03)',
+                      borderLeft: `2px solid ${correct ? '#10B981' : '#EF4444'}`,
+                    }}>
+                      <span style={{ fontSize: '0.48rem', color: '#444', fontWeight: 700, width: 14, flexShrink: 0 }}>
+                        {i + 1}
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: '0.58rem', color: '#bbb', margin: 0, lineHeight: 1.25, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {winnerText}
+                        </p>
+                        <p style={{ fontSize: '0.5rem', color: '#555', margin: 0, lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          vs {loserText}
+                        </p>
+                      </div>
+                      <span style={{ fontSize: '0.5rem', color: correct ? '#6EE7B7' : '#FCA5A5', fontWeight: 700, flexShrink: 0 }}>
+                        {pct !== null ? `${pct}%` : '...'}
                       </span>
                     </div>
                   );
                 })}
+              </div>
+              {partyStats.results.length > 5 && (
+                <button
+                  onClick={() => setShowAllDuels(!showAllDuels)}
+                  style={{
+                    width: '100%', marginTop: '0.25rem', padding: '0.25rem',
+                    background: 'none', border: '1px solid rgba(255,255,255,0.05)',
+                    borderRadius: 4, color: '#555', fontSize: '0.52rem', fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {showAllDuels ? '▲ Réduire' : `▼ Voir les ${partyStats.results.length} duels`}
+                </button>
+              )}
             </div>
           </div>
         )}
 
-        {/* ── Duel-by-duel review (shows BOTH elements) ── */}
-        <div style={{ ...card(), marginBottom: '0.5rem' }}>
-          <p style={labelStyle}>🆚 Récap duel par duel</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-            {duelsToShow.map((entry, i) => {
-              const correct = !entry.result.isOptimistic && entry.result.winner.percentage >= 50;
-              const isA = entry.result.winner.id === entry.duel.elementA.id;
-              const winnerText = isA ? entry.duel.elementA.texte : entry.duel.elementB.texte;
-              const loserText = isA ? entry.duel.elementB.texte : entry.duel.elementA.texte;
-              const pct = entry.result.isOptimistic ? null : entry.result.winner.percentage;
+        {/* ══════════════════════════════════════════════════════════════
+            ACTIONS — Clear hierarchy
+            ══════════════════════════════════════════════════════════════ */}
 
-              return (
-                <div
-                  key={i}
-                  style={{
-                    borderRadius: 6,
-                    border: `1px solid ${correct ? 'rgba(16,185,129,0.12)' : 'rgba(255,45,45,0.12)'}`,
-                    background: correct ? 'rgba(16,185,129,0.03)' : 'rgba(255,45,45,0.03)',
-                    padding: '0.4rem 0.5rem',
-                  }}
-                >
-                  {/* Duel number + verdict */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
-                    <span style={{ fontSize: '0.55rem', color: '#555', fontWeight: 700 }}>
-                      Duel {i + 1}
-                    </span>
-                    <span style={{ fontSize: '0.55rem', color: correct ? '#10B981' : '#EF4444', fontWeight: 700 }}>
-                      {correct ? '✅ Majorité' : '❌ Minorité'}
-                      {pct !== null && ` · ${pct}%`}
-                    </span>
-                  </div>
-                  {/* The two options */}
-                  <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'stretch' }}>
-                    {/* Winner (user's pick) */}
-                    <div style={{
-                      flex: 1, padding: '0.3rem 0.4rem', borderRadius: 5,
-                      background: 'rgba(255,45,45,0.08)',
-                      borderLeft: '2px solid #FF2D2D',
-                    }}>
-                      <p style={{ fontSize: '0.55rem', color: '#FF6B6B', fontWeight: 800, margin: '0 0 0.1rem', textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>
-                        🚩 Ton choix
-                      </p>
-                      <p style={{ fontSize: '0.62rem', color: '#ccc', margin: 0, lineHeight: 1.3, fontWeight: 600 }}>
-                        {winnerText}
-                      </p>
-                    </div>
-                    {/* Loser (the other option) */}
-                    <div style={{
-                      flex: 1, padding: '0.3rem 0.4rem', borderRadius: 5,
-                      background: 'rgba(255,255,255,0.02)',
-                      borderLeft: '2px solid #333',
-                    }}>
-                      <p style={{ fontSize: '0.55rem', color: '#555', fontWeight: 800, margin: '0 0 0.1rem', textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>
-                        VS
-                      </p>
-                      <p style={{ fontSize: '0.62rem', color: '#888', margin: 0, lineHeight: 1.3, fontWeight: 600 }}>
-                        {loserText}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {partyStats.results.length > 5 && (
-            <button
-              onClick={() => setShowAllDuels(!showAllDuels)}
-              style={{
-                width: '100%', marginTop: '0.35rem', padding: '0.3rem',
-                background: 'none', border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: 5, color: '#777', fontSize: '0.6rem', fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              {showAllDuels ? '▲ Voir moins' : `▼ Voir les ${partyStats.results.length} duels`}
-            </button>
-          )}
-        </div>
-
-        {/* ═══════════════════════════════════════════════════════════ */}
-        {/* ACTIONS                                                   */}
-        {/* ═══════════════════════════════════════════════════════════ */}
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '0.5rem' }}>
-          {/* Share */}
-          <button
-            onClick={handleShare}
-            style={{
-              width: '100%', padding: '0.6rem',
-              borderRadius: 8,
-              background: copied ? 'linear-gradient(135deg, #059669, #10B981)' : 'linear-gradient(135deg, #DC2626, #EF4444)',
-              border: `1px solid ${copied ? '#10B981' : 'rgba(255,45,45,0.3)'}`,
-              color: '#fff', fontSize: '0.75rem', fontWeight: 900,
-              letterSpacing: '0.04em', textTransform: 'uppercase' as const,
-              cursor: 'pointer',
-              boxShadow: `0 4px 16px ${copied ? 'rgba(16,185,129,0.25)' : 'rgba(255,45,45,0.2)'}`,
-            }}
-          >
-            {copied ? '✅ Copié !' : '📤 PARTAGER'}
-          </button>
-
-          {/* New party + Continue — side by side */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
-            <button
-              onClick={handleNewParty}
-              style={{
-                padding: '0.5rem', borderRadius: 8,
-                background: '#0C0C0E',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: '#ccc', fontSize: '0.68rem', fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
+        <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+          {/* Primary: Replay actions */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem' }}>
+            <button onClick={handleNewParty} style={btnSecondary}>
               🎯 Nouvelle partie
             </button>
-            <button
-              onClick={handleContinue}
-              style={{
-                padding: '0.5rem', borderRadius: 8,
-                background: '#0C0C0E',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: '#999', fontSize: '0.68rem', fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
+            <button onClick={handleContinue} style={btnSecondary}>
               🔄 +{partyConfig?.originalSize || 15} duels
             </button>
           </div>
 
-          {/* Rankings + secondary */}
-          <a
-            href="/classement"
-            style={{
-              display: 'block', width: '100%', padding: '0.5rem',
-              borderRadius: 8, textAlign: 'center',
-              background: '#0C0C0E',
-              border: '1px solid rgba(255,255,255,0.06)',
-              color: '#FCD34D', fontSize: '0.68rem', fontWeight: 700,
-              textDecoration: 'none',
-            }}
-          >
-            🏆 Classements
-          </a>
-
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-            <a href="/flagornot" style={{ fontSize: '0.65rem', color: '#666', textDecoration: 'none' }}>🔮 Oracle</a>
-            <a href="/" style={{ fontSize: '0.65rem', color: '#666', textDecoration: 'none' }}>🏠 Accueil</a>
+          {/* Tertiary links row */}
+          <div style={{
+            display: 'flex', justifyContent: 'center', gap: '0.8rem',
+            padding: '0.3rem 0',
+          }}>
+            <a href="/classement" style={linkStyle}>🏆 Classements</a>
+            <a href="/flagornot" style={linkStyle}>🔮 Oracle</a>
+            <a href="/" style={linkStyle}>🏠 Accueil</a>
           </div>
         </div>
 
-        {/* Sociological footer */}
-        <div style={{
-          borderRadius: 8, padding: '0.5rem 0.6rem',
-          background: 'rgba(255,45,45,0.03)', border: '1px solid rgba(255,45,45,0.08)',
-          textAlign: 'center',
+        {/* Sociological note */}
+        <p style={{
+          textAlign: 'center', fontSize: '0.5rem', color: '#444', lineHeight: 1.5,
+          marginTop: '0.3rem', padding: '0.3rem 0',
         }}>
-          <p style={{ fontSize: '0.6rem', color: '#888', lineHeight: 1.5, margin: 0 }}>
-            🔬 Tes votes alimentent les <strong style={{ color: '#ccc' }}>classements</strong> par sexe et tranche d&apos;âge.
-          </p>
-          <a href="/classement" style={{ fontSize: '0.6rem', color: '#FF6B6B', fontWeight: 700, textDecoration: 'none' }}>
-            Explorer →
-          </a>
-        </div>
+          🔬 Tes votes alimentent les <strong style={{ color: '#777' }}>classements</strong> par sexe et âge
+        </p>
       </main>
+
+      <style>{`
+        @keyframes pulse-share {
+          0%, 100% { box-shadow: 0 4px 20px rgba(255,45,45,0.3); }
+          50% { box-shadow: 0 4px 28px rgba(255,45,45,0.5); }
+        }
+      `}</style>
     </div>
   );
 }
 
-// ── Small stat box component ────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════════════
+   SUB-COMPONENTS
+   ═══════════════════════════════════════════════════════════════════════ */
 
-function StatBox({ value, label, accent }: { value: string; label: string; accent: string }) {
+function StatPill({ value, label, color }: { value: string; label: string; color: string }) {
   return (
     <div style={{
-      textAlign: 'center', padding: '0.4rem 0.25rem',
-      borderRadius: 8,
-      background: `rgba(${accent},0.06)`,
-      border: `1px solid rgba(${accent},0.12)`,
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      padding: '0.3rem 0.5rem', borderRadius: 6,
+      background: `${color}0F`, border: `1px solid ${color}1F`,
+      flex: 1,
     }}>
-      <p style={{ fontSize: '1rem', fontWeight: 900, color: '#F5F5F7', margin: 0, lineHeight: 1.1 }}>{value}</p>
-      <p style={{ fontSize: '0.5rem', fontWeight: 800, color: '#666', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginTop: '0.1rem' }}>{label}</p>
+      <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#F5F5F7', lineHeight: 1 }}>{value}</span>
+      <span style={{ fontSize: '0.45rem', fontWeight: 800, color: '#666', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginTop: '0.05rem' }}>{label}</span>
     </div>
   );
 }
+
+function MiniCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      background: '#0C0C0E', borderRadius: 8, padding: '0.45rem 0.5rem',
+      border: '1px solid rgba(255,255,255,0.05)',
+      display: 'flex', flexDirection: 'column', gap: '0.1rem',
+    }}>
+      {children}
+    </div>
+  );
+}
+
+function SectionLabel({ text }: { text: string }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '0.4rem',
+      margin: '0 0 0.35rem',
+    }}>
+      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+      <span style={{ fontSize: '0.5rem', fontWeight: 800, color: '#444', letterSpacing: '0.15em', textTransform: 'uppercase' as const }}>
+        {text}
+      </span>
+      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+    </div>
+  );
+}
+
+/* ── Shared styles ────────────────────────────────────────────────────── */
+
+const btnSecondary: React.CSSProperties = {
+  padding: '0.5rem', borderRadius: 8,
+  background: '#0C0C0E',
+  border: '1px solid rgba(255,255,255,0.08)',
+  color: '#bbb', fontSize: '0.65rem', fontWeight: 700,
+  cursor: 'pointer',
+};
+
+const linkStyle: React.CSSProperties = {
+  fontSize: '0.6rem', color: '#555', textDecoration: 'none', fontWeight: 600,
+};

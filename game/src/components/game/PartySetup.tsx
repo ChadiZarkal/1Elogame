@@ -68,16 +68,22 @@ export function PartySetup() {
           ← Retour
         </button>
 
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 'clamp(0.75rem, 2vw, 1rem)' }}>
+        {/* Logo + Header */}
+        <div style={{ textAlign: 'center', marginBottom: 'clamp(0.6rem, 2vw, 0.85rem)' }}>
+          <img
+            src="/logo-rog-new.svg"
+            alt="Red or Green"
+            style={{ width: 90, height: 'auto', margin: '0 auto 0.35rem', display: 'block', opacity: 0.9 }}
+            draggable={false}
+          />
           <h1 style={{
-            fontSize: 'clamp(1.2rem, 5vw, 1.6rem)', fontWeight: 900,
+            fontSize: 'clamp(1.1rem, 4.5vw, 1.4rem)', fontWeight: 900,
             color: '#F5F5F7', margin: 0, letterSpacing: '-0.02em',
           }}>
-            🚩 Lancer une partie
+            Lancer une partie
           </h1>
-          <p style={{ fontSize: '0.7rem', color: '#888', marginTop: '0.3rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const }}>
-            Choisis et joue
+          <p style={{ fontSize: '0.6rem', color: '#666', marginTop: '0.2rem', fontWeight: 600 }}>
+            Choisis ta catégorie et c&apos;est parti
           </p>
         </div>
 
@@ -93,9 +99,7 @@ export function PartySetup() {
           <div
             role="radiogroup" aria-label="Choix de catégorie"
             style={{
-              display: 'flex', gap: '0.4rem', overflowX: 'auto',
-              WebkitOverflowScrolling: 'touch',
-              scrollbarWidth: 'none',
+              display: 'flex', flexWrap: 'wrap', gap: '0.35rem',
             }}
           >
             {CATEGORY_OPTIONS.map(cat => {
@@ -106,14 +110,13 @@ export function PartySetup() {
                   onClick={() => setCategory(cat.id)}
                   role="radio" aria-checked={sel}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: '0.3rem',
-                    padding: '0.4rem 0.7rem', borderRadius: 6,
-                    fontSize: '0.72rem', fontWeight: 700, whiteSpace: 'nowrap',
+                    display: 'flex', alignItems: 'center', gap: '0.25rem',
+                    padding: '0.4rem 0.65rem', borderRadius: 6,
+                    fontSize: '0.7rem', fontWeight: 700,
                     background: sel ? 'rgba(255,45,45,0.12)' : '#0C0C0E',
                     border: `1px solid ${sel ? 'rgba(255,45,45,0.35)' : 'rgba(255,255,255,0.06)'}`,
                     color: sel ? '#FF6B6B' : '#999',
                     cursor: 'pointer', transition: 'all 0.15s',
-                    flexShrink: 0,
                   }}
                 >
                   <span>{cat.emoji}</span>
@@ -182,9 +185,9 @@ export function PartySetup() {
               cursor: 'pointer', color: '#999',
             }}
           >
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span>🧪</span>
-              <span style={{ color: '#ccc' }}>Comment ça marche ?</span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <span>📖</span>
+              <span style={{ color: '#ddd' }}>Comment ça marche ?</span>
             </span>
             <span style={{ fontSize: '0.6rem', transition: 'transform 0.2s', transform: showRules ? 'rotate(180deg)' : 'none' }}>▼</span>
           </button>
@@ -192,13 +195,13 @@ export function PartySetup() {
             <div id="party-rules" style={{ padding: '0 0.75rem 0.65rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 {[
-                  { e: '🆚', t: '2 situations, choisis le pire Red Flag' },
-                  { e: '📊', t: 'Compare ton avis avec la communauté' },
-                  { e: '🏆', t: 'Récap personnalisé en fin de partie' },
+                  { e: '🆚', t: '2 situations apparaissent : choisis le pire Red Flag' },
+                  { e: '📊', t: 'Découvre si la communauté est d\'accord avec toi' },
+                  { e: '🏆', t: 'Obtiens ton profil personnalisé en fin de partie' },
                 ].map(r => (
-                  <div key={r.t} style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.85rem', flexShrink: 0 }}>{r.e}</span>
-                    <span style={{ fontSize: '0.68rem', color: '#999', lineHeight: 1.3 }}>{r.t}</span>
+                  <div key={r.t} style={{ display: 'flex', gap: '0.4rem', alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '0.9rem', flexShrink: 0, lineHeight: 1.2 }}>{r.e}</span>
+                    <span style={{ fontSize: '0.7rem', color: '#aaa', lineHeight: 1.4, fontWeight: 500 }}>{r.t}</span>
                   </div>
                 ))}
               </div>
