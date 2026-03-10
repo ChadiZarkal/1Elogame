@@ -442,14 +442,25 @@ export const useGameStore = create<GameState>((set, get) => ({
     // ── Party mode: check if we've reached the target ──
     if (partyActive && partyConfig && duelCount >= partyConfig.size) {
       // Party complete! Build final stats
+      // Use Math.max with current streak to avoid race condition where the
+      // last duel's API response set state.streak but partyBestStreak wasn't
+      // updated (because partyActive gets set to false before the update).
       const state = get();
+      const finalBestStreak = Math.max(state.partyBestStreak, state.streak);
+      
+      // Recompute correctGuesses from results for accuracy (same race condition fix)
+      let finalCorrect = 0;
+      for (const entry of state.partyResults) {
+        if (!entry.result.isOptimistic && entry.result.winner.percentage >= 50) finalCorrect++;
+      }
+      
       set({
         partyComplete: true,
         partyActive: false,
         partyStats: {
           results: state.partyResults,
-          bestStreak: state.partyBestStreak,
-          correctGuesses: state.partyCorrectGuesses,
+          bestStreak: finalBestStreak,
+          correctGuesses: Math.max(state.partyCorrectGuesses, finalCorrect),
           startedAt: state.partyStartedAt,
           endedAt: Date.now(),
           category: partyConfig.category,
@@ -579,13 +590,20 @@ export const useGameStore = create<GameState>((set, get) => ({
     const state = get();
     if (!state.partyConfig) return;
     
+    // Same race condition fix as showNextDuel
+    const finalBestStreak = Math.max(state.partyBestStreak, state.streak);
+    let finalCorrect = 0;
+    for (const entry of state.partyResults) {
+      if (!entry.result.isOptimistic && entry.result.winner.percentage >= 50) finalCorrect++;
+    }
+    
     set({
       partyComplete: true,
       partyActive: false,
       partyStats: {
         results: state.partyResults,
-        bestStreak: state.partyBestStreak,
-        correctGuesses: state.partyCorrectGuesses,
+        bestStreak: finalBestStreak,
+        correctGuesses: Math.max(state.partyCorrectGuesses, finalCorrect),
         startedAt: state.partyStartedAt,
         endedAt: Date.now(),
         category: state.partyConfig.category,
