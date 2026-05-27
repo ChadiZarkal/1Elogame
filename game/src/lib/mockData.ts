@@ -89,7 +89,7 @@ const _initialMockElements: Element[] = [
   createElement('29', "Être radin", 'quotidien', 3, 1015),
   createElement('30', "Diviser l'addition au centime près", 'quotidien', 2, 995),
   
-  // MÉTIERS (💼)
+  // MÉTIERS (💼) — Bureau behaviors + professions
   createElement('31', "Travailler le dimanche", 'metiers', 2, 1130),
   createElement('32', "Répondre aux emails à 23h", 'metiers', 2, 1065),
   createElement('33', "Ne jamais prendre de congés", 'metiers', 3, 1035),
@@ -100,6 +100,56 @@ const _initialMockElements: Element[] = [
   createElement('38', "Chauffer du poisson au micro-ondes", 'metiers', 4, 1045),
   createElement('39', "Être influenceur LinkedIn", 'metiers', 3, 1175),
   createElement('40', "Être politicien", 'metiers', 4, 1155),
+
+  // Bureau: culture d'entreprise
+  createElement('95', "Être en télétravail 100%", 'metiers', 2, 1050),
+  createElement('96', "Venir au bureau en pyjama", 'metiers', 2, 1040),
+  createElement('97', "Poser un RTT le lundi", 'metiers', 2, 1055),
+  createElement('98', "Être en burnout permanent", 'metiers', 3, 1060),
+  createElement('99', "Faire semblant de travailler", 'metiers', 2, 1045),
+  createElement('100', "Arriver en retard tous les jours", 'metiers', 3, 1070),
+  createElement('101', "Partir à 17h pile", 'metiers', 2, 1035),
+
+  // Bureau: relations professionnelles
+  createElement('102', "Coucher avec son boss", 'metiers', 4, 1180),
+  createElement('103', "Balancer ses collègues", 'metiers', 4, 1160),
+  createElement('104', "Ne jamais faire le café", 'metiers', 2, 1030),
+  createElement('105', "Organiser des pots toutes les semaines", 'metiers', 2, 1025),
+  createElement('106', "Critiquer son boss sur Slack", 'metiers', 3, 1120),
+  createElement('107', "Ghoster les réunions Teams", 'metiers', 2, 1055),
+
+  // Bureau: ambiance & productivité
+  createElement('108', "Mettre de la musique sans casque au bureau", 'metiers', 3, 1100),
+  createElement('109', "Manger des trucs qui puent au bureau", 'metiers', 3, 1095),
+  createElement('110', "Parler fort au téléphone en open space", 'metiers', 3, 1090),
+  createElement('111', "Organiser des réunions inutiles", 'metiers', 3, 1080),
+  createElement('112', "Envoyer 50 messages Slack par jour", 'metiers', 2, 1040),
+  createElement('113', "Ne jamais lire ses emails", 'metiers', 3, 1075),
+  createElement('114', "Mettre 'CC' à toute la boîte", 'metiers', 3, 1070),
+  createElement('115', "Procrastiner sur LinkedIn", 'metiers', 2, 1035),
+  createElement('116', "Scroller TikTok en réunion", 'metiers', 2, 1050),
+
+  // Bureau: carrière & ambition
+  createElement('117', "Être en reconversion à 40 ans", 'metiers', 2, 1045),
+  createElement('118', "Lancer sa startup", 'metiers', 2, 1060),
+  createElement('119', "Être freelance galérien", 'metiers', 2, 1055),
+  createElement('120', "Faire semblant d'être entrepreneur", 'metiers', 3, 1110),
+  createElement('121', "Poster des citations motivantes", 'metiers', 2, 1040),
+  createElement('122', "Être coach en développement personnel", 'metiers', 3, 1115),
+  createElement('123', "Vendre des formations bidons", 'metiers', 4, 1150),
+  createElement('124', "Faire du MLM", 'metiers', 4, 1145),
+  createElement('125', "Être dans la crypto H24", 'metiers', 2, 1055),
+
+  // Bureau: types de jobs (supplémentaires)
+  createElement('126', "Être policier", 'metiers', 2, 1085),
+  createElement('127', "Être influenceur", 'metiers', 3, 1140),
+  createElement('128', "Être avocat fiscaliste", 'metiers', 2, 1080),
+  createElement('129', "Être télévendeur", 'metiers', 3, 1100),
+  createElement('130', "Être serveur dans un fast-food", 'metiers', 2, 1050),
+  createElement('131', "Être agent immobilier", 'metiers', 3, 1095),
+  createElement('132', "Être DJ de mariage", 'metiers', 2, 1060),
+  createElement('133', "Être community manager", 'metiers', 2, 1055),
+  createElement('134', "Être recruteur IT", 'metiers', 2, 1065),
 
   // 💸 La "Hustle Culture" & L'Argent
   createElement('41', "Être trader / Banquier d'affaires", 'metiers', 3, 1165),

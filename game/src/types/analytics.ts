@@ -25,6 +25,7 @@ export interface CommunitySubmission {
   id: string;
   text: string;
   verdict: 'red' | 'green';
+  justification?: string;
   timestamp: number;
 }
 

@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: '/admin/stats', label: 'Statistiques', icon: '📊', shortLabel: 'Stats' },
   { href: '/admin/demographics', label: 'Démographie', icon: '📈', shortLabel: 'Démo' },
   { href: '/admin/moderation', label: 'Modération', icon: '🛡️', shortLabel: 'Modér.' },
+  { href: '/admin/oracle', label: 'Oracle', icon: '🔮', shortLabel: 'Oracle' },
 ];
 
 export function AdminNav() {
