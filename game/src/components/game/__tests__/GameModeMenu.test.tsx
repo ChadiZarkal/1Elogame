@@ -26,20 +26,19 @@ describe('GameModeMenu', () => {
     expect(screen.getByText('Classique')).toBeDefined();
   });
 
-  it('affiche les 4 catégories dans le menu', () => {
+  it('affiche les 3 catégories dans le menu', () => {
     render(<GameModeMenu currentSelection={defaultSelection} onSelectionChange={onSelectionChange} />);
     fireEvent.click(screen.getByTitle('Changer de catégorie'));
     expect(screen.getByText('Sexe & Kinks')).toBeDefined();
-    expect(screen.getByText('Lifestyle')).toBeDefined();
     expect(screen.getByText('Quotidien')).toBeDefined();
-    expect(screen.getByText('Bureau')).toBeDefined();
+    expect(screen.getByText('Métiers')).toBeDefined();
   });
 
   it('appelle onSelectionChange avec la catégorie sélectionnée', () => {
     render(<GameModeMenu currentSelection={defaultSelection} onSelectionChange={onSelectionChange} />);
     fireEvent.click(screen.getByTitle('Changer de catégorie'));
-    fireEvent.click(screen.getByText('Lifestyle'));
-    expect(onSelectionChange).toHaveBeenCalledWith({ mode: 'thematique', category: 'lifestyle' });
+    fireEvent.click(screen.getByText('Quotidien'));
+    expect(onSelectionChange).toHaveBeenCalledWith({ mode: 'thematique', category: 'quotidien' });
   });
 
   it('appelle onSelectionChange en mode default au clic Classique', () => {
@@ -62,9 +61,9 @@ describe('GameModeMenu', () => {
   });
 
   it('affiche le label de la catégorie en mode thématique', () => {
-    const thematicSelection: GameModeSelection = { mode: 'thematique', category: 'bureau' };
+    const thematicSelection: GameModeSelection = { mode: 'thematique', category: 'metiers' };
     render(<GameModeMenu currentSelection={thematicSelection} onSelectionChange={onSelectionChange} />);
-    expect(screen.getByText('Bureau')).toBeDefined();
+    expect(screen.getByText('Métiers')).toBeDefined();
   });
 
   it('affiche le bouton "Revenir au mode classique" si filtre actif', () => {

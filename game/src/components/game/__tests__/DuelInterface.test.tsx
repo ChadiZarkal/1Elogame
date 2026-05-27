@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { DuelInterface } from '../DuelInterface';
 
 const mockElementA = { id: 'a1', texte: 'Ghoster après le date', categorie: 'sexe' };
-const mockElementB = { id: 'b1', texte: 'Jouer aux jeux 10h', categorie: 'lifestyle' };
+const mockElementB = { id: 'b1', texte: 'Jouer aux jeux 10h', categorie: 'quotidien' };
 
 describe('DuelInterface', () => {
   it('renders both element texts', () => {
@@ -20,7 +20,7 @@ describe('DuelInterface', () => {
     );
     // CategoryBadge renders labelFr from categories config
     expect(screen.getByText('Sexe & Kinks')).toBeInTheDocument();
-    expect(screen.getByText('Lifestyle')).toBeInTheDocument();
+    expect(screen.getByText('Quotidien')).toBeInTheDocument();
   });
 
   it('renders VS divider', () => {

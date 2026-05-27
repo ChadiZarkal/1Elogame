@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { useGameStore } from '@/stores/gameStore';
 import { DuelInterface } from '@/components/game/DuelInterface';
 import { StreakDisplay } from '@/components/game/StreakDisplay';
-import { GameModeMenu } from '@/components/game/GameModeMenu';
+import { CategorySelector } from '@/components/game/CategorySelector';
 import { FullPageLoading } from '@/components/ui/Loading';
 
 // Lazy-load components only needed after first vote or rarely
@@ -18,6 +18,7 @@ const CompactResult = dynamic(() => import('@/components/game/CompactResult').th
 export default function JouerPage() {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [categoriesChosen, setCategoriesChosen] = useState(false);
   
   const {
     hasProfile,
@@ -42,7 +43,7 @@ export default function JouerPage() {
     setGameMode,
   } = useGameStore();
   
-  // Initialize from storage and fetch first duel
+  // Initialize from storage
   useEffect(() => {
     initializeFromStorage();
     
@@ -63,13 +64,13 @@ export default function JouerPage() {
     return () => clearTimeout(timer);
   }, [hasProfile, router]);
   
-  // Fetch first duel when profile is loaded
+  // Fetch first duel when profile is loaded AND categories chosen
   // Guard: !error prevents infinite retry loop when API fails (429 / 500)
   useEffect(() => {
-    if (hasProfile && !currentDuel && !isLoadingDuel && !allDuelsExhausted && !error) {
+    if (hasProfile && categoriesChosen && !currentDuel && !isLoadingDuel && !allDuelsExhausted && !error) {
       fetchNextDuel();
     }
-  }, [hasProfile, currentDuel, isLoadingDuel, allDuelsExhausted, error, fetchNextDuel]);
+  }, [hasProfile, categoriesChosen, currentDuel, isLoadingDuel, allDuelsExhausted, error, fetchNextDuel]);
   
   // Auto-scroll to bottom when new content appears
   useEffect(() => {
@@ -155,9 +156,25 @@ export default function JouerPage() {
   }, [duelCount]);
   
   const handleReset = useCallback(() => { resetGame(); router.push('/jeu'); }, [resetGame, router]);
+
+  const handleCategoryStart = useCallback((selectedCategories: string[]) => {
+    const selection = {
+      mode: 'thematique' as const,
+      category: selectedCategories[0],
+      categories: selectedCategories,
+    };
+    setGameMode(selection);
+    localStorage.setItem('default_game_categories', JSON.stringify(selectedCategories));
+    setCategoriesChosen(true);
+  }, [setGameMode]);
   
   if (!hasProfile) {
     return <FullPageLoading text="Chargement..." />;
+  }
+
+  // Show category selector before starting the game
+  if (!categoriesChosen) {
+    return <CategorySelector onStart={handleCategoryStart} />;
   }
   
   if (allDuelsExhausted) {
@@ -214,7 +231,7 @@ export default function JouerPage() {
       
       {/* Current active duel/result - takes full screen height */}
       <div className="h-screen w-full relative flex flex-col">
-        {/* Top bar: home + streak + mode */}
+        {/* Top bar: home + streak */}
         <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {/* Home button */}
@@ -234,11 +251,6 @@ export default function JouerPage() {
               />
             </div>
           </div>
-          {/* Game Mode Menu */}
-          <GameModeMenu
-            currentSelection={gameMode}
-            onSelectionChange={setGameMode}
-          />
         </div>
         
         {/* First duel hint */}

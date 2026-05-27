@@ -77,7 +77,7 @@ describe('/api/admin/elements', () => {
       const { POST } = await import('@/app/api/admin/elements/route');
       const response = await POST(makePostRequest({
         texte: 'Nouveau comportement test',
-        categorie: 'lifestyle',
+        categorie: 'quotidien',
         niveau_provocation: 3,
       }));
       const json = await response.json();
@@ -118,7 +118,7 @@ describe('/api/admin/elements', () => {
       const { POST } = await import('@/app/api/admin/elements/route');
       const response = await POST(makePostRequest({
         texte: 'Test element',
-        categorie: 'bureau',
+        categorie: 'metiers',
         niveau_provocation: 3,
       }));
 

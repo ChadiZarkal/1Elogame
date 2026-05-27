@@ -23,9 +23,9 @@ import {
 describe('categorieSchema', () => {
   it('accepte les catégories valides', () => {
     expect(categorieSchema.parse('sexe')).toBe('sexe');
-    expect(categorieSchema.parse('lifestyle')).toBe('lifestyle');
     expect(categorieSchema.parse('quotidien')).toBe('quotidien');
-    expect(categorieSchema.parse('bureau')).toBe('bureau');
+    expect(categorieSchema.parse('quotidien')).toBe('quotidien');
+    expect(categorieSchema.parse('metiers')).toBe('metiers');
   });
 
   it('rejette les catégories invalides', () => {
@@ -176,7 +176,7 @@ describe('elementsQuerySchema', () => {
     const result = elementsQuerySchema.parse({
       page: '2',
       limit: '50',
-      category: 'bureau',
+      category: 'metiers',
       active: 'true',
       search: 'test',
     });

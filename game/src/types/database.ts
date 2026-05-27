@@ -1,12 +1,11 @@
 // Database types for Supabase
 
-// Catégories disponibles - Nouvelles catégories 2026
+// Catégories disponibles - 3 catégories 2026
 // IMPORTANT: Doit correspondre aux clés dans src/config/categories.ts
 export type Categorie = 
-  | 'sexe'      // Sexe & Kinks - relations, dating, intimité
-  | 'lifestyle' // Lifestyle - hobbies, passions, sport, activités
+  | 'sexe'      // Sexe & Kinks - relations, dating, intimité, flirt
   | 'quotidien' // Quotidien - comportements et habitudes du quotidien
-  | 'bureau';   // Bureau - comportements et attitudes au travail
+  | 'metiers';  // Métiers - comportements et attitudes au travail, professions
 
 export type SexeVotant = 'homme' | 'femme' | 'autre';
 

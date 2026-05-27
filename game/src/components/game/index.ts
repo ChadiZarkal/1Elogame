@@ -4,6 +4,7 @@
  */
 
 export { AllDuelsExhausted } from './AllDuelsExhausted';
+export { CategorySelector } from './CategorySelector';
 export { CompactResult } from './CompactResult';
 export { DuelInterface } from './DuelInterface';
 export { GameModeMenu } from './GameModeMenu';

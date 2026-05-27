@@ -96,9 +96,9 @@ describe('trackProfile', () => {
 
 describe('trackCategoryChange', () => {
   it('met à jour la catégorie', () => {
-    trackCategoryChange('bureau');
+    trackCategoryChange('metiers');
     const stats = getCurrentSessionStats();
-    expect(stats.category).toBe('bureau');
+    expect(stats.category).toBe('metiers');
   });
 });
 

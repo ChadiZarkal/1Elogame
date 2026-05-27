@@ -26,7 +26,7 @@ function createMockElement(overrides: Partial<Element> = {}): Element {
   return {
     id: `el-${Math.random().toString(36).slice(2, 8)}`,
     texte: 'Test element',
-    categorie: 'lifestyle',
+    categorie: 'quotidien',
     niveau_provocation: 2,
     actif: true,
     elo_global: 1000,
@@ -125,7 +125,7 @@ describe('findCrossCategoryPairs', () => {
   it('trouve des paires de catégories différentes', () => {
     const elements = [
       createMockElement({ id: 'a', categorie: 'sexe' }),
-      createMockElement({ id: 'b', categorie: 'bureau' }),
+      createMockElement({ id: 'b', categorie: 'metiers' }),
       createMockElement({ id: 'c', categorie: 'sexe' }),
     ];
     const pairs = findCrossCategoryPairs(elements, new Set(), emptyContext);
@@ -158,12 +158,12 @@ describe('findRandomPairs', () => {
 
 describe('toElementDTO', () => {
   it('extrait uniquement id, texte, categorie', () => {
-    const element = createMockElement({ id: 'test-1', texte: 'Hello', categorie: 'bureau' });
+    const element = createMockElement({ id: 'test-1', texte: 'Hello', categorie: 'metiers' });
     const dto = toElementDTO(element);
     expect(dto).toEqual({
       id: 'test-1',
       texte: 'Hello',
-      categorie: 'bureau',
+      categorie: 'metiers',
     });
     expect(Object.keys(dto)).toHaveLength(3);
   });

@@ -20,11 +20,10 @@ export interface CategoryConfig {
 /**
  * CATÉGORIES DISPONIBLES
  * 
- * Les 4 catégories principales du jeu :
- * - Sexe & Kinks : relations, dating, intimité
- * - Lifestyle : hobbies, passions, sport, activités
+ * Les 3 catégories principales du jeu :
+ * - Sexe & Kinks : relations, dating, intimité, flirt
  * - Quotidien : comportements et habitudes du quotidien
- * - Bureau : comportements et attitudes au travail
+ * - Métiers : comportements et attitudes au travail, professions
  */
 export const CATEGORIES_CONFIG: Record<string, CategoryConfig> = {
   sexe: {
@@ -35,14 +34,6 @@ export const CATEGORIES_CONFIG: Record<string, CategoryConfig> = {
     textColor: 'text-[#FCA5A5]',
     emoji: '🔥'
   },
-  lifestyle: {
-    id: 'lifestyle',
-    label: 'Lifestyle',
-    labelFr: 'Lifestyle',
-    color: 'bg-[#7C3AED]/20',
-    textColor: 'text-[#C4B5FD]',
-    emoji: '🎯'
-  },
   quotidien: {
     id: 'quotidien',
     label: 'Quotidien',
@@ -51,10 +42,10 @@ export const CATEGORIES_CONFIG: Record<string, CategoryConfig> = {
     textColor: 'text-[#6EE7B7]',
     emoji: '🤷'
   },
-  bureau: {
-    id: 'bureau',
-    label: 'Bureau',
-    labelFr: 'Bureau',
+  metiers: {
+    id: 'metiers',
+    label: 'Métiers',
+    labelFr: 'Métiers',
     color: 'bg-[#1E3A5F]/50',
     textColor: 'text-[#60A5FA]',
     emoji: '💼'

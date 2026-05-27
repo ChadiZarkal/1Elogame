@@ -10,7 +10,7 @@ import { CompactResult } from '@/components/game/CompactResult';
 import type { Duel, VoteResult } from '@/types/game';
 
 const makeDuel = (): Duel => ({
-  elementA: { id: 'a', texte: 'Être gentil', categorie: 'lifestyle' },
+  elementA: { id: 'a', texte: 'Être gentil', categorie: 'quotidien' },
   elementB: { id: 'b', texte: 'Ghoster quelqu\'un', categorie: 'sexe' },
 });
 

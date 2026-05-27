@@ -246,10 +246,10 @@ export default function AdminCategoriesPage() {
                 <div>
                   <h3 className="text-[#DC2626] font-bold mb-2">Étape 2 : Ajouter votre catégorie</h3>
                   <pre className="bg-[#0D0D0D] p-4 rounded-lg text-[#F5F5F5] font-mono text-sm overflow-x-auto">
-{`lifestyle: {
-  id: 'lifestyle',
-  label: 'Lifestyle',
-  labelFr: 'Style de vie',
+{`nouvelle_categorie: {
+  id: 'nouvelle_categorie',
+  label: 'Ma Catégorie',
+  labelFr: 'Ma Catégorie',
   color: 'bg-[#8B5CF6]/20',
   textColor: 'text-[#A78BFA]',
   emoji: '🌟'

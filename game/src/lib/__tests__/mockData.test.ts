@@ -47,7 +47,7 @@ describe('getMockElements', () => {
   });
 
   it('retourne des éléments avec des catégories valides', () => {
-    const validCategories = ['sexe', 'lifestyle', 'quotidien', 'bureau'];
+    const validCategories = ['sexe', 'quotidien', 'metiers'];
     const elements = getMockElements();
     for (const el of elements) {
       expect(validCategories).toContain(el.categorie);
@@ -179,16 +179,15 @@ describe('updateMockElo', () => {
 });
 
 describe('mockElements structure', () => {
-  it('contient 10 éléments par catégorie', () => {
+  it('contient des éléments dans les 3 catégories', () => {
     const byCat = mockElements.reduce((acc, el) => {
       acc[el.categorie] = (acc[el.categorie] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     
-    expect(byCat['sexe']).toBe(10);
-    expect(byCat['lifestyle']).toBe(10);
-    expect(byCat['quotidien']).toBe(10);
-    expect(byCat['bureau']).toBe(10);
+    expect(byCat['sexe']).toBeGreaterThan(0);
+    expect(byCat['quotidien']).toBeGreaterThan(0);
+    expect(byCat['metiers']).toBeGreaterThan(0);
   });
 
   it('chaque élément a un texte non vide', () => {

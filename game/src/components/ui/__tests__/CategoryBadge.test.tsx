@@ -17,8 +17,8 @@ describe('CategoryBadge', () => {
   });
 
   it('affiche un badge pill', () => {
-    render(<CategoryBadge categorie="lifestyle" variant="pill" />);
-    const badge = screen.getByText(/lifestyle/i);
+    render(<CategoryBadge categorie="quotidien" variant="pill" />);
+    const badge = screen.getByText(/quotidien/i);
     expect(badge).toBeDefined();
   });
 
@@ -35,7 +35,7 @@ describe('CategoryBadge', () => {
   });
 
   it('applique les classes CSS pill correctement', () => {
-    const { container } = render(<CategoryBadge categorie="bureau" variant="pill" />);
+    const { container } = render(<CategoryBadge categorie="metiers" variant="pill" />);
     const span = container.querySelector('span.rounded-full');
     expect(span).toBeDefined();
   });

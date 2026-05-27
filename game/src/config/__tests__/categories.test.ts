@@ -13,15 +13,14 @@ import {
 } from '@/config/categories';
 
 describe('CATEGORIES_CONFIG', () => {
-  it('contient exactement 4 catégories', () => {
-    expect(Object.keys(CATEGORIES_CONFIG)).toHaveLength(4);
+  it('contient exactement 3 catégories', () => {
+    expect(Object.keys(CATEGORIES_CONFIG)).toHaveLength(3);
   });
 
   it('contient les catégories attendues', () => {
     expect(CATEGORIES_CONFIG).toHaveProperty('sexe');
-    expect(CATEGORIES_CONFIG).toHaveProperty('lifestyle');
     expect(CATEGORIES_CONFIG).toHaveProperty('quotidien');
-    expect(CATEGORIES_CONFIG).toHaveProperty('bureau');
+    expect(CATEGORIES_CONFIG).toHaveProperty('metiers');
   });
 
   it('chaque catégorie a les propriétés requises', () => {
@@ -41,14 +40,14 @@ describe('CATEGORIES_CONFIG', () => {
 });
 
 describe('CATEGORIES_LIST', () => {
-  it('est un tableau de 4 éléments', () => {
-    expect(CATEGORIES_LIST).toHaveLength(4);
+  it('est un tableau de 3 éléments', () => {
+    expect(CATEGORIES_LIST).toHaveLength(3);
   });
 });
 
 describe('CATEGORY_IDS', () => {
-  it('contient les 4 IDs', () => {
-    expect(CATEGORY_IDS).toEqual(['sexe', 'lifestyle', 'quotidien', 'bureau']);
+  it('contient les 3 IDs', () => {
+    expect(CATEGORY_IDS).toEqual(['sexe', 'quotidien', 'metiers']);
   });
 });
 
@@ -66,7 +65,7 @@ describe('getCategory', () => {
 
 describe('getCategoryClasses', () => {
   it('retourne les classes CSS pour un ID valide', () => {
-    const classes = getCategoryClasses('bureau');
+    const classes = getCategoryClasses('metiers');
     expect(classes).toContain('bg-');
     expect(classes).toContain('text-');
   });

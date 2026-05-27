@@ -21,18 +21,28 @@ export type GameMode = 'default' | 'thematique';
 export interface GameModeSelection {
   mode: GameMode;
   category: string | null; // null = toutes catégories (default mode)
+  categories?: string[]; // multi-select: list of selected category IDs
 }
 
 export const DEFAULT_GAME_MODE: GameModeSelection = {
   mode: 'thematique',
-  category: 'quotidien',
+  category: 'sexe',
+  categories: ['sexe'],
 };
 
 /** Reads the admin-configured default category from localStorage (client-side only). */
 export function getDefaultGameMode(): GameModeSelection {
   if (typeof window === 'undefined') return DEFAULT_GAME_MODE;
-  const saved = localStorage.getItem('default_game_category');
-  if (saved) return { mode: 'thematique', category: saved };
+  const saved = localStorage.getItem('default_game_categories');
+  if (saved) {
+    try {
+      const cats = JSON.parse(saved) as string[];
+      if (cats.length === 1) return { mode: 'thematique', category: cats[0], categories: cats };
+      if (cats.length > 1) return { mode: 'thematique', category: cats[0], categories: cats };
+    } catch { /* ignore */ }
+  }
+  const savedSingle = localStorage.getItem('default_game_category');
+  if (savedSingle) return { mode: 'thematique', category: savedSingle, categories: [savedSingle] };
   return DEFAULT_GAME_MODE;
 }
 
@@ -191,7 +201,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (appearances) {
         params.set('appearances', appearances);
       }
-      if (gameMode.mode === 'thematique' && gameMode.category) {
+      if (gameMode.mode === 'thematique' && gameMode.categories && gameMode.categories.length > 0) {
+        // Pick a random category from selected ones for variety
+        const cats = gameMode.categories;
+        const picked = cats[Math.floor(Math.random() * cats.length)];
+        params.set('category', picked);
+      } else if (gameMode.mode === 'thematique' && gameMode.category) {
         params.set('category', gameMode.category);
       }
       
