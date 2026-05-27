@@ -4,7 +4,7 @@ import { useEffect, useCallback, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
-import { useGameStore } from '@/stores/gameStore';
+import { useGameStore, type PartySize } from '@/stores/gameStore';
 import { DuelInterface } from '@/components/game/DuelInterface';
 import { StreakDisplay } from '@/components/game/StreakDisplay';
 import { CategorySelector } from '@/components/game/CategorySelector';
@@ -18,7 +18,6 @@ const CompactResult = dynamic(() => import('@/components/game/CompactResult').th
 export default function JouerPage() {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [categoriesChosen, setCategoriesChosen] = useState(false);
   
   const {
     hasProfile,
@@ -31,8 +30,10 @@ export default function JouerPage() {
     allDuelsExhausted,
     isLoadingDuel,
     error,
-    gameMode,
     duelHistory,
+    partyActive,
+    partyConfig,
+    partyComplete,
     initializeFromStorage,
     fetchNextDuel,
     submitVote,
@@ -40,7 +41,7 @@ export default function JouerPage() {
     showNextDuel,
     resetGame,
     clearError,
-    setGameMode,
+    startParty,
   } = useGameStore();
   
   // Initialize from storage
@@ -64,13 +65,20 @@ export default function JouerPage() {
     return () => clearTimeout(timer);
   }, [hasProfile, router]);
   
-  // Fetch first duel when profile is loaded AND categories chosen
+  // Redirect to recap when party completes
+  useEffect(() => {
+    if (partyComplete) {
+      router.push('/jeu/recap');
+    }
+  }, [partyComplete, router]);
+  
+  // Fetch first duel when profile is loaded AND party is active
   // Guard: !error prevents infinite retry loop when API fails (429 / 500)
   useEffect(() => {
-    if (hasProfile && categoriesChosen && !currentDuel && !isLoadingDuel && !allDuelsExhausted && !error) {
+    if (hasProfile && partyActive && !currentDuel && !isLoadingDuel && !allDuelsExhausted && !error) {
       fetchNextDuel();
     }
-  }, [hasProfile, categoriesChosen, currentDuel, isLoadingDuel, allDuelsExhausted, error, fetchNextDuel]);
+  }, [hasProfile, partyActive, currentDuel, isLoadingDuel, allDuelsExhausted, error, fetchNextDuel]);
   
   // Auto-scroll to bottom when new content appears
   useEffect(() => {
@@ -157,23 +165,17 @@ export default function JouerPage() {
   
   const handleReset = useCallback(() => { resetGame(); router.push('/jeu'); }, [resetGame, router]);
 
-  const handleCategoryStart = useCallback((selectedCategories: string[]) => {
-    const selection = {
-      mode: 'thematique' as const,
-      category: selectedCategories[0],
-      categories: selectedCategories,
-    };
-    setGameMode(selection);
+  const handleCategoryStart = useCallback((selectedCategories: string[], partySize: PartySize) => {
     localStorage.setItem('default_game_categories', JSON.stringify(selectedCategories));
-    setCategoriesChosen(true);
-  }, [setGameMode]);
+    startParty({ size: partySize, originalSize: partySize, categories: selectedCategories });
+  }, [startParty]);
   
   if (!hasProfile) {
     return <FullPageLoading text="Chargement..." />;
   }
 
-  // Show category selector before starting the game
-  if (!categoriesChosen) {
+  // Show category selector / party setup before starting the game
+  if (!partyActive && !partyComplete) {
     return <CategorySelector onStart={handleCategoryStart} />;
   }
   
@@ -231,7 +233,7 @@ export default function JouerPage() {
       
       {/* Current active duel/result - takes full screen height */}
       <div className="h-screen w-full relative flex flex-col">
-        {/* Top bar: home + streak */}
+        {/* Top bar: home + streak + party progress */}
         <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {/* Home button */}
@@ -251,6 +253,20 @@ export default function JouerPage() {
               />
             </div>
           </div>
+          {/* Party progress */}
+          {partyConfig && (
+            <div className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-[#333] rounded-full px-3 py-1.5 flex items-center gap-2">
+              <span className="text-xs font-bold text-[#999]">
+                {duelCount >= partyConfig.size ? '✅' : `${duelCount}/${partyConfig.size}`}
+              </span>
+              <div className="w-16 h-1.5 bg-[#333] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#EF4444] rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(100, (duelCount / partyConfig.size) * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
         
         {/* First duel hint */}
