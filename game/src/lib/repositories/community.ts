@@ -30,12 +30,13 @@ export async function getRecentSubmissions(limit = 20): Promise<CommunitySubmiss
     text: row.text as string,
     verdict: row.verdict as 'red' | 'green',
     justification: (row.justification as string) || undefined,
+    gender: (row.gender as 'homme' | 'femme' | 'autre') || undefined,
     timestamp: new Date(row.created_at as string).getTime(),
   }));
 }
 
 /** Save a new community submission. */
-export async function saveSubmission(text: string, verdict: 'red' | 'green', justification?: string): Promise<CommunitySubmission> {
+export async function saveSubmission(text: string, verdict: 'red' | 'green', justification?: string, gender?: 'homme' | 'femme' | 'autre'): Promise<CommunitySubmission> {
   const sanitized = sanitizeText(text).slice(0, MAX_FLAGORNOT_TEXT_LENGTH);
 
   if (isMockMode()) {
@@ -44,6 +45,7 @@ export async function saveSubmission(text: string, verdict: 'red' | 'green', jus
       text: sanitized,
       verdict,
       justification,
+      gender,
       timestamp: Date.now(),
     };
     mockCommunityStore.push(submission);
@@ -54,9 +56,9 @@ export async function saveSubmission(text: string, verdict: 'red' | 'green', jus
 
   const { createServerClient, typedInsert } = await import('@/lib/supabase');
   const supabase = createServerClient();
-  const { error } = await typedInsert(supabase, 'flagornot_submissions', { text: sanitized, verdict, justification: justification || null });
+  const { error } = await typedInsert(supabase, 'flagornot_submissions', { text: sanitized, verdict, justification: justification || null, gender: gender || null });
   if (error) throw new Error(`DB error saving submission: ${error.message}`);
-  return { id: `new-${Date.now()}`, text: sanitized, verdict, justification, timestamp: Date.now() };
+  return { id: `new-${Date.now()}`, text: sanitized, verdict, justification, gender, timestamp: Date.now() };
 }
 
 /** Get global red/green verdict counts. */
@@ -117,8 +119,99 @@ export async function getAllSubmissions(
     text: row.text as string,
     verdict: row.verdict as 'red' | 'green',
     justification: (row.justification as string) || undefined,
+    gender: (row.gender as 'homme' | 'femme' | 'autre') || undefined,
     timestamp: new Date(row.created_at as string).getTime(),
   }));
 
   return { submissions, total: count ?? 0 };
+}
+
+/** Get gender-based statistics for Oracle. */
+export async function getGenderStats(): Promise<{
+  total: number;
+  byGender: { gender: string; total: number; red: number; green: number; redPercent: number }[];
+  insights: string[];
+}> {
+  if (isMockMode()) {
+    const genders = ['homme', 'femme', 'autre'] as const;
+    const byGender = genders.map(g => {
+      const items = mockCommunityStore.filter(s => s.gender === g);
+      const red = items.filter(s => s.verdict === 'red').length;
+      const green = items.filter(s => s.verdict === 'green').length;
+      const total = items.length;
+      return { gender: g, total, red, green, redPercent: total > 0 ? Math.round((red / total) * 100) : 0 };
+    });
+    return { total: mockCommunityStore.length, byGender, insights: generateInsights(byGender) };
+  }
+
+  const { createServerClient } = await import('@/lib/supabase');
+  const supabase = createServerClient();
+
+  // Get counts grouped by gender and verdict
+  const { data, error } = await supabase
+    .from('flagornot_submissions')
+    .select('gender, verdict')
+    .not('gender', 'is', null);
+
+  if (error) throw new Error(`DB error fetching gender stats: ${error.message}`);
+
+  const counts: Record<string, { red: number; green: number }> = {};
+  for (const row of (data || []) as Array<{ gender: string; verdict: string }>) {
+    const g = row.gender as string;
+    if (!counts[g]) counts[g] = { red: 0, green: 0 };
+    if (row.verdict === 'red') counts[g].red++;
+    else counts[g].green++;
+  }
+
+  const byGender = Object.entries(counts).map(([gender, { red, green }]) => {
+    const total = red + green;
+    return { gender, total, red, green, redPercent: total > 0 ? Math.round((red / total) * 100) : 0 };
+  });
+
+  // Sort by total desc
+  byGender.sort((a, b) => b.total - a.total);
+
+  const totalAll = byGender.reduce((sum, g) => sum + g.total, 0);
+
+  return { total: totalAll, byGender, insights: generateInsights(byGender) };
+}
+
+function generateInsights(byGender: { gender: string; total: number; red: number; green: number; redPercent: number }[]): string[] {
+  const insights: string[] = [];
+  const homme = byGender.find(g => g.gender === 'homme');
+  const femme = byGender.find(g => g.gender === 'femme');
+
+  if (homme && femme && homme.total >= 3 && femme.total >= 3) {
+    if (homme.redPercent > femme.redPercent) {
+      const diff = homme.redPercent - femme.redPercent;
+      insights.push(`🚩 Les hommes reçoivent ${diff}% plus de Red Flags que les femmes`);
+    } else if (femme.redPercent > homme.redPercent) {
+      const diff = femme.redPercent - homme.redPercent;
+      insights.push(`🚩 Les femmes reçoivent ${diff}% plus de Red Flags que les hommes`);
+    } else {
+      insights.push(`⚖️ Hommes et femmes reçoivent autant de Red Flags`);
+    }
+
+    if (homme.total > femme.total) {
+      const ratio = Math.round((homme.total / femme.total) * 10) / 10;
+      insights.push(`♂️ Les hommes utilisent l'Oracle ${ratio}x plus que les femmes`);
+    } else if (femme.total > homme.total) {
+      const ratio = Math.round((femme.total / homme.total) * 10) / 10;
+      insights.push(`♀️ Les femmes utilisent l'Oracle ${ratio}x plus que les hommes`);
+    }
+
+    const hommeGreenPct = homme.total > 0 ? Math.round((homme.green / homme.total) * 100) : 0;
+    const femmeGreenPct = femme.total > 0 ? Math.round((femme.green / femme.total) * 100) : 0;
+    if (hommeGreenPct > femmeGreenPct + 5) {
+      insights.push(`🟢 Les hommes ont ${hommeGreenPct}% de Green Flags vs ${femmeGreenPct}% chez les femmes`);
+    } else if (femmeGreenPct > hommeGreenPct + 5) {
+      insights.push(`🟢 Les femmes ont ${femmeGreenPct}% de Green Flags vs ${hommeGreenPct}% chez les hommes`);
+    }
+  }
+
+  if (insights.length === 0) {
+    insights.push(`📊 Pas assez de données pour générer des insights (besoin d'au moins 3 réponses par genre)`);
+  }
+
+  return insights;
 }

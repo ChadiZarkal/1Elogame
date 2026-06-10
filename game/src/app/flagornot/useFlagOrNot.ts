@@ -10,7 +10,8 @@ import { LOADING_PHRASES, PLACEHOLDERS, MIN_LOADING_MS, FALLBACK_SUGGESTIONS } f
  * Keeps the page component purely presentational.
  */
 export function useFlagOrNot() {
-  const [phase, setPhase] = useState<GamePhase>('idle');
+  const [phase, setPhase] = useState<GamePhase>('gender-select');
+  const [gender, setGender] = useState<'homme' | 'femme' | 'autre' | null>(null);
   const [input, setInput] = useState('');
   const [submittedText, setSubmittedText] = useState('');
   const [result, setResult] = useState<JudgmentResult | null>(null);
@@ -89,6 +90,13 @@ export function useFlagOrNot() {
     const saved = localStorage.getItem('flagornot_show_justification');
     if (saved !== null) setShowJustification(saved === 'true');
 
+    // Restore gender from localStorage — skip selection if already set
+    const savedGender = localStorage.getItem('flagornot_gender');
+    if (savedGender && ['homme', 'femme', 'autre'].includes(savedGender)) {
+      setGender(savedGender as 'homme' | 'femme' | 'autre');
+      setPhase('idle');
+    }
+
     const savedHistory = localStorage.getItem('flagornot_history');
     if (savedHistory) {
       try {
@@ -161,7 +169,7 @@ export function useFlagOrNot() {
       const res = await fetch('/api/flagornot/judge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, private: privateMode }),
+        body: JSON.stringify({ text, private: privateMode, gender }),
       });
       if (!res.ok) throw new Error('API error');
       const data: JudgmentResult = await res.json();
@@ -190,7 +198,7 @@ export function useFlagOrNot() {
       setPhase('reveal');
       if (navigator.vibrate) navigator.vibrate(40);
     }
-  }, [input, phase, privateMode, fetchCommunitySubmissions, fetchGlobalCounts]);
+  }, [input, phase, privateMode, gender, fetchCommunitySubmissions, fetchGlobalCounts]);
 
   const handleNext = useCallback(() => {
     setResult(null);
@@ -233,9 +241,16 @@ export function useFlagOrNot() {
     return 'radial-gradient(ellipse at 50% 60%, rgba(50,50,50,0.08) 0%, #0A0A0A 70%)';
   }, [phase, result]);
 
+  const selectGender = useCallback((g: 'homme' | 'femme' | 'autre') => {
+    setGender(g);
+    localStorage.setItem('flagornot_gender', g);
+    setPhase('idle');
+  }, []);
+
   return {
     // State
     phase,
+    gender,
     input,
     setInput,
     submittedText,
@@ -263,5 +278,7 @@ export function useFlagOrNot() {
     // Privacy
     privateMode,
     setPrivateMode,
+    // Gender
+    selectGender,
   };
 }

@@ -268,11 +268,8 @@ export default function LeaderboardPage() {
                           {top3[0].texte}
                         </p>
                         <div className="flex items-baseline gap-2">
-                          <span className="text-[28px] font-black" style={{ color: accent }}>
-                            {getEloForView(top3[0], view)}
-                          </span>
-                          <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: accent }}>
-                            ELO
+                          <span className="text-[13px] font-semibold" style={{ color: accent }}>
+                            {top3[0].nb_participations} votes
                           </span>
                         </div>
                       </div>
@@ -300,10 +297,9 @@ export default function LeaderboardPage() {
                           {top3[1].texte}
                         </p>
                         <div className="flex items-baseline gap-1.5">
-                          <span className="text-[20px] font-black" style={{ color: '#9CA3AF' }}>
-                            {getEloForView(top3[1], view)}
+                          <span className="text-[12px] font-semibold" style={{ color: '#9CA3AF' }}>
+                            {top3[1].nb_participations} votes
                           </span>
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-[#6B7280]">ELO</span>
                         </div>
                       </motion.div>
                     )}
@@ -329,10 +325,9 @@ export default function LeaderboardPage() {
                           {top3[2].texte}
                         </p>
                         <div className="flex items-baseline gap-1.5">
-                          <span className="text-[20px] font-black" style={{ color: isRed ? '#F59E0B' : '#6EE7B7' }}>
-                            {getEloForView(top3[2], view)}
+                          <span className="text-[12px] font-semibold" style={{ color: isRed ? '#F59E0B' : '#6EE7B7' }}>
+                            {top3[2].nb_participations} votes
                           </span>
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-[#6B7280]">ELO</span>
                         </div>
                       </motion.div>
                     )}
@@ -380,15 +375,6 @@ export default function LeaderboardPage() {
                           </p>
                           <p className="text-[#555] text-[12px] mt-1">
                             {entry.nb_participations} votes
-                          </p>
-                        </div>
-                        {/* ELO */}
-                        <div className="text-right shrink-0 z-10 pl-2">
-                          <p className="text-[20px] font-black leading-none" style={{ color: '#FAFAFA' }}>
-                            {elo}
-                          </p>
-                          <p className="text-[10px] font-bold uppercase tracking-wider mt-1" style={{ color: accent }}>
-                            ELO
                           </p>
                         </div>
                       </motion.div>

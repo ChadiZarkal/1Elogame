@@ -5,6 +5,7 @@ import { useFlagOrNot } from './useFlagOrNot';
 import { LoadingPhase } from './LoadingPhase';
 import { RevealPhase } from './RevealPhase';
 import { IdlePhase } from './IdlePhase';
+import { GenderSelect } from './GenderSelect';
 
 export default function FlagOrNotPage() {
   const game = useFlagOrNot();
@@ -36,18 +37,25 @@ export default function FlagOrNotPage() {
 
         {(game.redCount > 0 || game.greenCount > 0) ? (
           <div className="flex items-center gap-2 text-xs min-w-[48px] justify-end font-medium">
+            <a href="/flagornot/stats" className="text-[#6B7280] hover:text-[#FAFAFA] transition-colors" aria-label="Stats">📊</a>
             <span className="text-[#EF4444]">🚩 {game.redCount.toLocaleString('fr-FR')}</span>
             <span className="text-[#6B7280]">·</span>
             <span className="text-[#10B981]">🟢 {game.greenCount.toLocaleString('fr-FR')}</span>
           </div>
         ) : (
-          <div className="min-w-[48px]" />
+          <div className="min-w-[48px] flex justify-end">
+            <a href="/flagornot/stats" className="text-[#6B7280] hover:text-[#FAFAFA] transition-colors text-sm" aria-label="Stats">📊</a>
+          </div>
         )}
       </div>
 
       {/* Main content */}
       <div className="relative z-10 flex-1 flex flex-col min-h-0">
         <AnimatePresence mode="wait">
+          {game.phase === 'gender-select' && (
+            <GenderSelect onSelect={game.selectGender} />
+          )}
+
           {game.phase === 'loading' && (
             <LoadingPhase
               loadingPhrase={game.loadingPhrase}

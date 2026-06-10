@@ -26,6 +26,7 @@ export interface CommunitySubmission {
   text: string;
   verdict: 'red' | 'green';
   justification?: string;
+  gender?: 'homme' | 'femme' | 'autre';
   timestamp: number;
 }
 

@@ -10,6 +10,7 @@ interface OracleSubmission {
   text: string;
   verdict: 'red' | 'green';
   justification?: string;
+  gender?: 'homme' | 'femme' | 'autre';
   timestamp: number;
 }
 
@@ -142,6 +143,7 @@ export default function AdminOraclePage() {
             <thead>
               <tr className="border-b border-white/10 text-left">
                 <th className="px-3 py-2 text-gray-400 font-medium w-16">Verdict</th>
+                <th className="px-3 py-2 text-gray-400 font-medium w-16">Genre</th>
                 <th className="px-3 py-2 text-gray-400 font-medium">Texte soumis</th>
                 <th className="px-3 py-2 text-gray-400 font-medium">Justification IA</th>
                 <th className="px-3 py-2 text-gray-400 font-medium w-32">Date</th>
@@ -150,7 +152,7 @@ export default function AdminOraclePage() {
             <tbody>
               {submissions.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-3 py-8 text-center text-gray-500">
+                  <td colSpan={5} className="px-3 py-8 text-center text-gray-500">
                     Aucune soumission trouvée
                   </td>
                 </tr>
@@ -165,6 +167,9 @@ export default function AdminOraclePage() {
                       }`}>
                         {sub.verdict === 'red' ? '🚩 RED' : '✅ GREEN'}
                       </span>
+                    </td>
+                    <td className="px-3 py-3 text-gray-300 text-xs">
+                      {sub.gender === 'homme' ? '♂️' : sub.gender === 'femme' ? '♀️' : sub.gender === 'autre' ? '🤷' : '—'}
                     </td>
                     <td className="px-3 py-3 text-gray-200 max-w-xs">
                       <span className="line-clamp-2">{sub.text}</span>

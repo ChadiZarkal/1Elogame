@@ -169,6 +169,7 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   const body = await request.json();
   const rawText = body?.text?.trim();
   const isPrivate = body?.private === true;
+  const gender = ['homme', 'femme', 'autre'].includes(body?.gender) ? body.gender : undefined;
 
   if (!rawText || typeof rawText !== 'string') {
     return apiError('VALIDATION_ERROR', 'Le champ "text" est requis.', 400);
@@ -192,7 +193,7 @@ export const POST = withApiHandler(async (request: NextRequest) => {
     try {
       const result = await fn();
       // Fire-and-forget: save to community (skip if private mode)
-      if (!isPrivate) saveSubmission(text, result.verdict, result.justification).catch(() => {});
+      if (!isPrivate) saveSubmission(text, result.verdict, result.justification, gender).catch(() => {});
       return NextResponse.json({ ...result, provider: name });
     } catch (err) {
       console.warn(`[FlagOrNot] ${name} failed:`, err);
@@ -201,6 +202,6 @@ export const POST = withApiHandler(async (request: NextRequest) => {
 
   // Final fallback: local keyword analysis
   const result = judgeLocally(text);
-  if (!isPrivate) saveSubmission(text, result.verdict, result.justification).catch(() => {});
+  if (!isPrivate) saveSubmission(text, result.verdict, result.justification, gender).catch(() => {});
   return NextResponse.json({ ...result, provider: 'local' });
 }, { rateLimit: true });
