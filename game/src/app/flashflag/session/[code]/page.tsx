@@ -27,6 +27,57 @@ interface SessionData {
   }>;
 }
 
+function decodeBase64Url(token: string): string {
+  const normalized = token.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized + '==='.slice((normalized.length + 3) % 4);
+  return atob(padded);
+}
+
+function parseInlineSessionFromHash(hash: string): SessionData | null {
+  const marker = 'payload=';
+  const index = hash.indexOf(marker);
+  if (index === -1) return null;
+
+  try {
+    const token = hash.slice(index + marker.length);
+    const json = decodeBase64Url(token);
+    const parsed = JSON.parse(json) as {
+      mode: 'local' | 'link';
+      sourceType: 'standard' | 'custom';
+      subjectSex: 'homme' | 'femme' | 'autre';
+      subjectAge: number;
+      test: { id?: string; name: string; description?: string | null; questions: Question[] };
+    };
+
+    if (!parsed?.test?.questions || !Array.isArray(parsed.test.questions) || parsed.test.questions.length === 0) return null;
+
+    return {
+      status: 'pending',
+      mode: parsed.mode,
+      sourceType: parsed.sourceType,
+      subject: {
+        sex: parsed.subjectSex,
+        age: parsed.subjectAge,
+      },
+      score: {
+        total: 0,
+        max: parsed.test.questions.length * 2,
+        answered: 0,
+        timedOut: 0,
+      },
+      test: {
+        id: parsed.test.id,
+        name: parsed.test.name,
+        description: parsed.test.description || null,
+        questions: parsed.test.questions,
+      },
+      answers: [],
+    };
+  } catch {
+    return null;
+  }
+}
+
 export default function FlashFlagSessionPage() {
   const params = useParams<{ code: string }>();
   const code = params.code;
@@ -39,6 +90,7 @@ export default function FlashFlagSessionPage() {
   const [remainingMs, setRemainingMs] = useState(0);
   const [answers, setAnswers] = useState<Array<{ questionIndex: number; questionText: string; selectedOption: string | null; selectedScore: 0 | 1 | 2; timedOut: boolean; timeSpentMs: number }>>([]);
   const [doneSummary, setDoneSummary] = useState<{ totalScore: number; maxScore: number; answeredCount: number; timedOutCount: number; riskPercent: number; riskLabel: string } | null>(null);
+  const [isInlineMode, setIsInlineMode] = useState(false);
 
   const startedAtRef = useRef<number>(0);
 
@@ -46,6 +98,19 @@ export default function FlashFlagSessionPage() {
   const totalQuestions = session?.test.questions.length || 0;
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash.includes('payload=')) {
+      const inlineSession = parseInlineSessionFromHash(window.location.hash);
+      if (inlineSession) {
+        setSession(inlineSession);
+        setLoading(false);
+        setIsInlineMode(true);
+        return;
+      }
+      setError('Lien invalide ou incomplet.');
+      setLoading(false);
+      return;
+    }
+
     fetch(`/api/flashflag/session/${code}`)
       .then((r) => r.json())
       .then((d) => {
@@ -63,6 +128,12 @@ export default function FlashFlagSessionPage() {
 
   const launch = async () => {
     setError('');
+
+    if (isInlineMode) {
+      setStarted(true);
+      return;
+    }
+
     try {
       await fetch(`/api/flashflag/session/${code}/start`, {
         method: 'POST',
@@ -76,6 +147,25 @@ export default function FlashFlagSessionPage() {
   };
 
   const submitAll = useCallback(async (payload: Array<{ questionIndex: number; questionText: string; selectedOption: string | null; selectedScore: 0 | 1 | 2; timedOut: boolean; timeSpentMs: number }>) => {
+    if (isInlineMode) {
+      const answeredCount = payload.filter((item) => !item.timedOut).length;
+      const timedOutCount = payload.filter((item) => item.timedOut).length;
+      const totalScore = payload.reduce((sum, item) => sum + item.selectedScore, 0);
+      const maxScore = (session?.test.questions.length || payload.length) * 2;
+      const riskPercent = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
+      const riskLabel = riskPercent >= 70 ? 'Alerte rouge' : riskPercent >= 40 ? 'Zone de vigilance' : 'Plutot rassurant';
+
+      setDoneSummary({
+        totalScore,
+        maxScore,
+        answeredCount,
+        timedOutCount,
+        riskPercent,
+        riskLabel,
+      });
+      return;
+    }
+
     try {
       const res = await fetch(`/api/flashflag/session/${code}/submit`, {
         method: 'POST',
@@ -88,7 +178,7 @@ export default function FlashFlagSessionPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur finale');
     }
-  }, [code]);
+  }, [code, isInlineMode, session]);
 
   const pushAnswer = useCallback((selectedOption: string | null, selectedScore: 0 | 1 | 2, timedOut: boolean) => {
     if (!currentQuestion) return;

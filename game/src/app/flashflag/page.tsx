@@ -21,6 +21,15 @@ interface CustomQuestion {
   options: Array<{ text: string; score: 0 | 1 | 2 }>;
 }
 
+interface LocalStandardTest {
+  id: string;
+  name: string;
+  description: string | null;
+  questions: CustomQuestion[];
+  is_active?: boolean;
+  updated_at?: string;
+}
+
 const defaultQuestion = (): CustomQuestion => ({
   text: '',
   timeLimitSec: 7,
@@ -35,6 +44,65 @@ const createSchema = z.object({
 });
 
 const CUSTOM_DRAFT_KEY = 'flashflag_custom_draft_v1';
+const LOCAL_STANDARD_TESTS_KEY = 'flashflag_local_standard_tests_v1';
+
+const FALLBACK_STANDARD_TEST: LocalStandardTest = {
+  id: 'fallback-standard-radar',
+  name: 'Radar Date Express',
+  description: '15 questions rapides pour reperer les signaux rouges.',
+  questions: [
+    { text: 'Es-tu feministe ?', timeLimitSec: 7, options: [{ text: 'Oui', score: 0 }, { text: 'C est complique', score: 1 }, { text: 'Non', score: 2 }] },
+    { text: 'Es-tu deja alle voir un psy ?', timeLimitSec: 7, options: [{ text: 'Oui', score: 0 }, { text: 'Non', score: 1 }, { text: 'J en ai pas besoin', score: 2 }] },
+    { text: 'Ton meilleur pote trompe sa copine ?', timeLimitSec: 7, options: [{ text: 'Je le recadre', score: 0 }, { text: 'Je la previens', score: 1 }, { text: 'Je le couvre', score: 2 }] },
+    { text: 'As-tu deja pleure devant un film ?', timeLimitSec: 7, options: [{ text: 'Oui', score: 0 }, { text: 'Rarement', score: 1 }, { text: 'Non jamais', score: 2 }] },
+    { text: 'Les compliments dans la rue ?', timeLimitSec: 7, options: [{ text: 'C est lourd', score: 0 }, { text: 'C est normal', score: 1 }, { text: 'C est flatteur', score: 2 }] },
+    { text: 'Elle dit pas ce soir ?', timeLimitSec: 7, options: [{ text: 'Ok pas de souci', score: 0 }, { text: 'Mais pourquoi ?', score: 1 }, { text: 'J insiste un peu', score: 2 }] },
+    { text: 'Elle sort sans toi ?', timeLimitSec: 7, options: [{ text: 'Amuse-toi bien', score: 0 }, { text: 'Fais attention', score: 1 }, { text: 'Tu rentres quand ?', score: 2 }] },
+    { text: 'Apres une grosse dispute ?', timeLimitSec: 7, options: [{ text: 'On en discute', score: 0 }, { text: 'Je fais le mort', score: 1 }, { text: 'J attends ses excuses', score: 2 }] },
+    { text: 'Ton ex en un mot ?', timeLimitSec: 7, options: [{ text: 'Une histoire passee', score: 0 }, { text: 'C etait une folle', score: 1 }, { text: 'Une manipulatrice', score: 2 }] },
+    { text: 'Ton bord politique ?', timeLimitSec: 7, options: [{ text: 'La gauche', score: 0 }, { text: 'Apolitique centre', score: 1 }, { text: 'La droite', score: 2 }] },
+    { text: 'Face a Men are trash ?', timeLimitSec: 7, options: [{ text: 'Je comprends l idee', score: 0 }, { text: 'Not all men', score: 1 }, { text: 'C est misandre', score: 2 }] },
+    { text: 'Le privilege masculin ?', timeLimitSec: 7, options: [{ text: 'J en suis conscient', score: 0 }, { text: 'J ai galere aussi', score: 1 }, { text: 'Ca n existe pas', score: 2 }] },
+    { text: 'Sur la question du genre ?', timeLimitSec: 7, options: [{ text: 'C est un spectre', score: 0 }, { text: 'C est une mode internet', score: 1 }, { text: 'Il n y a que deux genres', score: 2 }] },
+    { text: 'La masculinite toxique ?', timeLimitSec: 7, options: [{ text: 'Un probleme systemique', score: 0 }, { text: 'Terme exagere', score: 1 }, { text: 'Une invention', score: 2 }] },
+    { text: 'Les milliardaires ?', timeLimitSec: 7, options: [{ text: 'Il faut taxer massivement', score: 0 }, { text: 'Ils ont travaille dur', score: 1 }, { text: 'Ce sont des genies', score: 2 }] },
+  ],
+};
+
+const DEFAULT_FALLBACK_STANDARD_TESTS: LocalStandardTest[] = [FALLBACK_STANDARD_TEST];
+
+function toStandardMetadata(list: LocalStandardTest[]): StandardTest[] {
+  return list
+    .filter((item) => item.is_active !== false)
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      questionCount: item.questions.length,
+    }));
+}
+
+function loadLocalStandardTests(): LocalStandardTest[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_STANDARD_TESTS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as LocalStandardTest[];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item) => item && item.id && item.name && Array.isArray(item.questions));
+  } catch {
+    return [];
+  }
+}
+
+function encodePayloadToBase64Url(payload: unknown): string {
+  const text = JSON.stringify(payload);
+  const bytes = new TextEncoder().encode(text);
+  let binary = '';
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
 
 export default function FlashFlagPage() {
   const router = useRouter();
@@ -44,6 +112,7 @@ export default function FlashFlagPage() {
   const [sourceType, setSourceType] = useState<SourceType>('standard');
   const [mode, setMode] = useState<Mode>('local');
   const [tests, setTests] = useState<StandardTest[]>([]);
+  const [localStandardTests, setLocalStandardTests] = useState<LocalStandardTest[]>([]);
   const [selectedTestId, setSelectedTestId] = useState<string>('');
   const [customName, setCustomName] = useState('Test perso express');
   const [customDescription, setCustomDescription] = useState('');
@@ -53,14 +122,35 @@ export default function FlashFlagPage() {
   const [createdLink, setCreatedLink] = useState('');
 
   useEffect(() => {
+    const localTests = loadLocalStandardTests();
+    if (localTests.length > 0) {
+      const localMetadata = toStandardMetadata(localTests);
+      setLocalStandardTests(localTests);
+      setTests(localMetadata);
+      if (localMetadata.length > 0) setSelectedTestId(localMetadata[0].id);
+      return;
+    }
+
     fetch('/api/flashflag/tests')
       .then((r) => r.json())
       .then((d) => {
         const list = (d.data?.tests || []) as StandardTest[];
-        setTests(list);
-        if (list.length > 0) setSelectedTestId(list[0].id);
+        if (list.length > 0) {
+          setTests(list);
+          setSelectedTestId(list[0].id);
+          return;
+        }
+
+        setLocalStandardTests(DEFAULT_FALLBACK_STANDARD_TESTS);
+        setTests(toStandardMetadata(DEFAULT_FALLBACK_STANDARD_TESTS));
+        setSelectedTestId(DEFAULT_FALLBACK_STANDARD_TESTS[0].id);
       })
-      .catch(() => setError('Impossible de charger les tests standards'));
+      .catch(() => {
+        setLocalStandardTests(DEFAULT_FALLBACK_STANDARD_TESTS);
+        setTests(toStandardMetadata(DEFAULT_FALLBACK_STANDARD_TESTS));
+        setSelectedTestId(DEFAULT_FALLBACK_STANDARD_TESTS[0].id);
+        setError('Mode fallback actif: test standard embarque charge.');
+      });
   }, []);
 
   useEffect(() => {
@@ -149,7 +239,42 @@ export default function FlashFlagPage() {
 
       setCreatedLink(playUrl);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur inconnue');
+      const selectedLocal = localStandardTests.find((test) => test.id === selectedTestId)
+        || DEFAULT_FALLBACK_STANDARD_TESTS.find((test) => test.id === selectedTestId)
+        || null;
+
+      const fallbackTest = sourceType === 'custom'
+        ? {
+          name: customName,
+          description: customDescription || null,
+          questions: customQuestions,
+        }
+        : selectedLocal;
+
+      if (!fallbackTest) {
+        setError(e instanceof Error ? e.message : 'Erreur inconnue');
+        return;
+      }
+
+      const inlinePayload = {
+        mode,
+        sourceType,
+        subjectSex,
+        subjectAge,
+        test: fallbackTest,
+      };
+
+      const payloadToken = encodePayloadToBase64Url(inlinePayload);
+      const localCode = `L${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
+      const localUrl = `${window.location.origin}/flashflag/session/${localCode}#payload=${payloadToken}`;
+
+      if (mode === 'local') {
+        router.push(`/flashflag/session/${localCode}#payload=${payloadToken}`);
+        return;
+      }
+
+      setCreatedLink(localUrl);
+      setError('Mode fallback live actif: lien genere sans base de donnees.');
     } finally {
       setLoading(false);
     }
