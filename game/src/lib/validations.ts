@@ -79,6 +79,71 @@ export const rankingsQuerySchema = z.object({
   segment: z.union([sexeVotantSchema, ageVotantSchema]).optional(),
 });
 
+// Flash Flag schemas
+export const flashFlagOptionSchema = z.object({
+  text: z.string().min(1).max(140),
+  score: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+});
+
+export const flashFlagQuestionSchema = z.object({
+  text: z.string().min(3).max(220),
+  timeLimitSec: z.coerce.number().int().min(3).max(30),
+  options: z.array(flashFlagOptionSchema).min(2).max(3),
+});
+
+export const flashFlagCustomTestSchema = z.object({
+  name: z.string().min(3).max(80),
+  description: z.string().max(240).optional().nullable(),
+  questions: z.array(flashFlagQuestionSchema).length(10),
+});
+
+export const flashFlagCreateSessionSchema = z.object({
+  mode: z.enum(['local', 'link']),
+  sourceType: z.enum(['standard', 'custom']),
+  standardTestId: z.string().min(1).optional(),
+  customTest: flashFlagCustomTestSchema.optional(),
+  subjectSex: sexeVotantSchema,
+  subjectAge: z.coerce.number().int().min(16).max(99),
+}).superRefine((input, ctx) => {
+  if (input.sourceType === 'standard' && !input.standardTestId) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'standardTestId requis pour un test standard', path: ['standardTestId'] });
+  }
+  if (input.sourceType === 'custom' && !input.customTest) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'customTest requis pour un test personnalise', path: ['customTest'] });
+  }
+});
+
+export const flashFlagStartSessionSchema = z.object({
+  started: z.boolean().default(true),
+});
+
+export const flashFlagAnswerSchema = z.object({
+  questionIndex: z.coerce.number().int().min(0).max(99),
+  questionText: z.string().min(1).max(220),
+  selectedOption: z.string().max(140).nullable(),
+  selectedScore: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+  timedOut: z.boolean(),
+  timeSpentMs: z.coerce.number().int().min(0).max(120000),
+});
+
+export const flashFlagSubmitSchema = z.object({
+  answers: z.array(flashFlagAnswerSchema).min(1).max(20),
+});
+
+export const flashFlagAdminTestSchema = z.object({
+  name: z.string().min(3).max(80),
+  description: z.string().max(240).optional().nullable(),
+  isActive: z.boolean().optional().default(true),
+  questions: z.array(flashFlagQuestionSchema).min(1).max(20),
+});
+
+export const flashFlagAdminUpdateSchema = z.object({
+  name: z.string().min(3).max(80).optional(),
+  description: z.string().max(240).nullable().optional(),
+  isActive: z.boolean().optional(),
+  questions: z.array(flashFlagQuestionSchema).min(1).max(20).optional(),
+});
+
 // Type exports from schemas
 export type PlayerProfileInput = z.infer<typeof playerProfileSchema>;
 export type ElementCreateInput = z.infer<typeof elementCreateSchema>;
@@ -86,3 +151,5 @@ export type ElementUpdateInput = z.infer<typeof elementUpdateSchema>;
 export type VoteInput = z.infer<typeof voteSchema>;
 export type FeedbackInput = z.infer<typeof feedbackSchema>;
 export type AdminLoginInput = z.infer<typeof adminLoginSchema>;
+export type FlashFlagCreateSessionInput = z.infer<typeof flashFlagCreateSessionSchema>;
+export type FlashFlagSubmitInput = z.infer<typeof flashFlagSubmitSchema>;

@@ -125,6 +125,82 @@ Tracking de session (vues de page, entrées de jeu).
 
 ---
 
+## Flash Flag Sprint
+
+### `GET /api/flashflag/tests`
+
+Liste des tests standards disponibles.
+
+**Réponse :**
+```json
+{
+  "success": true,
+  "data": {
+    "tests": [
+      {
+        "id": "uuid",
+        "name": "Radar Date Express",
+        "description": "...",
+        "questionCount": 15
+      }
+    ]
+  }
+}
+```
+
+### `POST /api/flashflag/session`
+
+Crée une session locale ou partageable par lien.
+
+**Body (standard) :**
+```json
+{
+  "mode": "link",
+  "sourceType": "standard",
+  "standardTestId": "uuid",
+  "subjectSex": "homme",
+  "subjectAge": 27
+}
+```
+
+**Body (custom) :**
+```json
+{
+  "mode": "local",
+  "sourceType": "custom",
+  "subjectSex": "femme",
+  "subjectAge": 25,
+  "customTest": {
+    "name": "Mon test",
+    "description": "10 questions rapides",
+    "questions": [
+      {
+        "text": "Question 1",
+        "timeLimitSec": 7,
+        "options": [
+          { "text": "Option A", "score": 0 },
+          { "text": "Option B", "score": 2 }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### `GET /api/flashflag/session/[code]`
+
+Récupère le test, l'état et les résultats associés à la session.
+
+### `POST /api/flashflag/session/[code]/start`
+
+Passe la session à `in_progress`.
+
+### `POST /api/flashflag/session/[code]/submit`
+
+Soumet les réponses et calcule le score final.
+
+---
+
 ## Admin
 
 ⚠️ Toutes les routes admin nécessitent un token dans le header `Authorization`.

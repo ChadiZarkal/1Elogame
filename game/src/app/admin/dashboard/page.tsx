@@ -226,7 +226,7 @@ export default function AdminDashboardPage() {
         {/* Quick Actions Grid */}
         <div className="max-w-7xl mx-auto mb-8">
           <h2 className="text-[#A3A3A3] mb-4 uppercase tracking-wider text-xs font-semibold">Actions rapides</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
             <ActionCard title="Gérer les éléments" description="Ajouter, supprimer, star"
               href="/admin/elements" icon="📝" badge={`${stats?.activeElements ?? 0} actifs`} delay={0} />
             <ActionCard title="Algorithme" description="Anti-répétition, stratégies, ELO"
@@ -237,6 +237,8 @@ export default function AdminDashboardPage() {
               href="/admin/stats" icon="📊" badge={`${stats?.totalVotes ?? 0} votes`} delay={0.15} />
             <ActionCard title="Modération" description="Feedbacks et signalements"
               href="/admin/moderation" icon="🛡️" delay={0.2} />
+            <ActionCard title="Flash Flag" description="Tests chrono standards"
+              href="/admin/flashflag" icon="⚡" delay={0.25} />
           </div>
         </div>
 

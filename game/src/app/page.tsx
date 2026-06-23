@@ -111,6 +111,23 @@ export default function HubPage() {
                 TESTER <ArrowRight size={11} strokeWidth={2.5} />
               </span>
             </a>
+
+            <a
+              href="/flashflag"
+              className="hub__card hub__card--half hub__card--amber hub__enter hub__enter--6"
+              onClick={handleTap}
+              aria-label="Jouer à Flash Flag Sprint — quiz chronométré"
+            >
+              <div className="hub__card-header">
+                <span className="hub__card-emoji">⚡</span>
+                <span className="hub__card-tag hub__card-tag--amber">SPRINT</span>
+              </div>
+              <h3 className="hub__card-name hub__card-name--sm">Flash Flag</h3>
+              <p className="hub__card-pitch hub__card-pitch--sm">Quiz chrono sans retour</p>
+              <span className="hub__card-go hub__card-go--sm hub__card-go--amber">
+                LANCER <ArrowRight size={11} strokeWidth={2.5} />
+              </span>
+            </a>
           </div>
 
         </div>

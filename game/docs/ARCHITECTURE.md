@@ -39,7 +39,7 @@ Red Flag Games est une application web de type "party game social" construite av
 ```
 src/
 ├── app/                    # Pages & API routes (Next.js App Router)
-│   ├── page.tsx           # Page d'accueil (Hub des 3 jeux)
+│   ├── page.tsx           # Page d'accueil (Hub des 4 jeux)
 │   ├── jeu/               # Red Flag Duel
 │   │   ├── page.tsx       # Formulaire de profil
 │   │   └── jouer/page.tsx # Interface de jeu
@@ -50,13 +50,17 @@ src/
 │   │   ├── LoadingPhase.tsx # Phase de chargement
 │   │   └── RevealPhase.tsx # Phase de révélation
 │   ├── classement/        # Leaderboard
+│   ├── flashflag/         # Flash Flag Sprint (quiz chronométré)
+│   │   ├── page.tsx       # Création session (standard/perso)
+│   │   └── session/[code]/page.tsx # Passage + recap résultats
 │   ├── admin/             # Panel d'administration (7 pages)
-│   └── api/               # 14 API routes
+│   └── api/               # API routes
 │       ├── duel/          # Sélection de paire
 │       ├── vote/          # Soumission de vote + ELO
 │       ├── leaderboard/   # Classement
 │       ├── feedback/      # star/thumbs
 │       ├── flagornot/     # judge + community
+│       ├── flashflag/     # tests + sessions + submit
 │       ├── admin/         # login, stats, algorithm, elements
 │       ├── analytics/     # Session tracking
 │       └── stats/         # Stats publiques
@@ -130,6 +134,16 @@ src/
 4. POST /api/flagornot/community (archivage)
 ```
 
+### Flash Flag Sprint
+```
+1. Hôte configure la cible (sexe + âge) + standard/perso
+2. POST /api/flashflag/session (génération code + lien)
+3. Joueur ouvre /flashflag/session/[code], warning puis start
+4. Réponses chrono, timeout => réponse négative (score 0)
+5. POST /submit (score total + niveau de risque)
+6. GET session/[code] permet relecture du recap via le lien
+```
+
 ---
 
 ## Modules clés
@@ -201,6 +215,13 @@ src/
 | `/api/admin/elements` | GET/POST | CRUD éléments |
 | `/api/admin/elements/[id]` | PATCH/DELETE | Édition élément |
 | `/api/admin/demographics` | GET | Données démographiques |
+| `/api/flashflag/tests` | GET | Liste des tests standards |
+| `/api/flashflag/session` | POST | Création d'une session Flash Flag |
+| `/api/flashflag/session/[code]` | GET | Détail session + test + réponses |
+| `/api/flashflag/session/[code]/start` | POST | Démarrer la session |
+| `/api/flashflag/session/[code]/submit` | POST | Soumission finale chrono |
+| `/api/admin/flashflag` | GET/POST | Admin tests standards Flash Flag |
+| `/api/admin/flashflag/[id]` | GET/PATCH/DELETE | Détail/édition/désactivation |
 
 ---
 

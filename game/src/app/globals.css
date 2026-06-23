@@ -511,6 +511,14 @@ button:focus-visible {
   border-left-color: #A855F7;
 }
 
+.hub__card--amber {
+  border-left: 3px solid #F59E0B;
+}
+.hub__card--amber:hover {
+  border-color: rgba(245, 158, 11, 0.25);
+  border-left-color: #F59E0B;
+}
+
 .hub__card-header {
   display: flex;
   align-items: center;
@@ -542,6 +550,10 @@ button:focus-visible {
 .hub__card-tag--purple {
   color: #A855F7;
   background: rgba(168, 85, 247, 0.1);
+}
+.hub__card-tag--amber {
+  color: #F59E0B;
+  background: rgba(245, 158, 11, 0.12);
 }
 
 .hub__card-name {
@@ -616,6 +628,15 @@ button:focus-visible {
 }
 .hub__card:hover .hub__card-go--purple {
   background: rgba(168, 85, 247, 0.14);
+}
+
+.hub__card-go--amber {
+  color: #F59E0B;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+.hub__card:hover .hub__card-go--amber {
+  background: rgba(245, 158, 11, 0.16);
 }
 
 .hub__card:hover .hub__card-go {

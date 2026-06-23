@@ -4,8 +4,8 @@
 
 Le projet utilise **Vitest 4.0.18** avec **@testing-library/react** dans un environnement **jsdom**.
 
-- **48 fichiers de test**
-- **493 tests**
+- **Nouveaux tests Flash Flag** : helpers, validations, routes API, smoke E2E
+- **Couverture étendue** : duel + oracle + flashflag
 - **100% de passage**
 
 ---
@@ -68,6 +68,13 @@ it('mode mock', async () => {
 });
 ```
 
+Exemples Flash Flag ajoutés:
+- `src/app/api/__tests__/flashflag-tests.test.ts`
+- `src/app/api/__tests__/flashflag-session-create.test.ts`
+- `src/app/api/__tests__/flashflag-session-submit.test.ts`
+- `src/app/api/__tests__/admin-flashflag.test.ts`
+- `src/app/api/__tests__/admin-flashflag-id.test.ts`
+
 ### 3. Tests de composants
 
 ```tsx
@@ -124,6 +131,9 @@ npx vitest
 
 # Avec couverture
 npx vitest run --coverage
+
+# E2E (config dédiée)
+npx vitest run --config vitest.e2e.config.ts
 ```
 
 ---

@@ -60,6 +60,66 @@ export interface DuelFeedback {
   updated_at: string;
 }
 
+export interface FlashFlagTest {
+  id: string;
+  name: string;
+  description: string | null;
+  is_standard: boolean;
+  is_active: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FlashFlagQuestion {
+  id: string;
+  test_id: string;
+  position: number;
+  question_text: string;
+  time_limit_sec: number;
+  created_at: string;
+}
+
+export interface FlashFlagOption {
+  id: string;
+  question_id: string;
+  position: number;
+  option_text: string;
+  score: 0 | 1 | 2;
+  created_at: string;
+}
+
+export interface FlashFlagSession {
+  id: string;
+  access_code: string;
+  mode: 'local' | 'link';
+  source_type: 'standard' | 'custom';
+  test_id: string | null;
+  custom_payload: unknown | null;
+  subject_sex: SexeVotant;
+  subject_age: number;
+  status: 'pending' | 'in_progress' | 'completed';
+  total_score: number;
+  max_score: number;
+  answered_count: number;
+  timed_out_count: number;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+}
+
+export interface FlashFlagAnswer {
+  id: string;
+  session_id: string;
+  question_index: number;
+  question_text: string;
+  selected_option: string | null;
+  selected_score: 0 | 1 | 2;
+  timed_out: boolean;
+  time_spent_ms: number;
+  created_at: string;
+}
+
 // Database table types for Supabase
 export interface Database {
   public: {
@@ -96,6 +156,81 @@ export interface Database {
         Row: DuelFeedback;
         Insert: Omit<DuelFeedback, 'id' | 'updated_at'>;
         Update: Partial<Omit<DuelFeedback, 'id'>>;
+      };
+      flashflag_tests: {
+        Row: FlashFlagTest;
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          is_standard?: boolean;
+          is_active?: boolean;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<FlashFlagTest, 'id' | 'created_at'>>;
+      };
+      flashflag_questions: {
+        Row: FlashFlagQuestion;
+        Insert: {
+          id?: string;
+          test_id: string;
+          position: number;
+          question_text: string;
+          time_limit_sec?: number;
+          created_at?: string;
+        };
+        Update: Partial<Omit<FlashFlagQuestion, 'id' | 'test_id' | 'created_at'>>;
+      };
+      flashflag_options: {
+        Row: FlashFlagOption;
+        Insert: {
+          id?: string;
+          question_id: string;
+          position: number;
+          option_text: string;
+          score: 0 | 1 | 2;
+          created_at?: string;
+        };
+        Update: Partial<Omit<FlashFlagOption, 'id' | 'question_id' | 'created_at'>>;
+      };
+      flashflag_sessions: {
+        Row: FlashFlagSession;
+        Insert: {
+          id?: string;
+          access_code: string;
+          mode: 'local' | 'link';
+          source_type: 'standard' | 'custom';
+          test_id?: string | null;
+          custom_payload?: unknown | null;
+          subject_sex: SexeVotant;
+          subject_age: number;
+          status?: 'pending' | 'in_progress' | 'completed';
+          total_score?: number;
+          max_score?: number;
+          answered_count?: number;
+          timed_out_count?: number;
+          started_at?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Omit<FlashFlagSession, 'id' | 'created_at'>>;
+      };
+      flashflag_answers: {
+        Row: FlashFlagAnswer;
+        Insert: {
+          id?: string;
+          session_id: string;
+          question_index: number;
+          question_text: string;
+          selected_option?: string | null;
+          selected_score?: 0 | 1 | 2;
+          timed_out?: boolean;
+          time_spent_ms?: number;
+          created_at?: string;
+        };
+        Update: Partial<Omit<FlashFlagAnswer, 'id' | 'session_id' | 'created_at'>>;
       };
       flagornot_submissions: {
         Row: {

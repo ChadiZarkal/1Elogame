@@ -6,6 +6,7 @@ A mobile-first party game where players vote on which of two options is the bigg
 
 - **Red Flag Duel** (`/jeu/jouer`) — Choose between two red flags: which one is worse? ELO-ranked.
 - **Flag or Not** (`/flagornot`) — Submit your own red flag and get judged by AI (Gemini) + community votes.
+- **Flash Flag Sprint** (`/flashflag`) — Timed questionnaire with no backtracking, local or share-link mode.
 - **Classement** (`/classement`) — Leaderboard with category filters and demographic breakdowns.
 
 ## Tech Stack
@@ -38,12 +39,16 @@ game/src/
 │   │   ├── LoadingPhase.tsx    # AI judging animation
 │   │   └── RevealPhase.tsx     # Result reveal
 │   ├── classement/page.tsx     # Leaderboard
+│   ├── flashflag/              # Flash Flag Sprint (timed quiz)
+│   │   ├── page.tsx            # Session creation (standard/custom)
+│   │   └── session/[code]/page.tsx # Timed play + recap
 │   ├── redflag/page.tsx        # Game mode selection
 │   ├── admin/                  # Admin panel (7 pages)
 │   └── api/                    # API routes
 │       ├── duel/               # GET next duel pair
 │       ├── vote/               # POST vote + ELO update
 │       ├── flagornot/          # AI judge + community
+│       ├── flashflag/          # Timed quiz sessions
 │       ├── leaderboard/        # GET rankings
 │       └── admin/              # Admin CRUD APIs
 ├── components/
@@ -105,6 +110,8 @@ Migrations are in `supabase/migrations/` and numbered sequentially:
 3. `003_add_is_starred.sql` — Starred elements feature
 4. `004_segment_participations.sql` — Per-demographic participation counters
 5. `005_flagornot_submissions.sql` — Flag or Not submissions table
+6. `013_flashflag_quiz.sql` — Flash Flag tests/sessions/answers schema
+7. `014_flashflag_seed_standard.sql` — Standard Flash Flag test seed data
 
 ## Key Algorithms
 

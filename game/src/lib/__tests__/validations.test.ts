@@ -18,6 +18,8 @@ import {
   duelQuerySchema,
   elementsQuerySchema,
   rankingsQuerySchema,
+  flashFlagCreateSessionSchema,
+  flashFlagSubmitSchema,
 } from '@/lib/validations';
 
 describe('categorieSchema', () => {
@@ -194,5 +196,46 @@ describe('rankingsQuerySchema', () => {
     });
     expect(result.type).toBe('red');
     expect(result.limit).toBe(20);
+  });
+});
+
+describe('flashFlagCreateSessionSchema', () => {
+  it('accepte une creation standard valide', () => {
+    const result = flashFlagCreateSessionSchema.parse({
+      mode: 'link',
+      sourceType: 'standard',
+      standardTestId: '550e8400-e29b-41d4-a716-446655440000',
+      subjectSex: 'homme',
+      subjectAge: 28,
+    });
+    expect(result.mode).toBe('link');
+  });
+
+  it('rejette custom sans customTest', () => {
+    expect(() => flashFlagCreateSessionSchema.parse({
+      mode: 'local',
+      sourceType: 'custom',
+      subjectSex: 'femme',
+      subjectAge: 24,
+    })).toThrow();
+  });
+});
+
+describe('flashFlagSubmitSchema', () => {
+  it('accepte une soumission valide', () => {
+    const result = flashFlagSubmitSchema.parse({
+      answers: [
+        {
+          questionIndex: 0,
+          questionText: 'Q1',
+          selectedOption: 'Oui',
+          selectedScore: 1,
+          timedOut: false,
+          timeSpentMs: 1400,
+        },
+      ],
+    });
+
+    expect(result.answers).toHaveLength(1);
   });
 });
