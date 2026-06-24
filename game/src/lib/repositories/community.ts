@@ -11,11 +11,12 @@ import { MAX_FLAGORNOT_TEXT_LENGTH } from '@/config/constants';
 // In-memory store for mock mode
 const mockCommunityStore: CommunitySubmission[] = [];
 
-const JUSTIFICATION_COLUMNS = ['justification', 'justification_ai', 'justif'] as const;
+const JUSTIFICATION_COLUMNS = ['justification', 'justification_ai', 'justification_ia', 'justif'] as const;
 const GENDER_COLUMNS = ['gender', 'genre', 'sexe'] as const;
+const CORE_SUBMISSION_COLUMNS = new Set(['id', 'text', 'verdict', 'created_at', ...JUSTIFICATION_COLUMNS, ...GENDER_COLUMNS]);
 
-function hasMissingColumnError(message: string, columnName: string): boolean {
-  const normalized = message.toLowerCase();
+function hasMissingColumnError(message: string | null | undefined, columnName: string): boolean {
+  const normalized = (message || '').toLowerCase();
   const column = columnName.toLowerCase();
 
   return (
@@ -25,7 +26,7 @@ function hasMissingColumnError(message: string, columnName: string): boolean {
   );
 }
 
-function hasAnyMissingOptionalColumnError(message: string): boolean {
+function hasAnyMissingOptionalColumnError(message: string | null | undefined): boolean {
   for (const column of JUSTIFICATION_COLUMNS) {
     if (hasMissingColumnError(message, column)) return true;
   }
@@ -43,9 +44,45 @@ function pickStringField(row: Record<string, unknown>, keys: readonly string[]):
   return undefined;
 }
 
+function inferJustificationField(row: Record<string, unknown>): string | undefined {
+  const text = typeof row.text === 'string' ? row.text : '';
+  const verdict = typeof row.verdict === 'string' ? row.verdict : '';
+
+  for (const [key, value] of Object.entries(row)) {
+    if (typeof value !== 'string' || value.trim().length === 0) continue;
+
+    const normalizedKey = key.toLowerCase();
+    const isJustificationLike = normalizedKey.includes('justif') || normalizedKey.includes('reason') || normalizedKey.includes('explain') || normalizedKey.includes('comment');
+    if (!isJustificationLike) continue;
+
+    if (value !== text && value !== verdict && value !== 'homme' && value !== 'femme' && value !== 'autre') {
+      return value;
+    }
+  }
+
+  let bestFallback: string | undefined;
+  for (const [key, value] of Object.entries(row)) {
+    if (CORE_SUBMISSION_COLUMNS.has(key)) continue;
+    if (typeof value !== 'string' || value.trim().length < 16) continue;
+    if (value === text || value === verdict) continue;
+    if (value === 'homme' || value === 'femme' || value === 'autre') continue;
+
+    if (!bestFallback || value.length > bestFallback.length) {
+      bestFallback = value;
+    }
+  }
+
+  return bestFallback;
+}
+
 function pickGenderField(row: Record<string, unknown>): 'homme' | 'femme' | 'autre' | undefined {
   const raw = pickStringField(row, GENDER_COLUMNS);
   if (raw === 'homme' || raw === 'femme' || raw === 'autre') return raw;
+
+  for (const value of Object.values(row)) {
+    if (value === 'homme' || value === 'femme' || value === 'autre') return value;
+  }
+
   return undefined;
 }
 
@@ -54,7 +91,7 @@ function mapSubmissionRow(row: Record<string, unknown>): CommunitySubmission {
     id: row.id as string,
     text: row.text as string,
     verdict: row.verdict as 'red' | 'green',
-    justification: pickStringField(row, JUSTIFICATION_COLUMNS),
+    justification: pickStringField(row, JUSTIFICATION_COLUMNS) || inferJustificationField(row),
     gender: pickGenderField(row),
     timestamp: new Date(row.created_at as string).getTime(),
   };
