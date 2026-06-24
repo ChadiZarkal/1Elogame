@@ -13,7 +13,13 @@ const mockCommunityStore: CommunitySubmission[] = [];
 
 function hasMissingColumnError(message: string, columnName: string): boolean {
   const normalized = message.toLowerCase();
-  return normalized.includes(`column "${columnName.toLowerCase()}"`) && normalized.includes('does not exist');
+  const column = columnName.toLowerCase();
+
+  return (
+    (normalized.includes(`column "${column}"`) && normalized.includes('does not exist'))
+    || normalized.includes(`could not find the '${column}' column`)
+    || (normalized.includes('schema cache') && normalized.includes(`'${column}'`))
+  );
 }
 
 function shouldRetryWithoutOptionalColumns(message: string): boolean {
