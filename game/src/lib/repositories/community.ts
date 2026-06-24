@@ -11,6 +11,9 @@ import { MAX_FLAGORNOT_TEXT_LENGTH } from '@/config/constants';
 // In-memory store for mock mode
 const mockCommunityStore: CommunitySubmission[] = [];
 
+const JUSTIFICATION_COLUMNS = ['justification', 'justification_ai', 'justif'] as const;
+const GENDER_COLUMNS = ['gender', 'genre', 'sexe'] as const;
+
 function hasMissingColumnError(message: string, columnName: string): boolean {
   const normalized = message.toLowerCase();
   const column = columnName.toLowerCase();
@@ -22,8 +25,85 @@ function hasMissingColumnError(message: string, columnName: string): boolean {
   );
 }
 
-function shouldRetryWithoutOptionalColumns(message: string): boolean {
-  return hasMissingColumnError(message, 'justification') || hasMissingColumnError(message, 'gender');
+function hasAnyMissingOptionalColumnError(message: string): boolean {
+  for (const column of JUSTIFICATION_COLUMNS) {
+    if (hasMissingColumnError(message, column)) return true;
+  }
+  for (const column of GENDER_COLUMNS) {
+    if (hasMissingColumnError(message, column)) return true;
+  }
+  return false;
+}
+
+function pickStringField(row: Record<string, unknown>, keys: readonly string[]): string | undefined {
+  for (const key of keys) {
+    const value = row[key];
+    if (typeof value === 'string' && value.trim().length > 0) return value;
+  }
+  return undefined;
+}
+
+function pickGenderField(row: Record<string, unknown>): 'homme' | 'femme' | 'autre' | undefined {
+  const raw = pickStringField(row, GENDER_COLUMNS);
+  if (raw === 'homme' || raw === 'femme' || raw === 'autre') return raw;
+  return undefined;
+}
+
+function mapSubmissionRow(row: Record<string, unknown>): CommunitySubmission {
+  return {
+    id: row.id as string,
+    text: row.text as string,
+    verdict: row.verdict as 'red' | 'green',
+    justification: pickStringField(row, JUSTIFICATION_COLUMNS),
+    gender: pickGenderField(row),
+    timestamp: new Date(row.created_at as string).getTime(),
+  };
+}
+
+function buildInsertPayloads(
+  text: string,
+  verdict: 'red' | 'green',
+  justification?: string,
+  gender?: 'homme' | 'femme' | 'autre',
+): Array<Record<string, unknown>> {
+  const payloads: Array<Record<string, unknown>> = [];
+  const basePayload: Record<string, unknown> = {
+    text,
+    verdict,
+  };
+
+  if (justification && gender) {
+    for (const justificationColumn of JUSTIFICATION_COLUMNS) {
+      for (const genderColumn of GENDER_COLUMNS) {
+        payloads.push({
+          ...basePayload,
+          [justificationColumn]: justification,
+          [genderColumn]: gender,
+        });
+      }
+    }
+  }
+
+  if (justification) {
+    for (const justificationColumn of JUSTIFICATION_COLUMNS) {
+      payloads.push({
+        ...basePayload,
+        [justificationColumn]: justification,
+      });
+    }
+  }
+
+  if (gender) {
+    for (const genderColumn of GENDER_COLUMNS) {
+      payloads.push({
+        ...basePayload,
+        [genderColumn]: gender,
+      });
+    }
+  }
+
+  payloads.push(basePayload);
+  return payloads;
 }
 
 /** Get recent community submissions. */
@@ -40,14 +120,7 @@ export async function getRecentSubmissions(limit = 20): Promise<CommunitySubmiss
     .order('created_at', { ascending: false })
     .limit(limit);
   if (error) throw new Error(`DB error fetching submissions: ${error.message}`);
-  return (data || []).map((row: Record<string, unknown>) => ({
-    id: row.id as string,
-    text: row.text as string,
-    verdict: row.verdict as 'red' | 'green',
-    justification: (row.justification as string) || undefined,
-    gender: (row.gender as 'homme' | 'femme' | 'autre') || undefined,
-    timestamp: new Date(row.created_at as string).getTime(),
-  }));
+  return (data || []).map((row: Record<string, unknown>) => mapSubmissionRow(row));
 }
 
 /** Save a new community submission. */
@@ -72,26 +145,27 @@ export async function saveSubmission(text: string, verdict: 'red' | 'green', jus
   const { createServerClient, typedInsert } = await import('@/lib/supabase');
   const supabase = createServerClient();
 
-  const fullInsert = await typedInsert(supabase, 'flagornot_submissions', {
-    text: sanitized,
-    verdict,
-    justification: justification || null,
-    gender: gender || null,
-  });
+  const payloads = buildInsertPayloads(sanitized, verdict, justification, gender);
+  let lastOptionalColumnError: string | null = null;
+  let inserted = false;
 
-  if (fullInsert.error) {
-    if (!shouldRetryWithoutOptionalColumns(fullInsert.error.message)) {
-      throw new Error(`DB error saving submission: ${fullInsert.error.message}`);
+  for (const payload of payloads) {
+    const insertResult = await typedInsert(supabase, 'flagornot_submissions', payload);
+
+    if (!insertResult.error) {
+      inserted = true;
+      break;
     }
 
-    const fallbackInsert = await typedInsert(supabase, 'flagornot_submissions', {
-      text: sanitized,
-      verdict,
-    });
-
-    if (fallbackInsert.error) {
-      throw new Error(`DB error saving submission: ${fallbackInsert.error.message}`);
+    if (!hasAnyMissingOptionalColumnError(insertResult.error.message)) {
+      throw new Error(`DB error saving submission: ${insertResult.error.message}`);
     }
+
+    lastOptionalColumnError = insertResult.error.message;
+  }
+
+  if (!inserted) {
+    throw new Error(`DB error saving submission: ${lastOptionalColumnError ?? 'Unable to insert submission with known optional columns'}`);
   }
 
   return { id: `new-${Date.now()}`, text: sanitized, verdict, justification, gender, timestamp: Date.now() };
@@ -150,14 +224,7 @@ export async function getAllSubmissions(
   const { data, error, count } = await query;
   if (error) throw new Error(`DB error fetching all submissions: ${error.message}`);
 
-  const submissions = (data || []).map((row: Record<string, unknown>) => ({
-    id: row.id as string,
-    text: row.text as string,
-    verdict: row.verdict as 'red' | 'green',
-    justification: (row.justification as string) || undefined,
-    gender: (row.gender as 'homme' | 'femme' | 'autre') || undefined,
-    timestamp: new Date(row.created_at as string).getTime(),
-  }));
+  const submissions = (data || []).map((row: Record<string, unknown>) => mapSubmissionRow(row));
 
   return { submissions, total: count ?? 0 };
 }
@@ -183,26 +250,45 @@ export async function getGenderStats(): Promise<{
   const { createServerClient } = await import('@/lib/supabase');
   const supabase = createServerClient();
 
-  // Get counts grouped by gender and verdict
-  const { data, error } = await supabase
-    .from('flagornot_submissions')
-    .select('gender, verdict')
-    .not('gender', 'is', null);
+  let data: Array<Record<string, unknown>> = [];
+  let selectedGenderColumn: string | null = null;
+  let lastMissingGenderColumnError: string | null = null;
 
-  if (error) {
-    if (hasMissingColumnError(error.message, 'gender')) {
-      return {
-        total: 0,
-        byGender: [],
-        insights: ['📊 Le suivi par genre n est pas encore actif sur cette base de donnees.'],
-      };
+  for (const genderColumn of GENDER_COLUMNS) {
+    const queryResult = await supabase
+      .from('flagornot_submissions')
+      .select(`${genderColumn}, verdict`)
+      .not(genderColumn, 'is', null);
+
+    if (!queryResult.error) {
+      selectedGenderColumn = genderColumn;
+      data = (queryResult.data || []) as Array<Record<string, unknown>>;
+      break;
     }
-    throw new Error(`DB error fetching gender stats: ${error.message}`);
+
+    if (hasMissingColumnError(queryResult.error.message, genderColumn)) {
+      lastMissingGenderColumnError = queryResult.error.message;
+      continue;
+    }
+
+    throw new Error(`DB error fetching gender stats: ${queryResult.error.message}`);
+  }
+
+  if (!selectedGenderColumn) {
+    const fallbackInsight = lastMissingGenderColumnError
+      ? '📊 Le suivi par genre n est pas encore actif sur cette base de donnees.'
+      : '📊 Donnees de genre indisponibles pour le moment.';
+
+    return {
+      total: 0,
+      byGender: [],
+      insights: [fallbackInsight],
+    };
   }
 
   const counts: Record<string, { red: number; green: number }> = {};
-  for (const row of (data || []) as Array<{ gender: string; verdict: string }>) {
-    const g = row.gender as string;
+  for (const row of data) {
+    const g = row[selectedGenderColumn] as string;
     if (!counts[g]) counts[g] = { red: 0, green: 0 };
     if (row.verdict === 'red') counts[g].red++;
     else counts[g].green++;
