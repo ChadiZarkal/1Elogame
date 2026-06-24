@@ -32,6 +32,16 @@ interface LocalStandardTest {
   updated_at?: string;
 }
 
+interface SessionWatchData {
+  status: 'pending' | 'in_progress' | 'completed';
+  score: {
+    total: number;
+    max: number;
+    answered: number;
+    timedOut: number;
+  };
+}
+
 const defaultQuestion = (): CustomQuestion => ({
   text: '',
   timeLimitSec: 7,
@@ -106,6 +116,12 @@ function encodePayloadToBase64Url(payload: unknown): string {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
+function getRiskLabelFromPercent(percent: number): string {
+  if (percent >= 70) return 'Alerte rouge';
+  if (percent >= 40) return 'Zone de vigilance';
+  return 'Plutot rassurant';
+}
+
 export default function FlashFlagPage() {
   const router = useRouter();
 
@@ -122,6 +138,9 @@ export default function FlashFlagPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [createdLink, setCreatedLink] = useState('');
+  const [createdSessionCode, setCreatedSessionCode] = useState('');
+  const [watchData, setWatchData] = useState<SessionWatchData | null>(null);
+  const [watchError, setWatchError] = useState('');
 
   useEffect(() => {
     const localTests = loadLocalStandardTests();
@@ -184,6 +203,49 @@ export default function FlashFlagPage() {
     }
   }, [customName, customDescription, customQuestions]);
 
+  useEffect(() => {
+    if (!createdSessionCode) return;
+
+    let active = true;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    const fetchSession = async () => {
+      try {
+        const res = await fetch(`/api/flashflag/session/${createdSessionCode}`, {
+          cache: 'no-store',
+        });
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          throw new Error(json.error?.message || 'Suivi indisponible');
+        }
+
+        if (!active) return;
+        const data = json.data as SessionWatchData;
+        setWatchData({
+          status: data.status,
+          score: data.score,
+        });
+        setWatchError('');
+
+        if (data.status === 'completed' && intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
+      } catch (err) {
+        if (!active) return;
+        setWatchError(err instanceof Error ? err.message : 'Suivi indisponible');
+      }
+    };
+
+    fetchSession();
+    intervalId = setInterval(fetchSession, 3000);
+
+    return () => {
+      active = false;
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [createdSessionCode]);
+
   const canCreate = useMemo(() => {
     const parsed = createSchema.safeParse({ subjectAge });
     if (!parsed.success) return false;
@@ -204,6 +266,9 @@ export default function FlashFlagPage() {
     setLoading(true);
     setError('');
     setCreatedLink('');
+    setCreatedSessionCode('');
+    setWatchData(null);
+    setWatchError('');
 
     const payload: Record<string, unknown> = {
       mode,
@@ -240,7 +305,13 @@ export default function FlashFlagPage() {
       }
 
       setCreatedLink(playUrl);
+      setCreatedSessionCode(code);
     } catch (e) {
+      if (mode === 'link') {
+        setError(e instanceof Error ? e.message : 'Impossible de generer un lien partageable pour le moment.');
+        return;
+      }
+
       const selectedLocal = localStandardTests.find((test) => test.id === selectedTestId)
         || DEFAULT_FALLBACK_STANDARD_TESTS.find((test) => test.id === selectedTestId)
         || null;
@@ -268,15 +339,13 @@ export default function FlashFlagPage() {
 
       const payloadToken = encodePayloadToBase64Url(inlinePayload);
       const localCode = `L${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
-      const localUrl = `${window.location.origin}/flashflag/session/${localCode}#payload=${payloadToken}`;
 
       if (mode === 'local') {
         router.push(`/flashflag/session/${localCode}#payload=${payloadToken}`);
         return;
       }
 
-      setCreatedLink(localUrl);
-      setError('Mode fallback live actif: lien genere sans base de donnees.');
+      setError('Mode local fallback actif: impossible d utiliser la base de donnees.');
     } finally {
       setLoading(false);
     }
@@ -305,6 +374,10 @@ export default function FlashFlagPage() {
       };
     }));
   };
+
+  const watchPercent = watchData && watchData.score.max > 0
+    ? Math.round((watchData.score.total / watchData.score.max) * 100)
+    : 0;
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#070708] text-[#F5F5F5] px-4 py-6 sm:py-8">
@@ -490,6 +563,40 @@ export default function FlashFlagPage() {
                 <button className="px-3 py-2 rounded-lg bg-[#991B1B] hover:bg-[#B91C1C] text-sm transition-colors" onClick={() => navigator.clipboard.writeText(createdLink)}>Copier</button>
                 <button className="px-3 py-2 rounded-lg bg-[#27272A] hover:bg-[#3F3F46] text-sm transition-colors" onClick={() => window.open(createdLink, '_blank')}>Ouvrir</button>
               </div>
+            </div>
+          )}
+
+          {createdSessionCode && (
+            <div className="rounded-xl border border-white/10 bg-[#151619] p-3 space-y-2">
+              <p className="text-sm font-semibold text-[#E4E4E7]">Suivi de cette invitation</p>
+              <p className="text-xs text-[#A3A3A3]">Code session: {createdSessionCode}</p>
+
+              {watchData && watchData.status === 'pending' && (
+                <p className="text-xs text-[#D4D4D8]">Le test n a pas encore ete lance par le destinataire.</p>
+              )}
+
+              {watchData && watchData.status === 'in_progress' && (
+                <p className="text-xs text-[#FCA5A5]">Le destinataire est en train de repondre au test.</p>
+              )}
+
+              {watchData && watchData.status === 'completed' && (
+                <div className="rounded-lg border border-[#7F1D1D] bg-[#1A1212] p-3 space-y-1">
+                  <p className="text-sm text-[#FECACA]">Resultat recu</p>
+                  <p className="text-xs text-[#E4E4E7]">
+                    Score: {watchData.score.total}/{watchData.score.max} ({watchPercent}%)
+                  </p>
+                  <p className="text-xs text-[#E4E4E7]">Niveau: {getRiskLabelFromPercent(watchPercent)}</p>
+                  <p className="text-xs text-[#D4D4D8]">
+                    Reponses: {watchData.score.answered} | Timeout: {watchData.score.timedOut}
+                  </p>
+                </div>
+              )}
+
+              {!watchData && !watchError && (
+                <p className="text-xs text-[#D4D4D8]">Initialisation du suivi en cours...</p>
+              )}
+
+              {watchError && <p className="text-xs text-[#FCA5A5]">Suivi: {watchError}</p>}
             </div>
           )}
 

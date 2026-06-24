@@ -36,6 +36,39 @@ interface AnswerRecord {
   time_spent_ms: number;
 }
 
+interface CompatSessionPayload {
+  mode: 'local' | 'link';
+  sourceType: 'standard' | 'custom';
+  subjectSex: 'homme' | 'femme' | 'autre';
+  subjectAge: number;
+  status: 'pending' | 'in_progress' | 'completed';
+  totalScore: number;
+  maxScore: number;
+  answeredCount: number;
+  timedOutCount: number;
+  startedAt: string | null;
+  completedAt: string | null;
+  test: FlashFlagTestDTO;
+  answers: AnswerRecord[];
+}
+
+interface CompatAnalyticsRow {
+  session_id: string;
+  started_at: number;
+  created_at?: string;
+  game_entries: Array<{
+    game?: string;
+    at?: number;
+    payload?: CompatSessionPayload;
+  }> | null;
+}
+
+const COMPAT_SESSION_KEY_PREFIX = 'flashflag:';
+const COMPAT_SESSION_ID_PREFIX = 'compat-flashflag:';
+const COMPAT_GAME_ENTRY_KEY = 'flashflag_compat';
+const FLASHFLAG_TABLE_ERROR_REGEX = /(could not find the table|does not exist|schema cache|relation)/i;
+const FLASHFLAG_TABLE_NAME_REGEX = /flashflag_(tests|questions|options|sessions|answers)/i;
+
 const mockStandardTests: FlashFlagTestDTO[] = [
   {
     id: 'mock-standard-1',
@@ -81,6 +114,185 @@ function mapQuestions(questions: Array<{ id: string; position: number; question_
     }));
 }
 
+function isFlashFlagTableMissingError(message: string): boolean {
+  return FLASHFLAG_TABLE_ERROR_REGEX.test(message) && FLASHFLAG_TABLE_NAME_REGEX.test(message);
+}
+
+function buildCompatSessionKey(code: string): string {
+  return `${COMPAT_SESSION_KEY_PREFIX}${code}`;
+}
+
+function isCompatSessionId(id: string): boolean {
+  return id.startsWith(COMPAT_SESSION_ID_PREFIX);
+}
+
+function serializeAnswers(answers: FlashFlagAnswerInput[]): AnswerRecord[] {
+  return answers.map((item) => ({
+    question_index: item.questionIndex,
+    question_text: item.questionText,
+    selected_option: item.selectedOption,
+    selected_score: item.selectedScore,
+    timed_out: item.timedOut,
+    time_spent_ms: item.timeSpentMs,
+  }));
+}
+
+function readCompatPayload(entries: CompatAnalyticsRow['game_entries']): CompatSessionPayload | null {
+  if (!Array.isArray(entries) || entries.length === 0) return null;
+
+  const explicit = entries.find((entry) => entry?.game === COMPAT_GAME_ENTRY_KEY)?.payload;
+  const payload = explicit || entries[0]?.payload;
+  if (!payload?.test?.questions || !Array.isArray(payload.test.questions)) return null;
+  return payload;
+}
+
+function mapCompatToSession(
+  code: string,
+  payload: CompatSessionPayload,
+  createdAt: string,
+): {
+  session: SessionRecord;
+  test: FlashFlagTestDTO;
+  answers: AnswerRecord[];
+} {
+  return {
+    session: {
+      id: `${COMPAT_SESSION_ID_PREFIX}${code}`,
+      access_code: code,
+      mode: payload.mode,
+      source_type: payload.sourceType,
+      test_id: payload.sourceType === 'standard' ? payload.test.id || null : null,
+      custom_payload: payload.sourceType === 'custom' ? payload.test : null,
+      subject_sex: payload.subjectSex,
+      subject_age: payload.subjectAge,
+      status: payload.status,
+      total_score: payload.totalScore,
+      max_score: payload.maxScore,
+      answered_count: payload.answeredCount,
+      timed_out_count: payload.timedOutCount,
+      started_at: payload.startedAt,
+      completed_at: payload.completedAt,
+      created_at: createdAt,
+    },
+    test: payload.test,
+    answers: payload.answers,
+  };
+}
+
+async function getCompatSessionByCode(code: string): Promise<{
+  session: SessionRecord;
+  test: FlashFlagTestDTO;
+  answers: AnswerRecord[];
+} | null> {
+  const { createServerClient } = await import('@/lib/supabase');
+  const supabase = createServerClient();
+
+  const { data, error } = await supabase
+    .from('analytics_sessions')
+    .select('session_id, started_at, created_at, game_entries')
+    .eq('session_id', buildCompatSessionKey(code))
+    .maybeSingle();
+
+  const typedRow = (data || null) as CompatAnalyticsRow | null;
+  if (error) throw new Error(`DB error fetching flashflag compatibility session: ${error.message}`);
+  if (!typedRow) return null;
+
+  const payload = readCompatPayload(typedRow.game_entries);
+  if (!payload) return null;
+
+  const createdAt = typedRow.created_at || new Date(typedRow.started_at || Date.now()).toISOString();
+  return mapCompatToSession(code, payload, createdAt);
+}
+
+async function upsertCompatSessionPayload(input: {
+  code: string;
+  payload: CompatSessionPayload;
+  startedAtMs?: number;
+  createOnly?: boolean;
+}) {
+  const { createServerClient, typedInsert, typedUpsert } = await import('@/lib/supabase');
+  const supabase = createServerClient();
+
+  const now = Date.now();
+  const sessionKey = buildCompatSessionKey(input.code);
+  const startedAt = input.payload.startedAt ? new Date(input.payload.startedAt).getTime() : null;
+  const startedAtMs = input.startedAtMs || startedAt || now;
+  const duration = startedAt ? Math.max(0, Math.round((now - startedAt) / 1000)) : 0;
+
+  const compatRow = {
+    session_id: sessionKey,
+    started_at: startedAtMs,
+    flushed_at: now,
+    duration,
+    page_views: [COMPAT_GAME_ENTRY_KEY],
+    game_entries: [{ game: COMPAT_GAME_ENTRY_KEY, at: now, payload: input.payload }],
+    votes: 0,
+    ai_requests: 0,
+    choices_before_quit: 0,
+    category: 'flashflag',
+    sex: input.payload.subjectSex,
+    age: null,
+  };
+
+  if (input.createOnly) {
+    const { error: insertError } = await typedInsert(supabase, 'analytics_sessions', compatRow);
+    if (insertError) {
+      throw new Error(`DB error saving flashflag compatibility session: ${insertError.message}`);
+    }
+    return;
+  }
+
+  const { error: upsertError } = await typedUpsert(supabase, 'analytics_sessions', compatRow, { onConflict: 'session_id' });
+  if (upsertError) {
+    throw new Error(`DB error saving flashflag compatibility session: ${upsertError.message}`);
+  }
+}
+
+async function createCompatFlashFlagSession(input: {
+  mode: 'local' | 'link';
+  sourceType: 'standard' | 'custom';
+  test: FlashFlagTestDTO;
+  subjectSex: 'homme' | 'femme' | 'autre';
+  subjectAge: number;
+  origin: string;
+}) {
+  let attempts = 0;
+  while (attempts < 10) {
+    const code = generateAccessCode();
+    attempts += 1;
+
+    const payload: CompatSessionPayload = {
+      mode: input.mode,
+      sourceType: input.sourceType,
+      subjectSex: input.subjectSex,
+      subjectAge: input.subjectAge,
+      status: 'pending',
+      totalScore: 0,
+      maxScore: input.test.questions.length * 2,
+      answeredCount: 0,
+      timedOutCount: 0,
+      startedAt: null,
+      completedAt: null,
+      test: input.test,
+      answers: [],
+    };
+
+    try {
+      await upsertCompatSessionPayload({ code, payload, createOnly: true });
+      return {
+        sessionCode: code,
+        playUrl: buildShareUrl(input.origin, code),
+      };
+    } catch (err) {
+      if (!(err instanceof Error) || !/duplicate key|session_id|unique/i.test(err.message)) {
+        throw err;
+      }
+    }
+  }
+
+  throw new Error('Impossible de creer une session partagee');
+}
+
 export async function listFlashFlagStandardTests(): Promise<Array<{ id: string; name: string; description: string | null; questionCount: number }>> {
   if (isMockMode()) {
     return mockStandardTests.map((test) => ({
@@ -101,7 +313,17 @@ export async function listFlashFlagStandardTests(): Promise<Array<{ id: string; 
     .eq('is_active', true)
     .order('created_at', { ascending: false });
 
-  if (error) throw new Error(`DB error listing flashflag tests: ${error.message}`);
+  if (error) {
+    if (isFlashFlagTableMissingError(error.message)) {
+      return mockStandardTests.map((test) => ({
+        id: test.id || '',
+        name: test.name,
+        description: test.description || null,
+        questionCount: test.questions.length,
+      }));
+    }
+    throw new Error(`DB error listing flashflag tests: ${error.message}`);
+  }
 
   const typedTests = (tests || []) as Array<{ id: string; name: string; description: string | null }>;
   if (typedTests.length === 0) return [];
@@ -141,7 +363,12 @@ export async function getFlashFlagTestById(id: string): Promise<FlashFlagTestDTO
     .maybeSingle();
 
   const typedTest = (test || null) as { id: string; name: string; description: string | null; is_active: boolean } | null;
-  if (testError) throw new Error(`DB error loading flashflag test: ${testError.message}`);
+  if (testError) {
+    if (isFlashFlagTableMissingError(testError.message)) {
+      return mockStandardTests.find((testItem) => testItem.id === id) || null;
+    }
+    throw new Error(`DB error loading flashflag test: ${testError.message}`);
+  }
   if (!typedTest || !typedTest.is_active) return null;
 
   const { data: questions, error: questionError } = await supabase
@@ -150,7 +377,12 @@ export async function getFlashFlagTestById(id: string): Promise<FlashFlagTestDTO
     .eq('test_id', id)
     .order('position', { ascending: true });
 
-  if (questionError) throw new Error(`DB error loading flashflag questions: ${questionError.message}`);
+  if (questionError) {
+    if (isFlashFlagTableMissingError(questionError.message)) {
+      return mockStandardTests.find((testItem) => testItem.id === id) || null;
+    }
+    throw new Error(`DB error loading flashflag questions: ${questionError.message}`);
+  }
 
   const typedQuestions = (questions || []) as Array<{
     id: string;
@@ -255,6 +487,17 @@ export async function createFlashFlagSession(input: {
       break;
     }
 
+    if (isFlashFlagTableMissingError(error.message)) {
+      return createCompatFlashFlagSession({
+        mode: input.mode,
+        sourceType: input.sourceType,
+        test,
+        subjectSex: input.subjectSex,
+        subjectAge: input.subjectAge,
+        origin: input.origin,
+      });
+    }
+
     lastError = error.message;
     if (!/duplicate key|access_code|unique/i.test(error.message)) {
       throw new Error(`DB error creating flashflag session: ${error.message}`);
@@ -303,8 +546,15 @@ export async function getFlashFlagSessionByCode(code: string): Promise<{
     .maybeSingle();
 
   const typedSession = (session || null) as SessionRecord | null;
-  if (sessionError) throw new Error(`DB error fetching flashflag session: ${sessionError.message}`);
-  if (!typedSession) return null;
+  if (sessionError) {
+    if (isFlashFlagTableMissingError(sessionError.message)) {
+      return getCompatSessionByCode(code);
+    }
+    throw new Error(`DB error fetching flashflag session: ${sessionError.message}`);
+  }
+  if (!typedSession) {
+    return getCompatSessionByCode(code);
+  }
 
   let test: FlashFlagTestDTO | null = null;
   if (typedSession.source_type === 'standard' && typedSession.test_id) {
@@ -321,7 +571,12 @@ export async function getFlashFlagSessionByCode(code: string): Promise<{
     .eq('session_id', typedSession.id)
     .order('question_index', { ascending: true });
 
-  if (answersError) throw new Error(`DB error fetching flashflag answers: ${answersError.message}`);
+  if (answersError) {
+    if (isFlashFlagTableMissingError(answersError.message)) {
+      return getCompatSessionByCode(code);
+    }
+    throw new Error(`DB error fetching flashflag answers: ${answersError.message}`);
+  }
 
   return {
     session: typedSession,
@@ -345,6 +600,30 @@ export async function startFlashFlagSession(code: string): Promise<void> {
 
   const session = await getFlashFlagSessionByCode(code);
   if (!session) throw new Error('Session introuvable');
+
+  if (isCompatSessionId(session.session.id)) {
+    if (session.session.status === 'completed') return;
+
+    const compatPayload: CompatSessionPayload = {
+      mode: session.session.mode,
+      sourceType: session.session.source_type,
+      subjectSex: session.session.subject_sex,
+      subjectAge: session.session.subject_age,
+      status: 'in_progress',
+      totalScore: session.session.total_score,
+      maxScore: session.session.max_score,
+      answeredCount: session.session.answered_count,
+      timedOutCount: session.session.timed_out_count,
+      startedAt: session.session.started_at || new Date().toISOString(),
+      completedAt: session.session.completed_at,
+      test: session.test,
+      answers: session.answers,
+    };
+
+    await upsertCompatSessionPayload({ code, payload: compatPayload });
+    return;
+  }
+
   if (session.session.status === 'completed') return;
 
   const { error } = await typedUpdate(supabase, 'flashflag_sessions', {
@@ -361,18 +640,29 @@ export async function submitFlashFlagAnswers(code: string, answers: FlashFlagAns
 
   const summary = computeFlashFlagSummary(answers, loaded.test.questions.length);
 
+  if (isCompatSessionId(loaded.session.id)) {
+    const compatPayload: CompatSessionPayload = {
+      mode: loaded.session.mode,
+      sourceType: loaded.session.source_type,
+      subjectSex: loaded.session.subject_sex,
+      subjectAge: loaded.session.subject_age,
+      status: 'completed',
+      totalScore: summary.totalScore,
+      maxScore: summary.maxScore,
+      answeredCount: summary.answeredCount,
+      timedOutCount: summary.timedOutCount,
+      startedAt: loaded.session.started_at || new Date().toISOString(),
+      completedAt: new Date().toISOString(),
+      test: loaded.test,
+      answers: serializeAnswers(answers),
+    };
+
+    await upsertCompatSessionPayload({ code, payload: compatPayload });
+    return summary;
+  }
+
   if (isMockMode()) {
-    mockAnswers.set(
-      loaded.session.id,
-      answers.map((item) => ({
-        question_index: item.questionIndex,
-        question_text: item.questionText,
-        selected_option: item.selectedOption,
-        selected_score: item.selectedScore,
-        timed_out: item.timedOut,
-        time_spent_ms: item.timeSpentMs,
-      })),
-    );
+    mockAnswers.set(loaded.session.id, serializeAnswers(answers));
 
     loaded.session.total_score = summary.totalScore;
     loaded.session.max_score = summary.maxScore;
