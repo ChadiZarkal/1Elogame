@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 
@@ -319,9 +320,25 @@ export default function FlashFlagPage() {
         </Link>
 
         <header className="rounded-3xl border border-[#3B1B1B] bg-[linear-gradient(120deg,#171212,#1F1114_55%,#271216)] p-5 shadow-[0_20px_80px_rgba(0,0,0,0.35)]">
-          <p className="text-xs tracking-[0.22em] text-[#FCA5A5] uppercase">Nouveau jeu</p>
-          <h1 className="mt-1 text-2xl sm:text-3xl font-black tracking-tight">Flash Flag Sprint</h1>
-          <p className="text-sm text-[#D4D4D8] mt-2">Questionnaire chronometre, sans retour arriere, pour des reponses instinctives.</p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs tracking-[0.22em] text-[#FCA5A5] uppercase">Red or Green • Mode Sprint</p>
+              <h1 className="mt-1 text-2xl sm:text-3xl font-black tracking-tight">Flash Flag</h1>
+              <p className="text-sm text-[#D4D4D8] mt-2 max-w-2xl">Questionnaire chronometre, sans retour arriere, pour capturer les reponses a chaud.</p>
+            </div>
+            <Image
+              src="/logo-rog-new.svg"
+              alt="Red or Green"
+              width={220}
+              height={48}
+              className="h-10 w-auto opacity-90 sm:h-12"
+            />
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2 text-xs">
+            <span className="rounded-full border border-[#7F1D1D] bg-[#2A1519] px-3 py-1 text-[#FECACA]">⚡ Questions rapides</span>
+            <span className="rounded-full border border-white/15 bg-white/[0.04] px-3 py-1 text-[#E4E4E7]">🚩 Score red flag instantane</span>
+            <span className="rounded-full border border-white/15 bg-white/[0.04] px-3 py-1 text-[#E4E4E7]">🔗 Mode local ou lien partageable</span>
+          </div>
         </header>
 
         <section className="rounded-2xl border border-white/10 bg-[#111214]/90 p-5 space-y-4 shadow-[0_8px_40px_rgba(0,0,0,0.25)] backdrop-blur-sm">

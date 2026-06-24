@@ -21,6 +21,7 @@ export default function AdminOraclePage() {
   const [total, setTotal] = useState(0);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<'all' | 'red' | 'green'>('all');
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 30;
@@ -65,8 +66,14 @@ export default function AdminOraclePage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setSearch(searchInput.trim());
     setPage(0);
-    // search state change in useEffect triggers fetch
+  };
+
+  const clearSearch = () => {
+    setSearchInput('');
+    setSearch('');
+    setPage(0);
   };
 
   if (isLoading) {
@@ -129,11 +136,26 @@ export default function AdminOraclePage() {
           <form onSubmit={handleSearch} className="flex gap-2 flex-1 max-w-md">
             <input
               type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Rechercher..."
               className="flex-1 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500"
             />
+            <button
+              type="submit"
+              className="px-3 py-1.5 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-500 transition-colors"
+            >
+              Rechercher
+            </button>
+            {(search || searchInput) && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="px-3 py-1.5 rounded-lg bg-white/5 text-gray-300 text-sm hover:bg-white/10 transition-colors"
+              >
+                Effacer
+              </button>
+            )}
           </form>
         </div>
 

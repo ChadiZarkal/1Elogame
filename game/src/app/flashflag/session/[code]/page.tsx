@@ -235,15 +235,65 @@ export default function FlashFlagSessionPage() {
     pushAnswer(opt.text, opt.score, false);
   };
 
-  if (loading) return <main className="min-h-screen bg-[#070708] text-white p-6">Chargement...</main>;
-  if (error && !session) return <main className="min-h-screen bg-[#070708] text-white p-6">{error}</main>;
-  if (!session) return <main className="min-h-screen bg-[#070708] text-white p-6">Session absente</main>;
+  if (loading) {
+    return (
+      <main className="relative min-h-screen overflow-hidden bg-[#070708] text-[#F5F5F5] p-6">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/15 blur-3xl" />
+        </div>
+        <div className="relative max-w-3xl mx-auto rounded-2xl border border-white/10 bg-[#111214]/90 p-5 shadow-[0_8px_40px_rgba(0,0,0,0.25)] backdrop-blur-sm">
+          Chargement de la session...
+        </div>
+      </main>
+    );
+  }
+
+  if (error && !session) {
+    return (
+      <main className="relative min-h-screen overflow-hidden bg-[#070708] text-[#F5F5F5] p-6">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/15 blur-3xl" />
+        </div>
+        <div className="relative max-w-3xl mx-auto space-y-4">
+          <Link href="/flashflag" className="inline-flex min-h-[44px] items-center gap-2 text-sm text-[#A3A3A3] hover:text-[#F5F5F5] transition-colors">
+            <span>←</span>
+            <span>Retour preparation</span>
+          </Link>
+          <div className="rounded-2xl border border-[#7F1D1D] bg-[#1A1212] p-5 text-[#FECACA] shadow-[0_8px_40px_rgba(0,0,0,0.25)]">
+            {error}
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (!session) {
+    return (
+      <main className="relative min-h-screen overflow-hidden bg-[#070708] text-[#F5F5F5] p-6">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/15 blur-3xl" />
+        </div>
+        <div className="relative max-w-3xl mx-auto space-y-4">
+          <Link href="/flashflag" className="inline-flex min-h-[44px] items-center gap-2 text-sm text-[#A3A3A3] hover:text-[#F5F5F5] transition-colors">
+            <span>←</span>
+            <span>Retour preparation</span>
+          </Link>
+          <div className="rounded-2xl border border-white/10 bg-[#111214]/90 p-5 shadow-[0_8px_40px_rgba(0,0,0,0.25)] backdrop-blur-sm">
+            Session absente
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   if (session.status === 'completed' && !doneSummary) {
     const percent = session.score.max > 0 ? Math.round((session.score.total / session.score.max) * 100) : 0;
     return (
-      <main className="min-h-screen bg-[#070708] text-[#F5F5F5] p-6">
-        <div className="max-w-3xl mx-auto rounded-2xl border border-white/10 bg-[#111214]/90 p-5 space-y-3 shadow-[0_8px_40px_rgba(0,0,0,0.25)] backdrop-blur-sm">
+      <main className="relative min-h-screen overflow-hidden bg-[#070708] text-[#F5F5F5] p-6">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/15 blur-3xl" />
+        </div>
+        <div className="relative max-w-3xl mx-auto rounded-2xl border border-white/10 bg-[#111214]/90 p-5 space-y-3 shadow-[0_8px_40px_rgba(0,0,0,0.25)] backdrop-blur-sm">
           <h1 className="text-2xl font-black">Resultat deja disponible</h1>
           <p>Score: {session.score.total}/{session.score.max} ({percent}%)</p>
           <p>Reponses: {session.score.answered} | Timeout: {session.score.timedOut}</p>
@@ -254,8 +304,11 @@ export default function FlashFlagSessionPage() {
 
   if (doneSummary) {
     return (
-      <main className="min-h-screen bg-[#070708] text-[#F5F5F5] p-6">
-        <div className="max-w-3xl mx-auto space-y-4">
+      <main className="relative min-h-screen overflow-hidden bg-[#070708] text-[#F5F5F5] p-6">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/15 blur-3xl" />
+        </div>
+        <div className="relative max-w-3xl mx-auto space-y-4">
           <header className="rounded-2xl border border-[#3A3A3A] bg-[linear-gradient(120deg,#171212,#1F1114_55%,#271216)] p-5 space-y-2 shadow-[0_20px_80px_rgba(0,0,0,0.35)]">
             <h1 className="text-3xl font-black">Test termine</h1>
             <p className="text-[#E4E4E7]">Score red flag: {doneSummary.totalScore}/{doneSummary.maxScore} ({doneSummary.riskPercent}%)</p>
