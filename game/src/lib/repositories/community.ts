@@ -14,6 +14,7 @@ const mockCommunityStore: CommunitySubmission[] = [];
 const JUSTIFICATION_COLUMNS = ['justification', 'justification_ai', 'justification_ia', 'justif'] as const;
 const GENDER_COLUMNS = ['gender', 'genre', 'sexe'] as const;
 const CORE_SUBMISSION_COLUMNS = new Set(['id', 'text', 'verdict', 'created_at', ...JUSTIFICATION_COLUMNS, ...GENDER_COLUMNS]);
+const EMBEDDED_META_MARKER = '\n<<<ORACLE_META>>>';
 
 function hasMissingColumnError(message: string | null | undefined, columnName: string): boolean {
   const normalized = (message || '').toLowerCase();
@@ -75,6 +76,63 @@ function inferJustificationField(row: Record<string, unknown>): string | undefin
   return bestFallback;
 }
 
+function encodeBase64Url(text: string): string {
+  return Buffer.from(text, 'utf8').toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function decodeBase64Url(token: string): string {
+  const normalized = token.replace(/-/g, '+').replace(/_/g, '/');
+  const padding = '='.repeat((4 - (normalized.length % 4)) % 4);
+  return Buffer.from(normalized + padding, 'base64').toString('utf8');
+}
+
+function encodeTextWithEmbeddedMeta(
+  text: string,
+  justification?: string,
+  gender?: 'homme' | 'femme' | 'autre',
+): string {
+  if (!justification && !gender) return text;
+
+  const meta: Record<string, string> = {};
+  if (justification) meta.j = justification;
+  if (gender) meta.g = gender;
+
+  const encodedMeta = encodeBase64Url(JSON.stringify(meta));
+  return `${text}${EMBEDDED_META_MARKER}${encodedMeta}`;
+}
+
+function decodeEmbeddedMetaFromText(rawText: string): {
+  text: string;
+  justification?: string;
+  gender?: 'homme' | 'femme' | 'autre';
+} {
+  const markerIndex = rawText.lastIndexOf(EMBEDDED_META_MARKER);
+  if (markerIndex === -1) {
+    return { text: rawText };
+  }
+
+  const text = rawText.slice(0, markerIndex);
+  const token = rawText.slice(markerIndex + EMBEDDED_META_MARKER.length).trim();
+  if (!token) {
+    return { text: rawText };
+  }
+
+  try {
+    const decoded = decodeBase64Url(token);
+    const parsed = JSON.parse(decoded) as { j?: unknown; g?: unknown };
+    const justification = typeof parsed.j === 'string' && parsed.j.trim().length > 0 ? parsed.j : undefined;
+    const gender = parsed.g === 'homme' || parsed.g === 'femme' || parsed.g === 'autre' ? parsed.g : undefined;
+
+    if (!justification && !gender) {
+      return { text: rawText };
+    }
+
+    return { text, justification, gender };
+  } catch {
+    return { text: rawText };
+  }
+}
+
 function pickGenderField(row: Record<string, unknown>): 'homme' | 'femme' | 'autre' | undefined {
   const raw = pickStringField(row, GENDER_COLUMNS);
   if (raw === 'homme' || raw === 'femme' || raw === 'autre') return raw;
@@ -87,12 +145,15 @@ function pickGenderField(row: Record<string, unknown>): 'homme' | 'femme' | 'aut
 }
 
 function mapSubmissionRow(row: Record<string, unknown>): CommunitySubmission {
+  const rawText = typeof row.text === 'string' ? row.text : '';
+  const embeddedMeta = decodeEmbeddedMetaFromText(rawText);
+
   return {
     id: row.id as string,
-    text: row.text as string,
+    text: embeddedMeta.text,
     verdict: row.verdict as 'red' | 'green',
-    justification: pickStringField(row, JUSTIFICATION_COLUMNS) || inferJustificationField(row),
-    gender: pickGenderField(row),
+    justification: pickStringField(row, JUSTIFICATION_COLUMNS) || embeddedMeta.justification || inferJustificationField(row),
+    gender: pickGenderField(row) || embeddedMeta.gender,
     timestamp: new Date(row.created_at as string).getTime(),
   };
 }
@@ -138,6 +199,11 @@ function buildInsertPayloads(
       });
     }
   }
+
+  payloads.push({
+    ...basePayload,
+    text: encodeTextWithEmbeddedMeta(text, justification, gender),
+  });
 
   payloads.push(basePayload);
   return payloads;
