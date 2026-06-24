@@ -250,8 +250,8 @@ export default function AdminDashboardPage() {
               className="bg-[#1A1A1A] border border-[#333] rounded-xl p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-[#F5F5F5] font-semibold text-sm">🤖 Justifications d'IA</h3>
-                  <p className="text-[#737373] text-xs mt-1">Afficher les justifications détaillées dans le jeu "Flag or Not"</p>
+                  <h3 className="text-[#F5F5F5] font-semibold text-sm">🤖 Justifications d&apos;IA</h3>
+                  <p className="text-[#737373] text-xs mt-1">Afficher les justifications détaillées dans le jeu &quot;Flag or Not&quot;</p>
                 </div>
                 <button
                   onClick={() => {

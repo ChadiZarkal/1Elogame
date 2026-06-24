@@ -1,6 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import { useFlagOrNot } from './useFlagOrNot';
 import { LoadingPhase } from './LoadingPhase';
 import { RevealPhase } from './RevealPhase';
@@ -8,43 +9,70 @@ import { IdlePhase } from './IdlePhase';
 import { GenderSelect } from './GenderSelect';
 
 export default function FlagOrNotPage() {
-  const game = useFlagOrNot();
+  const {
+    mainRef,
+    bgGradient,
+    redCount,
+    greenCount,
+    phase,
+    selectGender,
+    loadingPhrase,
+    submittedText,
+    result,
+    showJustification,
+    isMounted,
+    history,
+    handleShare,
+    handleNext,
+    input,
+    setInput,
+    communitySubmissions,
+    showCommunityTab,
+    setShowCommunityTab,
+    displaySuggestions,
+    placeholderIdx,
+    inputRef,
+    handleSubmit,
+    handleKeyDown,
+    privateMode,
+    setPrivateMode,
+  } = useFlagOrNot();
 
   return (
     <div
-      ref={game.mainRef}
+      ref={mainRef}
       className="relative flex flex-col overflow-hidden"
       style={{ height: 'var(--app-height, 100dvh)', background: '#0A0A0A' }}
     >
       {/* Ambient background */}
       <motion.div
         className="fixed inset-0 pointer-events-none z-0"
-        animate={{ background: game.bgGradient }}
+        animate={{ background: bgGradient }}
         transition={{ duration: 0.7 }}
       />
 
       {/* Top bar */}
       <div className="relative z-20 flex items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top))] pb-2">
-        <a
+        <Link
           href="/"
           className="text-[#6B7280] hover:text-white transition-colors text-sm flex items-center gap-1 min-w-[48px] min-h-[48px] justify-start active:scale-95"
           aria-label="Retour à l'accueil"
         >
           ← Retour
-        </a>
+        </Link>
 
         <h1 className="text-base font-bold text-[#FAFAFA] tracking-tight">Oracle</h1>
 
-        {(game.redCount > 0 || game.greenCount > 0) ? (
+        {(redCount > 0 || greenCount > 0) ? (
           <div className="flex items-center gap-2 text-xs min-w-[48px] justify-end font-medium">
-            <a href="/flagornot/stats" className="text-[#6B7280] hover:text-[#FAFAFA] transition-colors" aria-label="Stats">📊</a>
-            <span className="text-[#EF4444]">🚩 {game.redCount.toLocaleString('fr-FR')}</span>
+            <Link href="/flagornot/stats" className="text-[#6B7280] hover:text-[#FAFAFA] transition-colors" aria-label="Stats">📊</Link>
+            <span className="text-[#EF4444]">🚩 {redCount.toLocaleString('fr-FR')}</span>
             <span className="text-[#6B7280]">·</span>
-            <span className="text-[#10B981]">🟢 {game.greenCount.toLocaleString('fr-FR')}</span>
+            <span className="text-[#10B981]">🟢 {greenCount.toLocaleString('fr-FR')}</span>
           </div>
         ) : (
           <div className="min-w-[48px] flex justify-end">
-            <a href="/flagornot/stats" className="text-[#6B7280] hover:text-[#FAFAFA] transition-colors text-sm" aria-label="Stats">📊</a>
+            <Link href="/flagornot/stats" className="text-[#6B7280] hover:text-[#FAFAFA] transition-colors text-sm" aria-label="Stats">📊</Link>
           </div>
         )}
       </div>
@@ -52,46 +80,46 @@ export default function FlagOrNotPage() {
       {/* Main content */}
       <div className="relative z-10 flex-1 flex flex-col min-h-0">
         <AnimatePresence mode="wait">
-          {game.phase === 'gender-select' && (
-            <GenderSelect onSelect={game.selectGender} />
+          {phase === 'gender-select' && (
+            <GenderSelect onSelect={selectGender} />
           )}
 
-          {game.phase === 'loading' && (
+          {phase === 'loading' && (
             <LoadingPhase
-              loadingPhrase={game.loadingPhrase}
-              submittedText={game.submittedText}
+              loadingPhrase={loadingPhrase}
+              submittedText={submittedText}
             />
           )}
 
-          {game.phase === 'reveal' && game.result && (
+          {phase === 'reveal' && result && (
             <RevealPhase
-              result={game.result}
-              submittedText={game.submittedText}
-              showJustification={game.showJustification}
-              isMounted={game.isMounted}
-              redCount={game.redCount}
-              greenCount={game.greenCount}
-              historyLength={game.history.length}
-              onShare={game.handleShare}
-              onNext={game.handleNext}
+              result={result}
+              submittedText={submittedText}
+              showJustification={showJustification}
+              isMounted={isMounted}
+              redCount={redCount}
+              greenCount={greenCount}
+              historyLength={history.length}
+              onShare={handleShare}
+              onNext={handleNext}
             />
           )}
 
-          {game.phase === 'idle' && (
+          {phase === 'idle' && (
             <IdlePhase
-              input={game.input}
-              setInput={game.setInput}
-              history={game.history}
-              communitySubmissions={game.communitySubmissions}
-              showCommunityTab={game.showCommunityTab}
-              setShowCommunityTab={game.setShowCommunityTab}
-              displaySuggestions={game.displaySuggestions}
-              placeholderIdx={game.placeholderIdx}
-              inputRef={game.inputRef}
-              onSubmit={game.handleSubmit}
-              onKeyDown={game.handleKeyDown}
-              privateMode={game.privateMode}
-              setPrivateMode={game.setPrivateMode}
+              input={input}
+              setInput={setInput}
+              history={history}
+              communitySubmissions={communitySubmissions}
+              showCommunityTab={showCommunityTab}
+              setShowCommunityTab={setShowCommunityTab}
+              displaySuggestions={displaySuggestions}
+              placeholderIdx={placeholderIdx}
+              inputRef={inputRef}
+              onSubmit={handleSubmit}
+              onKeyDown={handleKeyDown}
+              privateMode={privateMode}
+              setPrivateMode={setPrivateMode}
             />
           )}
         </AnimatePresence>

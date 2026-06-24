@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Politique de Confidentialité',
@@ -157,7 +158,7 @@ export default function ConfidentialitePage() {
           </p>
         </section>
 
-        <a href="/" className="legal-page__back">← Retour à l&apos;accueil</a>
+        <Link href="/" className="legal-page__back">← Retour à l&apos;accueil</Link>
       </div>
     </main>
   );

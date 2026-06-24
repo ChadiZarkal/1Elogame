@@ -1,13 +1,24 @@
 import { withApiHandler, apiSuccess } from '@/lib/apiHelpers';
 import { createServerClient } from '@/lib/supabase';
 
+type FeedbackQueryAdapter = {
+  from: (table: string) => {
+    select: (query: string) => {
+      order: (column: string, options: { ascending: boolean }) => {
+        limit: (count: number) => Promise<{ data: unknown[] | null; error: { message: string } | null }>;
+      };
+    };
+  };
+};
+
 export const dynamic = 'force-dynamic';
 
 export const GET = withApiHandler(async () => {
   const supabase = createServerClient();
+  const queryAdapter = supabase as unknown as FeedbackQueryAdapter;
 
   // Fetch all feedback with element texts via joins
-  const { data, error } = await (supabase.from('duel_feedback') as any)
+  const { data, error } = await queryAdapter.from('duel_feedback')
     .select(`
       id,
       element_a_id,

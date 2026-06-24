@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useCallback, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
@@ -237,13 +238,13 @@ export default function JouerPage() {
         <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {/* Home button */}
-            <a
+            <Link
               href="/"
               className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-[#333] rounded-full w-10 h-10 flex items-center justify-center text-[#A3A3A3] hover:text-[#F5F5F5] transition-colors"
               aria-label="Retour accueil"
             >
               ←
-            </a>
+            </Link>
             {/* Streak — hidden instead of unmounted to prevent CLS */}
             <div style={{ visibility: showingResult ? 'hidden' : 'visible' }}>
               <StreakDisplay 
