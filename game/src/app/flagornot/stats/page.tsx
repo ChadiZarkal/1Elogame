@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 interface GenderStat {
@@ -53,9 +54,9 @@ export default function OracleStatsPage() {
         <p className="text-[#6B7280] text-sm text-center mb-6">
           Les statistiques apparaîtront quand plus de personnes auront utilisé l&apos;Oracle.
         </p>
-        <a href="/flagornot" className="text-[#EF4444] text-sm font-medium hover:underline">
+        <Link href="/flagornot" className="text-[#EF4444] text-sm font-medium hover:underline">
           ← Retour à l&apos;Oracle
-        </a>
+        </Link>
       </div>
     );
   }
@@ -65,9 +66,9 @@ export default function OracleStatsPage() {
       {/* Header */}
       <div className="px-5 pt-[max(20px,env(safe-area-inset-top))] pb-6">
         <div className="max-w-md mx-auto">
-          <a href="/flagornot" className="text-[#6B7280] hover:text-[#FAFAFA] text-sm mb-5 flex items-center gap-1.5 transition-colors py-1">
+          <Link href="/flagornot" className="text-[#6B7280] hover:text-[#FAFAFA] text-sm mb-5 flex items-center gap-1.5 transition-colors py-1">
             ← Oracle
-          </a>
+          </Link>
           <div className="text-center">
             <h1 className="text-[26px] font-black text-[#FAFAFA] tracking-tight">
               📊 Stats Oracle

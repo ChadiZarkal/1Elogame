@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { ArrowRight, ArrowLeft, Shield } from 'lucide-react';
 import { METERS } from '@/config/meters-data';
 
@@ -13,9 +13,6 @@ const METER_COLORS: Record<string, string> = {
 };
 
 export default function RessourcesPage() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-
   return (
     <div className="min-h-[100dvh] bg-[#0A0A0B] text-[#FAFAFA] flex flex-col relative overflow-hidden">
       {/* Subtle background gradient */}
@@ -23,16 +20,16 @@ export default function RessourcesPage() {
       <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-[#F97316]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top))] pb-2">
-        <a
+        <Link
           href="/"
           className="text-[#6B7280] hover:text-white transition-colors text-sm flex items-center gap-1 min-w-[48px] min-h-[48px] justify-start active:scale-95"
           aria-label="Retour à l'accueil"
         >
           <ArrowLeft size={16} /> Retour
-        </a>
+        </Link>
       </div>
 
-      <main className={`flex-1 flex flex-col px-5 pb-8 transition-opacity duration-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+      <main className="flex-1 flex flex-col px-5 pb-8 transition-opacity duration-500 opacity-100">
         {/* Header */}
         <div className="text-center mt-2 mb-5">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#EF4444]/20 to-[#F97316]/20 border border-[#EF4444]/10 mb-3">
@@ -50,7 +47,7 @@ export default function RessourcesPage() {
         {/* Meter cards */}
         <div className="flex flex-col gap-2.5 max-w-md mx-auto w-full" role="list">
           {METERS.map((meter, idx) => (
-            <a
+            <Link
               key={meter.slug}
               href={`/ressources/${meter.slug}`}
               className="res-card group text-left"
@@ -80,7 +77,7 @@ export default function RessourcesPage() {
                   />
                 </div>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
 
@@ -104,12 +101,12 @@ export default function RessourcesPage() {
         {/* SEO-rich footer section with internal links */}
         <section className="mt-6 max-w-md mx-auto w-full px-1">
           <p className="text-[11px] text-[#3D3D3D] leading-relaxed text-center">
-            Ces outils d&apos;auto-évaluation sont proposés par <a href="/" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">Red or Green</a>.
+            Ces outils d&apos;auto-évaluation sont proposés par <Link href="/" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">Red or Green</Link>.
             Utilise-les pour évaluer ta situation et identifier d&apos;éventuels{' '}
-            <a href="/redflag" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">red flags</a> dans tes relations.
+            <Link href="/redflag" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">red flags</Link> dans tes relations.
             Tu peux aussi jouer au{' '}
-            <a href="/jeu" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">jeu Red or Green</a> ou tester l&apos;
-            <a href="/flagornot" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">Oracle</a> pour évaluer n&apos;importe quelle situation.
+            <Link href="/jeu" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">jeu Red or Green</Link> ou tester l&apos;
+            <Link href="/flagornot" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">Oracle</Link> pour évaluer n&apos;importe quelle situation.
           </p>
         </section>
       </main>

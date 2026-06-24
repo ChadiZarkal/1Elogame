@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 export default function NotFound() {
   return (
@@ -19,20 +20,22 @@ export default function NotFound() {
         </p>
 
         <div className="flex flex-col gap-3 pt-4">
-          <motion.a
-            href="/"
-            className="px-8 py-3 rounded-xl bg-[#DC2626] text-white font-bold text-lg hover:bg-[#EF4444] transition-colors text-center"
-            whileTap={{ scale: 0.97 }}
-          >
-            Retour à l&apos;accueil
-          </motion.a>
-          <motion.a
-            href="/flagornot"
-            className="px-8 py-3 rounded-xl bg-[#1A1A1A] border border-[#333] text-[#A3A3A3] font-medium hover:border-[#059669] hover:text-[#059669] transition-all text-center"
-            whileTap={{ scale: 0.97 }}
-          >
-            Essaye l'Oracle
-          </motion.a>
+          <motion.div whileTap={{ scale: 0.97 }}>
+            <Link
+              href="/"
+              className="px-8 py-3 rounded-xl bg-[#DC2626] text-white font-bold text-lg hover:bg-[#EF4444] transition-colors text-center block"
+            >
+              Retour à l&apos;accueil
+            </Link>
+          </motion.div>
+          <motion.div whileTap={{ scale: 0.97 }}>
+            <Link
+              href="/flagornot"
+              className="px-8 py-3 rounded-xl bg-[#1A1A1A] border border-[#333] text-[#A3A3A3] font-medium hover:border-[#059669] hover:text-[#059669] transition-all text-center block"
+            >
+              Essaye l&apos;Oracle
+            </Link>
+          </motion.div>
         </div>
       </motion.div>
     </div>

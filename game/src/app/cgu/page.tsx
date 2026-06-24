@@ -111,7 +111,7 @@ export default function CGUPage() {
           <p>
             L&apos;utilisation du Service implique le traitement de certaines données personnelles.
             Pour plus d&apos;informations, consultez notre{' '}
-            <a href="/confidentialite">Politique de Confidentialité</a>.
+            <Link href="/confidentialite">Politique de Confidentialité</Link>.
           </p>
         </section>
 

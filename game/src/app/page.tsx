@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { Trophy, ArrowRight, ExternalLink, Shield } from 'lucide-react';
 import { useHaptics } from '@/lib/hooks';
 
@@ -18,7 +19,7 @@ export default function HubPage() {
 
   const handleTap = useCallback((e: React.MouseEvent) => {
     tap();
-    // Let the native <a> navigation happen
+    // Keep haptic feedback on link navigation taps.
   }, [tap]);
 
   return (
@@ -78,7 +79,7 @@ export default function HubPage() {
 
           {/* Secondary: 2-column grid */}
           <div className="hub__row">
-            <a
+            <Link
               href="/jeu"
               className="hub__card hub__card--half hub__card--green hub__enter hub__enter--4"
               onClick={handleTap}
@@ -93,9 +94,9 @@ export default function HubPage() {
               <span className="hub__card-go hub__card-go--sm hub__card-go--green">
                 JOUER <ArrowRight size={11} strokeWidth={2.5} />
               </span>
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/flagornot"
               className="hub__card hub__card--half hub__card--purple hub__enter hub__enter--5"
               onClick={handleTap}
@@ -110,9 +111,9 @@ export default function HubPage() {
               <span className="hub__card-go hub__card-go--sm hub__card-go--purple">
                 TESTER <ArrowRight size={11} strokeWidth={2.5} />
               </span>
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/flashflag"
               className="hub__card hub__card--half hub__card--amber hub__enter hub__enter--6"
               onClick={handleTap}
@@ -127,7 +128,7 @@ export default function HubPage() {
               <span className="hub__card-go hub__card-go--sm hub__card-go--amber">
                 LANCER <ArrowRight size={11} strokeWidth={2.5} />
               </span>
-            </a>
+            </Link>
           </div>
 
         </div>
@@ -150,7 +151,7 @@ export default function HubPage() {
           </div>
 
           <nav className="hub__actions" aria-label="Navigation secondaire">
-            <a
+            <Link
               href="/classement"
               className="hub__action"
               onClick={handleTap}
@@ -158,8 +159,8 @@ export default function HubPage() {
             >
               <Trophy size={13} strokeWidth={2.5} />
               Classement
-            </a>
-            <a
+            </Link>
+            <Link
               href="/ressources"
               className="hub__action"
               onClick={handleTap}
@@ -167,15 +168,15 @@ export default function HubPage() {
             >
               <Shield size={13} strokeWidth={2.5} />
               Violentomètre
-            </a>
+            </Link>
           </nav>
 
           <p className="hub__version">Red or Green — v3.8</p>
 
           <nav className="hub__legal-links" aria-label="Pages légales">
-            <a href="/mentions-legales" className="hub__legal-link">Mentions légales</a>
-            <a href="/confidentialite" className="hub__legal-link">Confidentialité</a>
-            <a href="/cgu" className="hub__legal-link">CGU</a>
+            <Link href="/mentions-legales" className="hub__legal-link">Mentions légales</Link>
+            <Link href="/confidentialite" className="hub__legal-link">Confidentialité</Link>
+            <Link href="/cgu" className="hub__legal-link">CGU</Link>
           </nav>
 
           <section className="hub__seo">
@@ -183,9 +184,9 @@ export default function HubPage() {
             <p className="hub__seo-text">
               Joue gratuitement à <strong>Red or Green</strong>, le jeu en ligne où tu votes pour le pire comportement.
               Découvre aussi l&apos;<strong>Oracle</strong> pour savoir si une situation est un Red Flag ou un Green Flag,
-              et nos outils d&apos;auto-évaluation : <a href="/ressources/violentometre" className="hub__seo-link">violentomètre</a>,{' '}
-              <a href="/ressources/consentometre" className="hub__seo-link">consentomètre</a>,{' '}
-              <a href="/ressources/harcelometre" className="hub__seo-link">harcèlomètre</a> et plus encore.
+              et nos outils d&apos;auto-évaluation : <Link href="/ressources/violentometre" className="hub__seo-link">violentomètre</Link>,{' '}
+              <Link href="/ressources/consentometre" className="hub__seo-link">consentomètre</Link>,{' '}
+              <Link href="/ressources/harcelometre" className="hub__seo-link">harcèlomètre</Link> et plus encore.
               Sans inscription, sans téléchargement — jouable instantanément sur mobile et desktop.
             </p>
           </section>

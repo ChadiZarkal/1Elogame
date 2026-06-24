@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import Link from 'next/link';
 import { Phone, ExternalLink, RotateCcw, ChevronRight, Download } from 'lucide-react';
 import type {
   Meter,
@@ -220,12 +221,12 @@ export function ResultsPhase({
         >
           <RotateCcw size={14} /> Recommencer
         </button>
-        <a
+        <Link
           href="/ressources"
           className="w-full py-3 rounded-2xl text-[#9CA3AF] font-medium text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:text-white"
         >
           Essayer un autre test <ChevronRight size={14} />
-        </a>
+        </Link>
       </div>
 
       <p className="text-[10px] text-[#4B5563] text-center mb-2 flex items-center justify-center gap-1">

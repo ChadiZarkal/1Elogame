@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { METERS } from '@/config/meters-data';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
@@ -202,12 +203,12 @@ function MeterSeoContent({ slug }: { slug: string }) {
         </div>
       )}
       <nav aria-label="Autres outils">
-        <a href="/ressources">Tous les outils d&apos;auto-évaluation</a>
+        <Link href="/ressources">Tous les outils d&apos;auto-évaluation</Link>
         {METERS.filter(m => m.slug !== slug).map(m => (
-          <a key={m.slug} href={`/ressources/${m.slug}`}>{m.name}</a>
+          <Link key={m.slug} href={`/ressources/${m.slug}`}>{m.name}</Link>
         ))}
-        <a href="/">Red or Green — Accueil</a>
-        <a href="/jeu">Jouer à Red or Green</a>
+        <Link href="/">Red or Green — Accueil</Link>
+        <Link href="/jeu">Jouer à Red or Green</Link>
       </nav>
     </section>
   );
