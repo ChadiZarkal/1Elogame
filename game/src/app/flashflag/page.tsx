@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 
@@ -305,25 +306,30 @@ export default function FlashFlagPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0D0D0D] text-[#F5F5F5] px-4 py-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <a href="/" className="inline-flex items-center gap-2 text-sm text-[#A3A3A3] hover:text-[#F5F5F5] transition-colors">
+    <main className="relative min-h-screen overflow-hidden bg-[#070708] text-[#F5F5F5] px-4 py-6 sm:py-8">
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/15 blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-80 w-80 translate-x-1/3 rounded-full bg-[#EF4444]/10 blur-3xl" />
+      </div>
+
+      <div className="relative z-10 max-w-4xl mx-auto space-y-6">
+        <Link href="/" className="inline-flex min-h-[44px] items-center gap-2 text-sm text-[#A3A3A3] hover:text-[#F5F5F5] transition-colors">
           <span>←</span>
           <span>Retour accueil</span>
-        </a>
+        </Link>
 
-        <header className="rounded-2xl border border-[#3B1B1B] bg-gradient-to-r from-[#151010] via-[#221212] to-[#1A1212] p-5">
+        <header className="rounded-3xl border border-[#3B1B1B] bg-[linear-gradient(120deg,#171212,#1F1114_55%,#271216)] p-5 shadow-[0_20px_80px_rgba(0,0,0,0.35)]">
           <p className="text-xs tracking-[0.22em] text-[#FCA5A5] uppercase">Nouveau jeu</p>
-          <h1 className="text-2xl sm:text-3xl font-black">Flash Flag Sprint</h1>
+          <h1 className="mt-1 text-2xl sm:text-3xl font-black tracking-tight">Flash Flag Sprint</h1>
           <p className="text-sm text-[#D4D4D8] mt-2">Questionnaire chronometre, sans retour arriere, pour des reponses instinctives.</p>
         </header>
 
-        <section className="rounded-2xl border border-[#2E2E2E] bg-[#141414] p-5 space-y-4">
+        <section className="rounded-2xl border border-white/10 bg-[#111214]/90 p-5 space-y-4 shadow-[0_8px_40px_rgba(0,0,0,0.25)] backdrop-blur-sm">
           <h2 className="font-bold text-lg">1. Profil de la personne testee</h2>
           <div className="grid sm:grid-cols-2 gap-3">
             <label className="space-y-2">
               <span className="text-sm text-[#D4D4D8]">Sexe</span>
-              <select className="w-full bg-[#1A1A1A] border border-[#3A3A3A] rounded-lg px-3 py-2" value={subjectSex} onChange={(e) => setSubjectSex(e.target.value as SubjectSex)}>
+              <select className="w-full rounded-xl bg-[#17181B] border border-white/12 px-3 py-2.5 focus:outline-none focus:border-[#EF4444]/70 focus:ring-2 focus:ring-[#EF4444]/20 transition" value={subjectSex} onChange={(e) => setSubjectSex(e.target.value as SubjectSex)}>
                 <option value="homme">Homme</option>
                 <option value="femme">Femme</option>
                 <option value="autre">Autre</option>
@@ -331,22 +337,22 @@ export default function FlashFlagPage() {
             </label>
             <label className="space-y-2">
               <span className="text-sm text-[#D4D4D8]">Age</span>
-              <input type="number" min={16} max={99} className="w-full bg-[#1A1A1A] border border-[#3A3A3A] rounded-lg px-3 py-2" value={subjectAge} onChange={(e) => setSubjectAge(Number(e.target.value))} />
+              <input type="number" min={16} max={99} className="w-full rounded-xl bg-[#17181B] border border-white/12 px-3 py-2.5 focus:outline-none focus:border-[#EF4444]/70 focus:ring-2 focus:ring-[#EF4444]/20 transition" value={subjectAge} onChange={(e) => setSubjectAge(Number(e.target.value))} />
             </label>
           </div>
         </section>
 
-        <section className="rounded-2xl border border-[#2E2E2E] bg-[#141414] p-5 space-y-4">
+        <section className="rounded-2xl border border-white/10 bg-[#111214]/90 p-5 space-y-4 shadow-[0_8px_40px_rgba(0,0,0,0.25)] backdrop-blur-sm">
           <h2 className="font-bold text-lg">2. Choix du test</h2>
           <div className="flex gap-2">
-            <button className={`px-4 py-2 rounded-lg border ${sourceType === 'standard' ? 'bg-[#2A1313] border-[#DC2626]' : 'bg-transparent border-[#3A3A3A]'}`} onClick={() => setSourceType('standard')}>Standard</button>
-            <button className={`px-4 py-2 rounded-lg border ${sourceType === 'custom' ? 'bg-[#2A1313] border-[#DC2626]' : 'bg-transparent border-[#3A3A3A]'}`} onClick={() => setSourceType('custom')}>Perso (10 questions)</button>
+            <button className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${sourceType === 'standard' ? 'bg-[#2A1519] border-[#EF4444] text-white shadow-[0_0_0_1px_rgba(239,68,68,0.2)]' : 'bg-transparent border-white/15 text-[#C9CBD1] hover:border-white/25 hover:text-white'}`} onClick={() => setSourceType('standard')}>Standard</button>
+            <button className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${sourceType === 'custom' ? 'bg-[#2A1519] border-[#EF4444] text-white shadow-[0_0_0_1px_rgba(239,68,68,0.2)]' : 'bg-transparent border-white/15 text-[#C9CBD1] hover:border-white/25 hover:text-white'}`} onClick={() => setSourceType('custom')}>Perso (10 questions)</button>
           </div>
 
           {sourceType === 'standard' ? (
             <div className="space-y-2">
               <label className="text-sm text-[#D4D4D8]">Pack standard</label>
-              <select className="w-full bg-[#1A1A1A] border border-[#3A3A3A] rounded-lg px-3 py-2" value={selectedTestId} onChange={(e) => setSelectedTestId(e.target.value)}>
+              <select className="w-full rounded-xl bg-[#17181B] border border-white/12 px-3 py-2.5 focus:outline-none focus:border-[#EF4444]/70 focus:ring-2 focus:ring-[#EF4444]/20 transition" value={selectedTestId} onChange={(e) => setSelectedTestId(e.target.value)}>
                 {tests.map((test) => (
                   <option key={test.id} value={test.id}>{test.name} ({test.questionCount} questions)</option>
                 ))}
@@ -355,12 +361,12 @@ export default function FlashFlagPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              <input className="w-full bg-[#1A1A1A] border border-[#3A3A3A] rounded-lg px-3 py-2" placeholder="Nom du test" value={customName} onChange={(e) => setCustomName(e.target.value)} />
-              <input className="w-full bg-[#1A1A1A] border border-[#3A3A3A] rounded-lg px-3 py-2" placeholder="Description" value={customDescription} onChange={(e) => setCustomDescription(e.target.value)} />
+              <input className="w-full rounded-xl bg-[#17181B] border border-white/12 px-3 py-2.5 focus:outline-none focus:border-[#EF4444]/70 focus:ring-2 focus:ring-[#EF4444]/20 transition" placeholder="Nom du test" value={customName} onChange={(e) => setCustomName(e.target.value)} />
+              <input className="w-full rounded-xl bg-[#17181B] border border-white/12 px-3 py-2.5 focus:outline-none focus:border-[#EF4444]/70 focus:ring-2 focus:ring-[#EF4444]/20 transition" placeholder="Description" value={customDescription} onChange={(e) => setCustomDescription(e.target.value)} />
 
               <div className="flex flex-wrap gap-2">
                 <button
-                  className="text-xs px-2.5 py-1.5 rounded border border-[#555] text-[#E4E4E7]"
+                  className="text-xs px-2.5 py-1.5 rounded-lg border border-white/20 text-[#E4E4E7] hover:border-white/35 transition-colors"
                   onClick={() => {
                     navigator.clipboard.writeText(JSON.stringify({
                       name: customName,
@@ -372,7 +378,7 @@ export default function FlashFlagPage() {
                   Copier le brouillon JSON
                 </button>
                 <button
-                  className="text-xs px-2.5 py-1.5 rounded border border-[#7F1D1D] text-[#FECACA]"
+                  className="text-xs px-2.5 py-1.5 rounded-lg border border-[#7F1D1D] text-[#FECACA] hover:bg-[#2A1519] transition-colors"
                   onClick={() => {
                     setCustomName('');
                     setCustomDescription('');
@@ -382,7 +388,7 @@ export default function FlashFlagPage() {
                   Reinitialiser le test perso
                 </button>
                 <button
-                  className="text-xs px-2.5 py-1.5 rounded border border-[#444] text-[#D4D4D8]"
+                  className="text-xs px-2.5 py-1.5 rounded-lg border border-white/20 text-[#D4D4D8] hover:border-white/35 transition-colors"
                   onClick={() => {
                     const raw = window.prompt('Collez ici le JSON du brouillon Flash Flag');
                     if (!raw) return;
@@ -409,19 +415,19 @@ export default function FlashFlagPage() {
 
               <div className="space-y-3">
                 {customQuestions.map((question, qIndex) => (
-                  <div key={qIndex} className="rounded-xl border border-[#303030] bg-[#191919] p-3 space-y-2">
+                  <div key={qIndex} className="rounded-xl border border-white/10 bg-[#17181B] p-3 space-y-2">
                     <p className="text-xs text-[#A3A3A3]">Question {qIndex + 1}</p>
-                    <input className="w-full bg-[#1F1F1F] border border-[#3A3A3A] rounded-lg px-2 py-1.5 text-sm" placeholder="Texte de la question" value={question.text} onChange={(e) => updateQuestion(qIndex, { text: e.target.value })} />
+                    <input className="w-full rounded-lg bg-[#131416] border border-white/12 px-2 py-1.5 text-sm focus:outline-none focus:border-[#EF4444]/70 focus:ring-2 focus:ring-[#EF4444]/20 transition" placeholder="Texte de la question" value={question.text} onChange={(e) => updateQuestion(qIndex, { text: e.target.value })} />
                     <div className="flex items-center gap-2">
                       <label className="text-xs text-[#D4D4D8]">Temps (sec)</label>
-                      <input type="number" min={3} max={30} className="w-20 bg-[#1F1F1F] border border-[#3A3A3A] rounded-lg px-2 py-1.5 text-sm" value={question.timeLimitSec} onChange={(e) => updateQuestion(qIndex, { timeLimitSec: Number(e.target.value) })} />
+                      <input type="number" min={3} max={30} className="w-20 rounded-lg bg-[#131416] border border-white/12 px-2 py-1.5 text-sm focus:outline-none focus:border-[#EF4444]/70 focus:ring-2 focus:ring-[#EF4444]/20 transition" value={question.timeLimitSec} onChange={(e) => updateQuestion(qIndex, { timeLimitSec: Number(e.target.value) })} />
                     </div>
 
                     <div className="space-y-2">
                       {question.options.map((opt, optIndex) => (
                         <div key={optIndex} className="grid grid-cols-[1fr_auto] gap-2">
-                          <input className="bg-[#1F1F1F] border border-[#3A3A3A] rounded-lg px-2 py-1.5 text-sm" placeholder={`Option ${optIndex + 1}`} value={opt.text} onChange={(e) => updateOption(qIndex, optIndex, e.target.value)} />
-                          <select className="bg-[#1F1F1F] border border-[#3A3A3A] rounded-lg px-2 py-1.5 text-sm" value={opt.score} onChange={(e) => {
+                          <input className="rounded-lg bg-[#131416] border border-white/12 px-2 py-1.5 text-sm focus:outline-none focus:border-[#EF4444]/70 focus:ring-2 focus:ring-[#EF4444]/20 transition" placeholder={`Option ${optIndex + 1}`} value={opt.text} onChange={(e) => updateOption(qIndex, optIndex, e.target.value)} />
+                          <select className="rounded-lg bg-[#131416] border border-white/12 px-2 py-1.5 text-sm focus:outline-none focus:border-[#EF4444]/70 focus:ring-2 focus:ring-[#EF4444]/20 transition" value={opt.score} onChange={(e) => {
                             const score = Number(e.target.value) as 0 | 1 | 2;
                             setCustomQuestions((prev) => prev.map((q, qi) => qi !== qIndex ? q : {
                               ...q,
@@ -435,7 +441,7 @@ export default function FlashFlagPage() {
                         </div>
                       ))}
                       {question.options.length < 3 && (
-                        <button className="text-xs px-2 py-1 rounded border border-dashed border-[#666] text-[#D4D4D8]" onClick={() => addOption(qIndex)}>
+                        <button className="text-xs px-2 py-1 rounded-lg border border-dashed border-white/30 text-[#D4D4D8] hover:border-white/45 transition-colors" onClick={() => addOption(qIndex)}>
                           Ajouter 3e option
                         </button>
                       )}
@@ -447,25 +453,25 @@ export default function FlashFlagPage() {
           )}
         </section>
 
-        <section className="rounded-2xl border border-[#2E2E2E] bg-[#141414] p-5 space-y-4">
+        <section className="rounded-2xl border border-white/10 bg-[#111214]/90 p-5 space-y-4 shadow-[0_8px_40px_rgba(0,0,0,0.25)] backdrop-blur-sm">
           <h2 className="font-bold text-lg">3. Lancement</h2>
           <div className="flex gap-2">
-            <button className={`px-4 py-2 rounded-lg border ${mode === 'local' ? 'bg-[#2A1313] border-[#DC2626]' : 'bg-transparent border-[#3A3A3A]'}`} onClick={() => setMode('local')}>Joueur local</button>
-            <button className={`px-4 py-2 rounded-lg border ${mode === 'link' ? 'bg-[#2A1313] border-[#DC2626]' : 'bg-transparent border-[#3A3A3A]'}`} onClick={() => setMode('link')}>Envoyer un lien</button>
+            <button className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${mode === 'local' ? 'bg-[#2A1519] border-[#EF4444] text-white shadow-[0_0_0_1px_rgba(239,68,68,0.2)]' : 'bg-transparent border-white/15 text-[#C9CBD1] hover:border-white/25 hover:text-white'}`} onClick={() => setMode('local')}>Joueur local</button>
+            <button className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${mode === 'link' ? 'bg-[#2A1519] border-[#EF4444] text-white shadow-[0_0_0_1px_rgba(239,68,68,0.2)]' : 'bg-transparent border-white/15 text-[#C9CBD1] hover:border-white/25 hover:text-white'}`} onClick={() => setMode('link')}>Envoyer un lien</button>
           </div>
           <p className="text-xs text-[#A3A3A3]">Le mode lien permet a la personne cible de lancer le test elle-meme depuis son appareil.</p>
 
-          <button disabled={!canCreate || loading} onClick={createSession} className="w-full rounded-xl bg-[#E1492F] hover:bg-[#F15F47] disabled:opacity-40 disabled:cursor-not-allowed px-4 py-3 font-bold">
+          <button disabled={!canCreate || loading} onClick={createSession} className="w-full rounded-xl bg-[#EF4444] hover:bg-[#F87171] disabled:opacity-40 disabled:cursor-not-allowed px-4 py-3 font-bold transition-colors">
             {loading ? 'Generation...' : 'Generer le test'}
           </button>
 
           {createdLink && (
-            <div className="rounded-lg border border-[#7F1D1D] bg-[#1A1212] p-3 space-y-2">
+            <div className="rounded-xl border border-[#7F1D1D] bg-[#1A1212] p-3 space-y-2">
               <p className="text-sm text-[#FECACA]">Lien pret:</p>
               <p className="text-xs break-all text-[#F5F5F5]">{createdLink}</p>
               <div className="flex gap-2">
-                <button className="px-3 py-2 rounded bg-[#991B1B] hover:bg-[#B91C1C] text-sm" onClick={() => navigator.clipboard.writeText(createdLink)}>Copier</button>
-                <button className="px-3 py-2 rounded bg-[#27272A] hover:bg-[#3F3F46] text-sm" onClick={() => window.open(createdLink, '_blank')}>Ouvrir</button>
+                <button className="px-3 py-2 rounded-lg bg-[#991B1B] hover:bg-[#B91C1C] text-sm transition-colors" onClick={() => navigator.clipboard.writeText(createdLink)}>Copier</button>
+                <button className="px-3 py-2 rounded-lg bg-[#27272A] hover:bg-[#3F3F46] text-sm transition-colors" onClick={() => window.open(createdLink, '_blank')}>Ouvrir</button>
               </div>
             </div>
           )}

@@ -11,6 +11,15 @@ import { MAX_FLAGORNOT_TEXT_LENGTH } from '@/config/constants';
 // In-memory store for mock mode
 const mockCommunityStore: CommunitySubmission[] = [];
 
+function hasMissingColumnError(message: string, columnName: string): boolean {
+  const normalized = message.toLowerCase();
+  return normalized.includes(`column "${columnName.toLowerCase()}"`) && normalized.includes('does not exist');
+}
+
+function shouldRetryWithoutOptionalColumns(message: string): boolean {
+  return hasMissingColumnError(message, 'justification') || hasMissingColumnError(message, 'gender');
+}
+
 /** Get recent community submissions. */
 export async function getRecentSubmissions(limit = 20): Promise<CommunitySubmission[]> {
   if (isMockMode()) {
@@ -56,8 +65,29 @@ export async function saveSubmission(text: string, verdict: 'red' | 'green', jus
 
   const { createServerClient, typedInsert } = await import('@/lib/supabase');
   const supabase = createServerClient();
-  const { error } = await typedInsert(supabase, 'flagornot_submissions', { text: sanitized, verdict, justification: justification || null, gender: gender || null });
-  if (error) throw new Error(`DB error saving submission: ${error.message}`);
+
+  const fullInsert = await typedInsert(supabase, 'flagornot_submissions', {
+    text: sanitized,
+    verdict,
+    justification: justification || null,
+    gender: gender || null,
+  });
+
+  if (fullInsert.error) {
+    if (!shouldRetryWithoutOptionalColumns(fullInsert.error.message)) {
+      throw new Error(`DB error saving submission: ${fullInsert.error.message}`);
+    }
+
+    const fallbackInsert = await typedInsert(supabase, 'flagornot_submissions', {
+      text: sanitized,
+      verdict,
+    });
+
+    if (fallbackInsert.error) {
+      throw new Error(`DB error saving submission: ${fallbackInsert.error.message}`);
+    }
+  }
+
   return { id: `new-${Date.now()}`, text: sanitized, verdict, justification, gender, timestamp: Date.now() };
 }
 
@@ -153,7 +183,16 @@ export async function getGenderStats(): Promise<{
     .select('gender, verdict')
     .not('gender', 'is', null);
 
-  if (error) throw new Error(`DB error fetching gender stats: ${error.message}`);
+  if (error) {
+    if (hasMissingColumnError(error.message, 'gender')) {
+      return {
+        total: 0,
+        byGender: [],
+        insights: ['📊 Le suivi par genre n est pas encore actif sur cette base de donnees.'],
+      };
+    }
+    throw new Error(`DB error fetching gender stats: ${error.message}`);
+  }
 
   const counts: Record<string, { red: number; green: number }> = {};
   for (const row of (data || []) as Array<{ gender: string; verdict: string }>) {

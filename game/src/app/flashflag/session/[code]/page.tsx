@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 interface Question {
@@ -234,15 +235,15 @@ export default function FlashFlagSessionPage() {
     pushAnswer(opt.text, opt.score, false);
   };
 
-  if (loading) return <main className="min-h-screen bg-[#0D0D0D] text-white p-6">Chargement...</main>;
-  if (error && !session) return <main className="min-h-screen bg-[#0D0D0D] text-white p-6">{error}</main>;
-  if (!session) return <main className="min-h-screen bg-[#0D0D0D] text-white p-6">Session absente</main>;
+  if (loading) return <main className="min-h-screen bg-[#070708] text-white p-6">Chargement...</main>;
+  if (error && !session) return <main className="min-h-screen bg-[#070708] text-white p-6">{error}</main>;
+  if (!session) return <main className="min-h-screen bg-[#070708] text-white p-6">Session absente</main>;
 
   if (session.status === 'completed' && !doneSummary) {
     const percent = session.score.max > 0 ? Math.round((session.score.total / session.score.max) * 100) : 0;
     return (
-      <main className="min-h-screen bg-[#0D0D0D] text-[#F5F5F5] p-6">
-        <div className="max-w-3xl mx-auto rounded-2xl border border-[#3A3A3A] bg-[#171717] p-5 space-y-3">
+      <main className="min-h-screen bg-[#070708] text-[#F5F5F5] p-6">
+        <div className="max-w-3xl mx-auto rounded-2xl border border-white/10 bg-[#111214]/90 p-5 space-y-3 shadow-[0_8px_40px_rgba(0,0,0,0.25)] backdrop-blur-sm">
           <h1 className="text-2xl font-black">Resultat deja disponible</h1>
           <p>Score: {session.score.total}/{session.score.max} ({percent}%)</p>
           <p>Reponses: {session.score.answered} | Timeout: {session.score.timedOut}</p>
@@ -253,20 +254,20 @@ export default function FlashFlagSessionPage() {
 
   if (doneSummary) {
     return (
-      <main className="min-h-screen bg-[#0D0D0D] text-[#F5F5F5] p-6">
+      <main className="min-h-screen bg-[#070708] text-[#F5F5F5] p-6">
         <div className="max-w-3xl mx-auto space-y-4">
-          <header className="rounded-2xl border border-[#3A3A3A] bg-[#171717] p-5 space-y-2">
+          <header className="rounded-2xl border border-[#3A3A3A] bg-[linear-gradient(120deg,#171212,#1F1114_55%,#271216)] p-5 space-y-2 shadow-[0_20px_80px_rgba(0,0,0,0.35)]">
             <h1 className="text-3xl font-black">Test termine</h1>
             <p className="text-[#E4E4E7]">Score red flag: {doneSummary.totalScore}/{doneSummary.maxScore} ({doneSummary.riskPercent}%)</p>
             <p className="text-[#FCA5A5]">Niveau: {doneSummary.riskLabel}</p>
             <p className="text-sm text-[#A3A3A3]">Reponses donnees: {doneSummary.answeredCount} | Timeout: {doneSummary.timedOutCount}</p>
           </header>
 
-          <section className="rounded-2xl border border-[#3A3A3A] bg-[#171717] p-5">
+          <section className="rounded-2xl border border-white/10 bg-[#111214]/90 p-5 shadow-[0_8px_40px_rgba(0,0,0,0.25)] backdrop-blur-sm">
             <h2 className="font-bold mb-3">Recap des reponses</h2>
             <div className="space-y-2">
               {answers.map((ans, i) => (
-                <div key={i} className="rounded-lg border border-[#333] bg-[#1E1E1E] p-3">
+                <div key={i} className="rounded-lg border border-white/10 bg-[#17181B] p-3">
                   <p className="text-sm text-[#F5F5F5]">Q{i + 1}. {ans.questionText}</p>
                   <p className="text-xs text-[#D4D4D8] mt-1">
                     {ans.timedOut ? 'Temps ecoule (0 point)' : `Reponse: ${ans.selectedOption} (${ans.selectedScore} point${ans.selectedScore > 1 ? 's' : ''})`}
@@ -281,35 +282,40 @@ export default function FlashFlagSessionPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0D0D0D] text-[#F5F5F5] p-4 sm:p-6">
-      <div className="max-w-3xl mx-auto space-y-4">
-        <a href="/flashflag" className="inline-flex items-center gap-2 text-sm text-[#A3A3A3] hover:text-[#F5F5F5] transition-colors">
+    <main className="relative min-h-screen overflow-hidden bg-[#070708] text-[#F5F5F5] p-4 sm:p-6">
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/15 blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-80 w-80 translate-x-1/3 rounded-full bg-[#EF4444]/10 blur-3xl" />
+      </div>
+
+      <div className="relative z-10 max-w-3xl mx-auto space-y-4">
+        <Link href="/flashflag" className="inline-flex min-h-[44px] items-center gap-2 text-sm text-[#A3A3A3] hover:text-[#F5F5F5] transition-colors">
           <span>←</span>
           <span>Retour preparation</span>
-        </a>
+        </Link>
 
         {!started ? (
-          <section className="rounded-2xl border border-[#3A3A3A] bg-[#171717] p-5 space-y-4">
+          <section className="rounded-2xl border border-[#3A3A3A] bg-[linear-gradient(120deg,#171212,#1F1114_55%,#271216)] p-5 space-y-4 shadow-[0_20px_80px_rgba(0,0,0,0.35)]">
             <h1 className="text-2xl font-black">Attention</h1>
             <p className="text-[#D4D4D8]">Ce test est chronometre. Aucun retour arriere. Sans reponse dans le temps, la question compte comme mauvaise.</p>
-            <button className="w-full rounded-xl bg-[#E1492F] hover:bg-[#F15F47] px-4 py-3 font-bold" onClick={launch}>Commencer</button>
+            <button className="w-full rounded-xl bg-[#EF4444] hover:bg-[#F87171] px-4 py-3 font-bold transition-colors" onClick={launch}>Commencer</button>
           </section>
         ) : (
           <>
-            <header className="rounded-xl border border-[#3A3A3A] bg-[#171717] p-3">
+            <header className="rounded-xl border border-white/10 bg-[#111214]/90 p-3 shadow-[0_8px_40px_rgba(0,0,0,0.25)] backdrop-blur-sm">
               <p className="text-xs text-[#D4D4D8]">Question {index + 1}/{totalQuestions}</p>
-              <div className="w-full bg-[#2A2A2A] rounded-full h-2 mt-2 overflow-hidden">
-                <div className="h-full bg-[#DC2626]" style={{ width: `${progressPercent}%` }} />
+              <div className="w-full bg-[#202125] rounded-full h-2 mt-2 overflow-hidden">
+                <div className="h-full bg-[#EF4444]" style={{ width: `${progressPercent}%` }} />
               </div>
               <p className="text-xs mt-2 text-[#FCA5A5]">Temps restant: {(remainingMs / 1000).toFixed(1)}s</p>
             </header>
 
             {currentQuestion && (
-              <section className="rounded-2xl border border-[#3A3A3A] bg-[#171717] p-5 space-y-4">
+              <section className="rounded-2xl border border-white/10 bg-[#111214]/90 p-5 space-y-4 shadow-[0_8px_40px_rgba(0,0,0,0.25)] backdrop-blur-sm">
                 <h2 className="text-xl font-bold">{currentQuestion.text}</h2>
                 <div className="grid gap-2">
                   {currentQuestion.options.map((opt, idx) => (
-                    <button key={idx} className="text-left rounded-lg border border-[#444] bg-[#1F1F1F] hover:bg-[#27272A] px-3 py-2" onClick={() => onSelect(opt)}>
+                    <button key={idx} className="text-left rounded-lg border border-white/12 bg-[#17181B] hover:bg-[#1E2024] px-3 py-2 transition-colors" onClick={() => onSelect(opt)}>
                       {opt.text}
                     </button>
                   ))}
