@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useGameStore, type PartyStats } from '@/stores/gameStore';
 import { CATEGORIES_CONFIG } from '@/config/categories';
@@ -390,8 +391,8 @@ export function GameRecap() {
             display: 'flex', justifyContent: 'center', gap: '0.8rem',
             padding: '0.3rem 0',
           }}>
-            <a href="/classement" style={linkStyle}>🏆 Classements</a>
-            <a href="/" style={linkStyle}>🏠 Accueil</a>
+            <Link href="/classement" style={linkStyle}>🏆 Classements</Link>
+            <Link href="/" style={linkStyle}>🏠 Accueil</Link>
           </div>
         </div>
       </main>

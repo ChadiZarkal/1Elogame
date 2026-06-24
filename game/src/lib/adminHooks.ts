@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 // ---------------------------------------------------------------------------
@@ -13,16 +13,13 @@ import { useRouter } from 'next/navigation';
  */
 export function useAdminAuth() {
   const router = useRouter();
-  const [token, setToken] = useState<string | null>(null);
+  const token = typeof window !== 'undefined' ? sessionStorage.getItem('adminToken') : null;
 
   useEffect(() => {
-    const stored = sessionStorage.getItem('adminToken');
-    if (!stored) {
+    if (!token) {
       router.push('/admin');
-      return;
     }
-    setToken(stored);
-  }, [router]);
+  }, [router, token]);
 
   const clearAuth = useCallback(() => {
     sessionStorage.removeItem('adminToken');

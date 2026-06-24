@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 
 interface SparklesProps {
@@ -16,6 +15,12 @@ interface Sparkle {
   y: number;
   size: number;
   delay: number;
+  repeatDelay: number;
+}
+
+function deterministicUnit(seed: number): number {
+  const value = Math.sin(seed * 12.9898) * 43758.5453;
+  return value - Math.floor(value);
 }
 
 export function Sparkles({ 
@@ -24,18 +29,17 @@ export function Sparkles({
   color = '#EF4444',
   count = 6,
 }: SparklesProps) {
-  const [sparkles, setSparkles] = useState<Sparkle[]>([]);
-
-  useEffect(() => {
-    const newSparkles: Sparkle[] = Array.from({ length: count }, (_, i) => ({
+  const sparkles: Sparkle[] = Array.from({ length: count }, (_, i) => {
+    const base = i + 1;
+    return {
       id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: Math.random() * 3 + 2,
-      delay: Math.random() * 2,
-    }));
-    setSparkles(newSparkles);
-  }, [count]);
+      x: deterministicUnit(base * 11) * 100,
+      y: deterministicUnit(base * 17) * 100,
+      size: deterministicUnit(base * 23) * 3 + 2,
+      delay: deterministicUnit(base * 29) * 2,
+      repeatDelay: deterministicUnit(base * 31) * 2 + 1,
+    };
+  });
 
   return (
     <span className={`relative inline-block ${className}`}>
@@ -60,7 +64,7 @@ export function Sparkles({
             duration: 1.5,
             delay: sparkle.delay,
             repeat: Infinity,
-            repeatDelay: Math.random() * 2 + 1,
+            repeatDelay: sparkle.repeatDelay,
           }}
         />
       ))}

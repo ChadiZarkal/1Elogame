@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { typedInsert, typedUpdate } from '@/lib/supabase';
 
 // Create a minimal mock SupabaseClient
@@ -26,10 +27,14 @@ function createMockClient() {
   };
 }
 
+function asSupabaseClient(client: ReturnType<typeof createMockClient>): SupabaseClient {
+  return client as unknown as SupabaseClient;
+}
+
 describe('typedInsert', () => {
   it('appelle from(table).insert(data)', () => {
     const client = createMockClient();
-    typedInsert(client as any, 'elements', { texte: 'test', elo_global: 1000 });
+    typedInsert(asSupabaseClient(client), 'elements', { texte: 'test', elo_global: 1000 });
     
     expect(client._mockFrom).toHaveBeenCalledWith('elements');
     const fromReturn = client._mockFrom.mock.results[0].value;
@@ -42,7 +47,7 @@ describe('typedInsert', () => {
 describe('typedUpdate', () => {
   it('appelle from(table).update(data)', () => {
     const client = createMockClient();
-    typedUpdate(client as any, 'elements', { elo_global: 1200 });
+    typedUpdate(asSupabaseClient(client), 'elements', { elo_global: 1200 });
     
     expect(client._mockFrom).toHaveBeenCalledWith('elements');
     const fromReturn = client._mockFrom.mock.results[0].value;

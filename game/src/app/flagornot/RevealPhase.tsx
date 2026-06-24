@@ -18,6 +18,11 @@ interface RevealPhaseProps {
 const RED_EMOJIS = ['🚩', '💀', '😱', '⛔', '🔥', '💔', '😬'];
 const GREEN_EMOJIS = ['🟢', '✨', '💚', '🌟', '🎉', '💫', '🥳'];
 
+function particleJitter(seed: number): number {
+  const value = Math.sin(seed * 12.9898) * 43758.5453;
+  return value - Math.floor(value);
+}
+
 export function RevealPhase({
   result,
   submittedText,
@@ -44,9 +49,9 @@ export function RevealPhase({
       {/* Particle burst */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         {Array.from({ length: 14 }).map((_, i) => {
-          const angle = (i / 14) * 360 + Math.random() * 20;
+          const angle = (i / 14) * 360 + particleJitter(i + 1) * 20;
           const rad = (angle * Math.PI) / 180;
-          const dist = 90 + Math.random() * 100;
+          const dist = 90 + particleJitter(i + 101) * 100;
           return (
             <motion.span
               key={i}
@@ -58,7 +63,7 @@ export function RevealPhase({
                 y: Math.sin(rad) * dist,
                 opacity: 0,
                 scale: 0.15,
-                rotate: Math.random() * 400 - 200,
+                rotate: particleJitter(i + 201) * 400 - 200,
               }}
               transition={{ duration: 1.1, delay: 0.15 + i * 0.03, ease: 'easeOut' }}
             >

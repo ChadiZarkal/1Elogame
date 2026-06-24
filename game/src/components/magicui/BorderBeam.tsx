@@ -34,7 +34,7 @@ export function BorderBeam({
         }}
         animate={{
           '--angle': ['0deg', '360deg'],
-        } as any}
+        } as Record<string, string[]>}
         transition={{
           duration,
           delay,

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loading } from '@/components/ui/Loading';
@@ -61,15 +62,20 @@ export default function LeaderboardPage() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [error, setError] = useState('');
 
-  const fetchRankings = useCallback((category: string) => {
-    setIsLoading(true);
-    setError('');
-    const catParam = category ? `&category=${category}` : '';
-    Promise.all([
-      fetch(`/api/leaderboard?order=desc${catParam}`).then(r => r.json()),
-      fetch(`/api/leaderboard?order=asc${catParam}`).then(r => r.json()),
-    ])
-      .then(([redData, greenData]) => {
+  useEffect(() => {
+    let isActive = true;
+
+    const fetchRankings = async () => {
+      const catParam = categoryFilter ? `&category=${categoryFilter}` : '';
+
+      try {
+        const [redData, greenData] = await Promise.all([
+          fetch(`/api/leaderboard?order=desc${catParam}`).then((r) => r.json()),
+          fetch(`/api/leaderboard?order=asc${catParam}`).then((r) => r.json()),
+        ]);
+
+        if (!isActive) return;
+
         if (redData.success) {
           setRedRankings(redData.data.rankings);
           setTotalElements(redData.data.totalElements || 0);
@@ -77,14 +83,26 @@ export default function LeaderboardPage() {
         }
         if (greenData.success) setGreenRankings(greenData.data.rankings);
         if (!redData.success && !greenData.success) setError('Impossible de charger le classement');
-      })
-      .catch(() => setError('Erreur de connexion'))
-      .finally(() => setIsLoading(false));
-  }, []);
+      } catch {
+        if (isActive) setError('Erreur de connexion');
+      } finally {
+        if (isActive) setIsLoading(false);
+      }
+    };
 
-  useEffect(() => {
-    fetchRankings(categoryFilter);
-  }, [categoryFilter, fetchRankings]);
+    void fetchRankings();
+
+    return () => {
+      isActive = false;
+    };
+  }, [categoryFilter]);
+
+  const handleCategoryFilterChange = useCallback((nextCategory: string) => {
+    if (nextCategory === categoryFilter) return;
+    setIsLoading(true);
+    setError('');
+    setCategoryFilter(nextCategory);
+  }, [categoryFilter]);
 
   const rankings = mode === 'redflag' ? redRankings : greenRankings;
 
@@ -131,12 +149,12 @@ export default function LeaderboardPage() {
         style={{ background: `linear-gradient(180deg, ${accentDim} 0%, transparent 100%)` }}
       >
         <div className="max-w-md mx-auto">
-          <a
+          <Link
             href="/"
             className="text-[#6B7280] hover:text-[#FAFAFA] text-sm mb-5 flex items-center gap-1.5 transition-colors py-1"
           >
             ← Accueil
-          </a>
+          </Link>
 
           <div className="text-center mb-6">
             <h1 className="text-[26px] sm:text-[30px] font-black text-[#FAFAFA] tracking-tight">
@@ -203,7 +221,7 @@ export default function LeaderboardPage() {
                 {CATEGORY_FILTERS.map((cat) => (
                   <button
                     key={cat.value}
-                    onClick={() => setCategoryFilter(cat.value)}
+                    onClick={() => handleCategoryFilterChange(cat.value)}
                     className="text-[13px] px-4 py-2 rounded-xl font-semibold transition-all whitespace-nowrap"
                     style={categoryFilter === cat.value
                       ? { background: accentDim, color: accent, border: `1.5px solid ${accentBorder}` }

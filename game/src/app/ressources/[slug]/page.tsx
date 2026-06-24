@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { ArrowLeft } from 'lucide-react';
@@ -117,14 +118,14 @@ export default function MeterQuizPage() {
         </h1>
 
         {/* Quick exit button */}
-        <a
+        <Link
           href="/"
           className="text-[10px] text-[#4B5563] hover:text-[#EF4444] transition-colors min-w-[48px] min-h-[48px] flex items-center justify-end active:scale-95"
           aria-label="Quitter rapidement"
           title="Quitter rapidement"
         >
           ✕ Quitter
-        </a>
+        </Link>
       </div>
 
       {/* ═══ INTRO ═══ */}

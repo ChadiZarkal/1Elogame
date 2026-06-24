@@ -1,5 +1,11 @@
 import '@testing-library/jest-dom/vitest';
 
+const MockNextLink = ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => (
+  <a href={href} {...props}>{children}</a>
+);
+
+MockNextLink.displayName = 'MockNextLink';
+
 // Mock Next.js modules
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -13,9 +19,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('next/link', () => ({
-  default: ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => (
-    <a href={href} {...props}>{children}</a>
-  ),
+  default: MockNextLink,
 }));
 
 // Mock localStorage
@@ -94,12 +98,23 @@ vi.mock('framer-motion', async () => {
     motion: new Proxy(actual.motion, {
       get: (target, prop) => {
         if (typeof prop === 'string' && ['div', 'span', 'button', 'p', 'h1', 'h2', 'h3', 'a', 'section', 'ul', 'li'].includes(prop)) {
-          return (props: Record<string, unknown>) => {
-            const { initial, animate, exit, whileHover, whileTap, transition, variants, layout, layoutId, ...rest } = props;
+          const MockMotionTag = (props: Record<string, unknown>) => {
+            const rest = { ...props };
+            delete rest.initial;
+            delete rest.animate;
+            delete rest.exit;
+            delete rest.whileHover;
+            delete rest.whileTap;
+            delete rest.transition;
+            delete rest.variants;
+            delete rest.layout;
+            delete rest.layoutId;
             const Tag = prop as keyof JSX.IntrinsicElements;
             // @ts-expect-error dynamic tag
             return <Tag {...rest} />;
           };
+          MockMotionTag.displayName = `MockMotion(${prop})`;
+          return MockMotionTag;
         }
         return Reflect.get(target, prop);
       },

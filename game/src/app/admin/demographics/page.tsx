@@ -100,18 +100,19 @@ function DonutChart({ segments, size = 120 }: { segments: { label: string; value
   const r = size / 2 - 12;
   const strokeWidth = 18;
   const circumference = 2 * Math.PI * r;
-  
-  let offset = 0;
+  const percentages = segments.map((seg) => seg.value / total);
+  const offsets = percentages.map((_, index) =>
+    percentages.slice(0, index).reduce((sum, value) => sum + value, 0)
+  );
   
   return (
     <div className="flex items-center gap-4">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <circle cx={cx} cy={cy} r={r} fill="none" stroke="#1A1A1A" strokeWidth={strokeWidth} />
         {segments.map((seg, i) => {
-          const pct = seg.value / total;
+          const pct = percentages[i];
           const dashArray = `${pct * circumference} ${circumference}`;
-          const dashOffset = -offset * circumference;
-          offset += pct;
+          const dashOffset = -offsets[i] * circumference;
           return (
             <motion.circle
               key={i}

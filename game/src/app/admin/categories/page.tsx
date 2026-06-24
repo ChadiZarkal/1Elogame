@@ -7,15 +7,40 @@ import { Button } from '@/components/ui/Button';
 import { CATEGORIES_CONFIG, CategoryConfig } from '@/config/categories';
 import { AdminNav } from '@/components/admin/AdminNav';
 
+function loadInitialCategories(): Record<string, CategoryConfig> {
+  if (typeof window === 'undefined') return { ...CATEGORIES_CONFIG };
+
+  const saved = localStorage.getItem('category_overrides');
+  if (!saved) return { ...CATEGORIES_CONFIG };
+
+  try {
+    const overrides = JSON.parse(saved);
+    const merged = { ...CATEGORIES_CONFIG };
+    for (const [key, val] of Object.entries(overrides)) {
+      if (merged[key]) {
+        merged[key] = { ...merged[key], ...(val as Partial<CategoryConfig>) };
+      }
+    }
+    return merged;
+  } catch {
+    return { ...CATEGORIES_CONFIG };
+  }
+}
+
+function loadDefaultCategory(): string {
+  if (typeof window === 'undefined') return 'quotidien';
+  return localStorage.getItem('default_game_category') ?? 'quotidien';
+}
+
 export default function AdminCategoriesPage() {
   const router = useRouter();
-  const [localCategories, setLocalCategories] = useState<Record<string, CategoryConfig>>({});
+  const [localCategories, setLocalCategories] = useState<Record<string, CategoryConfig>>(loadInitialCategories);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState('');
   const [editEmoji, setEditEmoji] = useState('');
   const [showAddGuide, setShowAddGuide] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [defaultCategory, setDefaultCategory] = useState<string>('quotidien');
+  const [defaultCategory, setDefaultCategory] = useState<string>(loadDefaultCategory);
   const [defaultSaved, setDefaultSaved] = useState(false);
 
   useEffect(() => {
@@ -23,30 +48,7 @@ export default function AdminCategoriesPage() {
       const token = sessionStorage.getItem('adminToken');
       if (!token) {
         router.push('/admin');
-        return;
       }
-    }
-    // Load default category from localStorage
-    const savedDefault = localStorage.getItem('default_game_category');
-    if (savedDefault) setDefaultCategory(savedDefault);
-
-    // Load local overrides from localStorage
-    const saved = localStorage.getItem('category_overrides');
-    if (saved) {
-      try {
-        const overrides = JSON.parse(saved);
-        const merged = { ...CATEGORIES_CONFIG };
-        for (const [key, val] of Object.entries(overrides)) {
-          if (merged[key]) {
-            merged[key] = { ...merged[key], ...(val as Partial<CategoryConfig>) };
-          }
-        }
-        setLocalCategories(merged);
-      } catch {
-        setLocalCategories({ ...CATEGORIES_CONFIG });
-      }
-    } else {
-      setLocalCategories({ ...CATEGORIES_CONFIG });
     }
   }, [router]);
 

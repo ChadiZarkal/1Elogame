@@ -36,15 +36,31 @@ export const GET = withApiHandler(async () => {
     throw new Error(`Failed to fetch feedback: ${error.message}`);
   }
 
+  const asRecord = (value: unknown): Record<string, unknown> => (
+    typeof value === 'object' && value !== null ? value as Record<string, unknown> : {}
+  );
+
+  const asText = (value: unknown): string => {
+    const obj = asRecord(value);
+    return typeof obj.texte === 'string' ? obj.texte : 'Élément inconnu';
+  };
+
+  const asCount = (value: unknown): number => (
+    typeof value === 'number' ? value : 0
+  );
+
   // Flatten the joined data
-  const feedback = (data || []).map((row: Record<string, unknown>) => ({
-    id: row.id,
-    element_a_texte: (row.element_a as Record<string, string>)?.texte || 'Élément inconnu',
-    element_b_texte: (row.element_b as Record<string, string>)?.texte || 'Élément inconnu',
-    stars_count: row.stars_count || 0,
-    thumbs_up_count: row.thumbs_up_count || 0,
-    thumbs_down_count: row.thumbs_down_count || 0,
-  }));
+  const feedback = (data || []).map((row) => {
+    const entry = asRecord(row);
+    return {
+      id: entry.id,
+      element_a_texte: asText(entry.element_a),
+      element_b_texte: asText(entry.element_b),
+      stars_count: asCount(entry.stars_count),
+      thumbs_up_count: asCount(entry.thumbs_up_count),
+      thumbs_down_count: asCount(entry.thumbs_down_count),
+    };
+  });
 
   return apiSuccess(feedback);
 }, { requireAdmin: true });

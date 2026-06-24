@@ -17,7 +17,7 @@ export default function HubPage() {
       .catch(() => {});
   }, []);
 
-  const handleTap = useCallback((e: React.MouseEvent) => {
+  const handleTap = useCallback(() => {
     tap();
     // Keep haptic feedback on link navigation taps.
   }, [tap]);
