@@ -65,6 +65,21 @@ TONE FINAL:
 
 type JudgeResult = { verdict: 'red' | 'green'; justification: string };
 
+async function persistSubmissionSafely(
+  text: string,
+  result: JudgeResult,
+  isPrivate: boolean,
+  gender?: 'homme' | 'femme' | 'autre',
+): Promise<void> {
+  if (isPrivate) return;
+
+  try {
+    await saveSubmission(text, result.verdict, result.justification, gender);
+  } catch (error) {
+    console.warn('[FlagOrNot] saveSubmission failed:', error);
+  }
+}
+
 async function tryGemini(text: string): Promise<JudgeResult> {
   return judgeWithGemini(text, SYSTEM_PROMPT);
 }
@@ -192,8 +207,7 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   for (const { name, fn } of providers) {
     try {
       const result = await fn();
-      // Fire-and-forget: save to community (skip if private mode)
-      if (!isPrivate) saveSubmission(text, result.verdict, result.justification, gender).catch(() => {});
+      await persistSubmissionSafely(text, result, isPrivate, gender);
       return NextResponse.json({ ...result, provider: name });
     } catch (err) {
       console.warn(`[FlagOrNot] ${name} failed:`, err);
@@ -202,6 +216,6 @@ export const POST = withApiHandler(async (request: NextRequest) => {
 
   // Final fallback: local keyword analysis
   const result = judgeLocally(text);
-  if (!isPrivate) saveSubmission(text, result.verdict, result.justification, gender).catch(() => {});
+  await persistSubmissionSafely(text, result, isPrivate, gender);
   return NextResponse.json({ ...result, provider: 'local' });
 }, { rateLimit: true });
