@@ -8,32 +8,27 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock fs before importing gemini
-vi.mock(import('fs'), async (importOriginal) => {
-  const actual = await importOriginal();
+vi.mock('fs', () => {
   return {
-    ...actual,
+    readFileSync: vi.fn(),
+    existsSync: vi.fn().mockReturnValue(false),
+    readdirSync: vi.fn().mockReturnValue([]),
+    writeFileSync: vi.fn(),
+    unlinkSync: vi.fn(),
     default: {
-      ...actual,
       readFileSync: vi.fn(),
       existsSync: vi.fn().mockReturnValue(false),
       readdirSync: vi.fn().mockReturnValue([]),
       writeFileSync: vi.fn(),
       unlinkSync: vi.fn(),
     },
-    readFileSync: vi.fn(),
-    existsSync: vi.fn().mockReturnValue(false),
-    readdirSync: vi.fn().mockReturnValue([]),
-    writeFileSync: vi.fn(),
-    unlinkSync: vi.fn(),
   };
 });
 
-vi.mock(import('os'), async (importOriginal) => {
-  const actual = await importOriginal();
+vi.mock('os', () => {
   return {
-    ...actual,
-    default: { ...actual, tmpdir: () => '/tmp' },
     tmpdir: () => '/tmp',
+    default: { tmpdir: () => '/tmp' },
   };
 });
 
