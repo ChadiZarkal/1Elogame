@@ -7,6 +7,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
+vi.mock('@/lib/adminAuth', () => ({
+  authenticateAdmin: vi.fn().mockReturnValue(null),
+}));
+
 describe('/api/analytics/session', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -132,7 +136,9 @@ describe('/api/analytics/session', () => {
         await POST(req);
       }
 
-      const response = await GET();
+        const response = await GET(new NextRequest('http://localhost/api/analytics/session', {
+          headers: { Authorization: 'Bearer mock-admin-token' },
+        }));
       const json = await response.json();
 
       expect(json.success).toBe(true);
@@ -142,7 +148,9 @@ describe('/api/analytics/session', () => {
 
     it('retourne un tableau vide si aucune session', async () => {
       const { GET } = await import('@/app/api/analytics/session/route');
-      const response = await GET();
+        const response = await GET(new NextRequest('http://localhost/api/analytics/session', {
+          headers: { Authorization: 'Bearer mock-admin-token' },
+        }));
       const json = await response.json();
 
       expect(json.success).toBe(true);

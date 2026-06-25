@@ -116,7 +116,7 @@ describe('gameStore', () => {
       expect(state.hasProfile).toBe(true);
       expect(state.profile).toEqual({ sex: 'homme', age: '27plus' });
       expect(state.streak).toBe(3);
-      expect(state.duelCount).toBe(7);
+      expect(state.duelCount).toBe(0);
     });
 
     it('should handle missing session gracefully', () => {

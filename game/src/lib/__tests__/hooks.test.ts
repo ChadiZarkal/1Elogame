@@ -58,17 +58,18 @@ describe('useReducedMotion', () => {
   });
 
   it('réagit aux changements dynamiques de la media query', () => {
-    let changeHandler: ((e: { matches: boolean }) => void) | null = null;
+    let changeHandler: (() => void) | null = null;
+    let matches = false;
 
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
       value: vi.fn().mockImplementation((query: string) => ({
-        matches: false,
+        matches,
         media: query,
         onchange: null,
         addListener: vi.fn(),
         removeListener: vi.fn(),
-        addEventListener: vi.fn((_event: string, handler: (e: { matches: boolean }) => void) => {
+        addEventListener: vi.fn((_event: string, handler: () => void) => {
           changeHandler = handler;
         }),
         removeEventListener: vi.fn(),
@@ -81,8 +82,9 @@ describe('useReducedMotion', () => {
 
     // Simulate change
     act(() => {
+      matches = true;
       if (changeHandler) {
-        changeHandler({ matches: true });
+        changeHandler();
       }
     });
     expect(result.current).toBe(true);

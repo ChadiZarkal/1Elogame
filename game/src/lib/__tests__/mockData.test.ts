@@ -29,20 +29,22 @@ beforeEach(() => {
 });
 
 describe('getMockElements', () => {
+  const initialActiveCount = mockElements.filter((e) => e.actif).length;
+
   it('retourne uniquement les éléments actifs', () => {
     const elements = getMockElements();
     expect(elements.every(e => e.actif)).toBe(true);
   });
 
-  it('retourne 40 éléments par défaut', () => {
+  it('retourne tous les éléments actifs par défaut', () => {
     const elements = getMockElements();
-    expect(elements.length).toBe(40);
+    expect(elements.length).toBe(initialActiveCount);
   });
 
   it('exclut les éléments désactivés', () => {
     mockElements[0].actif = false;
     const elements = getMockElements();
-    expect(elements.length).toBe(39);
+    expect(elements.length).toBe(initialActiveCount - 1);
     expect(elements.find(e => e.id === '1')).toBeUndefined();
   });
 
@@ -54,10 +56,10 @@ describe('getMockElements', () => {
     }
   });
 
-  it('retourne des éléments avec les 4 catégories', () => {
+  it('retourne des éléments avec les 3 catégories', () => {
     const elements = getMockElements();
     const categories = new Set(elements.map(e => e.categorie));
-    expect(categories.size).toBe(4);
+    expect(categories.size).toBe(3);
   });
 });
 

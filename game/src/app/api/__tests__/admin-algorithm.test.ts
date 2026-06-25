@@ -14,25 +14,28 @@ vi.mock('@/lib/adminAuth', () => ({
 vi.mock('@/lib/algorithmConfig', () => {
   const DEFAULT_ALGORITHM_CONFIG = {
     strategies: {
-      elo_close: { enabled: true, weight: 40 },
-      cross_category: { enabled: true, weight: 20 },
-      starred: { enabled: true, weight: 15 },
-      random: { enabled: true, weight: 25 },
+      elo_close: { enabled: true, weight: 40, description: 'desc', recommendation: 'rec' },
+      cross_category: { enabled: true, weight: 20, description: 'desc', recommendation: 'rec' },
+      starred: { enabled: true, weight: 15, description: 'desc', recommendation: 'rec' },
+      random: { enabled: true, weight: 25, description: 'desc', recommendation: 'rec' },
     },
-    elo: { kFactorBase: 32, kFactorMin: 16 },
-    antiRepeat: { recentWindow: 10, maxAppearances: 3 },
+    elo: { minDifference: 50, maxDifference: 300 },
+    antiRepeat: { enabled: true, mode: 'strict', maxAppearancesPerSession: 1, cooldownRounds: 3 },
+    starredMinStars: 50,
+    kFactor: { newThreshold: 30, moderateThreshold: 100, newK: 40, moderateK: 32, establishedK: 24 },
+    candidatePoolSize: 10,
   };
 
   let currentConfig = { ...DEFAULT_ALGORITHM_CONFIG };
 
   return {
     DEFAULT_ALGORITHM_CONFIG,
-    getAlgorithmConfig: vi.fn(() => ({ ...currentConfig })),
-    setAlgorithmConfig: vi.fn((config: typeof DEFAULT_ALGORITHM_CONFIG) => {
+    loadAlgorithmConfig: vi.fn(async () => ({ ...currentConfig })),
+    setAlgorithmConfig: vi.fn(async (config: typeof DEFAULT_ALGORITHM_CONFIG) => {
       currentConfig = { ...config };
       return { success: true };
     }),
-    resetAlgorithmConfig: vi.fn(() => {
+    resetAlgorithmConfig: vi.fn(async () => {
       currentConfig = { ...DEFAULT_ALGORITHM_CONFIG };
     }),
   };
@@ -94,8 +97,11 @@ describe('/api/admin/algorithm', () => {
         starred: { enabled: true, weight: 10 },
         random: { enabled: true, weight: 20 },
       },
-      elo: { kFactorBase: 32, kFactorMin: 16 },
-      antiRepeat: { recentWindow: 10, maxAppearances: 3 },
+      elo: { minDifference: 50, maxDifference: 300 },
+      antiRepeat: { enabled: true, mode: 'strict', maxAppearancesPerSession: 1, cooldownRounds: 3 },
+      starredMinStars: 50,
+      kFactor: { newThreshold: 30, moderateThreshold: 100, newK: 40, moderateK: 32, establishedK: 24 },
+      candidatePoolSize: 10,
     };
 
     it('met à jour la configuration', async () => {
@@ -107,7 +113,7 @@ describe('/api/admin/algorithm', () => {
       const json = await response.json();
 
       expect(json.success).toBe(true);
-      expect(json.data.message).toContain('succès');
+      expect(json.data.message).toContain('mise à jour');
     });
 
     it('rejette une configuration invalide (stratégie manquante)', async () => {

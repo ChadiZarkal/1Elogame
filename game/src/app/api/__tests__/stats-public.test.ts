@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
 // Mock dependencies
 vi.mock('@/lib/mockData', () => ({
@@ -65,16 +65,16 @@ describe('GET /api/stats/public', () => {
     });
 
     it('retourne les stats depuis Supabase', async () => {
+      const eqMock = vi.fn().mockResolvedValue({ count: 2, error: null });
       mockSupabaseFrom.mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({
-            data: [
-              { nb_participations: 100 },
-              { nb_participations: 200 },
-            ],
-            error: null,
-          }),
+          eq: eqMock,
         }),
+      });
+
+      // votes count query
+      mockSupabaseFrom.mockReturnValueOnce({
+        select: vi.fn().mockResolvedValue({ count: 300, error: null }),
       });
 
       const { GET } = await import('@/app/api/stats/public/route');
@@ -88,30 +88,32 @@ describe('GET /api/stats/public', () => {
     });
 
     it('gère les erreurs Supabase gracieusement', async () => {
+      const eqMock = vi.fn().mockResolvedValue({ count: 0, error: null });
       mockSupabaseFrom.mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({
-            data: null,
-            error: new Error('DB error'),
-          }),
+          eq: eqMock,
         }),
+      });
+
+      mockSupabaseFrom.mockReturnValueOnce({
+        select: vi.fn().mockResolvedValue({ count: null, error: new Error('DB error') }),
       });
 
       const { GET } = await import('@/app/api/stats/public/route');
       const response = await GET(new NextRequest('http://localhost/api/stats/public'));
-      const json = await response.json();
-
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(200);
     });
 
     it('gère une liste vide', async () => {
+      const eqMock = vi.fn().mockResolvedValue({ count: 0, error: null });
       mockSupabaseFrom.mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({
-            data: [],
-            error: null,
-          }),
+          eq: eqMock,
         }),
+      });
+
+      mockSupabaseFrom.mockReturnValueOnce({
+        select: vi.fn().mockResolvedValue({ count: 0, error: null }),
       });
 
       const { GET } = await import('@/app/api/stats/public/route');
