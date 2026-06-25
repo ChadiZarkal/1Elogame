@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { useGameStore, type PartySize } from '@/stores/gameStore';
+import { useOnlineStatus, useHaptics } from '@/lib/hooks';
 import { DuelInterface } from '@/components/game/DuelInterface';
 import { StreakDisplay } from '@/components/game/StreakDisplay';
 import { CategorySelector } from '@/components/game/CategorySelector';
@@ -19,6 +20,11 @@ const CompactResult = dynamic(() => import('@/components/game/CompactResult').th
 export default function JouerPage() {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const previousOnlineRef = useRef(true);
+  const [showBackToLive, setShowBackToLive] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const isOnline = useOnlineStatus();
+  const { tap, success: hapticSuccess, error: hapticError } = useHaptics();
   
   const {
     hasProfile,
@@ -76,10 +82,10 @@ export default function JouerPage() {
   // Fetch first duel when profile is loaded AND party is active
   // Guard: !error prevents infinite retry loop when API fails (429 / 500)
   useEffect(() => {
-    if (hasProfile && partyActive && !currentDuel && !isLoadingDuel && !allDuelsExhausted && !error) {
+    if (hasProfile && partyActive && !currentDuel && !isLoadingDuel && !allDuelsExhausted && !error && isOnline) {
       fetchNextDuel();
     }
-  }, [hasProfile, partyActive, currentDuel, isLoadingDuel, allDuelsExhausted, error, fetchNextDuel]);
+  }, [hasProfile, partyActive, currentDuel, isLoadingDuel, allDuelsExhausted, error, isOnline, fetchNextDuel]);
   
   // Auto-scroll to bottom when new content appears
   useEffect(() => {
@@ -90,6 +96,57 @@ export default function JouerPage() {
       });
     }
   }, [duelHistory.length, showingResult, currentDuel]);
+
+  // Detect when user is reading history and offer quick jump back to live duel
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const onScroll = () => {
+      const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+      setShowBackToLive(distanceFromBottom > 180);
+    };
+
+    onScroll();
+    container.addEventListener('scroll', onScroll, { passive: true });
+    return () => container.removeEventListener('scroll', onScroll);
+  }, [duelHistory.length, showingResult, currentDuel]);
+
+  // Mobile resilience: clear feedback when connectivity changes and auto-resume fetch
+  useEffect(() => {
+    const wasOnline = previousOnlineRef.current;
+    if (wasOnline && !isOnline) {
+      hapticError();
+      toast('Connexion perdue', {
+        description: 'Le vote est suspendu tant que vous etes hors ligne.',
+        duration: 2800,
+      });
+    }
+
+    if (!wasOnline && isOnline) {
+      hapticSuccess();
+      toast('Connexion retablie', {
+        description: 'Le jeu reprend normalement.',
+        duration: 2200,
+      });
+
+      if (hasProfile && partyActive && !currentDuel && !isLoadingDuel && !allDuelsExhausted) {
+        fetchNextDuel();
+      }
+    }
+
+    previousOnlineRef.current = isOnline;
+  }, [
+    isOnline,
+    hasProfile,
+    partyActive,
+    currentDuel,
+    isLoadingDuel,
+    allDuelsExhausted,
+    fetchNextDuel,
+    hapticSuccess,
+    hapticError,
+  ]);
 
   // Streak milestone toasts with viral challenge CTA
   const prevStreakRef = useRef(0);
@@ -166,10 +223,31 @@ export default function JouerPage() {
   
   const handleReset = useCallback(() => { resetGame(); router.push('/jeu'); }, [resetGame, router]);
 
+  const handleRefreshDuel = useCallback(async () => {
+    tap();
+    if (!isOnline) {
+      toast('Connexion requise', {
+        description: 'Reconnecte-toi pour charger un nouveau duel.',
+        duration: 2200,
+      });
+      return;
+    }
+
+    setIsRefreshing(true);
+    clearError();
+    try {
+      await fetchNextDuel();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [tap, isOnline, clearError, fetchNextDuel]);
+
   const handleCategoryStart = useCallback((selectedCategories: string[], partySize: PartySize) => {
+    tap();
     localStorage.setItem('default_game_categories', JSON.stringify(selectedCategories));
+    localStorage.setItem('default_game_size', String(partySize));
     startParty({ size: partySize, originalSize: partySize, categories: selectedCategories });
-  }, [startParty]);
+  }, [tap, startParty]);
   
   if (!hasProfile) {
     return <FullPageLoading text="Chargement..." />;
@@ -190,17 +268,25 @@ export default function JouerPage() {
   
   if (error && !currentDuel) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#0D0D0D] p-6">
+      <div className="flex flex-col items-center justify-center min-h-dvh bg-[#0D0D0D] p-6">
         <div className="text-center space-y-4">
           <span className="text-6xl">😕</span>
           <h1 className="text-2xl font-bold text-[#F5F5F5]">Oups !</h1>
           <p className="text-[#A3A3A3]">{error}</p>
-          <button
-            onClick={() => { clearError(); fetchNextDuel(); }}
-            className="px-6 py-2 bg-[#DC2626] text-white rounded-lg hover:bg-[#EF4444] transition-colors"
-          >
-            Réessayer
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => { clearError(); fetchNextDuel(); }}
+              className="px-6 py-2 bg-[#DC2626] text-white rounded-lg hover:bg-[#EF4444] transition-colors"
+            >
+              Réessayer
+            </button>
+            <button
+              onClick={() => { resetGame(); router.push('/jeu/jouer'); }}
+              className="px-6 py-2 bg-[#1A1A1A] text-[#E4E4E7] border border-[#333] rounded-lg hover:border-[#555] transition-colors"
+            >
+              Changer de catégories
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -211,7 +297,11 @@ export default function JouerPage() {
   }
   
   return (
-    <div ref={scrollRef} className="h-screen w-screen overflow-y-auto relative bg-[#0D0D0D]">
+    <div
+      ref={scrollRef}
+      className="relative w-full overflow-y-auto overscroll-y-contain bg-[#0D0D0D]"
+      style={{ height: 'var(--app-height, 100dvh)' }}
+    >
       {/* History: past duel results */}
       {duelHistory.length > 0 && (
         <div className="pt-4 pb-2">
@@ -233,9 +323,9 @@ export default function JouerPage() {
       )}
       
       {/* Current active duel/result - takes full screen height */}
-      <div className="h-screen w-full relative flex flex-col">
+      <div className="w-full relative flex flex-col" style={{ minHeight: 'var(--app-height, 100dvh)' }}>
         {/* Top bar: home + streak + party progress */}
-        <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between">
+        <div className="absolute left-4 right-4 z-30 flex items-center justify-between" style={{ top: 'max(12px, env(safe-area-inset-top))' }}>
           <div className="flex items-center gap-2">
             {/* Home button */}
             <Link
@@ -245,6 +335,14 @@ export default function JouerPage() {
             >
               ←
             </Link>
+            <button
+              onClick={handleRefreshDuel}
+              disabled={isLoadingDuel || isRefreshing}
+              className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-[#333] rounded-full w-10 h-10 flex items-center justify-center text-[#A3A3A3] hover:text-[#F5F5F5] disabled:opacity-50 transition-colors"
+              aria-label="Rafraichir le duel"
+            >
+              {isRefreshing ? '…' : '↻'}
+            </button>
             {/* Streak — hidden instead of unmounted to prevent CLS */}
             <div style={{ visibility: showingResult ? 'hidden' : 'visible' }}>
               <StreakDisplay 
@@ -269,14 +367,37 @@ export default function JouerPage() {
             </div>
           )}
         </div>
+
+        {!isOnline && (
+          <div
+            className="absolute left-1/2 z-30 -translate-x-1/2 rounded-full border border-[#7F1D1D] bg-[#1A1212]/95 px-3 py-1 text-[11px] font-semibold text-[#FCA5A5]"
+            style={{ top: 'calc(max(12px, env(safe-area-inset-top)) + 52px)' }}
+          >
+            📡 Hors ligne: vote desactive
+          </div>
+        )}
         
         {/* First duel hint */}
         {duelCount < 3 && !showingResult && currentDuel && (
           <div
-            className="absolute top-20 left-1/2 -translate-x-1/2 z-10 bg-[#DC2626]/90 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-red-900/30 pointer-events-none"
+            className="absolute left-1/2 -translate-x-1/2 z-10 bg-[#DC2626]/90 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-red-900/30 pointer-events-none"
+            style={{ top: `calc(max(12px, env(safe-area-inset-top)) + ${isOnline ? 56 : 88}px)` }}
           >
             👆 Choisis le plus red flag 🚩
           </div>
+        )}
+
+        {showBackToLive && duelHistory.length > 0 && (
+          <button
+            onClick={() => {
+              if (!scrollRef.current) return;
+              scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+            }}
+            className="absolute right-4 z-30 rounded-full border border-[#EF4444]/40 bg-[#1A1A1A]/90 px-3 py-2 text-xs font-bold text-[#FCA5A5] backdrop-blur-sm hover:bg-[#232326] transition-colors"
+            style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 90px)' }}
+          >
+            ↓ Duel en cours
+          </button>
         )}
         
         {showingResult && lastResult ? (
@@ -296,7 +417,8 @@ export default function JouerPage() {
               elementA={currentDuel.elementA}
               elementB={currentDuel.elementB}
               onVote={submitVote}
-              disabled={showingResult || isLoadingDuel}
+              disabled={showingResult || isLoadingDuel || !isOnline}
+              disabledReason={!isOnline ? '📡 Reconnexion necessaire pour voter' : undefined}
             />
           </div>
         )}

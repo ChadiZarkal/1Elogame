@@ -84,7 +84,8 @@ export function validateAdminToken(token: string): boolean {
  * Revoke is a no-op for stateless tokens.
  * (Client should simply delete the token from storage.)
  */
-export function revokeAdminToken(_token: string): void {
+export function revokeAdminToken(token: string): void {
+  void token;
   /* no-op — stateless */
 }
 

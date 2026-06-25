@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Page } from 'puppeteer';
-import { createPage, closeBrowser, BASE_URL, screenshot, isServerReady, getTextContent } from './e2e.config';
+import { createPage, closeBrowser, BASE_URL, screenshot, isServerReady } from './e2e.config';
 
 let page: Page;
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Trophy, ArrowRight, ExternalLink, Shield } from 'lucide-react';
 import { useHaptics } from '@/lib/hooks';
 
@@ -31,10 +32,12 @@ export default function HubPage() {
 
         {/* ─── HERO ─── */}
         <header className="hub__hero hub__enter hub__enter--1">
-          <img
+          <Image
             src="/logo-rog-new.svg"
             alt="Red or Green — Le party game gratuit"
             className="hub__logo"
+            width={340}
+            height={74}
             draggable={false}
           />
           <h1 className="sr-only">Red or Green | Jeu de société en ligne gratuit pour débattre entre amis</h1>

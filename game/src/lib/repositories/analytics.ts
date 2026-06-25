@@ -12,7 +12,6 @@ import { isMockMode } from '@/lib/apiHelpers';
 // ─── In-memory store (mock / fallback) ────────────────────────────────────────
 
 declare global {
-  // eslint-disable-next-line no-var
   var __analyticsSessions: AnalyticsSessionData[] | undefined;
 }
 

@@ -1,6 +1,5 @@
 import { withApiHandler, apiSuccess } from '@/lib/apiHelpers';
 import { getPublicStats } from '@/lib/repositories';
-import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 

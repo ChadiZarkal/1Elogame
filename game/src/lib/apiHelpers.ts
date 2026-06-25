@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import type { ZodSchema, ZodError } from 'zod';
+import type { ZodSchema } from 'zod';
 import { createApiError, createApiSuccess } from './utils';
 
 // ---------------------------------------------------------------------------

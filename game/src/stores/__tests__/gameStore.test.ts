@@ -291,7 +291,7 @@ describe('gameStore', () => {
       });
 
       mockDuelResponse(); // preload (fires first via fetchNextDuel)
-      const realResult = mockVoteResponse({
+      mockVoteResponse({
         winner: { id: 'a1', percentage: 72, participations: 50, rank: 3, totalElements: 40 },
       });
 

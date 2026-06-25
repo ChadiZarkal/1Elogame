@@ -114,9 +114,7 @@ export const DEFAULT_ALGORITHM_CONFIG: AlgorithmConfig = {
 // ─── In-memory cache ──────────────────────────────────────────────────────────
 
 declare global {
-  // eslint-disable-next-line no-var
   var __algorithmConfig: AlgorithmConfig | undefined;
-  // eslint-disable-next-line no-var
   var __algorithmConfigLoaded: boolean | undefined;
 }
 

@@ -76,8 +76,7 @@ describe('GET /api/duel', () => {
     const { GET } = await import('@/app/api/duel/route');
     const { selectDuelPair } = await import('@/lib/algorithm');
 
-    const response = await GET(makeRequest({ category: 'love' }));
-    const json = await response.json();
+    await GET(makeRequest({ category: 'love' }));
 
     // selectDuelPair should have been called with filtered elements
     expect(selectDuelPair).toHaveBeenCalled();
@@ -139,7 +138,6 @@ describe('GET /api/duel', () => {
     ]);
 
     // Need to filter to category with 1 element
-    const { GET } = await import('@/app/api/duel/route');
     // Since getMockElements returns only 1 element, should 400
     const { selectDuelPair } = await import('@/lib/algorithm');
     (selectDuelPair as ReturnType<typeof vi.fn>).mockImplementationOnce(() => null);

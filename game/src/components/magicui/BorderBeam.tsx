@@ -1,6 +1,5 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 interface BorderBeamProps {
@@ -15,7 +14,6 @@ interface BorderBeamProps {
 
 export function BorderBeam({
   className = '',
-  size = 200,
   duration = 12,
   delay = 0,
   colorFrom = '#EF4444',

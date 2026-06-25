@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
+import { useHaptics } from '@/lib/hooks';
 
 interface AllDuelsExhaustedProps {
   duelCount: number;
@@ -9,8 +10,10 @@ interface AllDuelsExhaustedProps {
 }
 
 export function AllDuelsExhausted({ duelCount, onReset }: AllDuelsExhaustedProps) {
+  const { tap, success } = useHaptics();
 
   const handleShare = () => {
+    tap();
     const text = `🚩 J'ai participé à ${duelCount} duels sur Red or Green !\nEt toi, tu as combien de Red Flags ? 👀`;
     if (navigator.share) {
       navigator.share({ text, url: 'https://redorgreen.fr/jeu?ref=share' }).catch(() => {});
@@ -20,7 +23,7 @@ export function AllDuelsExhausted({ duelCount, onReset }: AllDuelsExhaustedProps
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-[#0D0D0D]">
+    <div className="flex flex-col items-center justify-center min-h-dvh px-6 pt-[max(20px,env(safe-area-inset-top))] pb-[max(20px,env(safe-area-inset-bottom))] bg-[#0D0D0D]">
       <motion.div
         className="text-center space-y-6 max-w-md"
         initial={{ opacity: 0, scale: 0.9 }}
@@ -51,12 +54,20 @@ export function AllDuelsExhausted({ duelCount, onReset }: AllDuelsExhaustedProps
         </div>
 
         <div className="flex flex-col gap-3 pt-2">
-          <Button onClick={onReset} variant="primary" size="lg">
+          <Button
+            onClick={() => {
+              success();
+              onReset();
+            }}
+            variant="primary"
+            size="lg"
+            className="min-h-12"
+          >
             🔄 Recommencer
           </Button>
           <a
             href="/classement"
-            className="px-6 py-3 rounded-xl bg-[#1A1A1A] border border-[#333] text-[#A3A3A3] font-medium hover:border-[#FCD34D] hover:text-[#FCD34D] transition-all text-center"
+            className="min-h-12 px-6 py-3 rounded-xl bg-[#1A1A1A] border border-[#333] text-[#A3A3A3] font-medium hover:border-[#FCD34D] hover:text-[#FCD34D] transition-all text-center flex items-center justify-center"
           >
             🏆 Voir le classement
           </a>

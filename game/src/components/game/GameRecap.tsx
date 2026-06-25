@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useGameStore, type PartyStats } from '@/stores/gameStore';
 import { CATEGORIES_CONFIG } from '@/config/categories';
@@ -201,9 +202,11 @@ export function GameRecap() {
         >
           {/* Logo */}
           <div style={{ padding: '0.7rem 0.75rem 0', textAlign: 'center' }}>
-            <img
+            <Image
               src="/logo-rog-new.svg"
               alt="Red or Green"
+              width={100}
+              height={22}
               style={{ width: 100, height: 'auto', margin: '0 auto 0.15rem', display: 'block', opacity: 0.9 }}
               draggable={false}
             />

@@ -32,6 +32,15 @@ interface LocalStandardTest {
   updated_at?: string;
 }
 
+interface SessionWatchAnswer {
+  question_index: number;
+  question_text: string;
+  selected_option: string | null;
+  selected_score: 0 | 1 | 2;
+  timed_out: boolean;
+  time_spent_ms: number;
+}
+
 interface SessionWatchData {
   status: 'pending' | 'in_progress' | 'completed';
   score: {
@@ -40,6 +49,10 @@ interface SessionWatchData {
     answered: number;
     timedOut: number;
   };
+  test?: {
+    name: string;
+  };
+  answers: SessionWatchAnswer[];
 }
 
 const defaultQuestion = (): CustomQuestion => ({
@@ -220,10 +233,17 @@ export default function FlashFlagPage() {
         }
 
         if (!active) return;
-        const data = json.data as SessionWatchData;
+        const data = json.data as {
+          status: 'pending' | 'in_progress' | 'completed';
+          score: SessionWatchData['score'];
+          test?: { name?: string };
+          answers?: SessionWatchAnswer[];
+        };
         setWatchData({
           status: data.status,
           score: data.score,
+          test: data.test?.name ? { name: data.test.name } : undefined,
+          answers: Array.isArray(data.answers) ? data.answers : [],
         });
         setWatchError('');
 
@@ -379,25 +399,30 @@ export default function FlashFlagPage() {
     ? Math.round((watchData.score.total / watchData.score.max) * 100)
     : 0;
 
+  const watchAnswers = useMemo(() => {
+    if (!watchData?.answers?.length) return [];
+    return [...watchData.answers].sort((a, b) => a.question_index - b.question_index);
+  }, [watchData]);
+
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#070708] text-[#F5F5F5] px-4 py-6 sm:py-8">
+    <main className="relative min-h-dvh overflow-hidden bg-[#0A0A0B] text-[#FAFAFA] px-4 py-6 sm:py-8">
       <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/15 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-80 w-80 translate-x-1/3 rounded-full bg-[#EF4444]/10 blur-3xl" />
+        <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/12 blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-80 w-80 translate-x-1/3 rounded-full bg-[#EF4444]/8 blur-3xl" />
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto space-y-6">
-        <Link href="/" className="inline-flex min-h-[44px] items-center gap-2 text-sm text-[#A3A3A3] hover:text-[#F5F5F5] transition-colors">
+        <Link href="/" className="inline-flex min-h-12 min-w-12 items-center gap-2 text-sm text-[#6B7280] hover:text-white transition-colors active:scale-95">
           <span>←</span>
           <span>Retour accueil</span>
         </Link>
 
-        <header className="rounded-3xl border border-[#3B1B1B] bg-[linear-gradient(120deg,#171212,#1F1114_55%,#271216)] p-5 shadow-[0_20px_80px_rgba(0,0,0,0.35)]">
+        <header className="rounded-2xl border border-[#1E1E1E] bg-[#111] p-5 shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs tracking-[0.22em] text-[#FCA5A5] uppercase">Red or Green • Mode Sprint</p>
+              <p className="text-xs tracking-[0.22em] text-[#6B7280] uppercase">Red or Green • Mode Sprint</p>
               <h1 className="mt-1 text-2xl sm:text-3xl font-black tracking-tight">Flash Flag</h1>
-              <p className="text-sm text-[#D4D4D8] mt-2 max-w-2xl">Questionnaire chronometre, sans retour arriere, pour capturer les reponses a chaud.</p>
+              <p className="text-sm text-[#9CA3AF] mt-2 max-w-2xl">Questionnaire chronometre, sans retour arriere, pour capturer les reponses a chaud.</p>
             </div>
             <Image
               src="/logo-rog-new.svg"
@@ -409,12 +434,12 @@ export default function FlashFlagPage() {
           </div>
           <div className="mt-4 flex flex-wrap gap-2 text-xs">
             <span className="rounded-full border border-[#7F1D1D] bg-[#2A1519] px-3 py-1 text-[#FECACA]">⚡ Questions rapides</span>
-            <span className="rounded-full border border-white/15 bg-white/[0.04] px-3 py-1 text-[#E4E4E7]">🚩 Score red flag instantane</span>
-            <span className="rounded-full border border-white/15 bg-white/[0.04] px-3 py-1 text-[#E4E4E7]">🔗 Mode local ou lien partageable</span>
+            <span className="rounded-full border border-white/15 bg-[#161616] px-3 py-1 text-[#D4D4D8]">🚩 Score red flag instantane</span>
+            <span className="rounded-full border border-white/15 bg-[#161616] px-3 py-1 text-[#D4D4D8]">🔗 Mode local ou lien partageable</span>
           </div>
         </header>
 
-        <section className="rounded-2xl border border-white/10 bg-[#111214]/90 p-5 space-y-4 shadow-[0_8px_40px_rgba(0,0,0,0.25)] backdrop-blur-sm">
+        <section className="rounded-2xl border border-[#1E1E1E] bg-[#111] p-5 space-y-4 shadow-[0_8px_40px_rgba(0,0,0,0.25)]">
           <h2 className="font-bold text-lg">1. Profil de la personne testee</h2>
           <div className="grid sm:grid-cols-2 gap-3">
             <label className="space-y-2">
@@ -432,7 +457,7 @@ export default function FlashFlagPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-white/10 bg-[#111214]/90 p-5 space-y-4 shadow-[0_8px_40px_rgba(0,0,0,0.25)] backdrop-blur-sm">
+        <section className="rounded-2xl border border-[#1E1E1E] bg-[#111] p-5 space-y-4 shadow-[0_8px_40px_rgba(0,0,0,0.25)]">
           <h2 className="font-bold text-lg">2. Choix du test</h2>
           <div className="flex gap-2">
             <button className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${sourceType === 'standard' ? 'bg-[#2A1519] border-[#EF4444] text-white shadow-[0_0_0_1px_rgba(239,68,68,0.2)]' : 'bg-transparent border-white/15 text-[#C9CBD1] hover:border-white/25 hover:text-white'}`} onClick={() => setSourceType('standard')}>Standard</button>
@@ -543,7 +568,7 @@ export default function FlashFlagPage() {
           )}
         </section>
 
-        <section className="rounded-2xl border border-white/10 bg-[#111214]/90 p-5 space-y-4 shadow-[0_8px_40px_rgba(0,0,0,0.25)] backdrop-blur-sm">
+        <section className="rounded-2xl border border-[#1E1E1E] bg-[#111] p-5 space-y-4 shadow-[0_8px_40px_rgba(0,0,0,0.25)]">
           <h2 className="font-bold text-lg">3. Lancement</h2>
           <div className="flex gap-2">
             <button className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${mode === 'local' ? 'bg-[#2A1519] border-[#EF4444] text-white shadow-[0_0_0_1px_rgba(239,68,68,0.2)]' : 'bg-transparent border-white/15 text-[#C9CBD1] hover:border-white/25 hover:text-white'}`} onClick={() => setMode('local')}>Joueur local</button>
@@ -567,7 +592,7 @@ export default function FlashFlagPage() {
           )}
 
           {createdSessionCode && (
-            <div className="rounded-xl border border-white/10 bg-[#151619] p-3 space-y-2">
+            <div className="rounded-xl border border-[#1E1E1E] bg-[#121214] p-3 space-y-2">
               <p className="text-sm font-semibold text-[#E4E4E7]">Suivi de cette invitation</p>
               <p className="text-xs text-[#A3A3A3]">Code session: {createdSessionCode}</p>
 
@@ -580,7 +605,7 @@ export default function FlashFlagPage() {
               )}
 
               {watchData && watchData.status === 'completed' && (
-                <div className="rounded-lg border border-[#7F1D1D] bg-[#1A1212] p-3 space-y-1">
+                <div className="rounded-lg border border-[#7F1D1D] bg-[#1A1212] p-3 space-y-2">
                   <p className="text-sm text-[#FECACA]">Resultat recu</p>
                   <p className="text-xs text-[#E4E4E7]">
                     Score: {watchData.score.total}/{watchData.score.max} ({watchPercent}%)
@@ -589,6 +614,35 @@ export default function FlashFlagPage() {
                   <p className="text-xs text-[#D4D4D8]">
                     Reponses: {watchData.score.answered} | Timeout: {watchData.score.timedOut}
                   </p>
+
+                  {watchData.test?.name && (
+                    <p className="text-xs text-[#D4D4D8]">Test: {watchData.test.name}</p>
+                  )}
+
+                  {watchAnswers.length > 0 && (
+                    <div className="mt-2 space-y-2 max-h-72 overflow-y-auto pr-1">
+                      {watchAnswers.map((ans, idx) => (
+                        <div key={`${ans.question_index}-${idx}`} className="rounded-lg border border-white/10 bg-[#111316] p-2.5">
+                          <p className="text-[11px] text-[#A3A3A3]">Question {ans.question_index + 1}</p>
+                          <p className="text-xs text-[#F5F5F5] mt-0.5">{ans.question_text}</p>
+                          <p className={`text-xs mt-1 ${ans.timed_out ? 'text-[#FCA5A5]' : 'text-[#D4D4D8]'}`}>
+                            {ans.timed_out
+                              ? 'Temps ecoule (0 point)'
+                              : `Reponse: ${ans.selected_option || 'Sans selection'} (${ans.selected_score} point${ans.selected_score > 1 ? 's' : ''})`}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="pt-1">
+                    <Link
+                      href={`/flashflag/session/${createdSessionCode}`}
+                      className="inline-flex items-center gap-1 text-xs text-[#FCA5A5] hover:text-[#FECACA] transition-colors"
+                    >
+                      Voir la session complete →
+                    </Link>
+                  </div>
                 </div>
               )}
 

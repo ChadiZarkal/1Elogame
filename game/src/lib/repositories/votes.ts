@@ -119,7 +119,6 @@ async function processProductionVote(
   const winnerEloDelta = newWinnerELO - winner.elo_global;
   const loserEloDelta = newLoserELO - loser.elo_global;
   const winnerSexDelta = winnerSexELO - (winner[sexField as keyof Element] as number);
-  const loserSexDelta = loserSexELO - (loser[sexField as keyof Element] as number);
   const winnerAgeDelta = winnerAgeELO - (winner[ageField as keyof Element] as number);
   const loserAgeDelta = loserAgeELO - (loser[ageField as keyof Element] as number);
 

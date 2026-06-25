@@ -7,9 +7,7 @@ import { Element, Categorie } from '@/types';
 
 // Use globalThis to share mock state across Turbopack route modules
 declare global {
-  // eslint-disable-next-line no-var
   var __mockElements: Element[] | undefined;
-  // eslint-disable-next-line no-var
   var __mockVotes: Map<string, Set<string>> | undefined;
 }
 

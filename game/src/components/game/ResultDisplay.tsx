@@ -139,7 +139,8 @@ export function ResultDisplay({
       {/* Correct/Wrong answer feedback — subtle overlay */}
       {!result.isOptimistic && (
         <motion.div
-          className="absolute top-16 left-1/2 -translate-x-1/2 z-30 pointer-events-none"
+          className="absolute left-1/2 -translate-x-1/2 z-30 pointer-events-none"
+          style={{ top: 'calc(max(12px, env(safe-area-inset-top)) + 56px)' }}
           initial={{ opacity: 0, y: -20, scale: 0.8 }}
           animate={{ opacity: [0, 1, 1, 0], y: [-20, 0, 0, -10], scale: [0.8, 1.05, 1, 0.95] }}
           transition={{ duration: 2, times: [0, 0.15, 0.7, 1] }}
@@ -208,7 +209,8 @@ export function ResultDisplay({
       {/* Indicateur de clic pour passer */}
       {canClickToAdvance && !showFeedback && (
         <motion.div
-          className="absolute bottom-4 left-1/2 -translate-x-1/2"
+          className="absolute left-1/2 -translate-x-1/2"
+          style={{ bottom: 'max(12px, env(safe-area-inset-bottom))' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: [0.5, 1, 0.5] }}
           transition={{ duration: 1.5, repeat: Infinity }}

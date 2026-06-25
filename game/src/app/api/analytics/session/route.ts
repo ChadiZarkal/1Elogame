@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { withApiHandler, apiSuccess, apiError } from '@/lib/apiHelpers';
+import { withApiHandler, apiSuccess } from '@/lib/apiHelpers';
 import { saveAnalyticsSession, getAnalyticsSessions } from '@/lib/repositories';
 import type { AnalyticsSessionData } from '@/types/analytics';
 

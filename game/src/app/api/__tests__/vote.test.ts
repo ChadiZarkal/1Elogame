@@ -143,8 +143,6 @@ describe('POST /api/vote', () => {
     });
 
     it('gère différentes tranches d\'âge', async () => {
-      const { POST } = await import('@/app/api/vote/route');
-      
       for (const age of ['16-18', '19-22', '23-26', '27+']) {
         vi.resetModules();
         vi.clearAllMocks();

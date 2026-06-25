@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { DuelInterface } from '../DuelInterface';
 
 const mockElementA = { id: 'a1', texte: 'Ghoster après le date', categorie: 'sexe' };

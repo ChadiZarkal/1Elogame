@@ -58,7 +58,7 @@ describe('ErrorBoundary', () => {
   });
 
   it('réinitialise l\'état quand on clique sur Réessayer', () => {
-    const { rerender } = render(
+    render(
       <ErrorBoundary>
         <ThrowingComponent shouldThrow={true} />
       </ErrorBoundary>

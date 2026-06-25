@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
 import { CategoryBadge } from '@/components/ui/CategoryBadge';
 import { Element, Categorie } from '@/types';
-import { CATEGORIES_CONFIG, CATEGORIES_LIST, getCategoryClasses } from '@/config/categories';
+import { CATEGORIES_LIST } from '@/config/categories';
 import { AdminNav } from '@/components/admin/AdminNav';
 
 export default function AdminElementsPage() {

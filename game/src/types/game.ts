@@ -1,6 +1,6 @@
 // Game-specific types
 
-import { SexeVotant, AgeVotant, Element } from './database';
+import { SexeVotant, AgeVotant } from './database';
 
 // Player profile (stored in LocalStorage)
 export interface PlayerProfile {

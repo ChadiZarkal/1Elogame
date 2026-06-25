@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { Duel } from '@/types/game';
+import { useHaptics } from '@/lib/hooks';
 import type { ElementStats } from './ResultCard';
 
 interface FeedbackBarProps {
@@ -33,8 +34,10 @@ export function FeedbackBar({
   onThumbsDown,
 }: FeedbackBarProps) {
   const [starGiven, setStarGiven] = useState(false);
+  const { tap, success } = useHaptics();
 
   const handleStar = () => {
+    tap();
     if (!starGiven) {
       setStarGiven(true);
       onStar();
@@ -43,6 +46,7 @@ export function FeedbackBar({
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
+    tap();
     const moreRF = elementAStats.isMoreRedFlag ? duel.elementA.texte : duel.elementB.texte;
     const lessRF = !elementAStats.isMoreRedFlag ? duel.elementA.texte : duel.elementB.texte;
     const shareText = `🚩 Red or Green\n\n"${moreRF}" est voté plus Red Flag que "${lessRF}" par la communauté !\n\nJoue toi aussi →`;
@@ -76,8 +80,8 @@ export function FeedbackBar({
         </motion.div>
       )}
 
-      <div className="flex justify-between items-center">
-        <div className="flex gap-2">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
           <motion.button
             onClick={handleStar}
             disabled={starGiven}
@@ -92,7 +96,10 @@ export function FeedbackBar({
             ⭐
           </motion.button>
           <motion.button
-            onClick={onThumbsUp}
+            onClick={() => {
+              tap();
+              onThumbsUp();
+            }}
             whileTap={{ scale: 0.9 }}
             className="p-2.5 rounded-xl bg-[#2A2A2A] text-[#F5F5F5] hover:bg-[#333] border border-[#333] transition-all"
             aria-label="J'aime ce duel"
@@ -100,7 +107,10 @@ export function FeedbackBar({
             👍
           </motion.button>
           <motion.button
-            onClick={onThumbsDown}
+            onClick={() => {
+              tap();
+              onThumbsDown();
+            }}
             whileTap={{ scale: 0.9 }}
             className="p-2.5 rounded-xl bg-[#2A2A2A] text-[#F5F5F5] hover:bg-[#333] border border-[#333] transition-all"
             aria-label="Je n'aime pas ce duel"
@@ -118,10 +128,13 @@ export function FeedbackBar({
         </div>
 
         <motion.button
-          onClick={onNext}
+          onClick={() => {
+            success();
+            onNext();
+          }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="px-6 py-2.5 bg-[#DC2626] hover:bg-[#EF4444] text-white rounded-xl font-bold shadow-[0_0_20px_rgba(220,38,38,0.3)] transition-all"
+          className="w-full min-h-12 px-6 py-2.5 bg-[#DC2626] hover:bg-[#EF4444] text-white rounded-xl font-bold shadow-[0_0_20px_rgba(220,38,38,0.3)] transition-all"
         >
           Suivant →
         </motion.button>

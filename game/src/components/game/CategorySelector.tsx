@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { CATEGORIES_CONFIG, CategoryConfig } from '@/config/categories';
+import { useHaptics } from '@/lib/hooks';
 import { type PartySize } from '@/stores/gameStore';
 
 const PARTY_SIZES: { value: PartySize; label: string; tag: string }[] = [
@@ -10,11 +12,15 @@ const PARTY_SIZES: { value: PartySize; label: string; tag: string }[] = [
   { value: 20, label: '20', tag: '🏆 Expert' },
 ];
 
+const DEFAULT_GAME_CATEGORIES_KEY = 'default_game_categories';
+const DEFAULT_GAME_SIZE_KEY = 'default_game_size';
+
 interface CategorySelectorProps {
   onStart: (selectedCategories: string[], partySize: PartySize) => void;
 }
 
 export function CategorySelector({ onStart }: CategorySelectorProps) {
+  const { select, tap } = useHaptics();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [partySize, setPartySize] = useState<PartySize>(15);
   const [showRules, setShowRules] = useState(() => {
@@ -23,7 +29,36 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
   });
   const categories: CategoryConfig[] = Object.values(CATEGORIES_CONFIG);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || process.env.NODE_ENV === 'test') return;
+
+    try {
+      const rawCategories = localStorage.getItem(DEFAULT_GAME_CATEGORIES_KEY);
+      if (rawCategories) {
+        const parsed = JSON.parse(rawCategories) as unknown;
+        if (Array.isArray(parsed)) {
+          const validIds = new Set(Object.keys(CATEGORIES_CONFIG));
+          const restored = parsed.filter((item): item is string => typeof item === 'string' && validIds.has(item));
+          if (restored.length > 0) {
+            setSelected(new Set(restored));
+          }
+        }
+      }
+
+      const rawSize = localStorage.getItem(DEFAULT_GAME_SIZE_KEY);
+      if (rawSize) {
+        const parsedSize = Number(rawSize) as PartySize;
+        if (PARTY_SIZES.some((size) => size.value === parsedSize)) {
+          setPartySize(parsedSize);
+        }
+      }
+    } catch {
+      // Ignore invalid stored preferences
+    }
+  }, []);
+
   const toggleCategory = (id: string) => {
+    select();
     setSelected(prev => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -37,15 +72,52 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
 
   const handleStart = () => {
     if (selected.size === 0) return;
+    tap();
     localStorage.setItem('rog_has_played', '1');
+    localStorage.setItem(DEFAULT_GAME_CATEGORIES_KEY, JSON.stringify(Array.from(selected)));
+    localStorage.setItem(DEFAULT_GAME_SIZE_KEY, String(partySize));
     onStart(Array.from(selected), partySize);
+  };
+
+  const handleSelectAll = () => {
+    tap();
+    setSelected(new Set(categories.map((category) => category.id)));
+  };
+
+  const handleResetSelection = () => {
+    tap();
+    setSelected(new Set());
   };
 
   return (
     <div
-      className="flex flex-col items-center justify-center px-4 py-6"
+      className="flex flex-col items-center justify-center px-4 pt-[max(12px,env(safe-area-inset-top))] pb-[max(20px,env(safe-area-inset-bottom))]"
       style={{ minHeight: '100dvh', background: '#0A0A0B' }}
     >
+      <div className="w-full max-w-sm flex items-center justify-between mb-4">
+        <Link
+          href="/jeu"
+          className="text-[#6B7280] hover:text-white transition-colors text-sm flex items-center gap-1 min-h-12 min-w-12"
+          aria-label="Retour au profil"
+        >
+          ← Retour
+        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSelectAll}
+            className="px-2.5 py-1.5 rounded-lg border border-white/15 text-[11px] font-semibold text-[#D4D4D8] hover:border-white/30 transition-colors"
+          >
+            Tout
+          </button>
+          <button
+            onClick={handleResetSelection}
+            className="px-2.5 py-1.5 rounded-lg border border-white/15 text-[11px] font-semibold text-[#A3A3A3] hover:border-white/30 transition-colors"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="text-center mb-5">
         <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2">
@@ -115,7 +187,10 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
             return (
               <button
                 key={s.value}
-                onClick={() => setPartySize(s.value)}
+                onClick={() => {
+                  select();
+                  setPartySize(s.value);
+                }}
                 role="radio"
                 aria-checked={sel}
                 className="flex flex-col items-center py-3 px-2 rounded-lg transition-all"

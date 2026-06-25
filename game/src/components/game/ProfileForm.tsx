@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useGameStore } from '@/stores/gameStore';
 import { SexeVotant, AgeVotant } from '@/types/database';
 import dynamic from 'next/dynamic';
@@ -88,10 +89,12 @@ export function ProfileForm() {
       {/* Logo */}
       <div className={`mb-6 text-center pt-10${mounted ? ' animate-pf-logo' : ''}`}>
         <div className={`flex items-center justify-center mb-3${mounted ? ' animate-pf-logo-img' : ''}`}>
-          <img
+          <Image
             src="/logo-rog-new.svg"
             alt="Red or Green"
             className="w-[180px] sm:w-[220px]"
+            width={220}
+            height={48}
             draggable={false}
           />
         </div>

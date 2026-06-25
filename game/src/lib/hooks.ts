@@ -23,6 +23,28 @@ export function useReducedMotion(): boolean {
   );
 }
 
+function subscribeToOnlineStatus(callback: () => void) {
+  window.addEventListener('online', callback);
+  window.addEventListener('offline', callback);
+  return () => {
+    window.removeEventListener('online', callback);
+    window.removeEventListener('offline', callback);
+  };
+}
+
+function getOnlineStatusSnapshot() {
+  return navigator.onLine;
+}
+
+/** Detect current network status (true = online). */
+export function useOnlineStatus(): boolean {
+  return useSyncExternalStore(
+    subscribeToOnlineStatus,
+    getOnlineStatusSnapshot,
+    () => true,
+  );
+}
+
 /** Trigger haptic feedback on supported devices. */
 export function useHaptics() {
   const vibrate = (pattern: number | number[] = 10) => {
