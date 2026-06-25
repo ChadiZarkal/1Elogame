@@ -83,10 +83,9 @@ describe('ProfileForm', () => {
     expect(screen.getByText(/C'EST PARTI/)).toBeDefined();
   });
 
-  it('affiche les instructions "Comment ça marche"', () => {
+  it('affiche les instructions compactes', () => {
     render(<ProfileForm />);
-    expect(screen.getByText(/Comment ça marche/)).toBeDefined();
-    expect(screen.getByText('Choisis')).toBeDefined();
+    expect(screen.getByText('Choisis le pire')).toBeDefined();
     expect(screen.getByText('Compare')).toBeDefined();
     expect(screen.getByText('Enchaîne')).toBeDefined();
   });

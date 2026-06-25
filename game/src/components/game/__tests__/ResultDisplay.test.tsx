@@ -131,9 +131,10 @@ describe('ResultDisplay', () => {
     expect(screen.getByText(/Streak: 3/)).toBeDefined();
   });
 
-  it('auto-avance après 4 secondes', () => {
-    render(<ResultDisplay {...defaultProps} />);
-    act(() => { vi.advanceTimersByTime(4000); });
+  it('avance au clic sur la zone résultat après délai minimal', () => {
+    const { container } = render(<ResultDisplay {...defaultProps} />);
+    act(() => { vi.advanceTimersByTime(300); });
+    fireEvent.click(container.firstChild as HTMLElement);
     expect(onNext).toHaveBeenCalled();
   });
 
