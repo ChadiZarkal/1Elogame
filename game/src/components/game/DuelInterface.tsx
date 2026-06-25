@@ -26,7 +26,7 @@ export function DuelInterface({ elementA, elementB, onVote, disabled, disabledRe
         side === 'a' ? elementA.id : elementB.id,
         side === 'a' ? elementB.id : elementA.id,
       );
-    }, 350);
+    }, 180);
   };
 
   const cardClass = (side: 'a' | 'b') => {
@@ -37,8 +37,8 @@ export function DuelInterface({ elementA, elementB, onVote, disabled, disabledRe
       !selected && !disabled && 'hover:bg-[#242424] hover:border-[#DC2626] hover:shadow-[0_0_30px_rgba(220,38,38,0.3)] active:bg-[#2A2A2A] active:scale-[0.98] cursor-pointer',
       disabled && !selected && 'saturate-[0.8]',
       selected && 'cursor-default',
-      isSelected && 'scale-[1.02] border-[#DC2626] ring-1 ring-[#DC2626]/40',
-      isOther && 'scale-95 opacity-40 border-[#333333]',
+      isSelected && 'border-[#DC2626] ring-1 ring-[#DC2626]/40',
+      isOther && 'opacity-50 border-[#333333] saturate-[0.7]',
       !isSelected && !isOther && 'border-[#333333]',
       side === 'a' ? 'animate-card-a' : 'animate-card-b',
     ].filter(Boolean).join(' ');

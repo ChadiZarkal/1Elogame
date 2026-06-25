@@ -35,11 +35,9 @@ interface ResultCardProps {
 export function ResultCard({ element, stats, flexValue, isOptimistic }: ResultCardProps) {
   const { isMoreRedFlag } = stats;
 
-  const bgClass = isOptimistic
-    ? 'bg-gradient-to-br from-[#2A2A2A] to-[#1A1A1A]'
-    : isMoreRedFlag
-      ? 'bg-gradient-to-br from-[#DC2626] to-[#991B1B]'
-      : 'bg-gradient-to-br from-[#059669] to-[#047857]';
+  const bgClass = isMoreRedFlag
+    ? 'bg-gradient-to-br from-[#DC2626] to-[#991B1B]'
+    : 'bg-gradient-to-br from-[#059669] to-[#047857]';
 
   return (
     <motion.div
@@ -67,7 +65,7 @@ export function ResultCard({ element, stats, flexValue, isOptimistic }: ResultCa
             animate={{ opacity: [0.4, 0.8, 0.4] }}
             transition={{ duration: 1.2, repeat: Infinity }}
           >
-            <span className="inline-flex items-center gap-2 bg-white/10 text-white/60 px-4 py-1.5 rounded-lg text-sm font-medium">
+            <span className="inline-flex items-center gap-2 bg-black/20 text-white/85 px-4 py-1.5 rounded-lg text-sm font-semibold">
               <span>⏳</span>
               <span>Calcul des votes...</span>
             </span>
@@ -93,11 +91,9 @@ export function ResultCard({ element, stats, flexValue, isOptimistic }: ResultCa
         {/* Element text */}
         <motion.p
           className={`font-bold text-white leading-tight mb-3 ${
-            isOptimistic
-              ? 'text-lg sm:text-xl'
-              : isMoreRedFlag
-                ? 'text-xl sm:text-2xl md:text-3xl'
-                : 'text-base sm:text-lg'
+            isMoreRedFlag
+              ? 'text-xl sm:text-2xl md:text-3xl'
+              : 'text-base sm:text-lg'
           }`}
           initial={{ opacity: 0.5 }}
           animate={{ opacity: 1 }}

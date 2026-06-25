@@ -80,8 +80,8 @@ export function ResultDisplay({
   const flexBig = 1 + (percentDiff / 50) * 0.8;
   const flexSmall = 1 - (percentDiff / 50) * 0.4;
   
-  const flexA = elementAIsMoreRedFlag ? flexBig : flexSmall;
-  const flexB = !elementAIsMoreRedFlag ? flexBig : flexSmall;
+  const flexA = result.isOptimistic ? 1 : (elementAIsMoreRedFlag ? flexBig : flexSmall);
+  const flexB = result.isOptimistic ? 1 : (!elementAIsMoreRedFlag ? flexBig : flexSmall);
   
   useEffect(() => {
     if (result.isOptimistic) {
@@ -90,8 +90,8 @@ export function ResultDisplay({
       return;
     }
 
-    const clickTimer = setTimeout(() => setCanClickToAdvance(true), 250);
-    const ctaTimer = setTimeout(() => setShowNextCta(true), 400);
+    const clickTimer = setTimeout(() => setCanClickToAdvance(true), 280);
+    const ctaTimer = setTimeout(() => setShowNextCta(true), 460);
 
     return () => {
       clearTimeout(clickTimer);

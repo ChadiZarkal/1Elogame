@@ -40,7 +40,7 @@ describe('DuelInterface', () => {
     fireEvent.click(screen.getByText('Ghoster après le date'));
     expect(onVote).not.toHaveBeenCalled();
 
-    vi.advanceTimersByTime(350);
+    vi.advanceTimersByTime(180);
     expect(onVote).toHaveBeenCalledWith('a1', 'b1');
 
     vi.useRealTimers();
@@ -54,7 +54,7 @@ describe('DuelInterface', () => {
     );
 
     fireEvent.click(screen.getByText('Jouer aux jeux 10h'));
-    vi.advanceTimersByTime(350);
+    vi.advanceTimersByTime(180);
     expect(onVote).toHaveBeenCalledWith('b1', 'a1');
 
     vi.useRealTimers();
