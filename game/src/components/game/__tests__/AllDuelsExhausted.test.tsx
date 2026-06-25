@@ -8,11 +8,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { AllDuelsExhausted } from '@/components/game/AllDuelsExhausted';
 
-const mockPush = vi.fn();
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mockPush }),
-}));
-
 describe('AllDuelsExhausted', () => {
   const onReset = vi.fn();
 
@@ -32,10 +27,10 @@ describe('AllDuelsExhausted', () => {
     expect(onReset).toHaveBeenCalledTimes(1);
   });
 
-  it('navigue vers le classement', () => {
+  it('affiche un lien vers le classement', () => {
     render(<AllDuelsExhausted duelCount={10} onReset={onReset} />);
-    fireEvent.click(screen.getByText(/classement/i));
-    expect(mockPush).toHaveBeenCalledWith('/classement');
+    const link = screen.getByRole('link', { name: /classement/i });
+    expect(link).toHaveAttribute('href', '/classement');
   });
 
   it('affiche le bouton de partage', () => {

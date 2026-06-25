@@ -27,22 +27,22 @@ describe('CategorySelector', () => {
   it('sélectionne une catégorie au clic', () => {
     render(<CategorySelector onStart={onStart} />);
     fireEvent.click(screen.getByText('Sexe & Kinks'));
-    expect(screen.getByText("🚩 C'EST PARTI")).toBeDefined();
+    expect(screen.getByText(/🚩 LANCER/i)).toBeDefined();
   });
 
   it('appelle onStart avec les catégories sélectionnées', () => {
     render(<CategorySelector onStart={onStart} />);
     fireEvent.click(screen.getByText('Sexe & Kinks'));
-    fireEvent.click(screen.getByText("🚩 C'EST PARTI"));
-    expect(onStart).toHaveBeenCalledWith(['sexe']);
+    fireEvent.click(screen.getByText(/🚩 LANCER/i));
+    expect(onStart).toHaveBeenCalledWith(['sexe'], 15);
   });
 
   it('permet la multi-sélection', () => {
     render(<CategorySelector onStart={onStart} />);
     fireEvent.click(screen.getByText('Sexe & Kinks'));
     fireEvent.click(screen.getByText('Quotidien'));
-    fireEvent.click(screen.getByText("🚩 C'EST PARTI"));
-    expect(onStart).toHaveBeenCalledWith(expect.arrayContaining(['sexe', 'quotidien']));
+    fireEvent.click(screen.getByText(/🚩 LANCER/i));
+    expect(onStart).toHaveBeenCalledWith(expect.arrayContaining(['sexe', 'quotidien']), 15);
   });
 
   it('permet de désélectionner', () => {
