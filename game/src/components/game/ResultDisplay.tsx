@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VoteResult, Duel } from '@/types/game';
 import { ResultCard, type ElementStats } from './ResultCard';
-import { FeedbackBar } from './FeedbackBar';
 
 interface ResultDisplayProps {
   duel: Duel;
@@ -21,9 +20,8 @@ export function ResultDisplay({
   streakEmoji,
   onNext,
 }: ResultDisplayProps) {
-  const [showFeedback, setShowFeedback] = useState(false);
+  const [showNextCta, setShowNextCta] = useState(false);
   const [canClickToAdvance, setCanClickToAdvance] = useState(false);
-  const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // winner = user's pick, loser = other option
   const userChoice = result.winner;
@@ -86,14 +84,20 @@ export function ResultDisplay({
   const flexB = !elementAIsMoreRedFlag ? flexBig : flexSmall;
   
   useEffect(() => {
-    const animationTimer = setTimeout(() => setShowFeedback(true), 400);
+    if (result.isOptimistic) {
+      setShowNextCta(false);
+      setCanClickToAdvance(false);
+      return;
+    }
+
     const clickTimer = setTimeout(() => setCanClickToAdvance(true), 250);
-    
+    const ctaTimer = setTimeout(() => setShowNextCta(true), 400);
+
     return () => {
-      clearTimeout(animationTimer);
       clearTimeout(clickTimer);
+      clearTimeout(ctaTimer);
     };
-  }, [onNext]);
+  }, [result.isOptimistic]);
 
   // Sparkle burst on correct answer (green confetti)
   useEffect(() => {
@@ -114,7 +118,6 @@ export function ResultDisplay({
   }, [result.isOptimistic, userGuessedCorrectly]);
   
   const handleNext = () => {
-    if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
     onNext();
   };
   
@@ -183,20 +186,40 @@ export function ResultDisplay({
         flexValue={flexB}
         isOptimistic={result.isOptimistic}
       />
-      
+
       <AnimatePresence>
-        {showFeedback && (
-          <FeedbackBar
-            streak={streak}
-            streakEmoji={streakEmoji}
-            streakMatched={result.streak.matched}
-            onNext={handleNext}
-          />
+        {showNextCta && (
+          <motion.div
+            className="absolute left-1/2 top-1/2 z-30 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3 pointer-events-none"
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.18 }}
+          >
+            {streak > 0 && (
+              <div className="rounded-full border border-white/30 bg-black/35 px-4 py-1.5 text-sm font-bold text-white backdrop-blur-md">
+                Streak: {streak} {streakEmoji}
+                {result.streak.matched ? <span className="ml-2 text-[#34D399]">+1 🎯</span> : null}
+              </div>
+            )}
+
+            <motion.button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNext();
+              }}
+              whileTap={{ scale: 0.96 }}
+              className="pointer-events-auto min-h-12 rounded-full border border-white/70 bg-white/95 px-7 py-2.5 text-sm font-black uppercase tracking-wide text-[#0F172A] shadow-[0_10px_35px_rgba(0,0,0,0.35)]"
+            >
+              Suivant
+            </motion.button>
+          </motion.div>
         )}
       </AnimatePresence>
       
       {/* Indicateur de clic pour passer */}
-      {canClickToAdvance && !showFeedback && (
+      {canClickToAdvance && !showNextCta && (
         <motion.div
           className="absolute left-1/2 -translate-x-1/2"
           style={{ bottom: 'max(12px, env(safe-area-inset-bottom))' }}

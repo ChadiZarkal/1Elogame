@@ -30,6 +30,13 @@ const makeResult = (winnerPct = 65): VoteResult => ({
   isOptimistic: false,
 });
 
+const makeOptimisticResult = (): VoteResult => ({
+  winner: { id: 'a', percentage: 50, participations: 0 },
+  loser: { id: 'b', percentage: 50, participations: 0 },
+  streak: { matched: false, current: 0 },
+  isOptimistic: true,
+});
+
 describe('ResultDisplay', () => {
   const onNext = vi.fn();
 
@@ -70,6 +77,12 @@ describe('ResultDisplay', () => {
     // Advance 400ms to show feedback
     act(() => { vi.advanceTimersByTime(400); });
     expect(screen.getByText(/Suivant/)).toBeDefined();
+  });
+
+  it('n\'affiche pas Suivant pendant le calcul optimiste', () => {
+    render(<ResultDisplay {...defaultProps} result={makeOptimisticResult()} />);
+    act(() => { vi.advanceTimersByTime(1200); });
+    expect(screen.queryByText(/Suivant/)).toBeNull();
   });
 
   it('n\'affiche pas de boutons feedback pendant la partie', () => {
