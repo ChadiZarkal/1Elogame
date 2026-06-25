@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { CATEGORIES_CONFIG, CategoryConfig } from '@/config/categories';
 import { useHaptics } from '@/lib/hooks';
@@ -15,47 +15,61 @@ const PARTY_SIZES: { value: PartySize; label: string; tag: string }[] = [
 const DEFAULT_GAME_CATEGORIES_KEY = 'default_game_categories';
 const DEFAULT_GAME_SIZE_KEY = 'default_game_size';
 
+function getInitialSelectedCategories(): Set<string> {
+  if (typeof window === 'undefined' || process.env.NODE_ENV === 'test') {
+    return new Set();
+  }
+
+  try {
+    const rawCategories = localStorage.getItem(DEFAULT_GAME_CATEGORIES_KEY);
+    if (!rawCategories) {
+      return new Set();
+    }
+
+    const parsed = JSON.parse(rawCategories) as unknown;
+    if (!Array.isArray(parsed)) {
+      return new Set();
+    }
+
+    const validIds = new Set(Object.keys(CATEGORIES_CONFIG));
+    const restored = parsed.filter((item): item is string => typeof item === 'string' && validIds.has(item));
+    return restored.length > 0 ? new Set(restored) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function getInitialPartySize(): PartySize {
+  if (typeof window === 'undefined' || process.env.NODE_ENV === 'test') {
+    return 15;
+  }
+
+  try {
+    const rawSize = localStorage.getItem(DEFAULT_GAME_SIZE_KEY);
+    if (!rawSize) {
+      return 15;
+    }
+
+    const parsedSize = Number(rawSize) as PartySize;
+    return PARTY_SIZES.some((size) => size.value === parsedSize) ? parsedSize : 15;
+  } catch {
+    return 15;
+  }
+}
+
 interface CategorySelectorProps {
   onStart: (selectedCategories: string[], partySize: PartySize) => void;
 }
 
 export function CategorySelector({ onStart }: CategorySelectorProps) {
   const { select, tap } = useHaptics();
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [partySize, setPartySize] = useState<PartySize>(15);
+  const [selected, setSelected] = useState<Set<string>>(() => getInitialSelectedCategories());
+  const [partySize, setPartySize] = useState<PartySize>(() => getInitialPartySize());
   const [showRules, setShowRules] = useState(() => {
     if (typeof window === 'undefined') return true;
     return !localStorage.getItem('rog_has_played');
   });
   const categories: CategoryConfig[] = Object.values(CATEGORIES_CONFIG);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || process.env.NODE_ENV === 'test') return;
-
-    try {
-      const rawCategories = localStorage.getItem(DEFAULT_GAME_CATEGORIES_KEY);
-      if (rawCategories) {
-        const parsed = JSON.parse(rawCategories) as unknown;
-        if (Array.isArray(parsed)) {
-          const validIds = new Set(Object.keys(CATEGORIES_CONFIG));
-          const restored = parsed.filter((item): item is string => typeof item === 'string' && validIds.has(item));
-          if (restored.length > 0) {
-            setSelected(new Set(restored));
-          }
-        }
-      }
-
-      const rawSize = localStorage.getItem(DEFAULT_GAME_SIZE_KEY);
-      if (rawSize) {
-        const parsedSize = Number(rawSize) as PartySize;
-        if (PARTY_SIZES.some((size) => size.value === parsedSize)) {
-          setPartySize(parsedSize);
-        }
-      }
-    } catch {
-      // Ignore invalid stored preferences
-    }
-  }, []);
 
   const toggleCategory = (id: string) => {
     select();
