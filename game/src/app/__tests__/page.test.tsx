@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import HubPage from '@/app/page';
 
 vi.mock('sonner', () => ({
@@ -16,11 +16,11 @@ vi.mock('lucide-react', () => ({
   Share2: () => <span>Share2</span>,
   ArrowRight: () => <span>→</span>,
   ExternalLink: () => <span>↗</span>,
+  Shield: () => <span>Shield</span>,
 }));
 
-const mockPush = vi.fn();
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: vi.fn() }),
   usePathname: () => '/',
   useSearchParams: () => new URLSearchParams(),
 }));
@@ -37,17 +37,17 @@ describe('HubPage', () => {
     const { container } = render(<HubPage />);
     const h1 = container.querySelector('h1');
     expect(h1).toBeDefined();
-    expect(h1!.textContent).toContain('RED');
-    expect(h1!.textContent).toContain('FLAG');
+    expect(h1!.textContent).toContain('Red or Green');
     // "Le jeu qui divise" is in the subtitle <p>, not in h1
     expect(screen.getByText('Le jeu qui divise')).toBeDefined();
   });
 
-  it('affiche les 3 cartes de jeu', () => {
+  it('affiche les cartes de jeu', () => {
     render(<HubPage />);
-    expect(screen.getByText('Red or Green')).toBeDefined();
-    expect(screen.getByText('Oracle')).toBeDefined();
-    expect(screen.getByText('Red Flag Test')).toBeDefined();
+    expect(screen.getByRole('heading', { level: 2, name: 'Red Flag Test' })).toBeDefined();
+    expect(screen.getByRole('heading', { level: 3, name: 'Red or Green' })).toBeDefined();
+    expect(screen.getByRole('heading', { level: 3, name: 'Oracle' })).toBeDefined();
+    expect(screen.getByRole('heading', { level: 3, name: 'Flash Flag' })).toBeDefined();
   });
 
   it('affiche les descriptions des jeux', () => {
@@ -57,33 +57,33 @@ describe('HubPage', () => {
     expect(screen.getByText(/Es-tu un red flag/)).toBeDefined();
   });
 
-  it('affiche les boutons Classement et Partager', () => {
+  it('affiche les boutons Classement et Violentomètre', () => {
     render(<HubPage />);
     expect(screen.getByText('Classement')).toBeDefined();
-    expect(screen.getByLabelText('Partager le jeu')).toBeDefined();
+    expect(screen.getByText('Violentomètre')).toBeDefined();
   });
 
-  it('navigue vers /classement au clic sur Classement', () => {
+  it('expose un lien vers /classement', () => {
     render(<HubPage />);
-    fireEvent.click(screen.getByText('Classement'));
-    expect(mockPush).toHaveBeenCalledWith('/classement');
+    const classementLink = screen.getByRole('link', { name: /Voir le classement des red flags/i });
+    expect(classementLink).toHaveAttribute('href', '/classement');
   });
 
-  it('navigue vers /jeu au clic sur Red or Green', () => {
+  it('expose un lien vers /jeu pour Red or Green', () => {
     render(<HubPage />);
-    fireEvent.click(screen.getByLabelText('Jouer à Red or Green'));
-    expect(mockPush).toHaveBeenCalledWith('/jeu');
+    const duelLink = screen.getByRole('link', { name: /Jouer à Red or Green/i });
+    expect(duelLink).toHaveAttribute('href', '/jeu');
   });
 
-  it('navigue vers /flagornot au clic sur Oracle', () => {
+  it('expose un lien vers /flagornot pour Oracle', () => {
     render(<HubPage />);
-    fireEvent.click(screen.getByLabelText('Jouer à Oracle'));
-    expect(mockPush).toHaveBeenCalledWith('/flagornot');
+    const oracleLink = screen.getByRole('link', { name: /Jouer à Oracle/i });
+    expect(oracleLink).toHaveAttribute('href', '/flagornot');
   });
 
   it('affiche le footer avec la version', () => {
     render(<HubPage />);
-    expect(screen.getByText(/Red Flag Games/)).toBeDefined();
+    expect(screen.getByText(/Red or Green — v3\.8/)).toBeDefined();
   });
 
   it('récupère les stats au montage', async () => {

@@ -10,12 +10,11 @@ import {
   setAlgorithmConfig,
   resetAlgorithmConfig,
   DEFAULT_ALGORITHM_CONFIG,
-  AlgorithmConfig,
 } from '@/lib/algorithmConfig';
 
 // Reset config between tests
-beforeEach(() => {
-  resetAlgorithmConfig();
+beforeEach(async () => {
+  await resetAlgorithmConfig();
 });
 
 describe('getAlgorithmConfig', () => {
@@ -57,14 +56,14 @@ describe('getAlgorithmConfig', () => {
 });
 
 describe('setAlgorithmConfig', () => {
-  it('accepte une config valide avec poids totalisant 100', () => {
+  it('accepte une config valide avec poids totalisant 100', async () => {
     const config = { ...DEFAULT_ALGORITHM_CONFIG };
-    const result = setAlgorithmConfig(config);
+    const result = await setAlgorithmConfig(config);
     expect(result.success).toBe(true);
     expect(result.error).toBeUndefined();
   });
 
-  it('la config est persistée après un set réussi', () => {
+  it('la config est persistée après un set réussi', async () => {
     const config = { ...DEFAULT_ALGORITHM_CONFIG };
     config.strategies = {
       ...config.strategies,
@@ -73,97 +72,97 @@ describe('setAlgorithmConfig', () => {
       starred: { ...config.strategies.starred, weight: 7 },
       random: { ...config.strategies.random, weight: 3 },
     };
-    setAlgorithmConfig(config);
+    await setAlgorithmConfig(config);
     const retrieved = getAlgorithmConfig();
     expect(retrieved.strategies.elo_close.weight).toBe(70);
   });
 
-  it('rejette si aucune stratégie n\'est activée', () => {
+  it('rejette si aucune stratégie n\'est activée', async () => {
     const config = structuredClone(DEFAULT_ALGORITHM_CONFIG);
     for (const key of Object.keys(config.strategies) as Array<keyof typeof config.strategies>) {
       config.strategies[key].enabled = false;
     }
-    const result = setAlgorithmConfig(config);
+    const result = await setAlgorithmConfig(config);
     expect(result.success).toBe(false);
     expect(result.error).toContain('Au moins une stratégie');
   });
 
-  it('rejette si les poids ne totalisent pas 100', () => {
+  it('rejette si les poids ne totalisent pas 100', async () => {
     const config = structuredClone(DEFAULT_ALGORITHM_CONFIG);
     config.strategies.elo_close.weight = 90; // Total = 90+30+15+5 = 140
-    const result = setAlgorithmConfig(config);
+    const result = await setAlgorithmConfig(config);
     expect(result.success).toBe(false);
     expect(result.error).toContain('100%');
   });
 
-  it('accepte si seules les stratégies activées totalisent 100', () => {
+  it('accepte si seules les stratégies activées totalisent 100', async () => {
     const config = structuredClone(DEFAULT_ALGORITHM_CONFIG);
     config.strategies.starred.enabled = false;
     config.strategies.random.enabled = false;
     // elo_close=50, cross_category=30 → 80, besoin de 100
     config.strategies.elo_close.weight = 60;
     config.strategies.cross_category.weight = 40;
-    const result = setAlgorithmConfig(config);
+    const result = await setAlgorithmConfig(config);
     expect(result.success).toBe(true);
   });
 
-  it('rejette si minDifference > maxDifference pour ELO', () => {
+  it('rejette si minDifference > maxDifference pour ELO', async () => {
     const config = structuredClone(DEFAULT_ALGORITHM_CONFIG);
     config.elo.minDifference = 500;
     config.elo.maxDifference = 100;
-    const result = setAlgorithmConfig(config);
+    const result = await setAlgorithmConfig(config);
     expect(result.success).toBe(false);
     expect(result.error).toContain('ELO');
   });
 
-  it('rejette si minDifference est négatif', () => {
+  it('rejette si minDifference est négatif', async () => {
     const config = structuredClone(DEFAULT_ALGORITHM_CONFIG);
     config.elo.minDifference = -10;
-    const result = setAlgorithmConfig(config);
+    const result = await setAlgorithmConfig(config);
     expect(result.success).toBe(false);
   });
 
-  it('rejette si maxAppearancesPerSession < 1', () => {
+  it('rejette si maxAppearancesPerSession < 1', async () => {
     const config = structuredClone(DEFAULT_ALGORITHM_CONFIG);
     config.antiRepeat.maxAppearancesPerSession = 0;
-    const result = setAlgorithmConfig(config);
+    const result = await setAlgorithmConfig(config);
     expect(result.success).toBe(false);
     expect(result.error).toContain('apparitions');
   });
 
-  it('rejette si cooldownRounds est négatif', () => {
+  it('rejette si cooldownRounds est négatif', async () => {
     const config = structuredClone(DEFAULT_ALGORITHM_CONFIG);
     config.antiRepeat.cooldownRounds = -1;
-    const result = setAlgorithmConfig(config);
+    const result = await setAlgorithmConfig(config);
     expect(result.success).toBe(false);
     expect(result.error).toContain('cooldown');
   });
 });
 
 describe('resetAlgorithmConfig', () => {
-  it('reset la config aux valeurs par défaut', () => {
+  it('reset la config aux valeurs par défaut', async () => {
     const config = structuredClone(DEFAULT_ALGORITHM_CONFIG);
     config.strategies.elo_close.weight = 90;
     config.strategies.cross_category.weight = 10;
     config.strategies.starred.enabled = false;
     config.strategies.random.enabled = false;
-    setAlgorithmConfig(config);
+    await setAlgorithmConfig(config);
     
-    resetAlgorithmConfig();
+    await resetAlgorithmConfig();
     const retrieved = getAlgorithmConfig();
     expect(retrieved.strategies.elo_close.weight).toBe(50);
   });
 
-  it('après reset, getAlgorithmConfig retourne les valeurs par défaut', () => {
+  it('après reset, getAlgorithmConfig retourne les valeurs par défaut', async () => {
     const config = structuredClone(DEFAULT_ALGORITHM_CONFIG);
     config.candidatePoolSize = 999;
     config.strategies.elo_close.weight = 60;
     config.strategies.cross_category.weight = 25;
     config.strategies.starred.weight = 10;
     config.strategies.random.weight = 5;
-    setAlgorithmConfig(config);
+    await setAlgorithmConfig(config);
     
-    resetAlgorithmConfig();
+    await resetAlgorithmConfig();
     const retrieved = getAlgorithmConfig();
     expect(retrieved.candidatePoolSize).toBe(DEFAULT_ALGORITHM_CONFIG.candidatePoolSize);
   });
