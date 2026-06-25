@@ -44,7 +44,6 @@ export default function JouerPage() {
     initializeFromStorage,
     fetchNextDuel,
     submitVote,
-    submitFeedback,
     showNextDuel,
     resetGame,
     clearError,
@@ -157,44 +156,20 @@ export default function JouerPage() {
       if (streak === 3) toast('🔥 3 de suite !', { description: 'Tu es chaud·e ce soir !', duration: 2500 });
       else if (streak === 5) {
         toast('⚡ Streak x5 !', {
-          description: 'Défie un ami !',
-          duration: 4000,
-          action: {
-            label: '📤 Défier',
-            onClick: () => {
-              const text = `🔥 J'ai une streak de 5 sur Red or Green ! Tu penses faire mieux ?`;
-              if (navigator.share) navigator.share({ text, url: 'https://redorgreen.fr/jeu' }).catch(() => {});
-              else navigator.clipboard.writeText(`${text} → redorgreen.fr/jeu`).catch(() => {});
-            },
-          },
+          description: 'Continue, tu es en feu.',
+          duration: 2500,
         });
       }
       else if (streak === 10) {
         toast('🏆 Streak x10 !', {
-          description: 'Incroyable ! Partage ta performance !',
-          duration: 5000,
-          action: {
-            label: '📤 Partager',
-            onClick: () => {
-              const text = `🏆 Streak de 10 sur Red or Green ! Qui peut me battre ?`;
-              if (navigator.share) navigator.share({ text, url: 'https://redorgreen.fr/jeu' }).catch(() => {});
-              else navigator.clipboard.writeText(`${text} → redorgreen.fr/jeu`).catch(() => {});
-            },
-          },
+          description: 'Incroyable regularite.',
+          duration: 2800,
         });
       }
       else if (streak >= 15 && streak % 5 === 0) {
         toast(`🎯 Streak x${streak}`, {
-          description: 'Légendaire ! Partage ton exploit !',
-          duration: 5000,
-          action: {
-            label: '📤 Partager',
-            onClick: () => {
-              const text = `🎯 Streak de ${streak} sur Red or Green ! Je suis inarrêtable !`;
-              if (navigator.share) navigator.share({ text, url: 'https://redorgreen.fr/jeu' }).catch(() => {});
-              else navigator.clipboard.writeText(`${text} → redorgreen.fr/jeu`).catch(() => {});
-            },
-          },
+          description: 'Niveau legendaire.',
+          duration: 2800,
         });
       }
     }
@@ -207,16 +182,8 @@ export default function JouerPage() {
     prevDuelCountRef.current = duelCount;
     if (duelCount > prev && duelCount > 0 && duelCount % 10 === 0) {
       toast(`🎮 ${duelCount} duels joués !`, {
-        description: 'Invite tes amis à jouer !',
-        duration: 5000,
-        action: {
-          label: '📤 Inviter',
-          onClick: () => {
-            const text = `🎮 J'ai fait ${duelCount} duels sur Red or Green ! Viens jouer aussi →`;
-            if (navigator.share) navigator.share({ text, url: 'https://redorgreen.fr/jeu' }).catch(() => {});
-            else navigator.clipboard.writeText(`${text} redorgreen.fr/jeu`).catch(() => {});
-          },
-        },
+        description: 'Tu tiens le rythme, continue.',
+        duration: 2600,
       });
     }
   }, [duelCount]);
@@ -407,9 +374,6 @@ export default function JouerPage() {
             streak={streak}
             streakEmoji={streakEmoji}
             onNext={showNextDuel}
-            onStar={() => submitFeedback('star')}
-            onThumbsUp={() => submitFeedback('thumbs_up')}
-            onThumbsDown={() => submitFeedback('thumbs_down')}
           />
         ) : (
           <div className="flex-1 flex flex-col w-full">

@@ -1,7 +1,7 @@
 /**
  * @file ResultDisplay.test.tsx
- * @description Tests for ResultDisplay — result percentages, feedback buttons, streak, auto-advance.
- * Covers: card rendering, star/thumbs/share buttons, streak display, VS divider.
+ * @description Tests for ResultDisplay — result percentages, sober progression bar, streak, auto-advance.
+ * Covers: card rendering, "Suivant" CTA, streak display, VS divider.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -32,9 +32,6 @@ const makeResult = (winnerPct = 65): VoteResult => ({
 
 describe('ResultDisplay', () => {
   const onNext = vi.fn();
-  const onStar = vi.fn();
-  const onThumbsUp = vi.fn();
-  const onThumbsDown = vi.fn();
 
   const defaultProps = {
     duel: makeDuel(),
@@ -42,9 +39,6 @@ describe('ResultDisplay', () => {
     streak: 3,
     streakEmoji: '🔥',
     onNext,
-    onStar,
-    onThumbsUp,
-    onThumbsDown,
   };
 
   beforeEach(() => {
@@ -78,42 +72,13 @@ describe('ResultDisplay', () => {
     expect(screen.getByText(/Suivant/)).toBeDefined();
   });
 
-  it('affiche les boutons star, thumbs up, thumbs down, partage', () => {
+  it('n\'affiche pas de boutons feedback pendant la partie', () => {
     render(<ResultDisplay {...defaultProps} />);
     act(() => { vi.advanceTimersByTime(400); });
-    
-    expect(screen.getByLabelText(/Voter pour ce duel/)).toBeDefined();
-    expect(screen.getByLabelText(/J'aime ce duel/)).toBeDefined();
-    expect(screen.getByLabelText(/Je n'aime pas ce duel/)).toBeDefined();
-    expect(screen.getByLabelText(/Partager ce duel/)).toBeDefined();
-  });
-
-  it('appelle onStar au clic sur le bouton étoile', () => {
-    render(<ResultDisplay {...defaultProps} />);
-    act(() => { vi.advanceTimersByTime(400); });
-    
-    fireEvent.click(screen.getByLabelText(/Voter pour ce duel/));
-    expect(onStar).toHaveBeenCalledTimes(1);
-  });
-
-  it('désactive le bouton star après un clic', () => {
-    render(<ResultDisplay {...defaultProps} />);
-    act(() => { vi.advanceTimersByTime(400); });
-    
-    fireEvent.click(screen.getByLabelText(/Voter pour ce duel/));
-    fireEvent.click(screen.getByLabelText(/Duel déjà noté/));
-    // Should only call once
-    expect(onStar).toHaveBeenCalledTimes(1);
-  });
-
-  it('appelle onThumbsUp et onThumbsDown', () => {
-    render(<ResultDisplay {...defaultProps} />);
-    act(() => { vi.advanceTimersByTime(400); });
-    
-    fireEvent.click(screen.getByLabelText(/J'aime/));
-    fireEvent.click(screen.getByLabelText(/Je n'aime pas/));
-    expect(onThumbsUp).toHaveBeenCalledTimes(1);
-    expect(onThumbsDown).toHaveBeenCalledTimes(1);
+    expect(screen.queryByLabelText(/Voter pour ce duel/)).toBeNull();
+    expect(screen.queryByLabelText(/J'aime ce duel/)).toBeNull();
+    expect(screen.queryByLabelText(/Je n'aime pas ce duel/)).toBeNull();
+    expect(screen.queryByLabelText(/Partager ce duel/)).toBeNull();
   });
 
   it('appelle onNext au clic sur Suivant', () => {

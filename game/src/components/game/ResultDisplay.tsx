@@ -12,9 +12,6 @@ interface ResultDisplayProps {
   streak: number;
   streakEmoji: string;
   onNext: () => void;
-  onStar: () => void;
-  onThumbsUp: () => void;
-  onThumbsDown: () => void;
 }
 
 export function ResultDisplay({
@@ -23,9 +20,6 @@ export function ResultDisplay({
   streak,
   streakEmoji,
   onNext,
-  onStar,
-  onThumbsUp,
-  onThumbsDown,
 }: ResultDisplayProps) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [canClickToAdvance, setCanClickToAdvance] = useState(false);
@@ -193,15 +187,10 @@ export function ResultDisplay({
       <AnimatePresence>
         {showFeedback && (
           <FeedbackBar
-            duel={duel}
-            elementAStats={elementAStats}
             streak={streak}
             streakEmoji={streakEmoji}
             streakMatched={result.streak.matched}
             onNext={handleNext}
-            onStar={onStar}
-            onThumbsUp={onThumbsUp}
-            onThumbsDown={onThumbsDown}
           />
         )}
       </AnimatePresence>
