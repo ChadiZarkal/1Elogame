@@ -82,6 +82,10 @@ export function ResultDisplay({
   
   const flexA = result.isOptimistic ? 1 : (elementAIsMoreRedFlag ? flexBig : flexSmall);
   const flexB = result.isOptimistic ? 1 : (!elementAIsMoreRedFlag ? flexBig : flexSmall);
+  const splitRatio = Math.max(5, Math.min(95, (flexA / (flexA + flexB)) * 100));
+  const topColor = elementAIsMoreRedFlag ? '#991B1B' : '#047857';
+  const bottomColor = !elementAIsMoreRedFlag ? '#991B1B' : '#047857';
+  const splitBackground = `linear-gradient(180deg, ${topColor} 0%, ${topColor} ${splitRatio}%, ${bottomColor} ${splitRatio}%, ${bottomColor} 100%)`;
   
   useEffect(() => {
     if (result.isOptimistic) {
@@ -130,7 +134,8 @@ export function ResultDisplay({
   
   return (
     <div 
-      className="flex flex-col h-full w-full overflow-hidden bg-[#0D0D0D]"
+      className="flex flex-1 min-h-0 h-full w-full flex-col overflow-hidden"
+      style={{ background: splitBackground }}
       onClick={handleScreenClick}
     >
       {/* Correct/Wrong answer feedback — subtle overlay */}
@@ -209,10 +214,19 @@ export function ResultDisplay({
                 e.stopPropagation();
                 handleNext();
               }}
+              whileHover={{ scale: 1.03, y: -1 }}
               whileTap={{ scale: 0.96 }}
-              className="pointer-events-auto min-h-12 rounded-full border border-white/70 bg-white/95 px-7 py-2.5 text-sm font-black uppercase tracking-wide text-[#0F172A] shadow-[0_10px_35px_rgba(0,0,0,0.35)]"
+              className="group pointer-events-auto relative isolate min-h-12 overflow-hidden rounded-full border border-white/65 bg-[#0B1220]/92 px-7 py-2.5 text-sm font-black uppercase tracking-[0.14em] text-white shadow-[0_12px_36px_rgba(0,0,0,0.45)] backdrop-blur-md"
             >
-              Suivant
+              <span
+                aria-hidden
+                className="absolute inset-0 bg-[linear-gradient(120deg,rgba(239,68,68,0.33),rgba(30,41,59,0.18),rgba(16,185,129,0.28))] opacity-85 transition-opacity duration-200 group-hover:opacity-100"
+              />
+              <span aria-hidden className="absolute inset-[1px] rounded-full border border-white/15" />
+              <span className="relative inline-flex items-center gap-2">
+                <span>Suivant</span>
+                <span aria-hidden className="text-base leading-none">→</span>
+              </span>
             </motion.button>
           </motion.div>
         )}

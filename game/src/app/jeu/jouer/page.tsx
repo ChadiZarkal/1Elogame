@@ -8,12 +8,12 @@ import dynamic from 'next/dynamic';
 import { useGameStore, type PartySize } from '@/stores/gameStore';
 import { useOnlineStatus, useHaptics } from '@/lib/hooks';
 import { DuelInterface } from '@/components/game/DuelInterface';
+import { ResultDisplay } from '@/components/game/ResultDisplay';
 import { StreakDisplay } from '@/components/game/StreakDisplay';
 import { CategorySelector } from '@/components/game/CategorySelector';
 import { FullPageLoading } from '@/components/ui/Loading';
 
-// Lazy-load components only needed after first vote or rarely
-const ResultDisplay = dynamic(() => import('@/components/game/ResultDisplay').then(m => m.ResultDisplay), { ssr: false });
+// Lazy-load components only needed rarely
 const AllDuelsExhausted = dynamic(() => import('@/components/game/AllDuelsExhausted').then(m => m.AllDuelsExhausted), { ssr: false });
 const CompactResult = dynamic(() => import('@/components/game/CompactResult').then(m => m.CompactResult), { ssr: false });
 
@@ -290,7 +290,13 @@ export default function JouerPage() {
       )}
       
       {/* Current active duel/result - takes full screen height */}
-      <div className="w-full relative flex flex-col" style={{ minHeight: 'var(--app-height, 100dvh)' }}>
+      <div
+        className="w-full relative flex flex-col"
+        style={{
+          minHeight: 'var(--app-height, 100dvh)',
+          height: 'var(--app-height, 100dvh)',
+        }}
+      >
         {/* Top bar: home + streak + party progress */}
         <div className="absolute left-4 right-4 z-30 flex items-center justify-between" style={{ top: 'max(12px, env(safe-area-inset-top))' }}>
           <div className="flex items-center gap-2">
@@ -368,13 +374,15 @@ export default function JouerPage() {
         )}
         
         {showingResult && lastResult ? (
-          <ResultDisplay
-            duel={currentDuel}
-            result={lastResult}
-            streak={streak}
-            streakEmoji={streakEmoji}
-            onNext={showNextDuel}
-          />
+          <div className="flex-1 min-h-0 flex flex-col w-full">
+            <ResultDisplay
+              duel={currentDuel}
+              result={lastResult}
+              streak={streak}
+              streakEmoji={streakEmoji}
+              onNext={showNextDuel}
+            />
+          </div>
         ) : (
           <div className="flex-1 flex flex-col w-full">
             <DuelInterface

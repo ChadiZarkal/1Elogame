@@ -41,7 +41,7 @@ export function ResultCard({ element, stats, flexValue, isOptimistic }: ResultCa
 
   return (
     <motion.div
-      className={`relative flex items-center justify-center p-5 ${bgClass}`}
+      className={`relative min-h-0 flex items-center justify-center overflow-hidden p-5 ${bgClass}`}
       initial={{ flex: 1 }}
       animate={{ flex: flexValue }}
       transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
