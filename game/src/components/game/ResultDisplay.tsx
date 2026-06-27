@@ -172,16 +172,63 @@ export function ResultDisplay({
         isOptimistic={result.isOptimistic}
       />
       
-      <div className="relative h-0 z-20">
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <motion.div 
-            className="bg-[#0D0D0D] border-2 border-[#333] rounded-full w-12 h-12 flex items-center justify-center"
-            initial={{ scale: 1.2 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <span className="text-sm font-bold text-[#A3A3A3]">VS</span>
-          </motion.div>
+      <div className="relative h-0 z-30 pointer-events-none">
+        <div className="absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2">
+          <AnimatePresence>
+            {showNextCta && streak > 0 && (
+              <motion.div
+                className="rounded-full border border-white/30 bg-black/35 px-4 py-1.5 text-sm font-bold text-white backdrop-blur-md"
+                initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                transition={{ duration: 0.18 }}
+              >
+                Streak: {streak} {streakEmoji}
+                {result.streak.matched ? <span className="ml-2 text-[#34D399]">+1 🎯</span> : null}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence mode="wait" initial={false}>
+            {showNextCta ? (
+              <motion.button
+                key="next-cta"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNext();
+                }}
+                initial={{ opacity: 0, scale: 0.88, y: 4 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.88, y: -4 }}
+                transition={{ duration: 0.18 }}
+                whileHover={{ scale: 1.03, y: -1 }}
+                whileTap={{ scale: 0.96 }}
+                className="group pointer-events-auto relative isolate min-h-12 overflow-hidden rounded-full border border-white/65 bg-[#0B1220]/92 px-7 py-2.5 text-sm font-black uppercase tracking-[0.14em] text-white shadow-[0_12px_36px_rgba(0,0,0,0.45)] backdrop-blur-md"
+              >
+                <span
+                  aria-hidden
+                  className="absolute inset-0 bg-[linear-gradient(120deg,rgba(239,68,68,0.33),rgba(30,41,59,0.18),rgba(16,185,129,0.28))] opacity-85 transition-opacity duration-200 group-hover:opacity-100"
+                />
+                <span aria-hidden className="absolute inset-[1px] rounded-full border border-white/15" />
+                <span className="relative inline-flex items-center gap-2">
+                  <span>Suivant</span>
+                  <span aria-hidden className="text-base leading-none">→</span>
+                </span>
+              </motion.button>
+            ) : (
+              <motion.div
+                key="vs-badge"
+                className="bg-[#0D0D0D] border-2 border-[#333] rounded-full w-12 h-12 flex items-center justify-center"
+                initial={{ opacity: 0, scale: 1.08 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.92 }}
+                transition={{ duration: 0.16 }}
+              >
+                <span className="text-sm font-bold text-[#A3A3A3]">VS</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
       
@@ -191,46 +238,6 @@ export function ResultDisplay({
         flexValue={flexB}
         isOptimistic={result.isOptimistic}
       />
-
-      <AnimatePresence>
-        {showNextCta && (
-          <motion.div
-            className="absolute left-1/2 top-1/2 z-30 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3 pointer-events-none"
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.18 }}
-          >
-            {streak > 0 && (
-              <div className="rounded-full border border-white/30 bg-black/35 px-4 py-1.5 text-sm font-bold text-white backdrop-blur-md">
-                Streak: {streak} {streakEmoji}
-                {result.streak.matched ? <span className="ml-2 text-[#34D399]">+1 🎯</span> : null}
-              </div>
-            )}
-
-            <motion.button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNext();
-              }}
-              whileHover={{ scale: 1.03, y: -1 }}
-              whileTap={{ scale: 0.96 }}
-              className="group pointer-events-auto relative isolate min-h-12 overflow-hidden rounded-full border border-white/65 bg-[#0B1220]/92 px-7 py-2.5 text-sm font-black uppercase tracking-[0.14em] text-white shadow-[0_12px_36px_rgba(0,0,0,0.45)] backdrop-blur-md"
-            >
-              <span
-                aria-hidden
-                className="absolute inset-0 bg-[linear-gradient(120deg,rgba(239,68,68,0.33),rgba(30,41,59,0.18),rgba(16,185,129,0.28))] opacity-85 transition-opacity duration-200 group-hover:opacity-100"
-              />
-              <span aria-hidden className="absolute inset-[1px] rounded-full border border-white/15" />
-              <span className="relative inline-flex items-center gap-2">
-                <span>Suivant</span>
-                <span aria-hidden className="text-base leading-none">→</span>
-              </span>
-            </motion.button>
-          </motion.div>
-        )}
-      </AnimatePresence>
       
       {/* Indicateur de clic pour passer */}
       {canClickToAdvance && !showNextCta && (
