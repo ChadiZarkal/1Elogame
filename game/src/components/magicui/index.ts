@@ -5,5 +5,4 @@
 
 export { AnimatedGradientText } from './AnimatedGradientText';
 export { BorderBeam } from './BorderBeam';
-export { FlipWords } from './FlipWords';
 export { Sparkles } from './Sparkles';

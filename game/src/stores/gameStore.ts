@@ -150,7 +150,6 @@ interface GameState {
   
   fetchNextDuel: () => Promise<void>;
   submitVote: (winnerId: string, loserId: string) => Promise<void>;
-  submitFeedback: (type: 'star' | 'thumbs_up' | 'thumbs_down') => Promise<void>;
   
   showNextDuel: () => void;
   resetGame: () => void;
@@ -417,28 +416,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     } catch (error) {
       // Keep optimistic result — don't disrupt UX for network errors 
       console.warn('Vote submission error:', error instanceof Error ? error.message : error);
-    }
-  },
-  
-  // Submit feedback (star or thumbs)
-  submitFeedback: async (type: 'star' | 'thumbs_up' | 'thumbs_down') => {
-    const { currentDuel } = get();
-    
-    if (!currentDuel) return;
-    
-    try {
-      await fetch('/api/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          elementAId: currentDuel.elementA.id,
-          elementBId: currentDuel.elementB.id,
-          type,
-        }),
-      });
-      // Fire and forget - don't wait for response
-    } catch {
-      // Silently ignore feedback errors
     }
   },
   
