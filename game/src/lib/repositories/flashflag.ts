@@ -576,7 +576,7 @@ export async function listFlashFlagStandardTests(): Promise<Array<{ id: string; 
   }));
 }
 
-export async function getFlashFlagTestById(id: string): Promise<FlashFlagTestDTO | null> {
+async function getFlashFlagTestByIdInternal(id: string, includeInactive: boolean): Promise<FlashFlagTestDTO | null> {
   if (isMockMode()) {
     return mockStandardTests.find((test) => test.id === id) || null;
   }
@@ -594,7 +594,8 @@ export async function getFlashFlagTestById(id: string): Promise<FlashFlagTestDTO
   if (testError) {
     if (isFlashFlagTableMissingError(testError.message)) {
       const compatTest = await getCompatStandardTestById(id);
-      if (!compatTest || !compatTest.is_active) return null;
+      if (!compatTest) return null;
+      if (!includeInactive && !compatTest.is_active) return null;
       return toFlashFlagTest(compatTest);
     }
     throw new Error(`DB error loading flashflag test: ${testError.message}`);
@@ -602,11 +603,12 @@ export async function getFlashFlagTestById(id: string): Promise<FlashFlagTestDTO
 
   if (!typedTest) {
     const compatTest = await getCompatStandardTestById(id);
-    if (!compatTest || !compatTest.is_active) return null;
+    if (!compatTest) return null;
+    if (!includeInactive && !compatTest.is_active) return null;
     return toFlashFlagTest(compatTest);
   }
 
-  if (!typedTest.is_active) return null;
+  if (!includeInactive && !typedTest.is_active) return null;
 
   const { data: questions, error: questionError } = await supabase
     .from('flashflag_questions')
@@ -617,7 +619,8 @@ export async function getFlashFlagTestById(id: string): Promise<FlashFlagTestDTO
   if (questionError) {
     if (isFlashFlagTableMissingError(questionError.message)) {
       const compatTest = await getCompatStandardTestById(id);
-      if (!compatTest || !compatTest.is_active) return null;
+      if (!compatTest) return null;
+      if (!includeInactive && !compatTest.is_active) return null;
       return toFlashFlagTest(compatTest);
     }
     throw new Error(`DB error loading flashflag questions: ${questionError.message}`);
@@ -637,6 +640,14 @@ export async function getFlashFlagTestById(id: string): Promise<FlashFlagTestDTO
     description: typedTest.description,
     questions: mapQuestions(typedQuestions),
   };
+}
+
+export async function getFlashFlagTestById(id: string): Promise<FlashFlagTestDTO | null> {
+  return getFlashFlagTestByIdInternal(id, false);
+}
+
+export async function getAdminFlashFlagTestById(id: string): Promise<FlashFlagTestDTO | null> {
+  return getFlashFlagTestByIdInternal(id, true);
 }
 
 export async function createFlashFlagSession(input: {

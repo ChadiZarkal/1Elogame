@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { withApiHandler, validateBody, apiSuccess, apiError } from '@/lib/apiHelpers';
-import { getFlashFlagTestById, updateAdminFlashFlagTest, disableAdminFlashFlagTest } from '@/lib/repositories';
+import { getAdminFlashFlagTestById, updateAdminFlashFlagTest, disableAdminFlashFlagTest } from '@/lib/repositories';
 import { flashFlagAdminUpdateSchema } from '@/lib/validations';
 
 export const dynamic = 'force-dynamic';
@@ -10,7 +10,7 @@ export const GET = withApiHandler(async (
   ctx,
 ) => {
   const { id } = await (ctx as { params: Promise<{ id: string }> }).params;
-  const test = await getFlashFlagTestById(id);
+  const test = await getAdminFlashFlagTestById(id);
   if (!test) return apiError('NOT_FOUND', 'Test introuvable', 404);
   return apiSuccess({ test });
 }, { requireAdmin: true });

@@ -15,6 +15,7 @@ export { saveAnalyticsSession, getAnalyticsSessions } from './analytics';
 export {
 	listFlashFlagStandardTests,
 	getFlashFlagTestById,
+	getAdminFlashFlagTestById,
 	createFlashFlagSession,
 	getFlashFlagSessionByCode,
 	startFlashFlagSession,

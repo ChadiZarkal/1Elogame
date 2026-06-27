@@ -94,7 +94,7 @@ export const flashFlagQuestionSchema = z.object({
 export const flashFlagCustomTestSchema = z.object({
   name: z.string().min(3).max(80),
   description: z.string().max(240).optional().nullable(),
-  questions: z.array(flashFlagQuestionSchema).length(10),
+  questions: z.array(flashFlagQuestionSchema).min(5).max(20),
 });
 
 export const flashFlagCreateSessionSchema = z.object({
