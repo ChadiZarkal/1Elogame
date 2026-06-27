@@ -424,7 +424,7 @@ export default function AdminFlashFlagPage() {
         <header className="rounded-2xl border border-[#2F2F2F] bg-[linear-gradient(130deg,#121212_0%,#181818_65%,#2A1212_100%)] p-5 sm:p-6">
           <h1 className="text-2xl font-black tracking-tight">Admin Flash Flag</h1>
           <p className="mt-2 text-sm text-[#C4C4C4]">
-            Ici vous creez et modifiez les tests standards proposes aux joueurs. L objectif est de garder un parcours clair et comprehensible.
+            Cree, modifie et republie les tests standards avec une interface plus rapide a manipuler.
           </p>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -500,18 +500,15 @@ export default function AdminFlashFlagPage() {
 
             <div className="flex gap-2 flex-wrap">
               <button
-                className="rounded border border-[#444] px-3 py-2 text-sm disabled:opacity-40"
-                onClick={addQuestion}
-                disabled={questions.length >= MAX_QUESTIONS}
-              >
-                + Question
-              </button>
-              <button
                 className="rounded border border-[#444] px-3 py-2 text-sm"
                 onClick={resetForm}
               >
                 Reinitialiser le formulaire
               </button>
+            </div>
+
+            <div className="rounded-xl border border-[#343434] bg-[#121212] p-3 text-xs text-[#A3A3A3]">
+              Conseil edition: ajoute tes nouvelles questions en bas pour garder le fil de creation sans remonter en haut.
             </div>
 
             <div className="space-y-3 max-h-[65vh] overflow-y-auto pr-1">
@@ -586,6 +583,19 @@ export default function AdminFlashFlagPage() {
                   </div>
                 </div>
               ))}
+
+              <div className="rounded-xl border border-dashed border-[#555] bg-[#121212] p-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-xs text-[#A3A3A3]">Ajoute une nouvelle question a la fin de la liste.</p>
+                  <button
+                    className="rounded border border-[#444] px-3 py-2 text-sm disabled:opacity-40"
+                    onClick={addQuestion}
+                    disabled={questions.length >= MAX_QUESTIONS}
+                  >
+                    + Ajouter une question en bas
+                  </button>
+                </div>
+              </div>
             </div>
 
             <button

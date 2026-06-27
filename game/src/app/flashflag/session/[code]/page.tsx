@@ -126,6 +126,13 @@ export default function FlashFlagSessionPage() {
   const currentQuestion = session?.test.questions[index] || null;
   const totalQuestions = session?.test.questions.length || 0;
 
+  const questionTimeLimitMs = currentQuestion ? currentQuestion.timeLimitSec * 1000 : 0;
+  const questionRemainingRatio = questionTimeLimitMs > 0
+    ? Math.max(0, Math.min(1, remainingMs / questionTimeLimitMs))
+    : 0;
+  const timerAccent = questionRemainingRatio <= 0.2 ? '#EF4444' : questionRemainingRatio <= 0.45 ? '#F59E0B' : '#22C55E';
+  const timerStrokeOffset = 176 - (176 * questionRemainingRatio);
+
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.hash.includes('payload=')) {
       const inlineSession = parseInlineSessionFromHash(window.location.hash);
@@ -424,6 +431,10 @@ export default function FlashFlagSessionPage() {
             <h1 className="text-2xl font-black">{session.test.name}</h1>
             {session.test.description && <p className="text-sm text-[#D4D4D8]">{session.test.description}</p>}
 
+            <div className="rounded-xl border border-white/10 bg-[#15161A] p-3 text-sm text-[#E5E7EB]">
+              Format ultra simple: la personne repond vite, sans retour arriere, et tu vois si les valeurs sont compatibles.
+            </div>
+
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-xl border border-white/10 bg-[#17181B] p-3">
                 <p className="text-[11px] text-[#A3A3A3]">Questions</p>
@@ -440,7 +451,7 @@ export default function FlashFlagSessionPage() {
             </div>
 
             <div className="rounded-xl border border-[#7F1D1D] bg-[#1A1212] p-3 text-sm text-[#FECACA]">
-              Repondez rapidement, sans retour arriere. Si le temps se termine, la question passe automatiquement a 0 point.
+              Challenge chrono: pas de retour arriere. Si le temps tombe a zero, c est automatiquement 0 point.
             </div>
 
             <button
@@ -452,12 +463,49 @@ export default function FlashFlagSessionPage() {
           </section>
         ) : (
           <>
-            <header className="rounded-xl border border-[#1E1E1E] bg-[#111] p-3 shadow-[0_8px_40px_rgba(0,0,0,0.25)]">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs text-[#D4D4D8]">Question {index + 1}/{totalQuestions}</p>
-                <p className="text-xs text-[#FCA5A5]">Temps restant: {(remainingMs / 1000).toFixed(1)}s</p>
+            <header className="rounded-2xl border border-[#1E1E1E] bg-[#111] p-4 shadow-[0_8px_40px_rgba(0,0,0,0.25)]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs text-[#D4D4D8]">Question {index + 1}/{totalQuestions}</p>
+                  <p className="mt-1 text-[11px] text-[#A3A3A3]">Avancement du test: {progressPercent}%</p>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#18191D] px-3 py-2">
+                  <svg width="64" height="64" viewBox="0 0 64 64" className="shrink-0">
+                    <circle cx="32" cy="32" r="28" fill="none" stroke="#25262B" strokeWidth="6" />
+                    <circle
+                      cx="32"
+                      cy="32"
+                      r="28"
+                      fill="none"
+                      stroke={timerAccent}
+                      strokeWidth="6"
+                      strokeLinecap="round"
+                      strokeDasharray="176"
+                      strokeDashoffset={timerStrokeOffset}
+                      transform="rotate(-90 32 32)"
+                    />
+                    <text x="32" y="36" textAnchor="middle" fill="#FAFAFA" fontSize="14" fontWeight="700">
+                      {(remainingMs / 1000).toFixed(1)}
+                    </text>
+                  </svg>
+
+                  <div className="min-w-32.5">
+                    <p className="text-[11px] text-[#A3A3A3]">Temps restant</p>
+                    <p className="text-sm font-semibold" style={{ color: timerAccent }}>
+                      {questionRemainingRatio <= 0.2 ? 'Urgence' : questionRemainingRatio <= 0.45 ? 'Depense rapide' : 'Zone confortable'}
+                    </p>
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#25262B]">
+                      <div
+                        className="h-full transition-[width] duration-75"
+                        style={{ width: `${Math.round(questionRemainingRatio * 100)}%`, background: timerAccent }}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#202125]">
+
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[#202125]">
                 <div className="h-full bg-[#EF4444]" style={{ width: `${progressPercent}%` }} />
               </div>
             </header>

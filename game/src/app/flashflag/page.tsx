@@ -177,7 +177,7 @@ export default function FlashFlagPage() {
       .catch(() => {
         setTests([]);
         setSelectedTestId('');
-        setError('Impossible de charger les tests standards admin pour le moment.');
+        setError('Impossible de charger les tests standards pour le moment.');
       });
   }, []);
 
@@ -440,27 +440,27 @@ export default function FlashFlagPage() {
   }, [watchData]);
 
   return (
-    <main className="relative min-h-dvh overflow-hidden bg-[#0A0A0B] text-[#FAFAFA] px-4 py-6 sm:py-8">
+    <main className="relative min-h-dvh overflow-hidden bg-[#09090A] text-[#FAFAFA] px-4 py-6 sm:py-8">
       <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/12 blur-3xl" />
-        <div className="absolute top-20 right-0 h-72 w-72 translate-x-1/3 rounded-full bg-[#F59E0B]/10 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-80 w-80 -translate-x-1/4 rounded-full bg-[#EF4444]/8 blur-3xl" />
+        <div className="absolute inset-0 bg-[repeating-linear-gradient(-45deg,transparent,transparent_14px,rgba(255,255,255,0.5)_14px,rgba(255,255,255,0.5)_15px)] opacity-[0.05]" />
+        <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/14 blur-3xl" />
+        <div className="absolute top-20 right-0 h-72 w-72 translate-x-1/3 rounded-full bg-[#F59E0B]/12 blur-3xl" />
+        <div className="absolute bottom-0 left-0 h-80 w-80 -translate-x-1/4 rounded-full bg-[#EF4444]/10 blur-3xl" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-5xl space-y-6">
-        <Link href="/" className="inline-flex min-h-12 min-w-12 items-center gap-2 text-sm text-[#A1A1AA] hover:text-white transition-colors active:scale-95">
+        <Link href="/" className="inline-flex min-h-12 min-w-12 items-center gap-2 rounded-lg px-2 text-sm text-[#A1A1AA] transition-colors hover:bg-white/5 hover:text-white active:scale-95">
           <span>←</span>
           <span>Retour accueil</span>
         </Link>
 
-        <header className="rounded-3xl border border-[#262626] bg-[linear-gradient(125deg,#111_0%,#161616_60%,#1E0F10_100%)] p-5 sm:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.4)]">
+        <header className="rounded-3xl border border-[#2B2B2D] bg-[linear-gradient(125deg,#101012_0%,#161619_58%,#2A1318_100%)] p-5 sm:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-2xl">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-[#A1A1AA]">Red or Green • Flash Flag</p>
-              <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Evaluer une dynamique de relation, sans jargon</h1>
-              <p className="mt-3 text-sm text-[#D4D4D8] sm:text-base">
-                Vous choisissez un test, vous lancez la session, puis vous obtenez un score lisible en quelques minutes.
-                Tout est en francais et pense pour etre compris des la premiere utilisation.
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#FCA5A5]">Flash Flag Sprint</p>
+              <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Match sympa ou mega red flag ?</h1>
+              <p className="mt-3 text-sm text-[#E4E4E7] sm:text-base">
+                Tu envoies le test, la personne repond vite, et tu vois direct si vos valeurs matchent.
               </p>
             </div>
             <Image
@@ -472,30 +472,39 @@ export default function FlashFlagPage() {
             />
           </div>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-              <p className="text-xs font-semibold text-[#FCA5A5]">Pourquoi</p>
-              <p className="mt-1 text-xs text-[#D4D4D8]">Identifier rapidement les signaux de vigilance dans une interaction.</p>
+          <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#FCD34D]">Exemple reel</p>
+            <p className="mt-1 text-sm text-[#E5E7EB]">
+              Tu discutes avec quelqu un sur Tinder et vous parlez d un rendez-vous. Tu envoies Flash Flag: en 2 minutes,
+              tu sais si c est alignement de valeurs ou gros warning.
+            </p>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-black/25 p-3">
+              <p className="text-xs font-semibold text-[#FCA5A5]">⚡ Rapide</p>
+              <p className="mt-1 text-xs text-[#D4D4D8]">Un mini sprint de questions, pas de roman.</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-              <p className="text-xs font-semibold text-[#FCD34D]">Comment</p>
-              <p className="mt-1 text-xs text-[#D4D4D8]">Questions chronometrees, sans retour arriere, reponses instinctives.</p>
+            <div className="rounded-2xl border border-white/10 bg-black/25 p-3">
+              <p className="text-xs font-semibold text-[#FCD34D]">⏱ Instinctif</p>
+              <p className="mt-1 text-xs text-[#D4D4D8]">Temps court par question pour eviter le baratin.</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-              <p className="text-xs font-semibold text-[#86EFAC]">Resultat</p>
-              <p className="mt-1 text-xs text-[#D4D4D8]">Score + niveau de risque + recap des reponses pour mieux comprendre.</p>
+            <div className="rounded-2xl border border-white/10 bg-black/25 p-3">
+              <p className="text-xs font-semibold text-[#86EFAC]">🔗 Partageable</p>
+              <p className="mt-1 text-xs text-[#D4D4D8]">Tu peux envoyer un lien ou le faire direct sur place.</p>
             </div>
           </div>
         </header>
 
         <section className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-2xl border border-[#262626] bg-[#111] p-5 space-y-4 shadow-[0_8px_36px_rgba(0,0,0,0.25)]">
+          <div className="rounded-2xl border border-[#2B2B2D] bg-[#111113] p-5 shadow-[0_8px_36px_rgba(0,0,0,0.3)]">
             <h2 className="text-lg font-bold">1. Qui est evalue ?</h2>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <p className="mt-1 text-xs text-[#A3A3A3]">Profil de la personne qui va repondre au test.</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <label className="space-y-2">
                 <span className="text-sm text-[#D4D4D8]">Sexe</span>
                 <select
-                  className="w-full rounded-xl border border-white/12 bg-[#17181B] px-3 py-2.5 focus:outline-none focus:border-[#EF4444]/70 focus:ring-2 focus:ring-[#EF4444]/20"
+                  className="w-full rounded-xl border border-white/12 bg-[#17181B] px-3 py-2.5 focus:border-[#EF4444]/70 focus:outline-none focus:ring-2 focus:ring-[#EF4444]/20"
                   value={subjectSex}
                   onChange={(event) => setSubjectSex(event.target.value as SubjectSex)}
                 >
@@ -510,7 +519,7 @@ export default function FlashFlagPage() {
                   type="number"
                   min={16}
                   max={99}
-                  className="w-full rounded-xl border border-white/12 bg-[#17181B] px-3 py-2.5 focus:outline-none focus:border-[#EF4444]/70 focus:ring-2 focus:ring-[#EF4444]/20"
+                  className="w-full rounded-xl border border-white/12 bg-[#17181B] px-3 py-2.5 focus:border-[#EF4444]/70 focus:outline-none focus:ring-2 focus:ring-[#EF4444]/20"
                   value={subjectAge}
                   onChange={(event) => setSubjectAge(Number(event.target.value))}
                 />
@@ -518,48 +527,35 @@ export default function FlashFlagPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[#262626] bg-[#111] p-5 space-y-4 shadow-[0_8px_36px_rgba(0,0,0,0.25)]">
-            <h2 className="text-lg font-bold">2. Comment lancer la session ?</h2>
-            <div className="flex gap-2">
+          <div className="rounded-2xl border border-[#2B2B2D] bg-[#111113] p-5 shadow-[0_8px_36px_rgba(0,0,0,0.3)]">
+            <h2 className="text-lg font-bold">2. Quel type de test envoyer ?</h2>
+            <p className="mt-1 text-xs text-[#A3A3A3]">Selectionne d abord le format du questionnaire.</p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <button
-                className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${mode === 'local' ? 'bg-[#2A1519] border-[#EF4444] text-white' : 'bg-transparent border-white/15 text-[#C9CBD1] hover:border-white/25 hover:text-white'}`}
-                onClick={() => setMode('local')}
+                className={`rounded-2xl border p-3 text-left transition ${sourceType === 'standard' ? 'border-[#EF4444] bg-[#2A1519] text-white shadow-[0_0_0_1px_rgba(239,68,68,0.25)]' : 'border-white/12 bg-[#17181B] text-[#D4D4D8] hover:border-white/25 hover:text-white'}`}
+                onClick={() => setSourceType('standard')}
               >
-                Joueur local
+                <p className="text-sm font-bold">⚙ Test standard</p>
+                <p className="mt-1 text-xs text-current/80">Liste prete, creee dans l admin.</p>
               </button>
+
               <button
-                className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${mode === 'link' ? 'bg-[#2A1519] border-[#EF4444] text-white' : 'bg-transparent border-white/15 text-[#C9CBD1] hover:border-white/25 hover:text-white'}`}
-                onClick={() => setMode('link')}
+                className={`rounded-2xl border p-3 text-left transition ${sourceType === 'custom' ? 'border-[#EF4444] bg-[#2A1519] text-white shadow-[0_0_0_1px_rgba(239,68,68,0.25)]' : 'border-white/12 bg-[#17181B] text-[#D4D4D8] hover:border-white/25 hover:text-white'}`}
+                onClick={() => setSourceType('custom')}
               >
-                Invitation par lien
+                <p className="text-sm font-bold">🧩 Test perso</p>
+                <p className="mt-1 text-xs text-current/80">De {CUSTOM_MIN_QUESTIONS} a {CUSTOM_MAX_QUESTIONS} questions.</p>
               </button>
             </div>
-            <p className="text-xs text-[#A3A3A3]">
-              En local, vous lancez le test sur cet appareil. En lien, la personne repond depuis son propre telephone.
-            </p>
           </div>
         </section>
 
-        <section className="rounded-2xl border border-[#262626] bg-[#111] p-5 space-y-4 shadow-[0_8px_36px_rgba(0,0,0,0.25)]">
-          <h2 className="text-lg font-bold">3. Choisissez le contenu du test</h2>
-
-          <div className="flex gap-2 flex-wrap">
-            <button
-              className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${sourceType === 'standard' ? 'bg-[#2A1519] border-[#EF4444] text-white' : 'bg-transparent border-white/15 text-[#C9CBD1] hover:border-white/25 hover:text-white'}`}
-              onClick={() => setSourceType('standard')}
-            >
-              Test standard admin
-            </button>
-            <button
-              className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${sourceType === 'custom' ? 'bg-[#2A1519] border-[#EF4444] text-white' : 'bg-transparent border-white/15 text-[#C9CBD1] hover:border-white/25 hover:text-white'}`}
-              onClick={() => setSourceType('custom')}
-            >
-              Test perso ({CUSTOM_MIN_QUESTIONS} a {CUSTOM_MAX_QUESTIONS} questions)
-            </button>
-          </div>
+        <section className="rounded-2xl border border-[#2B2B2D] bg-[#111113] p-5 shadow-[0_8px_36px_rgba(0,0,0,0.3)]">
+          <h2 className="text-lg font-bold">3. Regler le contenu du test</h2>
 
           {sourceType === 'standard' ? (
-            <div className="space-y-3">
+            <div className="mt-4 space-y-3">
               {tests.length === 0 ? (
                 <p className="text-sm text-[#FCA5A5]">Aucun test standard actif n est disponible pour le moment.</p>
               ) : (
@@ -590,13 +586,13 @@ export default function FlashFlagPage() {
               )}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="mt-4 space-y-4">
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="space-y-2">
                   <span className="text-sm text-[#D4D4D8]">Nom du test perso</span>
                   <input
-                    className="w-full rounded-xl border border-white/12 bg-[#17181B] px-3 py-2.5 focus:outline-none focus:border-[#EF4444]/70 focus:ring-2 focus:ring-[#EF4444]/20"
-                    placeholder="Ex: Communication et limites"
+                    className="w-full rounded-xl border border-white/12 bg-[#17181B] px-3 py-2.5 focus:border-[#EF4444]/70 focus:outline-none focus:ring-2 focus:ring-[#EF4444]/20"
+                    placeholder="Ex: Valeurs et respect"
                     value={customName}
                     onChange={(event) => setCustomName(event.target.value)}
                   />
@@ -604,8 +600,8 @@ export default function FlashFlagPage() {
                 <label className="space-y-2">
                   <span className="text-sm text-[#D4D4D8]">Description (optionnelle)</span>
                   <input
-                    className="w-full rounded-xl border border-white/12 bg-[#17181B] px-3 py-2.5 focus:outline-none focus:border-[#EF4444]/70 focus:ring-2 focus:ring-[#EF4444]/20"
-                    placeholder="Contexte, objectif, ton"
+                    className="w-full rounded-xl border border-white/12 bg-[#17181B] px-3 py-2.5 focus:border-[#EF4444]/70 focus:outline-none focus:ring-2 focus:ring-[#EF4444]/20"
+                    placeholder="Ex: questions claires et directes"
                     value={customDescription}
                     onChange={(event) => setCustomDescription(event.target.value)}
                   />
@@ -617,24 +613,15 @@ export default function FlashFlagPage() {
                   <p className="text-sm text-[#E4E4E7]">
                     {customQuestions.length} question(s) • {customEstimatedDuration}
                   </p>
-                  <div className="flex gap-2">
-                    <button
-                      className="rounded-lg border border-white/20 px-2.5 py-1.5 text-xs text-[#E4E4E7] hover:border-white/35"
-                      onClick={addQuestion}
-                      disabled={customQuestions.length >= CUSTOM_MAX_QUESTIONS}
-                    >
-                      + Ajouter une question
-                    </button>
-                    <button
-                      className="rounded-lg border border-[#7F1D1D] px-2.5 py-1.5 text-xs text-[#FCA5A5] hover:bg-[#2A1519]"
-                      onClick={resetCustomDraft}
-                    >
-                      Reinitialiser
-                    </button>
-                  </div>
+                  <button
+                    className="rounded-lg border border-[#7F1D1D] px-2.5 py-1.5 text-xs text-[#FCA5A5] hover:bg-[#2A1519]"
+                    onClick={resetCustomDraft}
+                  >
+                    Reinitialiser
+                  </button>
                 </div>
                 <p className="mt-2 text-xs text-[#A3A3A3]">
-                  Vous pouvez adapter librement entre {CUSTOM_MIN_QUESTIONS} et {CUSTOM_MAX_QUESTIONS} questions.
+                  Tu peux adapter librement entre {CUSTOM_MIN_QUESTIONS} et {CUSTOM_MAX_QUESTIONS} questions.
                 </p>
               </div>
 
@@ -653,7 +640,7 @@ export default function FlashFlagPage() {
                     </div>
 
                     <input
-                      className="w-full rounded-lg border border-white/12 bg-[#131416] px-2.5 py-2 text-sm focus:outline-none focus:border-[#EF4444]/70 focus:ring-2 focus:ring-[#EF4444]/20"
+                      className="w-full rounded-lg border border-white/12 bg-[#131416] px-2.5 py-2 text-sm focus:border-[#EF4444]/70 focus:outline-none focus:ring-2 focus:ring-[#EF4444]/20"
                       placeholder="Texte de la question"
                       value={question.text}
                       onChange={(event) => updateQuestion(qIndex, { text: event.target.value })}
@@ -665,7 +652,7 @@ export default function FlashFlagPage() {
                         type="number"
                         min={3}
                         max={30}
-                        className="w-24 rounded-lg border border-white/12 bg-[#131416] px-2 py-1.5 text-sm focus:outline-none focus:border-[#EF4444]/70 focus:ring-2 focus:ring-[#EF4444]/20"
+                        className="w-24 rounded-lg border border-white/12 bg-[#131416] px-2 py-1.5 text-sm focus:border-[#EF4444]/70 focus:outline-none focus:ring-2 focus:ring-[#EF4444]/20"
                         value={question.timeLimitSec}
                         onChange={(event) => updateQuestion(qIndex, { timeLimitSec: Number(event.target.value) })}
                       />
@@ -675,13 +662,13 @@ export default function FlashFlagPage() {
                       {question.options.map((option, optIndex) => (
                         <div key={optIndex} className="grid grid-cols-[1fr_auto_auto] gap-2">
                           <input
-                            className="rounded-lg border border-white/12 bg-[#131416] px-2 py-1.5 text-sm focus:outline-none focus:border-[#EF4444]/70 focus:ring-2 focus:ring-[#EF4444]/20"
+                            className="rounded-lg border border-white/12 bg-[#131416] px-2 py-1.5 text-sm focus:border-[#EF4444]/70 focus:outline-none focus:ring-2 focus:ring-[#EF4444]/20"
                             placeholder={`Option ${optIndex + 1}`}
                             value={option.text}
                             onChange={(event) => updateOption(qIndex, optIndex, { text: event.target.value })}
                           />
                           <select
-                            className="rounded-lg border border-white/12 bg-[#131416] px-2 py-1.5 text-sm focus:outline-none focus:border-[#EF4444]/70 focus:ring-2 focus:ring-[#EF4444]/20"
+                            className="rounded-lg border border-white/12 bg-[#131416] px-2 py-1.5 text-sm focus:border-[#EF4444]/70 focus:outline-none focus:ring-2 focus:ring-[#EF4444]/20"
                             value={option.score}
                             onChange={(event) => updateOption(qIndex, optIndex, { score: Number(event.target.value) as 0 | 1 | 2 })}
                           >
@@ -711,19 +698,55 @@ export default function FlashFlagPage() {
                   </div>
                 ))}
               </div>
+
+              <div className="rounded-2xl border border-dashed border-white/20 bg-[#111216] p-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-xs text-[#A3A3A3]">Besoin d une question en plus ? Ajoute-la directement en bas.</p>
+                  <button
+                    className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-[#E4E4E7] hover:border-white/35 disabled:opacity-40"
+                    onClick={addQuestion}
+                    disabled={customQuestions.length >= CUSTOM_MAX_QUESTIONS}
+                  >
+                    + Ajouter une question en bas
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </section>
 
-        <section className="rounded-2xl border border-[#262626] bg-[#111] p-5 space-y-4 shadow-[0_8px_36px_rgba(0,0,0,0.25)]">
-          <h2 className="text-lg font-bold">4. Lancer le test</h2>
+        <section className="rounded-2xl border border-[#2B2B2D] bg-[#111113] p-5 space-y-4 shadow-[0_8px_36px_rgba(0,0,0,0.3)]">
+          <h2 className="text-lg font-bold">4. Choisir l envoi puis lancer</h2>
+          <p className="text-xs text-[#A3A3A3]">Derniere etape: choisis le mode d envoi juste avant de generer la session.</p>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              className={`rounded-2xl border p-4 text-left transition ${mode === 'local' ? 'border-[#EF4444] bg-[#2A1519] text-white shadow-[0_0_0_1px_rgba(239,68,68,0.25)]' : 'border-white/12 bg-[#17181B] text-[#D4D4D8] hover:border-white/25 hover:text-white'}`}
+              onClick={() => setMode('local')}
+            >
+              <p className="text-sm font-bold">📱 Jouer en local</p>
+              <p className="mt-1 text-xs text-current/80">Tu gardes le telephone et la personne repond tout de suite.</p>
+            </button>
+
+            <button
+              className={`rounded-2xl border p-4 text-left transition ${mode === 'link' ? 'border-[#EF4444] bg-[#2A1519] text-white shadow-[0_0_0_1px_rgba(239,68,68,0.25)]' : 'border-white/12 bg-[#17181B] text-[#D4D4D8] hover:border-white/25 hover:text-white'}`}
+              onClick={() => setMode('link')}
+            >
+              <p className="text-sm font-bold">🔗 Envoyer un lien</p>
+              <p className="mt-1 text-xs text-current/80">Tu partages l URL, la personne repond depuis son appareil.</p>
+            </button>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-[#15161A] p-3 text-xs text-[#D4D4D8]">
+            En local: usage immediat sur cet ecran. En lien: ideal pour un envoi en message avant un rendez-vous.
+          </div>
 
           <button
             disabled={!canCreate || loading}
             onClick={createSession}
-            className="w-full rounded-xl bg-[#EF4444] px-4 py-3 font-bold transition-colors hover:bg-[#F87171] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full rounded-xl bg-[#EF4444] px-4 py-3 font-bold transition-colors hover:bg-[#F87171] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {loading ? 'Generation en cours...' : 'Generer et demarrer'}
+            {loading ? 'Generation en cours...' : mode === 'link' ? 'Generer le lien a partager' : 'Demarrer sur cet appareil'}
           </button>
 
           {createdLink && (
