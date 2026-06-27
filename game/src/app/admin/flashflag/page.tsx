@@ -19,6 +19,20 @@ interface DraftQuestion {
   options: Array<{ text: string; score: 0 | 1 | 2 }>;
 }
 
+function toUiErrorMessage(action: 'load' | 'create' | 'disable', err: unknown): string {
+  const raw = err instanceof Error ? err.message : 'Erreur inconnue';
+  if (/Une erreur interne est survenue/i.test(raw)) {
+    if (action === 'load') {
+      return 'Impossible de charger les tests standards pour le moment. Verifiez les migrations FlashFlag ou la connexion Supabase.';
+    }
+    if (action === 'create') {
+      return 'Le test n a pas pu etre publie. Verifiez la connexion a la base puis reessayez.';
+    }
+    return 'La desactivation a echoue. Verifiez la connexion a la base puis reessayez.';
+  }
+  return raw;
+}
+
 export default function AdminFlashFlagPage() {
   const router = useRouter();
   const [tests, setTests] = useState<AdminTest[]>([]);
@@ -32,6 +46,9 @@ export default function AdminFlashFlagPage() {
   const [questions, setQuestions] = useState<DraftQuestion[]>([
     { text: '', timeLimitSec: 7, options: [{ text: '', score: 0 }, { text: '', score: 2 }] },
   ]);
+
+  const activeTestsCount = useMemo(() => tests.filter((test) => test.is_active).length, [tests]);
+  const inactiveTestsCount = useMemo(() => tests.length - activeTestsCount, [tests, activeTestsCount]);
 
   const fetchTests = useCallback(async () => {
     setLoading(true);
@@ -51,7 +68,7 @@ export default function AdminFlashFlagPage() {
       setTests(remoteTests);
     } catch (e) {
       setTests([]);
-      setError(e instanceof Error ? e.message : 'Erreur');
+      setError(toUiErrorMessage('load', e));
     } finally {
       setLoading(false);
     }
@@ -153,7 +170,7 @@ export default function AdminFlashFlagPage() {
       setSuccess('Test standard publie avec succes.');
       await fetchTests();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Creation impossible');
+      setError(toUiErrorMessage('create', e));
     } finally {
       setIsSubmitting(false);
     }
@@ -179,7 +196,7 @@ export default function AdminFlashFlagPage() {
       setSuccess('Test desactive avec succes.');
       await fetchTests();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Suppression impossible');
+      setError(toUiErrorMessage('disable', e));
     }
   };
 
@@ -191,6 +208,10 @@ export default function AdminFlashFlagPage() {
           <h1 className="text-2xl font-black">⚡ Admin Flash Flag</h1>
           <p className="text-sm text-[#9CA3AF]">Gestion des tests standards chronometres.</p>
         </header>
+
+        <div className="rounded-lg border border-[#3B3B3B] bg-[#171717] p-3 text-sm text-[#D1D5DB]">
+          Les tests <span className="font-semibold text-emerald-300">actifs</span> crees ici sont proposes aux utilisateurs dans FlashFlag quand ils choisissent <span className="font-semibold">Test standard</span>.
+        </div>
 
         {error && <div className="rounded-lg border border-red-500/40 bg-red-900/20 p-3 text-red-200">{error}</div>}
         {success && <div className="rounded-lg border border-emerald-500/40 bg-emerald-900/20 p-3 text-emerald-200">{success}</div>}
@@ -252,7 +273,19 @@ export default function AdminFlashFlagPage() {
         </section>
 
         <section className="rounded-xl border border-[#333] bg-[#141414] p-4">
-          <h2 className="font-bold mb-3">Tests existants</h2>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="font-bold">Tests existants</h2>
+            <button className="px-2.5 py-1.5 rounded border border-[#444] text-xs hover:border-[#666]" onClick={fetchTests}>
+              Rafraichir
+            </button>
+          </div>
+
+          {!loading && tests.length > 0 && (
+            <p className="mb-3 text-xs text-[#A3A3A3]">
+              {activeTestsCount} actif(s) • {inactiveTestsCount} inactif(s)
+            </p>
+          )}
+
           {loading ? (
             <p className="text-sm text-[#A3A3A3]">Chargement...</p>
           ) : (
@@ -273,7 +306,11 @@ export default function AdminFlashFlagPage() {
                   </button>
                 </div>
               ))}
-              {tests.length === 0 && <p className="text-sm text-[#A3A3A3]">Aucun test pour le moment.</p>}
+              {tests.length === 0 && !error && (
+                <p className="text-sm text-[#A3A3A3]">
+                  Aucun test standard configure. Creez-en un ci-dessus pour qu il apparaisse ensuite dans FlashFlag.
+                </p>
+              )}
             </div>
           )}
         </section>

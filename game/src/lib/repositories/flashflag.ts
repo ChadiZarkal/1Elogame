@@ -52,6 +52,22 @@ interface CompatSessionPayload {
   answers: AnswerRecord[];
 }
 
+interface CompatStandardTestRecord {
+  id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  updated_at: string;
+  questions: FlashFlagQuestionDTO[];
+}
+
+interface CompatStandardCatalogPayload {
+  type: 'standard-tests-catalog';
+  tests: CompatStandardTestRecord[];
+}
+
+type CompatAnalyticsPayload = CompatSessionPayload | CompatStandardCatalogPayload;
+
 interface CompatAnalyticsRow {
   session_id: string;
   started_at: number;
@@ -59,13 +75,15 @@ interface CompatAnalyticsRow {
   game_entries: Array<{
     game?: string;
     at?: number;
-    payload?: CompatSessionPayload;
+    payload?: CompatAnalyticsPayload;
   }> | null;
 }
 
 const COMPAT_SESSION_KEY_PREFIX = 'flashflag:';
 const COMPAT_SESSION_ID_PREFIX = 'compat-flashflag:';
 const COMPAT_GAME_ENTRY_KEY = 'flashflag_compat';
+const COMPAT_STANDARD_CATALOG_SESSION_KEY = 'flashflag:standard-tests-catalog';
+const COMPAT_STANDARD_CATALOG_ENTRY_KEY = 'flashflag_standard_tests_catalog';
 const FLASHFLAG_TABLE_ERROR_REGEX = /(could not find the table|does not exist|schema cache|relation)/i;
 const FLASHFLAG_TABLE_NAME_REGEX = /flashflag_(tests|questions|options|sessions|answers)/i;
 
@@ -118,6 +136,11 @@ function isFlashFlagTableMissingError(message: string): boolean {
   return FLASHFLAG_TABLE_ERROR_REGEX.test(message) && FLASHFLAG_TABLE_NAME_REGEX.test(message);
 }
 
+function isMissingFlashFlagTableError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return isFlashFlagTableMissingError(error.message);
+}
+
 function buildCompatSessionKey(code: string): string {
   return `${COMPAT_SESSION_KEY_PREFIX}${code}`;
 }
@@ -137,11 +160,98 @@ function serializeAnswers(answers: FlashFlagAnswerInput[]): AnswerRecord[] {
   }));
 }
 
+function cloneQuestions(questions: FlashFlagQuestionDTO[]): FlashFlagQuestionDTO[] {
+  return questions.map((question) => ({
+    id: question.id,
+    text: question.text,
+    timeLimitSec: question.timeLimitSec,
+    options: question.options.map((option) => ({
+      id: option.id,
+      text: option.text,
+      score: option.score,
+    })),
+  }));
+}
+
+function buildDefaultCompatStandardTests(): CompatStandardTestRecord[] {
+  const now = new Date().toISOString();
+  return mockStandardTests.map((test, index) => ({
+    id: test.id || `compat-standard-default-${index + 1}`,
+    name: test.name,
+    description: test.description || null,
+    is_active: true,
+    updated_at: now,
+    questions: cloneQuestions(test.questions),
+  }));
+}
+
+function toStandardTestsMetadata(records: CompatStandardTestRecord[]): Array<{ id: string; name: string; description: string | null; questionCount: number }> {
+  return records
+    .filter((record) => record.is_active)
+    .map((record) => ({
+      id: record.id,
+      name: record.name,
+      description: record.description,
+      questionCount: record.questions.length,
+    }));
+}
+
+function toAdminTestsList(records: CompatStandardTestRecord[]) {
+  return records.map((record) => ({
+    id: record.id,
+    name: record.name,
+    description: record.description,
+    is_active: record.is_active,
+    question_count: record.questions.length,
+    updated_at: record.updated_at,
+  }));
+}
+
+function toFlashFlagTest(record: CompatStandardTestRecord): FlashFlagTestDTO {
+  return {
+    id: record.id,
+    name: record.name,
+    description: record.description,
+    questions: cloneQuestions(record.questions),
+  };
+}
+
+function normalizeCompatStandardTests(input: unknown): CompatStandardTestRecord[] {
+  if (!Array.isArray(input)) return [];
+
+  return input
+    .map((item, index) => {
+      if (!item || typeof item !== 'object') return null;
+      const typed = item as Partial<CompatStandardTestRecord>;
+      if (!typed.name || typeof typed.name !== 'string') return null;
+      if (!Array.isArray(typed.questions) || typed.questions.length === 0) return null;
+
+      return {
+        id: typeof typed.id === 'string' && typed.id.length > 0 ? typed.id : `compat-standard-${index + 1}`,
+        name: typed.name,
+        description: typeof typed.description === 'string' ? typed.description : null,
+        is_active: typed.is_active !== false,
+        updated_at: typeof typed.updated_at === 'string' ? typed.updated_at : new Date().toISOString(),
+        questions: cloneQuestions(typed.questions as FlashFlagQuestionDTO[]),
+      } satisfies CompatStandardTestRecord;
+    })
+    .filter((item): item is CompatStandardTestRecord => item !== null);
+}
+
+function readCompatStandardCatalogPayload(entries: CompatAnalyticsRow['game_entries']): CompatStandardCatalogPayload | null {
+  if (!Array.isArray(entries) || entries.length === 0) return null;
+
+  const explicit = entries.find((entry) => entry?.game === COMPAT_STANDARD_CATALOG_ENTRY_KEY)?.payload;
+  const payload = (explicit || entries[0]?.payload) as CompatStandardCatalogPayload | undefined;
+  if (!payload || !Array.isArray(payload.tests)) return null;
+  return payload;
+}
+
 function readCompatPayload(entries: CompatAnalyticsRow['game_entries']): CompatSessionPayload | null {
   if (!Array.isArray(entries) || entries.length === 0) return null;
 
   const explicit = entries.find((entry) => entry?.game === COMPAT_GAME_ENTRY_KEY)?.payload;
-  const payload = explicit || entries[0]?.payload;
+  const payload = (explicit || entries[0]?.payload) as CompatSessionPayload | undefined;
   if (!payload?.test?.questions || !Array.isArray(payload.test.questions)) return null;
   return payload;
 }
@@ -248,6 +358,120 @@ async function upsertCompatSessionPayload(input: {
   }
 }
 
+async function getCompatStandardTestsCatalog(): Promise<CompatStandardTestRecord[]> {
+  const { createServerClient } = await import('@/lib/supabase');
+  const supabase = createServerClient();
+
+  const { data, error } = await supabase
+    .from('analytics_sessions')
+    .select('session_id, started_at, created_at, game_entries')
+    .eq('session_id', COMPAT_STANDARD_CATALOG_SESSION_KEY)
+    .maybeSingle();
+
+  if (error) throw new Error(`DB error loading flashflag compatibility catalog: ${error.message}`);
+
+  const typedRow = (data || null) as CompatAnalyticsRow | null;
+  if (!typedRow) return buildDefaultCompatStandardTests();
+
+  const payload = readCompatStandardCatalogPayload(typedRow.game_entries);
+  if (!payload) return buildDefaultCompatStandardTests();
+
+  const normalized = normalizeCompatStandardTests(payload.tests);
+  return normalized.length > 0 ? normalized : buildDefaultCompatStandardTests();
+}
+
+async function saveCompatStandardTestsCatalog(records: CompatStandardTestRecord[]): Promise<void> {
+  const { createServerClient, typedUpsert } = await import('@/lib/supabase');
+  const supabase = createServerClient();
+
+  const now = Date.now();
+  const payload: CompatStandardCatalogPayload = {
+    type: 'standard-tests-catalog',
+    tests: records,
+  };
+
+  const row = {
+    session_id: COMPAT_STANDARD_CATALOG_SESSION_KEY,
+    started_at: now,
+    flushed_at: now,
+    duration: 0,
+    page_views: [COMPAT_STANDARD_CATALOG_ENTRY_KEY],
+    game_entries: [{ game: COMPAT_STANDARD_CATALOG_ENTRY_KEY, at: now, payload }],
+    votes: 0,
+    ai_requests: 0,
+    choices_before_quit: 0,
+    category: 'flashflag',
+    sex: null,
+    age: null,
+  };
+
+  const { error } = await typedUpsert(supabase, 'analytics_sessions', row, { onConflict: 'session_id' });
+  if (error) throw new Error(`DB error saving flashflag compatibility catalog: ${error.message}`);
+}
+
+async function createCompatStandardTest(input: {
+  name: string;
+  description?: string | null;
+  isActive: boolean;
+  questions: FlashFlagQuestionDTO[];
+}): Promise<{ id: string }> {
+  const catalog = await getCompatStandardTestsCatalog();
+
+  let id = `compat-standard-${generateAccessCode().toLowerCase()}`;
+  let attempts = 0;
+  while (catalog.some((item) => item.id === id) && attempts < 10) {
+    id = `compat-standard-${generateAccessCode().toLowerCase()}`;
+    attempts += 1;
+  }
+
+  const next: CompatStandardTestRecord[] = [
+    {
+      id,
+      name: input.name,
+      description: input.description || null,
+      is_active: input.isActive,
+      updated_at: new Date().toISOString(),
+      questions: cloneQuestions(input.questions),
+    },
+    ...catalog,
+  ];
+
+  await saveCompatStandardTestsCatalog(next);
+  return { id };
+}
+
+async function getCompatStandardTestById(id: string): Promise<CompatStandardTestRecord | null> {
+  const catalog = await getCompatStandardTestsCatalog();
+  return catalog.find((item) => item.id === id) || null;
+}
+
+async function updateCompatStandardTest(
+  id: string,
+  input: { name?: string; description?: string | null; isActive?: boolean; questions?: FlashFlagQuestionDTO[] },
+): Promise<boolean> {
+  const catalog = await getCompatStandardTestsCatalog();
+  const idx = catalog.findIndex((item) => item.id === id);
+  if (idx < 0) return false;
+
+  const current = catalog[idx];
+  const updated: CompatStandardTestRecord = {
+    ...current,
+    updated_at: new Date().toISOString(),
+    name: typeof input.name !== 'undefined' ? input.name : current.name,
+    description: typeof input.description !== 'undefined' ? input.description : current.description,
+    is_active: typeof input.isActive !== 'undefined' ? input.isActive : current.is_active,
+    questions: input.questions ? cloneQuestions(input.questions) : cloneQuestions(current.questions),
+  };
+
+  catalog[idx] = updated;
+  await saveCompatStandardTestsCatalog(catalog);
+  return true;
+}
+
+async function disableCompatStandardTest(id: string): Promise<boolean> {
+  return updateCompatStandardTest(id, { isActive: false });
+}
+
 async function createCompatFlashFlagSession(input: {
   mode: 'local' | 'link';
   sourceType: 'standard' | 'custom';
@@ -315,12 +539,8 @@ export async function listFlashFlagStandardTests(): Promise<Array<{ id: string; 
 
   if (error) {
     if (isFlashFlagTableMissingError(error.message)) {
-      return mockStandardTests.map((test) => ({
-        id: test.id || '',
-        name: test.name,
-        description: test.description || null,
-        questionCount: test.questions.length,
-      }));
+      const compatTests = await getCompatStandardTestsCatalog();
+      return toStandardTestsMetadata(compatTests);
     }
     throw new Error(`DB error listing flashflag tests: ${error.message}`);
   }
@@ -329,10 +549,18 @@ export async function listFlashFlagStandardTests(): Promise<Array<{ id: string; 
   if (typedTests.length === 0) return [];
 
   const testIds = typedTests.map((t) => t.id);
-  const { data: questions } = await supabase
+  const { data: questions, error: questionsError } = await supabase
     .from('flashflag_questions')
     .select('id, test_id')
     .in('test_id', testIds);
+
+  if (questionsError) {
+    if (isFlashFlagTableMissingError(questionsError.message)) {
+      const compatTests = await getCompatStandardTestsCatalog();
+      return toStandardTestsMetadata(compatTests);
+    }
+    throw new Error(`DB error listing flashflag test questions: ${questionsError.message}`);
+  }
 
   const typedQuestions = (questions || []) as Array<{ id: string; test_id: string }>;
   const counts = new Map<string, number>();
@@ -365,11 +593,20 @@ export async function getFlashFlagTestById(id: string): Promise<FlashFlagTestDTO
   const typedTest = (test || null) as { id: string; name: string; description: string | null; is_active: boolean } | null;
   if (testError) {
     if (isFlashFlagTableMissingError(testError.message)) {
-      return mockStandardTests.find((testItem) => testItem.id === id) || null;
+      const compatTest = await getCompatStandardTestById(id);
+      if (!compatTest || !compatTest.is_active) return null;
+      return toFlashFlagTest(compatTest);
     }
     throw new Error(`DB error loading flashflag test: ${testError.message}`);
   }
-  if (!typedTest || !typedTest.is_active) return null;
+
+  if (!typedTest) {
+    const compatTest = await getCompatStandardTestById(id);
+    if (!compatTest || !compatTest.is_active) return null;
+    return toFlashFlagTest(compatTest);
+  }
+
+  if (!typedTest.is_active) return null;
 
   const { data: questions, error: questionError } = await supabase
     .from('flashflag_questions')
@@ -379,7 +616,9 @@ export async function getFlashFlagTestById(id: string): Promise<FlashFlagTestDTO
 
   if (questionError) {
     if (isFlashFlagTableMissingError(questionError.message)) {
-      return mockStandardTests.find((testItem) => testItem.id === id) || null;
+      const compatTest = await getCompatStandardTestById(id);
+      if (!compatTest || !compatTest.is_active) return null;
+      return toFlashFlagTest(compatTest);
     }
     throw new Error(`DB error loading flashflag questions: ${questionError.message}`);
   }
@@ -735,7 +974,14 @@ export async function listAdminFlashFlagTests() {
     .select('id, name, description, is_active, updated_at')
     .eq('is_standard', true)
     .order('updated_at', { ascending: false });
-  if (error) throw new Error(`DB error loading admin flashflag tests: ${error.message}`);
+
+  if (error) {
+    if (isFlashFlagTableMissingError(error.message)) {
+      const compatTests = await getCompatStandardTestsCatalog();
+      return toAdminTestsList(compatTests);
+    }
+    throw new Error(`DB error loading admin flashflag tests: ${error.message}`);
+  }
 
   const typedTests = (tests || []) as Array<{
     id: string;
@@ -749,10 +995,18 @@ export async function listAdminFlashFlagTests() {
   let counts = new Map<string, number>();
 
   if (testIds.length > 0) {
-    const { data: questions } = await supabase
+    const { data: questions, error: questionsError } = await supabase
       .from('flashflag_questions')
       .select('test_id')
       .in('test_id', testIds);
+
+    if (questionsError) {
+      if (isFlashFlagTableMissingError(questionsError.message)) {
+        const compatTests = await getCompatStandardTestsCatalog();
+        return toAdminTestsList(compatTests);
+      }
+      throw new Error(`DB error loading admin flashflag question counts: ${questionsError.message}`);
+    }
 
     const typedQuestions = (questions || []) as Array<{ test_id: string }>;
 
@@ -796,7 +1050,12 @@ export async function createAdminFlashFlagTest(input: {
     created_by: 'admin',
   }).select('id').single();
 
-  if (testError) throw new Error(`DB error creating flashflag test: ${testError.message}`);
+  if (testError) {
+    if (isFlashFlagTableMissingError(testError.message)) {
+      return createCompatStandardTest(input);
+    }
+    throw new Error(`DB error creating flashflag test: ${testError.message}`);
+  }
 
   const testId = (testRow as { id: string }).id;
 
@@ -846,55 +1105,70 @@ export async function updateAdminFlashFlagTest(
   const { createServerClient, typedUpdate, typedInsert } = await import('@/lib/supabase');
   const supabase = createServerClient();
 
-  if (typeof input.name !== 'undefined' || typeof input.description !== 'undefined' || typeof input.isActive !== 'undefined') {
-    const updatePayload: Record<string, unknown> = {};
-    if (typeof input.name !== 'undefined') updatePayload.name = input.name;
-    if (typeof input.description !== 'undefined') updatePayload.description = input.description;
-    if (typeof input.isActive !== 'undefined') updatePayload.is_active = input.isActive;
+  try {
+    if (typeof input.name !== 'undefined' || typeof input.description !== 'undefined' || typeof input.isActive !== 'undefined') {
+      const updatePayload: Record<string, unknown> = {};
+      if (typeof input.name !== 'undefined') updatePayload.name = input.name;
+      if (typeof input.description !== 'undefined') updatePayload.description = input.description;
+      if (typeof input.isActive !== 'undefined') updatePayload.is_active = input.isActive;
 
-    const { error: headerError } = await typedUpdate(supabase, 'flashflag_tests', updatePayload).eq('id', id);
-    if (headerError) throw new Error(`DB error updating flashflag test header: ${headerError.message}`);
-  }
-
-  if (input.questions) {
-    const { data: existingQuestions } = await supabase.from('flashflag_questions').select('id').eq('test_id', id);
-    const typedExistingQuestions = (existingQuestions || []) as Array<{ id: string }>;
-    const questionIds = typedExistingQuestions.map((q) => q.id);
-    if (questionIds.length > 0) {
-      const { error: deleteOptionsError } = await supabase.from('flashflag_options').delete().in('question_id', questionIds);
-      if (deleteOptionsError) throw new Error(`DB error deleting flashflag options: ${deleteOptionsError.message}`);
+      const { error: headerError } = await typedUpdate(supabase, 'flashflag_tests', updatePayload).eq('id', id);
+      if (headerError) throw new Error(`DB error updating flashflag test header: ${headerError.message}`);
     }
 
-    const { error: deleteQuestionsError } = await supabase.from('flashflag_questions').delete().eq('test_id', id);
-    if (deleteQuestionsError) throw new Error(`DB error deleting flashflag questions: ${deleteQuestionsError.message}`);
+    if (input.questions) {
+      const { data: existingQuestions, error: existingQuestionsError } = await supabase
+        .from('flashflag_questions')
+        .select('id')
+        .eq('test_id', id);
 
-    for (let i = 0; i < input.questions.length; i += 1) {
-      const question = input.questions[i];
-      const { data: questionRow, error: questionError } = await typedInsert(supabase, 'flashflag_questions', {
-        test_id: id,
-        position: i,
-        question_text: question.text,
-        time_limit_sec: question.timeLimitSec,
-      }).select('id').single();
+      if (existingQuestionsError) {
+        throw new Error(`DB error loading flashflag questions: ${existingQuestionsError.message}`);
+      }
 
-      if (questionError) throw new Error(`DB error re-creating flashflag question: ${questionError.message}`);
+      const typedExistingQuestions = (existingQuestions || []) as Array<{ id: string }>;
+      const questionIds = typedExistingQuestions.map((q) => q.id);
+      if (questionIds.length > 0) {
+        const { error: deleteOptionsError } = await supabase.from('flashflag_options').delete().in('question_id', questionIds);
+        if (deleteOptionsError) throw new Error(`DB error deleting flashflag options: ${deleteOptionsError.message}`);
+      }
 
-      const qid = (questionRow as { id: string }).id;
-      const optionRows = question.options.map((option, idx) => ({
-        question_id: qid,
-        position: idx,
-        option_text: option.text,
-        score: option.score,
-      }));
+      const { error: deleteQuestionsError } = await supabase.from('flashflag_questions').delete().eq('test_id', id);
+      if (deleteQuestionsError) throw new Error(`DB error deleting flashflag questions: ${deleteQuestionsError.message}`);
 
-      for (const optionRow of optionRows) {
-        const { error: optionsError } = await typedInsert(supabase, 'flashflag_options', optionRow);
-        if (optionsError) throw new Error(`DB error re-creating flashflag options: ${optionsError.message}`);
+      for (let i = 0; i < input.questions.length; i += 1) {
+        const question = input.questions[i];
+        const { data: questionRow, error: questionError } = await typedInsert(supabase, 'flashflag_questions', {
+          test_id: id,
+          position: i,
+          question_text: question.text,
+          time_limit_sec: question.timeLimitSec,
+        }).select('id').single();
+
+        if (questionError) throw new Error(`DB error re-creating flashflag question: ${questionError.message}`);
+
+        const qid = (questionRow as { id: string }).id;
+        const optionRows = question.options.map((option, idx) => ({
+          question_id: qid,
+          position: idx,
+          option_text: option.text,
+          score: option.score,
+        }));
+
+        for (const optionRow of optionRows) {
+          const { error: optionsError } = await typedInsert(supabase, 'flashflag_options', optionRow);
+          if (optionsError) throw new Error(`DB error re-creating flashflag options: ${optionsError.message}`);
+        }
       }
     }
-  }
 
-  return true;
+    return true;
+  } catch (error) {
+    if (isMissingFlashFlagTableError(error)) {
+      return updateCompatStandardTest(id, input);
+    }
+    throw error;
+  }
 }
 
 export async function disableAdminFlashFlagTest(id: string) {
@@ -908,6 +1182,13 @@ export async function disableAdminFlashFlagTest(id: string) {
   const { createServerClient, typedUpdate } = await import('@/lib/supabase');
   const supabase = createServerClient();
   const { error } = await typedUpdate(supabase, 'flashflag_tests', { is_active: false }).eq('id', id);
-  if (error) throw new Error(`DB error disabling flashflag test: ${error.message}`);
+
+  if (error) {
+    if (isFlashFlagTableMissingError(error.message)) {
+      return disableCompatStandardTest(id);
+    }
+    throw new Error(`DB error disabling flashflag test: ${error.message}`);
+  }
+
   return true;
 }
