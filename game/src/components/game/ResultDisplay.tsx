@@ -210,7 +210,7 @@ export function ResultDisplay({
                   aria-hidden
                   className="absolute inset-0 bg-[linear-gradient(120deg,rgba(239,68,68,0.33),rgba(30,41,59,0.18),rgba(16,185,129,0.28))] opacity-85 transition-opacity duration-200 group-hover:opacity-100"
                 />
-                <span aria-hidden className="absolute inset-[1px] rounded-full border border-white/15" />
+                <span aria-hidden className="absolute inset-px rounded-full border border-white/15" />
                 <span className="relative inline-flex items-center gap-2">
                   <span>Suivant</span>
                   <span aria-hidden className="text-base leading-none">→</span>
