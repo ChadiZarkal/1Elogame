@@ -19,53 +19,6 @@ interface DraftQuestion {
   options: Array<{ text: string; score: 0 | 1 | 2 }>;
 }
 
-const LOCAL_STANDARD_TESTS_KEY = 'flashflag_local_standard_tests_v1';
-
-function saveLocalTests(tests: AdminTest[]) {
-  try {
-    const payload = tests.map((test) => ({
-      id: test.id,
-      name: test.name,
-      description: test.description,
-      is_active: test.is_active,
-      updated_at: test.updated_at,
-      questions: [],
-      question_count: test.question_count,
-    }));
-    localStorage.setItem(LOCAL_STANDARD_TESTS_KEY, JSON.stringify(payload));
-  } catch {
-    // Ignore local persistence failures
-  }
-}
-
-function readLocalTests(): AdminTest[] {
-  try {
-    const raw = localStorage.getItem(LOCAL_STANDARD_TESTS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as Array<{
-      id: string;
-      name: string;
-      description: string | null;
-      is_active: boolean;
-      updated_at: string;
-      question_count: number;
-    }>;
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter((item) => item && item.id && item.name)
-      .map((item) => ({
-        id: item.id,
-        name: item.name,
-        description: item.description || null,
-        is_active: item.is_active !== false,
-        question_count: item.question_count || 0,
-        updated_at: item.updated_at || new Date().toISOString(),
-      }));
-  } catch {
-    return [];
-  }
-}
-
 export default function AdminFlashFlagPage() {
   const router = useRouter();
   const [tests, setTests] = useState<AdminTest[]>([]);
@@ -96,15 +49,9 @@ export default function AdminFlashFlagPage() {
       if (!res.ok) throw new Error(json.error?.message || 'Chargement impossible');
       const remoteTests = json.data.tests || [];
       setTests(remoteTests);
-      saveLocalTests(remoteTests);
     } catch (e) {
-      const localTests = readLocalTests();
-      if (localTests.length > 0) {
-        setTests(localTests);
-        setError('Mode local actif: affichage des tests admin en cache navigateur.');
-      } else {
-        setError(e instanceof Error ? e.message : 'Erreur');
-      }
+      setTests([]);
+      setError(e instanceof Error ? e.message : 'Erreur');
     } finally {
       setLoading(false);
     }
@@ -206,23 +153,7 @@ export default function AdminFlashFlagPage() {
       setSuccess('Test standard publie avec succes.');
       await fetchTests();
     } catch (e) {
-      const fallbackId = `local-${Date.now()}`;
-      const localEntry: AdminTest = {
-        id: fallbackId,
-        name: name.trim(),
-        description: description || null,
-        is_active: true,
-        question_count: questions.length,
-        updated_at: new Date().toISOString(),
-      };
-      const next = [localEntry, ...tests];
-      setTests(next);
-      saveLocalTests(next);
-      setName('');
-      setDescription('');
-      setQuestions([{ text: '', timeLimitSec: 7, options: [{ text: '', score: 0 }, { text: '', score: 2 }] }]);
-      setSuccess('Mode local actif: test ajoute dans le navigateur (fallback).');
-      setError(e instanceof Error ? `${e.message} (fallback local applique)` : 'Erreur (fallback local applique)');
+      setError(e instanceof Error ? e.message : 'Creation impossible');
     } finally {
       setIsSubmitting(false);
     }
@@ -248,11 +179,7 @@ export default function AdminFlashFlagPage() {
       setSuccess('Test desactive avec succes.');
       await fetchTests();
     } catch (e) {
-      const next = tests.map((test) => test.id === id ? { ...test, is_active: false } : test);
-      setTests(next);
-      saveLocalTests(next);
-      setSuccess('Mode local actif: test desactive en cache navigateur.');
-      setError(e instanceof Error ? `${e.message} (fallback local applique)` : 'Erreur (fallback local applique)');
+      setError(e instanceof Error ? e.message : 'Suppression impossible');
     }
   };
 
