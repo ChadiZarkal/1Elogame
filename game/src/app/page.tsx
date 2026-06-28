@@ -267,7 +267,6 @@ export default function HubPage() {
               };
 
               return (
-                // @ts-expect-error - Next/Link properties vary dynamically
                 <CardWrapper
                   key={game.id}
                   onClick={handleTap}
