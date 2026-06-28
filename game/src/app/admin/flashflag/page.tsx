@@ -441,6 +441,21 @@ export default function AdminFlashFlagPage() {
               <p className="text-sm font-semibold">{estimatedDurationLabel}</p>
             </div>
           </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            <div className="rounded-xl border border-white/10 bg-[#141416] p-3">
+              <p className="text-xs font-semibold text-[#FCA5A5]">Dating check</p>
+              <p className="mt-1 text-xs text-[#A3A3A3]">Questions valeurs, limites, respect.</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-[#141416] p-3">
+              <p className="text-xs font-semibold text-[#FCD34D]">Safe night</p>
+              <p className="mt-1 text-xs text-[#A3A3A3]">Consentement, pression, securite.</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-[#141416] p-3">
+              <p className="text-xs font-semibold text-[#86EFAC]">Debat social</p>
+              <p className="mt-1 text-xs text-[#A3A3A3]">Version fun pour soiree ou groupe.</p>
+            </div>
+          </div>
         </header>
 
         {error && (
@@ -509,6 +524,10 @@ export default function AdminFlashFlagPage() {
 
             <div className="rounded-xl border border-[#343434] bg-[#121212] p-3 text-xs text-[#A3A3A3]">
               Conseil edition: ajoute tes nouvelles questions en bas pour garder le fil de creation sans remonter en haut.
+            </div>
+
+            <div className="rounded-xl border border-[#343434] bg-[#121212] p-3 text-xs text-[#A3A3A3]">
+              Bon standard FlashFlag: formulation courte, 6 a 8 secondes, options concretes et faciles a trancher vite.
             </div>
 
             <div className="space-y-3 max-h-[65vh] overflow-y-auto pr-1">

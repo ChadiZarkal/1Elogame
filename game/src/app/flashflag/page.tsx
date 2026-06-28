@@ -23,6 +23,15 @@ interface CustomQuestion {
   options: Array<{ text: string; score: 0 | 1 | 2 }>;
 }
 
+interface CustomPreset {
+  id: string;
+  label: string;
+  audience: string;
+  suggestedName: string;
+  suggestedDescription: string;
+  questions: CustomQuestion[];
+}
+
 interface SessionWatchAnswer {
   question_index: number;
   question_text: string;
@@ -58,6 +67,179 @@ const defaultQuestion = (): CustomQuestion => ({
     { text: '', score: 2 },
   ],
 });
+
+function cloneQuestions(questions: CustomQuestion[]): CustomQuestion[] {
+  return questions.map((question) => ({
+    text: question.text,
+    timeLimitSec: question.timeLimitSec,
+    options: question.options.map((option) => ({ ...option })),
+  }));
+}
+
+const CUSTOM_PRESETS: CustomPreset[] = [
+  {
+    id: 'dating-valeurs',
+    label: 'Dating valeurs',
+    audience: 'Avant un premier date',
+    suggestedName: 'Compatibilite valeurs',
+    suggestedDescription: 'Version rapide pour verifier valeurs et respect de base.',
+    questions: [
+      {
+        text: 'Si la personne que tu dates dit "je suis feministe", ta reaction instinctive ?',
+        timeLimitSec: 7,
+        options: [
+          { text: 'Parfait, c est essentiel pour moi aussi', score: 0 },
+          { text: 'Ca depend de ce que ca veut dire', score: 1 },
+          { text: 'Je trouve ca excessif', score: 2 },
+        ],
+      },
+      {
+        text: 'Quand ton/ta partenaire pose une limite claire, tu fais quoi ?',
+        timeLimitSec: 7,
+        options: [
+          { text: 'Je respecte, meme si je suis frustre', score: 0 },
+          { text: 'Je negocie encore un peu', score: 1 },
+          { text: 'Je force, sinon ca ne bouge pas', score: 2 },
+        ],
+      },
+      {
+        text: 'Politique et valeurs dans le couple, pour toi c est...',
+        timeLimitSec: 8,
+        options: [
+          { text: 'Important, ca compte dans la compatibilite', score: 0 },
+          { text: 'Secondaire si le feeling est la', score: 1 },
+          { text: 'Inutile, je m en fiche totalement', score: 2 },
+        ],
+      },
+      {
+        text: 'Un desaccord monte: ton reflexe principal ?',
+        timeLimitSec: 7,
+        options: [
+          { text: 'Parler calmement et comprendre', score: 0 },
+          { text: 'Couper la discussion puis revenir plus tard', score: 1 },
+          { text: 'Crier ou rabaisser pour gagner', score: 2 },
+        ],
+      },
+      {
+        text: 'Tu apprends que ton/ta partenaire a deja menti sur un detail important. Tu...',
+        timeLimitSec: 8,
+        options: [
+          { text: 'Discutes franchement de la confiance', score: 0 },
+          { text: 'Laisses passer une fois', score: 1 },
+          { text: 'Mentir est normal, tout le monde le fait', score: 2 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'safe-night',
+    label: 'Safe night check',
+    audience: 'Avant de rentrer chez quelqu un',
+    suggestedName: 'Respect et securite',
+    suggestedDescription: 'Check express pour voir le niveau de respect dans les situations sensibles.',
+    questions: [
+      {
+        text: 'Quand quelqu un dit "non", ta reaction immediate ?',
+        timeLimitSec: 6,
+        options: [
+          { text: 'Je stoppe tout de suite', score: 0 },
+          { text: 'Je tente une derniere fois', score: 1 },
+          { text: 'Je continue si je sens que la personne veut', score: 2 },
+        ],
+      },
+      {
+        text: 'Boire beaucoup avant un date, pour toi c est...',
+        timeLimitSec: 7,
+        options: [
+          { text: 'A eviter, je veux rester clair', score: 0 },
+          { text: 'Pourquoi pas un peu', score: 1 },
+          { text: 'Parfait pour faire sauter les blocages', score: 2 },
+        ],
+      },
+      {
+        text: 'Partager la localisation avec des amis pendant un date ?',
+        timeLimitSec: 7,
+        options: [
+          { text: 'Bonne pratique de securite', score: 0 },
+          { text: 'Parfois utile', score: 1 },
+          { text: 'Inutile, c est parano', score: 2 },
+        ],
+      },
+      {
+        text: 'Une personne ne repond pas vite a tes messages. Tu...',
+        timeLimitSec: 8,
+        options: [
+          { text: 'Respectes son rythme', score: 0 },
+          { text: 'Relances deux ou trois fois', score: 1 },
+          { text: 'Spam ou culpabilises', score: 2 },
+        ],
+      },
+      {
+        text: 'Sur un sujet intime, le consentement c est...',
+        timeLimitSec: 7,
+        options: [
+          { text: 'Clair, explicite, revocable a tout moment', score: 0 },
+          { text: 'Sous-entendu si l ambiance est bonne', score: 1 },
+          { text: 'Pas necessaire si on est deja en couple', score: 2 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'debate-party',
+    label: 'Debat entre potes',
+    audience: 'Soiree ou groupe d amis',
+    suggestedName: 'Debat flash entre amis',
+    suggestedDescription: 'Version fun pour lancer un debat en groupe sans que ca s eternise.',
+    questions: [
+      {
+        text: 'En desaccord en groupe, ton style ?',
+        timeLimitSec: 6,
+        options: [
+          { text: 'Ecoute puis argumente', score: 0 },
+          { text: 'Je provoque un peu pour le show', score: 1 },
+          { text: 'Je ridiculise pour gagner', score: 2 },
+        ],
+      },
+      {
+        text: 'Quand on te contredit avec des faits, tu...',
+        timeLimitSec: 7,
+        options: [
+          { text: 'Revises ta position', score: 0 },
+          { text: 'Restes bloque mais poli', score: 1 },
+          { text: 'Changes de sujet en attaquant la personne', score: 2 },
+        ],
+      },
+      {
+        text: 'Humour en soiree: ou places-tu la limite ?',
+        timeLimitSec: 7,
+        options: [
+          { text: 'Jamais sur les vulnerabilites des gens', score: 0 },
+          { text: 'Ca depend du contexte', score: 1 },
+          { text: 'Tout est autorise si ca fait rire', score: 2 },
+        ],
+      },
+      {
+        text: 'Une personne du groupe est mal a l aise. Tu...',
+        timeLimitSec: 8,
+        options: [
+          { text: 'Calmes le jeu et recadres', score: 0 },
+          { text: 'Attends de voir si ca passe', score: 1 },
+          { text: 'Tu pousses encore pour rire', score: 2 },
+        ],
+      },
+      {
+        text: 'Le but d un debat flash entre amis, pour toi ?',
+        timeLimitSec: 7,
+        options: [
+          { text: 'Comprendre les limites et valeurs de chacun', score: 0 },
+          { text: 'Tester juste pour le fun', score: 1 },
+          { text: 'Coincer les autres en public', score: 2 },
+        ],
+      },
+    ],
+  },
+];
 
 const createSchema = z.object({
   subjectAge: z.number().int().min(16).max(99),
@@ -146,8 +328,13 @@ export default function FlashFlagPage() {
   const [error, setError] = useState('');
   const [createdLink, setCreatedLink] = useState('');
   const [createdSessionCode, setCreatedSessionCode] = useState('');
+  const [createdTestName, setCreatedTestName] = useState('');
+  const [createdDurationLabel, setCreatedDurationLabel] = useState('');
+  const [createdShareMessage, setCreatedShareMessage] = useState('');
   const [watchData, setWatchData] = useState<SessionWatchData | null>(null);
   const [watchError, setWatchError] = useState('');
+  const [uiFeedback, setUiFeedback] = useState('');
+  const [canNativeShare, setCanNativeShare] = useState(false);
 
   const selectedStandardTest = useMemo(
     () => tests.find((test) => test.id === selectedTestId) || null,
@@ -305,8 +492,24 @@ export default function FlashFlagPage() {
     setError('');
     setCreatedLink('');
     setCreatedSessionCode('');
+    setCreatedTestName('');
+    setCreatedDurationLabel('');
+    setCreatedShareMessage('');
     setWatchData(null);
     setWatchError('');
+    setUiFeedback('');
+
+    const questionCountForMeta = sourceType === 'standard'
+      ? (selectedStandardTest?.questionCount || customQuestions.length)
+      : customQuestions.length;
+
+    const testNameForMeta = sourceType === 'standard'
+      ? (selectedStandardTest?.name || 'Flash Flag')
+      : (customName.trim() || 'Flash Flag perso');
+
+    const durationForMeta = sourceType === 'standard'
+      ? formatDurationFromSeconds(questionCountForMeta * 7)
+      : customEstimatedDuration;
 
     const payload: Record<string, unknown> = {
       mode,
@@ -345,6 +548,11 @@ export default function FlashFlagPage() {
 
       setCreatedLink(playUrl);
       setCreatedSessionCode(code);
+      setCreatedTestName(testNameForMeta);
+      setCreatedDurationLabel(durationForMeta);
+      setCreatedShareMessage(
+        `Hey ! Mini Flash Flag avant de se voir : "${testNameForMeta}" (${durationForMeta}). Reponds vite, sans retour arriere 👇 ${playUrl}`,
+      );
     } catch (err) {
       if (mode === 'link') {
         setError(err instanceof Error ? err.message : 'Impossible de generer un lien partageable pour le moment.');
@@ -438,6 +646,72 @@ export default function FlashFlagPage() {
     if (!watchData?.answers?.length) return [];
     return [...watchData.answers].sort((a, b) => a.question_index - b.question_index);
   }, [watchData]);
+
+  const invitationShareMessage = useMemo(() => {
+    if (!createdLink) return '';
+    if (createdShareMessage.trim().length > 0) return createdShareMessage;
+
+    const fallbackName = createdTestName || 'Flash Flag';
+    const fallbackDuration = createdDurationLabel || 'environ 2 minutes';
+    return `Mini Flash Flag avant de se voir: ${fallbackName} (${fallbackDuration}). Reponds vite, sans retour arriere. ${createdLink}`;
+  }, [createdDurationLabel, createdLink, createdShareMessage, createdTestName]);
+
+  useEffect(() => {
+    if (typeof navigator === 'undefined') return;
+    setCanNativeShare('share' in navigator);
+  }, []);
+
+  const setTemporaryFeedback = (message: string) => {
+    setUiFeedback(message);
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => setUiFeedback(''), 2200);
+    }
+  };
+
+  const applyPreset = (presetId: string) => {
+    const preset = CUSTOM_PRESETS.find((item) => item.id === presetId);
+    if (!preset) return;
+
+    setSourceType('custom');
+    setCustomName(preset.suggestedName);
+    setCustomDescription(preset.suggestedDescription);
+    setCustomQuestions(cloneQuestions(preset.questions));
+    setTemporaryFeedback(`Preset "${preset.label}" charge.`);
+  };
+
+  const copyToClipboard = async (text: string, successMessage: string) => {
+    if (typeof navigator === 'undefined' || !navigator.clipboard) {
+      setTemporaryFeedback('Copie indisponible sur cet appareil.');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setTemporaryFeedback(successMessage);
+    } catch {
+      setTemporaryFeedback('Copie impossible sur cet appareil.');
+    }
+  };
+
+  const shareInvitation = async () => {
+    if (!createdLink || !canNativeShare || typeof navigator === 'undefined') return;
+
+    try {
+      await navigator.share({
+        title: 'Flash Flag',
+        text: invitationShareMessage,
+        url: createdLink,
+      });
+    } catch {
+      // Ignore abort from native share panel.
+    }
+  };
+
+  const shareOnWhatsapp = () => {
+    if (!createdLink || typeof window === 'undefined') return;
+    const message = encodeURIComponent(invitationShareMessage);
+    window.open(`https://wa.me/?text=${message}`, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <main className="relative min-h-dvh overflow-hidden bg-[#09090A] text-[#FAFAFA] px-4 py-6 sm:py-8">
@@ -608,6 +882,23 @@ export default function FlashFlagPage() {
                 </label>
               </div>
 
+              <div className="rounded-2xl border border-white/10 bg-[#15161A] p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FCD34D]">Templates express</p>
+                <p className="mt-1 text-xs text-[#A3A3A3]">Choisis un pack selon ton contexte puis personnalise.</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                  {CUSTOM_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      className="rounded-xl border border-white/12 bg-[#1B1D22] p-3 text-left transition hover:border-white/30"
+                      onClick={() => applyPreset(preset.id)}
+                    >
+                      <p className="text-sm font-semibold text-[#F5F5F5]">{preset.label}</p>
+                      <p className="mt-1 text-[11px] text-[#A3A3A3]">{preset.audience}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="rounded-2xl border border-[#2F2F2F] bg-[#141416] p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm text-[#E4E4E7]">
@@ -711,6 +1002,10 @@ export default function FlashFlagPage() {
                   </button>
                 </div>
               </div>
+
+              {uiFeedback && (
+                <p className="text-xs text-[#86EFAC]">{uiFeedback}</p>
+              )}
             </div>
           )}
         </section>
@@ -749,16 +1044,47 @@ export default function FlashFlagPage() {
             {loading ? 'Generation en cours...' : mode === 'link' ? 'Generer le lien a partager' : 'Demarrer sur cet appareil'}
           </button>
 
+          <div className="sticky bottom-2 z-20 sm:hidden">
+            <button
+              disabled={!canCreate || loading}
+              onClick={createSession}
+              className="w-full rounded-xl border border-[#7F1D1D] bg-[#1A1212]/95 px-4 py-3 text-sm font-bold text-[#FECACA] shadow-[0_12px_32px_rgba(0,0,0,0.35)] backdrop-blur disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {loading ? 'Generation...' : mode === 'link' ? 'Partager maintenant' : 'Lancer maintenant'}
+            </button>
+          </div>
+
           {createdLink && (
             <div className="rounded-xl border border-[#7F1D1D] bg-[#1A1212] p-3 space-y-2">
               <p className="text-sm text-[#FECACA]">Lien pret a envoyer</p>
+              <p className="text-xs text-[#F5D0D0]">{createdTestName} • {createdDurationLabel}</p>
               <p className="text-xs break-all text-[#F5F5F5]">{createdLink}</p>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button
                   className="rounded-lg bg-[#991B1B] px-3 py-2 text-sm transition-colors hover:bg-[#B91C1C]"
-                  onClick={() => navigator.clipboard.writeText(createdLink)}
+                  onClick={() => copyToClipboard(createdLink, 'Lien copie.')}
                 >
-                  Copier
+                  Copier lien
+                </button>
+                <button
+                  className="rounded-lg bg-[#334155] px-3 py-2 text-sm text-[#E2E8F0] transition-colors hover:bg-[#475569]"
+                  onClick={() => copyToClipboard(invitationShareMessage, 'Message pret copie.')}
+                >
+                  Copier message pret
+                </button>
+                {canNativeShare && (
+                  <button
+                    className="rounded-lg bg-[#1F2937] px-3 py-2 text-sm transition-colors hover:bg-[#374151]"
+                    onClick={shareInvitation}
+                  >
+                    Partager
+                  </button>
+                )}
+                <button
+                  className="rounded-lg bg-[#065F46] px-3 py-2 text-sm transition-colors hover:bg-[#047857]"
+                  onClick={shareOnWhatsapp}
+                >
+                  WhatsApp
                 </button>
                 <button
                   className="rounded-lg bg-[#27272A] px-3 py-2 text-sm transition-colors hover:bg-[#3F3F46]"
@@ -767,6 +1093,7 @@ export default function FlashFlagPage() {
                   Ouvrir
                 </button>
               </div>
+              {uiFeedback && <p className="text-xs text-[#86EFAC]">{uiFeedback}</p>}
             </div>
           )}
 

@@ -120,6 +120,9 @@ export default function FlashFlagSessionPage() {
     riskLabel: string;
   } | null>(null);
   const [isInlineMode, setIsInlineMode] = useState(false);
+  const [canNativeShare, setCanNativeShare] = useState(false);
+  const [sessionUrl, setSessionUrl] = useState('');
+  const [shareFeedback, setShareFeedback] = useState('');
 
   const startedAtRef = useRef<number>(0);
 
@@ -132,6 +135,36 @@ export default function FlashFlagSessionPage() {
     : 0;
   const timerAccent = questionRemainingRatio <= 0.2 ? '#EF4444' : questionRemainingRatio <= 0.45 ? '#F59E0B' : '#22C55E';
   const timerStrokeOffset = 176 - (176 * questionRemainingRatio);
+
+  useEffect(() => {
+    if (typeof navigator !== 'undefined') {
+      setCanNativeShare('share' in navigator);
+    }
+    if (typeof window !== 'undefined') {
+      setSessionUrl(window.location.href.split('#')[0]);
+    }
+  }, [code]);
+
+  const setTemporaryShareFeedback = (message: string) => {
+    setShareFeedback(message);
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => setShareFeedback(''), 2200);
+    }
+  };
+
+  const copyText = async (value: string, successMessage: string) => {
+    if (typeof navigator === 'undefined' || !navigator.clipboard) {
+      setTemporaryShareFeedback('Copie indisponible sur cet appareil.');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(value);
+      setTemporaryShareFeedback(successMessage);
+    } catch {
+      setTemporaryShareFeedback('Copie impossible sur cet appareil.');
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.hash.includes('payload=')) {
@@ -167,6 +200,31 @@ export default function FlashFlagSessionPage() {
     const totalSeconds = session.test.questions.reduce((sum, question) => sum + question.timeLimitSec, 0);
     return formatDurationFromSeconds(totalSeconds);
   }, [session]);
+
+  const resultShareText = useMemo(() => {
+    if (doneSummary) {
+      return `Je viens de finir Flash Flag (${doneSummary.riskPercent}% - ${doneSummary.riskLabel}). Tu oses le faire en mode chrono ?`;
+    }
+    if (session?.status === 'completed') {
+      const percent = session.score.max > 0 ? Math.round((session.score.total / session.score.max) * 100) : 0;
+      return `Resultat Flash Flag: ${percent}% (${getRiskLabelFromPercent(percent)}). A ton tour en mode chrono.`;
+    }
+    return 'Teste Flash Flag en mode chrono.';
+  }, [doneSummary, session]);
+
+  const shareResult = async () => {
+    if (!sessionUrl || !canNativeShare || typeof navigator === 'undefined') return;
+
+    try {
+      await navigator.share({
+        title: 'Flash Flag',
+        text: resultShareText,
+        url: sessionUrl,
+      });
+    } catch {
+      // Ignore user abort.
+    }
+  };
 
   const launch = async () => {
     setError('');
@@ -256,6 +314,9 @@ export default function FlashFlagSessionPage() {
   }, [answers, currentQuestion, index, totalQuestions, submitAll]);
 
   const onTimeout = useCallback(() => {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate([30, 40, 30]);
+    }
     pushAnswer(null, 0, true);
   }, [pushAnswer]);
 
@@ -280,6 +341,9 @@ export default function FlashFlagSessionPage() {
   }, [started, index, currentQuestion, doneSummary, onTimeout]);
 
   const onSelect = (option: { text: string; score: 0 | 1 | 2 }) => {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
     pushAnswer(option.text, option.score, false);
   };
 
@@ -367,6 +431,34 @@ export default function FlashFlagSessionPage() {
                 </div>
               )}
             </div>
+
+            <div className="rounded-xl border border-white/10 bg-[#15161A] p-4 space-y-2">
+              <p className="text-xs uppercase tracking-[0.18em] text-[#A3A3A3]">Boucle virale</p>
+              <p className="text-sm text-[#E4E4E7]">Partage le challenge et compare les resultats entre potes ou avec ton match.</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  className="rounded-lg bg-[#991B1B] px-3 py-2 text-sm transition-colors hover:bg-[#B91C1C]"
+                  onClick={() => copyText(resultShareText, 'Message de challenge copie.')}
+                >
+                  Copier le message
+                </button>
+                <button
+                  className="rounded-lg bg-[#27272A] px-3 py-2 text-sm transition-colors hover:bg-[#3F3F46]"
+                  onClick={() => copyText(sessionUrl, 'Lien de session copie.')}
+                >
+                  Copier le lien
+                </button>
+                {canNativeShare && (
+                  <button
+                    className="rounded-lg bg-[#334155] px-3 py-2 text-sm transition-colors hover:bg-[#475569]"
+                    onClick={shareResult}
+                  >
+                    Partager
+                  </button>
+                )}
+              </div>
+              {shareFeedback && <p className="text-xs text-[#86EFAC]">{shareFeedback}</p>}
+            </div>
           </section>
         </div>
       </main>
@@ -402,6 +494,34 @@ export default function FlashFlagSessionPage() {
                 </div>
               ))}
             </div>
+          </section>
+
+          <section className="rounded-2xl border border-[#1E1E1E] bg-[#111] p-5 space-y-3 shadow-[0_8px_40px_rgba(0,0,0,0.25)]">
+            <p className="text-xs uppercase tracking-[0.18em] text-[#A3A3A3]">Defi suivant</p>
+            <p className="text-sm text-[#E4E4E7]">Envoie le test a une autre personne et compare les resultats.</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="rounded-lg bg-[#991B1B] px-3 py-2 text-sm transition-colors hover:bg-[#B91C1C]"
+                onClick={() => copyText(resultShareText, 'Message de challenge copie.')}
+              >
+                Copier le message
+              </button>
+              <button
+                className="rounded-lg bg-[#27272A] px-3 py-2 text-sm transition-colors hover:bg-[#3F3F46]"
+                onClick={() => copyText(sessionUrl, 'Lien de session copie.')}
+              >
+                Copier le lien
+              </button>
+              {canNativeShare && (
+                <button
+                  className="rounded-lg bg-[#334155] px-3 py-2 text-sm transition-colors hover:bg-[#475569]"
+                  onClick={shareResult}
+                >
+                  Partager
+                </button>
+              )}
+            </div>
+            {shareFeedback && <p className="text-xs text-[#86EFAC]">{shareFeedback}</p>}
           </section>
 
           <Link href="/flashflag" className="inline-flex min-h-12 min-w-12 items-center gap-2 text-sm text-[#A1A1AA] hover:text-white transition-colors">
@@ -508,6 +628,16 @@ export default function FlashFlagSessionPage() {
               <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[#202125]">
                 <div className="h-full bg-[#EF4444]" style={{ width: `${progressPercent}%` }} />
               </div>
+
+              <div className="mt-2 text-[11px]">
+                {questionRemainingRatio <= 0.2 ? (
+                  <p className="text-[#FCA5A5]">Decision immediate: le chrono est presque a zero.</p>
+                ) : questionRemainingRatio <= 0.45 ? (
+                  <p className="text-[#FCD34D]">Accroche-toi, le temps file vite.</p>
+                ) : (
+                  <p className="text-[#86EFAC]">Tu es dans le timing, garde le rythme.</p>
+                )}
+              </div>
             </header>
 
             {currentQuestion && (
@@ -517,10 +647,13 @@ export default function FlashFlagSessionPage() {
                   {currentQuestion.options.map((option, idx) => (
                     <button
                       key={idx}
-                      className="text-left rounded-lg border border-white/12 bg-[#17181B] hover:bg-[#1E2024] px-3 py-2 transition-colors"
+                      className="min-h-14 text-left rounded-lg border border-white/12 bg-[#17181B] px-3 py-3 transition-colors hover:bg-[#1E2024] active:scale-[0.99]"
                       onClick={() => onSelect(option)}
                     >
-                      {option.text}
+                      <span className="flex items-center gap-2">
+                        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 text-xs text-[#A3A3A3]">{idx + 1}</span>
+                        <span>{option.text}</span>
+                      </span>
                     </button>
                   ))}
                 </div>

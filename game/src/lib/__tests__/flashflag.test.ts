@@ -19,7 +19,10 @@ describe('flashflag helpers', () => {
 
   it('valide le nombre de questions', () => {
     expect(ensureQuestionCount(Array.from({ length: 10 }, () => ({ text: 'q', timeLimitSec: 7, options: [{ text: 'a', score: 0 }, { text: 'b', score: 1 }] })))).toBe(true);
-    expect(ensureQuestionCount(Array.from({ length: 9 }, () => ({ text: 'q', timeLimitSec: 7, options: [{ text: 'a', score: 0 }, { text: 'b', score: 1 }] })))).toBe(false);
+    expect(ensureQuestionCount(Array.from({ length: 5 }, () => ({ text: 'q', timeLimitSec: 7, options: [{ text: 'a', score: 0 }, { text: 'b', score: 1 }] })))).toBe(true);
+    expect(ensureQuestionCount(Array.from({ length: 20 }, () => ({ text: 'q', timeLimitSec: 7, options: [{ text: 'a', score: 0 }, { text: 'b', score: 1 }] })))).toBe(true);
+    expect(ensureQuestionCount(Array.from({ length: 4 }, () => ({ text: 'q', timeLimitSec: 7, options: [{ text: 'a', score: 0 }, { text: 'b', score: 1 }] })))).toBe(false);
+    expect(ensureQuestionCount(Array.from({ length: 21 }, () => ({ text: 'q', timeLimitSec: 7, options: [{ text: 'a', score: 0 }, { text: 'b', score: 1 }] })))).toBe(false);
   });
 
   it('genere un lien de partage', () => {

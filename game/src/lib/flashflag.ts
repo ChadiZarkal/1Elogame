@@ -47,8 +47,8 @@ export function generateAccessCode(): string {
   return out;
 }
 
-export function ensureQuestionCount(questions: FlashFlagQuestionDTO[], expected = 10): boolean {
-  return questions.length === expected;
+export function ensureQuestionCount(questions: FlashFlagQuestionDTO[], min = 5, max = 20): boolean {
+  return questions.length >= min && questions.length <= max;
 }
 
 export function computeFlashFlagSummary(answers: FlashFlagAnswerInput[], questionCount: number): FlashFlagScoreSummary {
