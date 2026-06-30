@@ -70,6 +70,9 @@ interface SenderShareResume {
   createdTestName: string;
   createdDurationLabel: string;
   createdShareMessage: string;
+  watchData: SessionWatchData | null;
+  watchError: string;
+  isSenderFocusMode: boolean;
   updatedAt: number;
 }
 
@@ -382,6 +385,11 @@ function parseSenderShareResume(value: unknown): SenderShareResume | null {
   if (payload.version !== FLASHFLAG_SHARE_RESUME_VERSION) return null;
   if (typeof payload.createdSessionCode !== 'string' || payload.createdSessionCode.trim().length < 4) return null;
 
+  const watchData = payload.watchData;
+  const normalizedWatchData = watchData && typeof watchData === 'object'
+    ? (watchData as SessionWatchData)
+    : null;
+
   return {
     version: FLASHFLAG_SHARE_RESUME_VERSION,
     createdLink: typeof payload.createdLink === 'string' ? payload.createdLink : '',
@@ -389,6 +397,9 @@ function parseSenderShareResume(value: unknown): SenderShareResume | null {
     createdTestName: typeof payload.createdTestName === 'string' ? payload.createdTestName : 'Flash Flag',
     createdDurationLabel: typeof payload.createdDurationLabel === 'string' ? payload.createdDurationLabel : '',
     createdShareMessage: typeof payload.createdShareMessage === 'string' ? payload.createdShareMessage : '',
+    watchData: normalizedWatchData,
+    watchError: typeof payload.watchError === 'string' ? payload.watchError : '',
+    isSenderFocusMode: payload.isSenderFocusMode !== false,
     updatedAt: Number.isFinite(payload.updatedAt) ? Number(payload.updatedAt) : Date.now(),
   };
 }
@@ -427,6 +438,7 @@ export default function FlashFlagPage() {
   const [watchError, setWatchError] = useState('');
   const [uiFeedback, setUiFeedback] = useState('');
   const [lastSessionResume, setLastSessionResume] = useState<LastSessionResume | null>(null);
+  const [isSenderFocusMode, setIsSenderFocusMode] = useState(false);
   const [canNativeShare, setCanNativeShare] = useState(false);
 
   const selectedStandardTest = useMemo(
@@ -521,6 +533,9 @@ export default function FlashFlagPage() {
       setCreatedTestName(parsed.createdTestName);
       setCreatedDurationLabel(parsed.createdDurationLabel);
       setCreatedShareMessage(parsed.createdShareMessage);
+      setWatchData(parsed.watchData);
+      setWatchError(parsed.watchError);
+      setIsSenderFocusMode(parsed.isSenderFocusMode);
     } catch {
       // Ignore invalid stored sender resume state.
     }
@@ -592,6 +607,9 @@ export default function FlashFlagPage() {
         createdTestName,
         createdDurationLabel,
         createdShareMessage,
+        watchData,
+        watchError,
+        isSenderFocusMode,
         updatedAt: Date.now(),
       };
 
@@ -599,7 +617,7 @@ export default function FlashFlagPage() {
     } catch {
       // Ignore localStorage failures.
     }
-  }, [createdLink, createdSessionCode, createdTestName, createdDurationLabel, createdShareMessage]);
+  }, [createdLink, createdSessionCode, createdTestName, createdDurationLabel, createdShareMessage, watchData, watchError, isSenderFocusMode]);
 
   const canCreate = useMemo(() => {
     const profileValid = createSchema.safeParse({ subjectAge }).success;
@@ -691,6 +709,7 @@ export default function FlashFlagPage() {
       setCreatedShareMessage(
         `Hey ! Mini Flash Flag avant de se voir : "${testNameForMeta}" (${durationForMeta}). Reponds vite, sans retour arriere 👇 ${playUrl}`,
       );
+      setIsSenderFocusMode(true);
     } catch (err) {
       if (mode === 'link') {
         setError(err instanceof Error ? err.message : 'Impossible de generer un lien partageable pour le moment.');
@@ -860,6 +879,7 @@ export default function FlashFlagPage() {
     setWatchData(null);
     setWatchError('');
     setUiFeedback('');
+    setIsSenderFocusMode(false);
   };
 
   const setTemporaryFeedback = (message: string) => {
@@ -995,12 +1015,26 @@ export default function FlashFlagPage() {
                     Copier le lien
                   </button>
                 )}
+                {invitationShareMessage && (
+                  <button
+                    className="inline-flex items-center rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm text-[#DBEAFE] transition-colors hover:bg-black/35"
+                    onClick={() => copyToClipboard(invitationShareMessage, 'Message copie.')}
+                  >
+                    Copier message
+                  </button>
+                )}
                 <Link
                   href={`/flashflag/session/${createdSessionCode}`}
                   className="inline-flex items-center rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm text-[#DBEAFE] transition-colors hover:bg-black/35"
                 >
                   Ouvrir le test
                 </Link>
+                <button
+                  className="inline-flex items-center rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm text-[#DBEAFE] transition-colors hover:bg-black/35"
+                  onClick={() => setIsSenderFocusMode((value) => !value)}
+                >
+                  {isSenderFocusMode ? 'Afficher reglages' : 'Masquer reglages'}
+                </button>
                 <button
                   className="inline-flex items-center rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm text-[#DBEAFE] transition-colors hover:bg-black/35"
                   onClick={clearSenderShareResume}
@@ -1041,7 +1075,15 @@ export default function FlashFlagPage() {
           </section>
         )}
 
-        <section className="grid gap-4 lg:grid-cols-2">
+        {createdSessionCode && isSenderFocusMode && (
+          <div className="rounded-xl border border-white/10 bg-[#111318]/85 px-4 py-3 text-xs text-[#A3A3A3]">
+            Mode suivi actif: les reglages longs sont masques pour aller droit au partage et au statut de reponse.
+          </div>
+        )}
+
+        {(!createdSessionCode || !isSenderFocusMode) && (
+          <>
+            <section className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-[#2B2B2D] bg-[#111113] p-5 shadow-[0_8px_36px_rgba(0,0,0,0.3)]">
             <h2 className="text-lg font-bold">1. Qui est evalue ?</h2>
             <p className="mt-1 text-xs text-[#A3A3A3]">Profil de la personne qui va repondre au test.</p>
@@ -1094,9 +1136,9 @@ export default function FlashFlagPage() {
               </button>
             </div>
           </div>
-        </section>
+            </section>
 
-        <section className="rounded-2xl border border-[#2B2B2D] bg-[#111113] p-5 shadow-[0_8px_36px_rgba(0,0,0,0.3)]">
+            <section className="rounded-2xl border border-[#2B2B2D] bg-[#111113] p-5 shadow-[0_8px_36px_rgba(0,0,0,0.3)]">
           <h2 className="text-lg font-bold">3. Regler le contenu du test</h2>
 
           {sourceType === 'standard' ? (
@@ -1279,9 +1321,9 @@ export default function FlashFlagPage() {
               )}
             </div>
           )}
-        </section>
+            </section>
 
-        <section className="rounded-2xl border border-[#2B2B2D] bg-[#111113] p-5 space-y-4 shadow-[0_8px_36px_rgba(0,0,0,0.3)]">
+            <section className="rounded-2xl border border-[#2B2B2D] bg-[#111113] p-5 space-y-4 shadow-[0_8px_36px_rgba(0,0,0,0.3)]">
           <h2 className="text-lg font-bold">4. Choisir l envoi puis lancer</h2>
           <p className="text-xs text-[#A3A3A3]">Derniere etape: choisis le mode d envoi juste avant de generer la session.</p>
 
@@ -1435,7 +1477,9 @@ export default function FlashFlagPage() {
               {error}
             </p>
           )}
-        </section>
+            </section>
+          </>
+        )}
       </div>
     </main>
   );
