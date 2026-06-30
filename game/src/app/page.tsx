@@ -7,7 +7,7 @@ import { ArrowRight, ExternalLink, Shield, Trophy, Flame, HelpCircle, Activity, 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHaptics } from '@/lib/hooks';
 
-type PersonaKey = 'dating' | 'group' | 'doubt';
+type PersonaKey = 'redflag' | 'group' | 'dating' | 'doubt';
 
 interface StatsData {
   totalVotes: number;
@@ -27,20 +27,22 @@ const CARDS_DATA: Record<PersonaKey, {
   href: string;
   emoji: string;
   shortcut: string;
+  external?: boolean;
 }> = {
-  dating: {
-    id: 'flashflag',
-    themeColor: '#FF3B30',
-    glowColor: 'rgba(255, 59, 48, 0.4)',
-    tag: '⚡ SPEED-TEST DATE',
-    title: 'FLASH FLAG SPRINT',
-    tagline: 'Chronométré. Cash. Sans pitié.',
-    desc: 'Créer un test de 10 questions piégées ou lancer le deck standard. Passe ton téléphone ou envoie le lien à ton date : pas de retour en arrière possible.',
-    bullets: ['⏱ Quiz intense 10s', '🚫 Zéro triche / Réflexion', '🤫 Verdict de toxicité direct'],
-    cta: 'LANCER LE FILTRE',
-    href: '/flashflag',
-    emoji: '🥂',
-    shortcut: 'Sprint'
+  redflag: {
+    id: 'redflagtest',
+    themeColor: '#FFB4AA',
+    glowColor: 'rgba(255, 180, 170, 0.4)',
+    tag: '🧪 QUIZ DE PERSONNALITÉ',
+    title: 'RED FLAG TEST',
+    tagline: 'Es-tu un Red Flag ambulant ?',
+    desc: 'Fais notre grand test de personnalité de référence de manière anonyme et obtiens ton diplôme de toxicité officiel à partager.',
+    bullets: ['🧠 Analyse psychologique fun', '📢 Résultats partageables', '🔥 100% interactif & anonyme'],
+    cta: 'TESTER TA TOXICITÉ',
+    href: 'https://redflagtest.redorgreen.fr/',
+    emoji: '🧪',
+    shortcut: 'Test',
+    external: true
   },
   group: {
     id: 'jeu',
@@ -55,6 +57,20 @@ const CARDS_DATA: Record<PersonaKey, {
     href: '/jeu',
     emoji: '🔥',
     shortcut: 'Duel'
+  },
+  dating: {
+    id: 'flashflag',
+    themeColor: '#FF3B30',
+    glowColor: 'rgba(255, 59, 48, 0.4)',
+    tag: '⚡ SPEED-TEST DATE',
+    title: 'FLASH FLAG SPRINT',
+    tagline: 'Chronométré. Cash. Sans pitié.',
+    desc: 'Créer un test de 10 questions piégées ou lancer le deck standard. Passe ton téléphone ou envoie le lien à ton date : pas de retour en arrière possible.',
+    bullets: ['⏱ Quiz intense 10s', '🚫 Zéro triche / Réflexion', '🤫 Verdict de toxicité direct'],
+    cta: 'LANCER LE FILTRE',
+    href: '/flashflag',
+    emoji: '🥂',
+    shortcut: 'Sprint'
   },
   doubt: {
     id: 'oracle',
@@ -178,8 +194,8 @@ export default function HubPage() {
           </div>
         </header>
 
-        {/* 2. Vibe Selector Capsule (Sliding layout indicator) */}
-        <div className="w-full bg-[#111112] border border-white/5 rounded-2xl p-1 mt-6 flex justify-between relative shadow-2xl">
+        {/* 2. Vibe Selector Capsule (Sliding layout indicator for 4 Games) */}
+        <div className="w-full bg-[#111112] border border-white/5 rounded-2xl p-1 mt-6 flex justify-between gap-1 relative shadow-2xl">
           {(Object.keys(CARDS_DATA) as PersonaKey[]).map((key) => {
             const isSelected = selectedVibe === key;
             const data = CARDS_DATA[key];
@@ -190,8 +206,8 @@ export default function HubPage() {
                   setSelectedVibe(key);
                   handleTap();
                 }}
-                className={`relative z-10 flex-1 py-3 text-xs font-black tracking-wide rounded-xl flex items-center justify-center gap-1.5 transition-all select-none cursor-pointer ${
-                  isSelected ? 'text-black' : 'text-[#8E8E93] hover:text-white'
+                className={`relative z-10 grow py-3 px-1 text-xs font-black tracking-wide rounded-xl flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-all select-none cursor-pointer ${
+                  isSelected ? 'text-black font-black' : 'text-[#8E8E93] hover:text-white'
                 }`}
               >
                 {isSelected && (
@@ -202,8 +218,8 @@ export default function HubPage() {
                     transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                   />
                 )}
-                <span className="text-sm">{data.emoji}</span>
-                <span className="hidden sm:inline font-black uppercase text-[10px] tracking-widest">{data.shortcut}</span>
+                <span className="text-base leading-none">{data.emoji}</span>
+                <span className="font-black uppercase text-[9px] tracking-wide leading-none">{data.shortcut}</span>
               </button>
             );
           })}
@@ -274,51 +290,57 @@ export default function HubPage() {
 
               {/* Massive Tactile Pulse Action Button */}
               <div className="pt-6">
-                <Link
-                  href={activeCard.href}
-                  onClick={handleTap}
-                  className="relative group w-full py-4 px-6 rounded-2xl flex items-center justify-between font-black text-xs uppercase tracking-widest text-black transition-all active:scale-[0.97] shadow-xl hover:brightness-110"
-                  style={{
-                    backgroundColor: activeCard.themeColor,
-                    boxShadow: `0 8px 30px ${activeCard.themeColor}3F`
-                  }}
-                >
-                  <span>{activeCard.cta}</span>
-                  <div className="flex items-center gap-1 bg-black/10 px-3 py-1 rounded-lg">
-                    <span className="font-extrabold text-[10px]">GO</span>
-                    <ArrowRight size={12} strokeWidth={2.5} />
-                  </div>
-                </Link>
+                {activeCard.external ? (
+                  <a
+                    href={activeCard.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={handleTap}
+                    className="relative group w-full py-4 px-6 rounded-2xl flex items-center justify-between font-black text-xs uppercase tracking-widest text-black transition-all active:scale-[0.97] shadow-xl hover:brightness-110"
+                    style={{
+                      backgroundColor: activeCard.themeColor,
+                      boxShadow: `0 8px 30px ${activeCard.themeColor}3F`
+                    }}
+                  >
+                    <span>{activeCard.cta}</span>
+                    <div className="flex items-center gap-1 bg-black/10 px-3 py-1 rounded-lg">
+                      <span className="font-extrabold text-[10px]">GO</span>
+                      <ArrowRight size={12} strokeWidth={2.5} />
+                    </div>
+                  </a>
+                ) : (
+                  <Link
+                    href={activeCard.href}
+                    onClick={handleTap}
+                    className="relative group w-full py-4 px-6 rounded-2xl flex items-center justify-between font-black text-xs uppercase tracking-widest text-black transition-all active:scale-[0.97] shadow-xl hover:brightness-110"
+                    style={{
+                      backgroundColor: activeCard.themeColor,
+                      boxShadow: `0 8px 30px ${activeCard.themeColor}3F`
+                    }}
+                  >
+                    <span>{activeCard.cta}</span>
+                    <div className="flex items-center gap-1 bg-black/10 px-3 py-1 rounded-lg">
+                      <span className="font-extrabold text-[10px]">GO</span>
+                      <ArrowRight size={12} strokeWidth={2.5} />
+                    </div>
+                  </Link>
+                )}
               </div>
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* 4. Secondary Tactile Row (Ultra-minimalist icons/actions capsule) */}
-        <section className="w-full flex items-center gap-2.5 mt-2">
-          {/* Autodiag External link */}
-          <a
-            href="https://redflagtest.redorgreen.fr/"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={handleTap}
-            className="flex-1 py-3.5 px-3 rounded-2xl bg-[#0F1012] border border-white/5 flex flex-col items-center justify-center text-center group active:scale-95 transition-transform"
-          >
-            <span className="text-lg">🧪</span>
-            <span className="font-black text-[9px] uppercase tracking-wider text-[#A6A6A6] group-hover:text-[#FFB4AA] mt-1 transition-colors">
-              ES-TU TOXIQUE ?
-            </span>
-          </a>
-
+        {/* 4. Secondary Tactile Row (Highly ergonomic 2-column layout) */}
+        <section className="w-full flex items-center gap-3 mt-2">
           {/* Results / Leaderboard */}
           <Link
             href="/classement"
             onClick={handleTap}
-            className="flex-1 py-3.5 px-3 rounded-2xl bg-[#0F1012] border border-white/5 flex flex-col items-center justify-center text-center group active:scale-95 transition-transform"
+            className="flex-1 py-4 px-4 rounded-2xl bg-[#0F1012] border border-white/5 flex flex-col items-center justify-center text-center group active:scale-95 transition-transform"
           >
-            <span className="text-lg">🏆</span>
+            <span className="text-xl">🏆</span>
             <span className="font-black text-[9px] uppercase tracking-wider text-[#A6A6A6] group-hover:text-[#2ECC71] mt-1 transition-colors">
-              LE PALMARÈS
+              LE PALMARÈS GÉNÉRAL
             </span>
           </Link>
 
@@ -328,11 +350,11 @@ export default function HubPage() {
               handleTap();
               setSafeZoneOpen(true);
             }}
-            className="flex-1 py-3.5 px-3 rounded-2xl bg-[#0F1012] border border-white/5 flex flex-col items-center justify-center text-center group active:scale-95 transition-transform cursor-pointer"
+            className="flex-1 py-4 px-4 rounded-2xl bg-[#0F1012] border border-white/5 flex flex-col items-center justify-center text-center group active:scale-95 transition-transform cursor-pointer"
           >
-            <span className="text-lg">🛡</span>
+            <span className="text-xl">🛡</span>
             <span className="font-black text-[9px] uppercase tracking-wider text-[#A6A6A6] group-hover:text-[#10B981] mt-1 transition-colors">
-              SAFE ZONE
+              ESPACE SAFE ZONE
             </span>
           </button>
         </section>
