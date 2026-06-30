@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, ExternalLink, Shield, Trophy, Flame, HelpCircle, Activity, Sparkles, MessageSquare, Info, X, Zap, Heart } from 'lucide-react';
@@ -94,6 +94,10 @@ export default function HubPage() {
   const [selectedVibe, setSelectedVibe] = useState<PersonaKey>('group');
   const [safeZoneOpen, setSafeZoneOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  const [swipeHint, setSwipeHint] = useState(true);
+  const touchStartXRef = useRef<number | null>(null);
+
+  const vibeOrder = useMemo(() => Object.keys(CARDS_DATA) as PersonaKey[], []);
 
   useEffect(() => {
     fetch('/api/stats/public')
@@ -107,6 +111,36 @@ export default function HubPage() {
   const handleTap = useCallback(() => {
     tap();
   }, [tap]);
+
+  const switchVibeByStep = useCallback((step: number) => {
+    setSelectedVibe((prev) => {
+      const currentIndex = vibeOrder.indexOf(prev);
+      const nextIndex = (currentIndex + step + vibeOrder.length) % vibeOrder.length;
+      return vibeOrder[nextIndex];
+    });
+    tap();
+    setSwipeHint(false);
+  }, [tap, vibeOrder]);
+
+  const onTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    touchStartXRef.current = e.changedTouches[0]?.clientX ?? null;
+  }, []);
+
+  const onTouchEnd = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStartXRef.current === null) return;
+    const endX = e.changedTouches[0]?.clientX ?? touchStartXRef.current;
+    const deltaX = endX - touchStartXRef.current;
+    touchStartXRef.current = null;
+
+    // Swipe threshold to avoid accidental tab switches on scroll.
+    if (Math.abs(deltaX) < 42) return;
+
+    if (deltaX < 0) {
+      switchVibeByStep(1);
+    } else {
+      switchVibeByStep(-1);
+    }
+  }, [switchVibeByStep]);
 
   const activeCard = CARDS_DATA[selectedVibe];
 
@@ -155,47 +189,40 @@ export default function HubPage() {
       <main id="main-content" className="relative z-10 mx-auto w-full max-w-110 px-5 py-6 flex flex-col items-center justify-between min-h-dvh">
         
         {/* 1. Header (Minimalist & Branding Focus) */}
-        <header className="w-full space-y-4 flex flex-col items-center">
-          <div className="w-full flex items-center justify-between px-1">
-            {/* Live Indicator */}
-            {stats ? (
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-neutral-900 border border-white/8 px-3 py-1 text-[9px] text-[#A6A6A6] font-bold tracking-wider">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2ECC71] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#2ECC71]"></span>
-                </span>
-                <span>{stats.estimatedPlayers.toLocaleString('fr-FR')} EN LIGNE</span>
-              </div>
-            ) : (
-              <div className="h-5 w-24 animate-pulse rounded-full bg-white/5" />
-            )}
-
-            {/* Quick Rules Button */}
-            <button
-              onClick={() => {
-                handleTap();
-                setHowToPlayOpen(true);
-              }}
-              className="p-2 -mr-2 text-white/50 hover:text-white active:scale-90 transition-transform cursor-pointer"
-              aria-label="Comment jouer ?"
-            >
-              <HelpCircle size={18} />
-            </button>
-          </div>
-
-          {/* Centered Brand Logo */}
-          <div className="py-2 scale-100 hover:scale-[1.02] active:scale-95 transition-transform duration-200">
-            <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_-swm7JSCbdPCLqOwOFuCKP66Pmm6j4HPWJU5iRvoc5tNnTI8mzZlvIEK2pU3YL8f4VMfRJS9uwI0tqWCZ8HceZoB1hhi2Igygfy9ViYizlejfbUdtoV9GXqfJ-O2PzDCSqqVkzeRXJAr2gdNFt23OBry1327wVvMoOl5zmgMTTDMB6kAXDP6dmMb7IUPDS283Z9k4o7wnIFfbOmbKf0pQrixrlJIMwD7cP3zSzWSv96UUUoKNMTOT61FshoGmXd2hgMSXejXoLQ"
+        <header className="w-full space-y-4 flex flex-col items-center pt-2">
+          {/* Centered Brand Logo - enlarged and dominant */}
+          <div className="py-2 scale-100 hover:scale-[1.01] active:scale-95 transition-transform duration-200">
+            <Image
+              src="/logo-rog-new.svg"
               alt="Red or Green Logo"
-              className="h-9 w-auto object-contain drop-shadow-[0_0_20px_rgba(255,59,48,0.2)]"
+              width={540}
+              height={118}
+              priority
               draggable={false}
+              className="h-auto w-[88vw] max-w-115 object-contain drop-shadow-[0_0_28px_rgba(255,59,48,0.3)]"
             />
           </div>
+
+          <p className="text-[10px] font-black tracking-[0.22em] uppercase text-[#CFCFD4]/70">
+            Swipe pour changer de jeu
+          </p>
         </header>
 
+        {/* Floating help button moved out of header for cleaner logo stage */}
+        <button
+          onClick={() => {
+            handleTap();
+            setHowToPlayOpen(true);
+          }}
+          className="fixed top-4 right-4 z-40 h-10 w-10 rounded-full border border-white/10 bg-black/55 text-white/70 backdrop-blur-md hover:text-white active:scale-90 transition-all cursor-pointer"
+          aria-label="Comment jouer ?"
+        >
+          <span className="sr-only">Comment jouer ?</span>
+          <HelpCircle size={17} className="mx-auto" />
+        </button>
+
         {/* 2. Vibe Selector Capsule (Sliding layout indicator for 4 Games) */}
-        <div className="w-full bg-[#111112] border border-white/5 rounded-2xl p-1 mt-6 flex justify-between gap-1 relative shadow-2xl">
+        <div className="w-full bg-[#111112] border border-white/5 rounded-2xl p-1 mt-4 flex justify-between gap-1 relative shadow-2xl">
           {(Object.keys(CARDS_DATA) as PersonaKey[]).map((key) => {
             const isSelected = selectedVibe === key;
             const data = CARDS_DATA[key];
@@ -240,6 +267,8 @@ export default function HubPage() {
                 borderColor: `${activeCard.themeColor}22`,
                 boxShadow: `0 25px 50px -12px ${activeCard.themeColor}0C`
               }}
+              onTouchStart={onTouchStart}
+              onTouchEnd={onTouchEnd}
             >
               {/* Backglow element on card */}
               <div 
@@ -273,19 +302,27 @@ export default function HubPage() {
                 </div>
 
                 {/* Game specific description */}
-                <p className="text-[12px] leading-relaxed text-[#B3B3B3] font-medium pt-1">
+                <p className="text-[13px] leading-relaxed text-[#D0D0D6] font-semibold pt-1">
                   {activeCard.desc}
                 </p>
 
                 {/* Specs / Bullet points */}
                 <ul className="space-y-2 pt-2">
                   {activeCard.bullets.map((bullet, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-xs font-bold text-[#E2E2E2]">
+                    <li key={idx} className="flex items-center gap-2 text-[12px] font-black text-[#F0F0F4]">
                       <span className="text-sm select-none" style={{ color: activeCard.themeColor }}>✔</span>
                       <span>{bullet}</span>
                     </li>
                   ))}
                 </ul>
+
+                {swipeHint && (
+                  <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/4 px-3 py-1 text-[10px] font-black tracking-wider uppercase text-[#C2C2C8]">
+                    <span>⬅</span>
+                    <span>Swipe</span>
+                    <span>➡</span>
+                  </div>
+                )}
               </div>
 
               {/* Massive Tactile Pulse Action Button */}
