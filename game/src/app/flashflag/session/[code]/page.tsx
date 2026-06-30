@@ -28,6 +28,96 @@ interface SessionData {
   }>;
 }
 
+type SessionStatus = SessionData['status'];
+
+interface RuntimeAnswer {
+  questionIndex: number;
+  questionText: string;
+  selectedOption: string | null;
+  selectedScore: 0 | 1 | 2;
+  timedOut: boolean;
+  timeSpentMs: number;
+}
+
+interface DoneSummary {
+  totalScore: number;
+  maxScore: number;
+  answeredCount: number;
+  timedOutCount: number;
+  riskPercent: number;
+  riskLabel: string;
+}
+
+interface PersistedSessionState {
+  version: number;
+  code: string;
+  isInlineMode: boolean;
+  started: boolean;
+  index: number;
+  answers: RuntimeAnswer[];
+  doneSummary: DoneSummary | null;
+  sessionSnapshot: SessionData | null;
+}
+
+const FLASHFLAG_SESSION_STATE_VERSION = 1;
+const FLASHFLAG_SESSION_STATE_PREFIX = 'flashflag_session_state_v1:';
+const FLASHFLAG_LAST_SESSION_KEY = 'flashflag_last_session_v1';
+
+function buildSessionStateStorageKey(code: string): string {
+  return `${FLASHFLAG_SESSION_STATE_PREFIX}${code}`;
+}
+
+function clampQuestionIndex(value: number, questionCount: number): number {
+  if (!Number.isFinite(value) || value < 0) return 0;
+  if (questionCount <= 1) return 0;
+  return Math.min(Math.floor(value), questionCount - 1);
+}
+
+function isRuntimeAnswerArray(value: unknown): value is RuntimeAnswer[] {
+  if (!Array.isArray(value)) return false;
+  return value.every((item) => {
+    if (!item || typeof item !== 'object') return false;
+    const typed = item as Partial<RuntimeAnswer>;
+    return typeof typed.questionIndex === 'number'
+      && typeof typed.questionText === 'string'
+      && (typed.selectedOption === null || typeof typed.selectedOption === 'string')
+      && (typed.selectedScore === 0 || typed.selectedScore === 1 || typed.selectedScore === 2)
+      && typeof typed.timedOut === 'boolean'
+      && typeof typed.timeSpentMs === 'number';
+  });
+}
+
+function isDoneSummary(value: unknown): value is DoneSummary {
+  if (!value || typeof value !== 'object') return false;
+  const typed = value as Partial<DoneSummary>;
+  return typeof typed.totalScore === 'number'
+    && typeof typed.maxScore === 'number'
+    && typeof typed.answeredCount === 'number'
+    && typeof typed.timedOutCount === 'number'
+    && typeof typed.riskPercent === 'number'
+    && typeof typed.riskLabel === 'string';
+}
+
+function normalizeSessionStatus(status: unknown): SessionStatus {
+  if (status === 'pending' || status === 'in_progress' || status === 'completed') return status;
+  return 'pending';
+}
+
+function buildLastSessionPayload(input: {
+  code: string;
+  status: SessionStatus;
+  testName: string;
+  updatedAt?: number;
+}) {
+  return {
+    code: input.code,
+    href: `/flashflag/session/${input.code}`,
+    status: input.status,
+    testName: input.testName,
+    updatedAt: input.updatedAt ?? Date.now(),
+  };
+}
+
 function decodeBase64Url(token: string): string {
   const normalized = token.replace(/-/g, '+').replace(/_/g, '/');
   const padded = normalized + '==='.slice((normalized.length + 3) % 4);
@@ -98,28 +188,16 @@ export default function FlashFlagSessionPage() {
   const code = params.code;
 
   const [loading, setLoading] = useState(true);
+  const [restoredBanner, setRestoredBanner] = useState('');
   const [error, setError] = useState('');
   const [session, setSession] = useState<SessionData | null>(null);
   const [started, setStarted] = useState(false);
   const [index, setIndex] = useState(0);
   const [remainingMs, setRemainingMs] = useState(0);
-  const [answers, setAnswers] = useState<Array<{
-    questionIndex: number;
-    questionText: string;
-    selectedOption: string | null;
-    selectedScore: 0 | 1 | 2;
-    timedOut: boolean;
-    timeSpentMs: number;
-  }>>([]);
-  const [doneSummary, setDoneSummary] = useState<{
-    totalScore: number;
-    maxScore: number;
-    answeredCount: number;
-    timedOutCount: number;
-    riskPercent: number;
-    riskLabel: string;
-  } | null>(null);
+  const [answers, setAnswers] = useState<RuntimeAnswer[]>([]);
+  const [doneSummary, setDoneSummary] = useState<DoneSummary | null>(null);
   const [isInlineMode, setIsInlineMode] = useState(false);
+  const [hasHydratedState, setHasHydratedState] = useState(false);
   const [canNativeShare, setCanNativeShare] = useState(false);
   const [sessionUrl, setSessionUrl] = useState('');
   const [shareFeedback, setShareFeedback] = useState('');
@@ -137,6 +215,52 @@ export default function FlashFlagSessionPage() {
   const timerStrokeOffset = 176 - (176 * questionRemainingRatio);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      setHasHydratedState(true);
+      return;
+    }
+
+    try {
+      const raw = window.localStorage.getItem(buildSessionStateStorageKey(code));
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<PersistedSessionState>;
+        if (parsed.version === FLASHFLAG_SESSION_STATE_VERSION && parsed.code === code) {
+          if (parsed.sessionSnapshot) {
+            setSession(parsed.sessionSnapshot as SessionData);
+            setLoading(false);
+          }
+
+          if (typeof parsed.isInlineMode === 'boolean') {
+            setIsInlineMode(parsed.isInlineMode);
+          }
+
+          if (typeof parsed.started === 'boolean') {
+            setStarted(parsed.started);
+          }
+
+          if (typeof parsed.index === 'number') {
+            setIndex(Math.max(0, Math.floor(parsed.index)));
+          }
+
+          if (isRuntimeAnswerArray(parsed.answers)) {
+            setAnswers(parsed.answers);
+          }
+
+          if (parsed.doneSummary === null || isDoneSummary(parsed.doneSummary)) {
+            setDoneSummary(parsed.doneSummary || null);
+          }
+
+          setRestoredBanner('Session restauree sur cet appareil.');
+        }
+      }
+    } catch {
+      // Ignore invalid persisted payloads.
+    } finally {
+      setHasHydratedState(true);
+    }
+  }, [code]);
+
+  useEffect(() => {
     if (typeof navigator !== 'undefined') {
       setCanNativeShare('share' in navigator);
     }
@@ -144,6 +268,50 @@ export default function FlashFlagSessionPage() {
       setSessionUrl(window.location.href.split('#')[0]);
     }
   }, [code]);
+
+  useEffect(() => {
+    if (!hasHydratedState || !session || typeof window === 'undefined') return;
+
+    const safeIndex = clampQuestionIndex(index, session.test.questions.length);
+    if (safeIndex !== index) {
+      setIndex(safeIndex);
+      return;
+    }
+
+    const payload: PersistedSessionState = {
+      version: FLASHFLAG_SESSION_STATE_VERSION,
+      code,
+      isInlineMode,
+      started,
+      index: safeIndex,
+      answers,
+      doneSummary,
+      sessionSnapshot: session,
+    };
+
+    try {
+      window.localStorage.setItem(buildSessionStateStorageKey(code), JSON.stringify(payload));
+
+      const currentStatus = doneSummary
+        ? 'completed'
+        : (started ? 'in_progress' : normalizeSessionStatus(session.status));
+
+      window.localStorage.setItem(
+        FLASHFLAG_LAST_SESSION_KEY,
+        JSON.stringify(buildLastSessionPayload({ code, status: currentStatus, testName: session.test.name })),
+      );
+    } catch {
+      // Ignore localStorage write failures.
+    }
+  }, [hasHydratedState, session, code, isInlineMode, started, index, answers, doneSummary]);
+
+  useEffect(() => {
+    if (!restoredBanner) return;
+    if (typeof window === 'undefined') return;
+
+    const timeout = window.setTimeout(() => setRestoredBanner(''), 2600);
+    return () => window.clearTimeout(timeout);
+  }, [restoredBanner]);
 
   const setTemporaryShareFeedback = (message: string) => {
     setShareFeedback(message);
@@ -167,10 +335,12 @@ export default function FlashFlagSessionPage() {
   };
 
   useEffect(() => {
+    if (!hasHydratedState) return;
+
     if (typeof window !== 'undefined' && window.location.hash.includes('payload=')) {
       const inlineSession = parseInlineSessionFromHash(window.location.hash);
       if (inlineSession) {
-        setSession(inlineSession);
+        setSession((prev) => prev || inlineSession);
         setLoading(false);
         setIsInlineMode(true);
         return;
@@ -180,15 +350,48 @@ export default function FlashFlagSessionPage() {
       return;
     }
 
-    fetch(`/api/flashflag/session/${code}`)
-      .then((response) => response.json())
-      .then((json) => {
-        if (!json.success) throw new Error(json.error?.message || 'Session introuvable');
-        setSession(json.data as SessionData);
+    let active = true;
+
+    fetch(`/api/flashflag/session/${code}`, { cache: 'no-store' })
+      .then((response) => response.json().then((json) => ({ ok: response.ok, json })))
+      .then(({ ok, json }) => {
+        if (!ok || !json.success) throw new Error(json.error?.message || 'Session introuvable');
+        if (!active) return;
+
+        const loaded = json.data as SessionData;
+        setSession(loaded);
+        setError('');
+
+        if (loaded.status === 'completed') {
+          setStarted(false);
+          setIndex(0);
+          setAnswers((prev) => {
+            if (prev.length > 0) return prev;
+            return loaded.answers.map((answer) => ({
+              questionIndex: answer.question_index,
+              questionText: answer.question_text,
+              selectedOption: answer.selected_option,
+              selectedScore: answer.selected_score,
+              timedOut: answer.timed_out,
+              timeSpentMs: answer.time_spent_ms,
+            }));
+          });
+        }
       })
-      .catch((err) => setError(err instanceof Error ? err.message : 'Erreur'))
-      .finally(() => setLoading(false));
-  }, [code]);
+      .catch((err) => {
+        if (!active) return;
+        if (!session) {
+          setError(err instanceof Error ? err.message : 'Erreur');
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [code, hasHydratedState, session]);
 
   const progressPercent = useMemo(() => {
     if (!totalQuestions) return 0;
@@ -246,14 +449,7 @@ export default function FlashFlagSessionPage() {
     }
   };
 
-  const submitAll = useCallback(async (payload: Array<{
-    questionIndex: number;
-    questionText: string;
-    selectedOption: string | null;
-    selectedScore: 0 | 1 | 2;
-    timedOut: boolean;
-    timeSpentMs: number;
-  }>) => {
+  const submitAll = useCallback(async (payload: RuntimeAnswer[]) => {
     if (isInlineMode) {
       const answeredCount = payload.filter((item) => !item.timedOut).length;
       const timedOutCount = payload.filter((item) => item.timedOut).length;
@@ -306,6 +502,7 @@ export default function FlashFlagSessionPage() {
     setAnswers(next);
 
     if (index + 1 >= totalQuestions) {
+      setStarted(false);
       submitAll(next);
       return;
     }
@@ -533,44 +730,52 @@ export default function FlashFlagSessionPage() {
   }
 
   return (
-    <main className="relative min-h-dvh overflow-hidden bg-[#0A0A0B] text-[#FAFAFA] p-4 sm:p-6">
+    <main className="relative min-h-dvh overflow-hidden bg-[#080809] text-[#FAFAFA] p-4 sm:p-6">
       <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/12 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-80 w-80 translate-x-1/3 rounded-full bg-[#EF4444]/8 blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(239,68,68,0.16),transparent_40%),radial-gradient(circle_at_80%_0%,rgba(251,191,36,0.12),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.03),transparent_32%)]" />
+        <div className="absolute inset-0 bg-[repeating-linear-gradient(-45deg,transparent,transparent_15px,rgba(255,255,255,0.35)_15px,rgba(255,255,255,0.35)_16px)] opacity-[0.03]" />
+        <div className="absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/14 blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-80 w-80 translate-x-1/3 rounded-full bg-[#F59E0B]/10 blur-3xl" />
       </div>
 
       <div className="relative z-10 max-w-3xl mx-auto space-y-4">
-        <Link href="/flashflag" className="inline-flex min-h-12 min-w-12 items-center gap-2 text-sm text-[#6B7280] hover:text-white transition-colors active:scale-95">
+        <Link href="/flashflag" className="inline-flex min-h-12 min-w-12 items-center gap-2 rounded-lg px-2 text-sm text-[#9CA3AF] hover:bg-white/5 hover:text-white transition-colors active:scale-95">
           <span>←</span>
           <span>Retour preparation</span>
         </Link>
 
+        {restoredBanner && (
+          <div className="rounded-xl border border-[#14532D] bg-[#052E1F]/75 px-4 py-2 text-xs text-[#86EFAC]">
+            {restoredBanner}
+          </div>
+        )}
+
         {!started ? (
-          <section className="rounded-2xl border border-[#1E1E1E] bg-[#111] p-5 space-y-4 shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-[#9CA3AF]">Session Flash Flag</p>
-            <h1 className="text-2xl font-black">{session.test.name}</h1>
+          <section className="rounded-3xl border border-[#2B2B2D] bg-[linear-gradient(125deg,#101012_0%,#161619_58%,#2A1318_100%)] p-5 space-y-4 shadow-[0_20px_70px_rgba(0,0,0,0.38)]">
+            <p className="inline-flex w-fit rounded-full border border-[#7F1D1D] bg-[#2A1519] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#FCA5A5]">Sprint Flash Flag</p>
+            <h1 className="text-3xl font-black leading-tight">{session.test.name}</h1>
             {session.test.description && <p className="text-sm text-[#D4D4D8]">{session.test.description}</p>}
 
-            <div className="rounded-xl border border-white/10 bg-[#15161A] p-3 text-sm text-[#E5E7EB]">
+            <div className="rounded-2xl border border-white/10 bg-black/35 p-4 text-sm text-[#E5E7EB]">
               Format ultra simple: la personne repond vite, sans retour arriere, et tu vois si les valeurs sont compatibles.
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-white/10 bg-[#17181B] p-3">
+              <div className="rounded-xl border border-white/10 bg-black/25 p-3">
                 <p className="text-[11px] text-[#A3A3A3]">Questions</p>
                 <p className="text-sm font-semibold">{session.test.questions.length}</p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-[#17181B] p-3">
+              <div className="rounded-xl border border-white/10 bg-black/25 p-3">
                 <p className="text-[11px] text-[#A3A3A3]">Duree estimee</p>
                 <p className="text-sm font-semibold">{totalEstimatedDuration}</p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-[#17181B] p-3">
+              <div className="rounded-xl border border-white/10 bg-black/25 p-3">
                 <p className="text-[11px] text-[#A3A3A3]">Mode</p>
                 <p className="text-sm font-semibold">{session.mode === 'link' ? 'Invitation' : 'Local'}</p>
               </div>
             </div>
 
-            <div className="rounded-xl border border-[#7F1D1D] bg-[#1A1212] p-3 text-sm text-[#FECACA]">
+            <div className="rounded-xl border border-[#7F1D1D] bg-[#1A1212]/85 p-3 text-sm text-[#FECACA]">
               Challenge chrono: pas de retour arriere. Si le temps tombe a zero, c est automatiquement 0 point.
             </div>
 
@@ -578,12 +783,14 @@ export default function FlashFlagSessionPage() {
               className="w-full rounded-xl bg-[#EF4444] hover:bg-[#F87171] px-4 py-3 font-bold transition-colors"
               onClick={launch}
             >
-              Commencer le test
+              {session.status === 'in_progress' ? 'Reprendre le sprint' : 'Commencer le sprint'}
             </button>
+
+            <p className="text-xs text-[#A3A3A3]">En cas de refresh ou de changement d onglet, la progression reprend automatiquement sur cet appareil.</p>
           </section>
         ) : (
           <>
-            <header className="rounded-2xl border border-[#1E1E1E] bg-[#111] p-4 shadow-[0_8px_40px_rgba(0,0,0,0.25)]">
+            <header className="sticky top-3 z-20 rounded-2xl border border-[#2B2B2D] bg-[#121315]/95 p-4 shadow-[0_8px_40px_rgba(0,0,0,0.3)] backdrop-blur">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs text-[#D4D4D8]">Question {index + 1}/{totalQuestions}</p>
@@ -641,22 +848,25 @@ export default function FlashFlagSessionPage() {
             </header>
 
             {currentQuestion && (
-              <section className="rounded-2xl border border-[#1E1E1E] bg-[#111] p-5 space-y-4 shadow-[0_8px_40px_rgba(0,0,0,0.25)]">
-                <h2 className="text-xl font-bold">{currentQuestion.text}</h2>
+              <section className="rounded-3xl border border-[#2B2B2D] bg-[linear-gradient(145deg,#111214_0%,#17181B_100%)] p-5 space-y-4 shadow-[0_18px_50px_rgba(0,0,0,0.32)]">
+                <p className="text-[11px] uppercase tracking-[0.16em] text-[#A3A3A3]">Decision en mode instinct</p>
+                <h2 className="text-xl font-bold leading-snug">{currentQuestion.text}</h2>
                 <div className="grid gap-2">
                   {currentQuestion.options.map((option, idx) => (
                     <button
                       key={idx}
-                      className="min-h-14 text-left rounded-lg border border-white/12 bg-[#17181B] px-3 py-3 transition-colors hover:bg-[#1E2024] active:scale-[0.99]"
+                      className="group min-h-14 text-left rounded-xl border border-white/12 bg-[#17181B] px-3 py-3 transition-colors hover:border-[#EF4444]/55 hover:bg-[#1F2024] active:scale-[0.99]"
                       onClick={() => onSelect(option)}
                     >
                       <span className="flex items-center gap-2">
-                        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 text-xs text-[#A3A3A3]">{idx + 1}</span>
-                        <span>{option.text}</span>
+                        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 text-xs text-[#A3A3A3] group-hover:border-[#FCA5A5] group-hover:text-[#FCA5A5]">{idx + 1}</span>
+                        <span className="text-[#F5F5F5]">{option.text}</span>
                       </span>
                     </button>
                   ))}
                 </div>
+
+                <p className="text-xs text-[#A3A3A3]">Astuce: reponds au premier ressenti. C est justement le but du sprint.</p>
               </section>
             )}
           </>

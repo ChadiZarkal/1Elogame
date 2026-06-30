@@ -55,9 +55,18 @@ interface SessionWatchData {
   answers: SessionWatchAnswer[];
 }
 
+interface LastSessionResume {
+  code: string;
+  href: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  testName: string;
+  updatedAt: number;
+}
+
 const CUSTOM_MIN_QUESTIONS = 5;
 const CUSTOM_MAX_QUESTIONS = 20;
 const CUSTOM_DRAFT_KEY = 'flashflag_custom_draft_v2';
+const FLASHFLAG_LAST_SESSION_KEY = 'flashflag_last_session_v1';
 
 const defaultQuestion = (): CustomQuestion => ({
   text: '',
@@ -307,6 +316,53 @@ function normalizeCustomQuestions(input: unknown): CustomQuestion[] {
     .filter((item): item is CustomQuestion => item !== null);
 }
 
+function parseLastSessionResume(value: unknown): LastSessionResume | null {
+  if (!value || typeof value !== 'object') return null;
+
+  const payload = value as Partial<LastSessionResume>;
+  const validStatus = payload.status === 'pending' || payload.status === 'in_progress' || payload.status === 'completed';
+  if (!validStatus) return null;
+
+  if (typeof payload.code !== 'string' || payload.code.trim().length < 4) return null;
+
+  const href = typeof payload.href === 'string' && payload.href.trim().length > 0
+    ? payload.href
+    : `/flashflag/session/${payload.code}`;
+
+  const testName = typeof payload.testName === 'string' && payload.testName.trim().length > 0
+    ? payload.testName
+    : 'Flash Flag';
+
+  const updatedAt = Number.isFinite(payload.updatedAt)
+    ? Number(payload.updatedAt)
+    : Date.now();
+
+  return {
+    code: payload.code,
+    href,
+    status: payload.status,
+    testName,
+    updatedAt,
+  };
+}
+
+function formatRelativeMinutes(updatedAt: number): string {
+  const deltaMs = Math.max(0, Date.now() - updatedAt);
+  const minutes = Math.floor(deltaMs / 60000);
+  if (minutes <= 1) return 'a l instant';
+  if (minutes < 60) return `il y a ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `il y a ${hours} h`;
+  const days = Math.floor(hours / 24);
+  return `il y a ${days} j`;
+}
+
+function getResumeStatusLabel(status: LastSessionResume['status']): string {
+  if (status === 'completed') return 'Resultat disponible';
+  if (status === 'in_progress') return 'Sprint en cours';
+  return 'Session prete';
+}
+
 export default function FlashFlagPage() {
   const router = useRouter();
 
@@ -334,6 +390,7 @@ export default function FlashFlagPage() {
   const [watchData, setWatchData] = useState<SessionWatchData | null>(null);
   const [watchError, setWatchError] = useState('');
   const [uiFeedback, setUiFeedback] = useState('');
+  const [lastSessionResume, setLastSessionResume] = useState<LastSessionResume | null>(null);
   const [canNativeShare, setCanNativeShare] = useState(false);
 
   const selectedStandardTest = useMemo(
@@ -661,6 +718,50 @@ export default function FlashFlagPage() {
     setCanNativeShare('share' in navigator);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const refreshLastSession = () => {
+      try {
+        const raw = window.localStorage.getItem(FLASHFLAG_LAST_SESSION_KEY);
+        if (!raw) {
+          setLastSessionResume(null);
+          return;
+        }
+        const parsed = parseLastSessionResume(JSON.parse(raw));
+        setLastSessionResume(parsed);
+      } catch {
+        setLastSessionResume(null);
+      }
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        refreshLastSession();
+      }
+    };
+
+    refreshLastSession();
+    window.addEventListener('focus', refreshLastSession);
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      window.removeEventListener('focus', refreshLastSession);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
+
+  const clearLastSessionResume = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.removeItem(FLASHFLAG_LAST_SESSION_KEY);
+      } catch {
+        // Ignore localStorage failures.
+      }
+    }
+    setLastSessionResume(null);
+  };
+
   const setTemporaryFeedback = (message: string) => {
     setUiFeedback(message);
     if (typeof window !== 'undefined') {
@@ -769,6 +870,35 @@ export default function FlashFlagPage() {
             </div>
           </div>
         </header>
+
+        {lastSessionResume && (
+          <section className="rounded-2xl border border-[#14532D]/70 bg-[linear-gradient(120deg,rgba(5,46,22,0.75),rgba(5,27,19,0.85))] p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.25)]">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#86EFAC]">Reprise rapide</p>
+                <h2 className="mt-1 text-lg font-bold">Tu peux reprendre ta derniere session</h2>
+                <p className="mt-1 text-xs text-[#D1FAE5]">
+                  {lastSessionResume.testName} • {getResumeStatusLabel(lastSessionResume.status)} • {formatRelativeMinutes(lastSessionResume.updatedAt)}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href={lastSessionResume.href || `/flashflag/session/${lastSessionResume.code}`}
+                  className="inline-flex items-center rounded-lg bg-[#16A34A] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#22C55E]"
+                >
+                  Ouvrir la session
+                </Link>
+                <button
+                  className="inline-flex items-center rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm text-[#D1FAE5] transition-colors hover:bg-black/35"
+                  onClick={clearLastSessionResume}
+                >
+                  Masquer
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
 
         <section className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-[#2B2B2D] bg-[#111113] p-5 shadow-[0_8px_36px_rgba(0,0,0,0.3)]">
