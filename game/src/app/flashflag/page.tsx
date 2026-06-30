@@ -320,8 +320,8 @@ function parseLastSessionResume(value: unknown): LastSessionResume | null {
   if (!value || typeof value !== 'object') return null;
 
   const payload = value as Partial<LastSessionResume>;
-  const validStatus = payload.status === 'pending' || payload.status === 'in_progress' || payload.status === 'completed';
-  if (!validStatus) return null;
+  const status = payload.status;
+  if (status !== 'pending' && status !== 'in_progress' && status !== 'completed') return null;
 
   if (typeof payload.code !== 'string' || payload.code.trim().length < 4) return null;
 
@@ -340,7 +340,7 @@ function parseLastSessionResume(value: unknown): LastSessionResume | null {
   return {
     code: payload.code,
     href,
-    status: payload.status,
+    status,
     testName,
     updatedAt,
   };
