@@ -380,9 +380,7 @@ export default function FlashFlagSessionPage() {
       })
       .catch((err) => {
         if (!active) return;
-        if (!session) {
-          setError(err instanceof Error ? err.message : 'Erreur');
-        }
+        setError(err instanceof Error ? err.message : 'Erreur');
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -391,7 +389,7 @@ export default function FlashFlagSessionPage() {
     return () => {
       active = false;
     };
-  }, [code, hasHydratedState, session]);
+  }, [code, hasHydratedState]);
 
   const progressPercent = useMemo(() => {
     if (!totalQuestions) return 0;

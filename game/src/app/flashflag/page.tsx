@@ -63,10 +63,22 @@ interface LastSessionResume {
   updatedAt: number;
 }
 
+interface SenderShareResume {
+  version: number;
+  createdLink: string;
+  createdSessionCode: string;
+  createdTestName: string;
+  createdDurationLabel: string;
+  createdShareMessage: string;
+  updatedAt: number;
+}
+
 const CUSTOM_MIN_QUESTIONS = 5;
 const CUSTOM_MAX_QUESTIONS = 20;
 const CUSTOM_DRAFT_KEY = 'flashflag_custom_draft_v2';
 const FLASHFLAG_LAST_SESSION_KEY = 'flashflag_last_session_v1';
+const FLASHFLAG_SHARE_RESUME_KEY = 'flashflag_share_resume_v1';
+const FLASHFLAG_SHARE_RESUME_VERSION = 1;
 
 const defaultQuestion = (): CustomQuestion => ({
   text: '',
@@ -363,6 +375,30 @@ function getResumeStatusLabel(status: LastSessionResume['status']): string {
   return 'Session prete';
 }
 
+function parseSenderShareResume(value: unknown): SenderShareResume | null {
+  if (!value || typeof value !== 'object') return null;
+
+  const payload = value as Partial<SenderShareResume>;
+  if (payload.version !== FLASHFLAG_SHARE_RESUME_VERSION) return null;
+  if (typeof payload.createdSessionCode !== 'string' || payload.createdSessionCode.trim().length < 4) return null;
+
+  return {
+    version: FLASHFLAG_SHARE_RESUME_VERSION,
+    createdLink: typeof payload.createdLink === 'string' ? payload.createdLink : '',
+    createdSessionCode: payload.createdSessionCode,
+    createdTestName: typeof payload.createdTestName === 'string' ? payload.createdTestName : 'Flash Flag',
+    createdDurationLabel: typeof payload.createdDurationLabel === 'string' ? payload.createdDurationLabel : '',
+    createdShareMessage: typeof payload.createdShareMessage === 'string' ? payload.createdShareMessage : '',
+    updatedAt: Number.isFinite(payload.updatedAt) ? Number(payload.updatedAt) : Date.now(),
+  };
+}
+
+function getWatchStatusLabel(status?: SessionWatchData['status']): string {
+  if (status === 'completed') return 'Resultats recus';
+  if (status === 'in_progress') return 'La personne est en train de repondre';
+  return 'Invitation envoyee, en attente de demarrage';
+}
+
 export default function FlashFlagPage() {
   const router = useRouter();
 
@@ -471,6 +507,26 @@ export default function FlashFlagPage() {
   }, [customName, customDescription, customQuestions]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const raw = window.localStorage.getItem(FLASHFLAG_SHARE_RESUME_KEY);
+      if (!raw) return;
+
+      const parsed = parseSenderShareResume(JSON.parse(raw));
+      if (!parsed) return;
+
+      setCreatedLink(parsed.createdLink);
+      setCreatedSessionCode(parsed.createdSessionCode);
+      setCreatedTestName(parsed.createdTestName);
+      setCreatedDurationLabel(parsed.createdDurationLabel);
+      setCreatedShareMessage(parsed.createdShareMessage);
+    } catch {
+      // Ignore invalid stored sender resume state.
+    }
+  }, []);
+
+  useEffect(() => {
     if (!createdSessionCode) return;
 
     let active = true;
@@ -519,6 +575,31 @@ export default function FlashFlagPage() {
       if (intervalId) clearInterval(intervalId);
     };
   }, [createdSessionCode]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      if (!createdSessionCode) {
+        window.localStorage.removeItem(FLASHFLAG_SHARE_RESUME_KEY);
+        return;
+      }
+
+      const payload: SenderShareResume = {
+        version: FLASHFLAG_SHARE_RESUME_VERSION,
+        createdLink,
+        createdSessionCode,
+        createdTestName,
+        createdDurationLabel,
+        createdShareMessage,
+        updatedAt: Date.now(),
+      };
+
+      window.localStorage.setItem(FLASHFLAG_SHARE_RESUME_KEY, JSON.stringify(payload));
+    } catch {
+      // Ignore localStorage failures.
+    }
+  }, [createdLink, createdSessionCode, createdTestName, createdDurationLabel, createdShareMessage]);
 
   const canCreate = useMemo(() => {
     const profileValid = createSchema.safeParse({ subjectAge }).success;
@@ -762,6 +843,25 @@ export default function FlashFlagPage() {
     setLastSessionResume(null);
   };
 
+  const clearSenderShareResume = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.removeItem(FLASHFLAG_SHARE_RESUME_KEY);
+      } catch {
+        // Ignore localStorage failures.
+      }
+    }
+
+    setCreatedLink('');
+    setCreatedSessionCode('');
+    setCreatedTestName('');
+    setCreatedDurationLabel('');
+    setCreatedShareMessage('');
+    setWatchData(null);
+    setWatchError('');
+    setUiFeedback('');
+  };
+
   const setTemporaryFeedback = (message: string) => {
     setUiFeedback(message);
     if (typeof window !== 'undefined') {
@@ -870,6 +970,47 @@ export default function FlashFlagPage() {
             </div>
           </div>
         </header>
+
+        {createdSessionCode && (
+          <section className="rounded-2xl border border-[#1D4ED8]/60 bg-[linear-gradient(120deg,rgba(15,23,42,0.85),rgba(22,33,62,0.8))] p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.25)]">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#93C5FD]">Invitation en cours</p>
+                <h2 className="mt-1 text-lg font-bold">{createdTestName || 'Flash Flag'}</h2>
+                <p className="mt-1 text-xs text-[#DBEAFE]">
+                  Code {createdSessionCode}
+                  {createdDurationLabel ? ` • ${createdDurationLabel}` : ''}
+                </p>
+                <p className="mt-1 text-xs text-[#BFDBFE]">
+                  {getWatchStatusLabel(watchData?.status)}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {createdLink && (
+                  <button
+                    className="inline-flex items-center rounded-lg bg-[#1D4ED8] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#2563EB]"
+                    onClick={() => copyToClipboard(createdLink, 'Lien copie.')}
+                  >
+                    Copier le lien
+                  </button>
+                )}
+                <Link
+                  href={`/flashflag/session/${createdSessionCode}`}
+                  className="inline-flex items-center rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm text-[#DBEAFE] transition-colors hover:bg-black/35"
+                >
+                  Ouvrir le test
+                </Link>
+                <button
+                  className="inline-flex items-center rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm text-[#DBEAFE] transition-colors hover:bg-black/35"
+                  onClick={clearSenderShareResume}
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
 
         {lastSessionResume && (
           <section className="rounded-2xl border border-[#14532D]/70 bg-[linear-gradient(120deg,rgba(5,46,22,0.75),rgba(5,27,19,0.85))] p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.25)]">
@@ -1252,19 +1393,22 @@ export default function FlashFlagPage() {
                   )}
 
                   {watchAnswers.length > 0 && (
-                    <div className="mt-2 max-h-72 space-y-2 overflow-y-auto pr-1">
-                      {watchAnswers.map((answer, idx) => (
-                        <div key={`${answer.question_index}-${idx}`} className="rounded-lg border border-white/10 bg-[#111316] p-2.5">
-                          <p className="text-[11px] text-[#A3A3A3]">Question {answer.question_index + 1}</p>
-                          <p className="mt-0.5 text-xs text-[#F5F5F5]">{answer.question_text}</p>
-                          <p className={`mt-1 text-xs ${answer.timed_out ? 'text-[#FCA5A5]' : 'text-[#D4D4D8]'}`}>
-                            {answer.timed_out
-                              ? 'Temps ecoule (0 point)'
-                              : `Reponse: ${answer.selected_option || 'Sans selection'} (${answer.selected_score} point${answer.selected_score > 1 ? 's' : ''})`}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                    <details className="mt-2 rounded-lg border border-white/10 bg-[#111316] p-2.5">
+                      <summary className="cursor-pointer text-xs text-[#D4D4D8]">Voir le detail des reponses ({watchAnswers.length})</summary>
+                      <div className="mt-2 max-h-72 space-y-2 overflow-y-auto pr-1">
+                        {watchAnswers.map((answer, idx) => (
+                          <div key={`${answer.question_index}-${idx}`} className="rounded-lg border border-white/10 bg-[#0D0E11] p-2.5">
+                            <p className="text-[11px] text-[#A3A3A3]">Question {answer.question_index + 1}</p>
+                            <p className="mt-0.5 text-xs text-[#F5F5F5]">{answer.question_text}</p>
+                            <p className={`mt-1 text-xs ${answer.timed_out ? 'text-[#FCA5A5]' : 'text-[#D4D4D8]'}`}>
+                              {answer.timed_out
+                                ? 'Temps ecoule (0 point)'
+                                : `Reponse: ${answer.selected_option || 'Sans selection'} (${answer.selected_score} point${answer.selected_score > 1 ? 's' : ''})`}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
                   )}
 
                   <div className="pt-1">
