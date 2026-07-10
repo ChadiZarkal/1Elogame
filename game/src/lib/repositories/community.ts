@@ -37,6 +37,11 @@ function hasAnyMissingOptionalColumnError(message: string | null | undefined): b
   return false;
 }
 
+function hasTextMaxLengthError(message: string | null | undefined): boolean {
+  const normalized = (message || '').toLowerCase();
+  return normalized.includes('text_max_length') || normalized.includes('violates check constraint');
+}
+
 function pickStringField(row: Record<string, unknown>, keys: readonly string[]): string | undefined {
   for (const key of keys) {
     const value = row[key];
@@ -200,10 +205,15 @@ function buildInsertPayloads(
     }
   }
 
-  payloads.push({
-    ...basePayload,
-    text: encodeTextWithEmbeddedMeta(text, justification, gender),
-  });
+  if (justification || gender) {
+    const textWithEmbeddedMeta = encodeTextWithEmbeddedMeta(text, justification, gender);
+    if (textWithEmbeddedMeta.length <= MAX_FLAGORNOT_TEXT_LENGTH) {
+      payloads.push({
+        ...basePayload,
+        text: textWithEmbeddedMeta,
+      });
+    }
+  }
 
   payloads.push(basePayload);
   return payloads;
@@ -228,7 +238,7 @@ export async function getRecentSubmissions(limit = 20): Promise<CommunitySubmiss
 
 /** Save a new community submission. */
 export async function saveSubmission(text: string, verdict: 'red' | 'green', justification?: string, gender?: 'homme' | 'femme' | 'autre'): Promise<CommunitySubmission> {
-  const sanitized = sanitizeText(text).slice(0, MAX_FLAGORNOT_TEXT_LENGTH);
+  const sanitized = sanitizeText(text, MAX_FLAGORNOT_TEXT_LENGTH);
 
   if (isMockMode()) {
     const submission: CommunitySubmission = {
@@ -260,11 +270,18 @@ export async function saveSubmission(text: string, verdict: 'red' | 'green', jus
       break;
     }
 
-    if (!hasAnyMissingOptionalColumnError(insertResult.error.message)) {
-      throw new Error(`DB error saving submission: ${insertResult.error.message}`);
+    if (hasAnyMissingOptionalColumnError(insertResult.error.message)) {
+      lastOptionalColumnError = insertResult.error.message;
+      continue;
     }
 
-    lastOptionalColumnError = insertResult.error.message;
+    const payloadText = typeof payload.text === 'string' ? payload.text : '';
+    const isEmbeddedMetaPayload = payloadText.includes(EMBEDDED_META_MARKER);
+    if (isEmbeddedMetaPayload && hasTextMaxLengthError(insertResult.error.message)) {
+      continue;
+    }
+
+    throw new Error(`DB error saving submission: ${insertResult.error.message}`);
   }
 
   if (!inserted) {

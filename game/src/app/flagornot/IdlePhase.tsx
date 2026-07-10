@@ -4,6 +4,7 @@ import { RefObject } from 'react';
 import { motion } from 'framer-motion';
 import type { HistoryItem, CommunitySubmission } from './constants';
 import { PLACEHOLDERS } from './constants';
+import { MAX_FLAGORNOT_TEXT_LENGTH } from '@/config/constants';
 
 interface IdlePhaseProps {
   input: string;
@@ -192,7 +193,7 @@ export function IdlePhase({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKeyDown}
               placeholder={PLACEHOLDERS[placeholderIdx]}
-              maxLength={280}
+              maxLength={MAX_FLAGORNOT_TEXT_LENGTH}
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"

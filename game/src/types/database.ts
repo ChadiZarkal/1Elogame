@@ -237,17 +237,23 @@ export interface Database {
           id: string;
           text: string;
           verdict: 'red' | 'green';
+          justification: string | null;
+          gender: 'homme' | 'femme' | 'autre' | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           text: string;
           verdict: 'red' | 'green';
+          justification?: string | null;
+          gender?: 'homme' | 'femme' | 'autre' | null;
           created_at?: string;
         };
         Update: Partial<{
           text: string;
           verdict: 'red' | 'green';
+          justification: string | null;
+          gender: 'homme' | 'femme' | 'autre' | null;
         }>;
       };
       analytics_sessions: {

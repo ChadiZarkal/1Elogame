@@ -7,6 +7,8 @@ export type GamePhase = 'gender-select' | 'idle' | 'loading' | 'reveal';
 export interface JudgmentResult {
   verdict: 'red' | 'green';
   justification: string;
+  persisted?: boolean;
+  persistenceWarning?: string;
 }
 
 export interface HistoryItem extends JudgmentResult {

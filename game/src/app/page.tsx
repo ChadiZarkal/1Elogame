@@ -33,12 +33,12 @@ const CARDS_DATA: Record<PersonaKey, {
     id: 'redflagtest',
     themeColor: '#FFB4AA',
     glowColor: 'rgba(255, 180, 170, 0.4)',
-    tag: '🧪 QUIZ DE PERSONNALITÉ',
+    tag: '🧪 TEST PERSONNEL',
     title: 'RED FLAG TEST',
-    tagline: 'Es-tu un Red Flag ambulant ?',
-    desc: 'Fais notre grand test de personnalité de référence de manière anonyme et obtiens ton diplôme de toxicité officiel à partager.',
-    bullets: ['🧠 Analyse psychologique fun', '📢 Résultats partageables', '🔥 100% interactif & anonyme'],
-    cta: 'TESTER TA TOXICITÉ',
+    tagline: 'Faire le point sur tes comportements.',
+    desc: 'Tu réponds au quiz en solo, puis tu obtiens un score simple pour voir ce que les autres peuvent percevoir comme red flag chez toi.',
+    bullets: ['🧠 En solo, en quelques minutes', '📊 Score clair à la fin', '🙈 Anonyme'],
+    cta: 'FAIRE LE TEST',
     href: 'https://redflagtest.redorgreen.fr/',
     emoji: '🧪',
     shortcut: 'Test',
@@ -48,12 +48,12 @@ const CARDS_DATA: Record<PersonaKey, {
     id: 'jeu',
     themeColor: '#2ECC71',
     glowColor: 'rgba(46, 204, 113, 0.4)',
-    tag: '🔥 AMBIANCE SOIRÉE',
+    tag: '👥 JEU DE GROUPE',
     title: 'RED OR GREEN DUEL',
-    tagline: 'Mets le feu aux débats.',
-    desc: 'Entre potes ou en solo, votez sur les pires contradictions humaines. Le jeu idéal pour confronter vos limites et déclencher des clashs mémorables.',
-    bullets: ['👥 1 à 100+ Joueurs', '💬 150+ Dilemmes absurdes', '👀 Résultats Monde en direct'],
-    cta: 'DÉMARRER LE CHOC',
+    tagline: 'Comparer vos avis rapidement.',
+    desc: 'Vous votez sur des situations à deux choix. C est utile pour lancer une discussion, voir les désaccords, et comparer votre groupe à la communauté.',
+    bullets: ['👥 Solo ou groupe', '🗳 Vote rapide en duel', '🏆 Classement en direct'],
+    cta: 'LANCER LE DUEL',
     href: '/jeu',
     emoji: '🔥',
     shortcut: 'Duel'
@@ -62,12 +62,12 @@ const CARDS_DATA: Record<PersonaKey, {
     id: 'flashflag',
     themeColor: '#FF3B30',
     glowColor: 'rgba(255, 59, 48, 0.4)',
-    tag: '⚡ SPEED-TEST DATE',
+    tag: '⚡ TEST CHRONOMÉTRÉ',
     title: 'FLASH FLAG SPRINT',
-    tagline: 'Chronométré. Cash. Sans pitié.',
-    desc: 'Créer un test de 10 questions piégées ou lancer le deck standard. Passe ton téléphone ou envoie le lien à ton date : pas de retour en arrière possible.',
-    bullets: ['⏱ Quiz intense 10s', '🚫 Zéro triche / Réflexion', '🤫 Verdict de toxicité direct'],
-    cta: 'LANCER LE FILTRE',
+    tagline: 'Tester les réactions à chaud.',
+    desc: 'Tu lances un test de 10 questions avec temps limité. C est pratique pour observer les réponses spontanées, en face à face ou à distance via lien.',
+    bullets: ['⏱ Temps court par question', '🔗 Partage par lien ou téléphone', '📋 Résumé final des réponses'],
+    cta: 'COMMENCER LE SPRINT',
     href: '/flashflag',
     emoji: '🥂',
     shortcut: 'Sprint'
@@ -76,12 +76,12 @@ const CARDS_DATA: Record<PersonaKey, {
     id: 'oracle',
     themeColor: '#88CEFF',
     glowColor: 'rgba(136, 206, 255, 0.4)',
-    tag: '🔮 ANALYSE PAR l\'IA',
-    title: 'L\'ORACLE SUPRÊME',
-    tagline: 'L\'IA qui te juge sans filtre.',
-    desc: 'Un comportement chelou ? Un SMS ambigu ? Raconte ton histoire ou balance une capture de ta discussion : l\'IA envoie son verdict ultra-cash.',
-    bullets: ['🧠 Intelligence artificielle', '💬 Analyse de SMS / Stories', '💔 Zéro bullshit, verdict brut'],
-    cta: 'INTERROGER L\'ORACLE',
+    tag: '🔮 AVIS RAPIDE IA',
+    title: 'ORACLE IA',
+    tagline: 'Obtenir un premier avis sur un doute.',
+    desc: 'Tu décris une situation en texte libre et l Oracle renvoie un verdict red ou green avec justification. Utile pour prendre du recul vite.',
+    bullets: ['✍️ Saisie libre', '🧠 Verdict + explication', '🗂 Historique communautaire (optionnel)'],
+    cta: 'LANCER UNE ANALYSE',
     href: '/flagornot',
     emoji: '🔮',
     shortcut: 'Oracle'
@@ -538,26 +538,34 @@ export default function HubPage() {
 
               <div className="mt-5 space-y-4">
                 <div className="flex gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-[#FFB4AA]/10 flex items-center justify-center text-[#FFB4AA] shrink-0 text-sm">🧪</div>
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-black text-white uppercase tracking-wide">Faire le point sur toi (Red Flag Test)</p>
+                    <p className="text-[11px] text-[#A6A6A6]">Un quiz solo pour identifier tes habitudes relationnelles. Tu repars avec un score clair et facile à lire.</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
                   <div className="w-7 h-7 rounded-lg bg-[#FF3B30]/10 flex items-center justify-center text-[#FF3B30] shrink-0 text-sm">🚩</div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-black text-white uppercase tracking-wide">Filtre ton date (Flash Flag)</p>
-                    <p className="text-[11px] text-[#A6A6A6]">Idéal pour vérifier si la personne à qui vous parlez à distance ou que vous allez voir est un nid à green ou red flags. Chronométré et amusant.</p>
+                    <p className="text-xs font-black text-white uppercase tracking-wide">Tester les réactions à chaud (Flash Flag)</p>
+                    <p className="text-[11px] text-[#A6A6A6]">Un test chronométré de 10 questions. Utile pour voir des réponses spontanées, sans trop réfléchir.</p>
                   </div>
                 </div>
 
                 <div className="flex gap-3">
                   <div className="w-7 h-7 rounded-lg bg-[#2ECC71]/10 flex items-center justify-center text-[#2ECC71] shrink-0 text-sm">🎮</div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-black text-white uppercase tracking-wide">Ambiance de folie (Red or Green Duel)</p>
-                    <p className="text-[11px] text-[#A6A6A6]">Faites défiler les dilemmes et votez en simultané. Rires, cris, débats sans fin et comparaisons statistiques garantis.</p>
+                    <p className="text-xs font-black text-white uppercase tracking-wide">Comparer vos avis (Red or Green Duel)</p>
+                    <p className="text-[11px] text-[#A6A6A6]">Vous votez en duel sur des situations. C est simple, rapide et utile pour lancer des discussions en groupe.</p>
                   </div>
                 </div>
 
                 <div className="flex gap-3">
                   <div className="w-7 h-7 rounded-lg bg-[#88CEFF]/10 flex items-center justify-center text-[#88CEFF] shrink-0 text-sm">🔮</div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-black text-white uppercase tracking-wide">Analyse tes doutes (L&apos;Oracle de l&apos;IA)</p>
-                    <p className="text-[11px] text-[#A6A6A6]">Soumets une discussion suspecte d&apos;un date ou d&apos;un partenaire. Notre intelligence artificielle l&apos;analyse et te renvoie sa sentence.</p>
+                    <p className="text-xs font-black text-white uppercase tracking-wide">Obtenir un premier avis (Oracle IA)</p>
+                    <p className="text-[11px] text-[#A6A6A6]">Tu écris ton doute et l IA donne un verdict red ou green avec explication. Pratique pour prendre du recul.</p>
                   </div>
                 </div>
               </div>

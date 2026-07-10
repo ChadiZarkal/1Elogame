@@ -110,6 +110,17 @@ export function RevealPhase({
           </motion.div>
         )}
 
+        {result.persistenceWarning && (
+          <motion.div
+            className="mt-3 w-full rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-left"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55 }}
+          >
+            <p className="text-[12px] text-amber-200 leading-relaxed">{result.persistenceWarning}</p>
+          </motion.div>
+        )}
+
         <motion.button
           onClick={onShare}
           className="mt-4 px-4 py-2 rounded-xl text-xs text-[#9CA3AF] bg-[#1A1A1A] border border-[#333] hover:border-[#555] hover:text-white transition-all active:scale-95"

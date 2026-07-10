@@ -7,6 +7,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import { MAX_FLAGORNOT_TEXT_LENGTH } from '@/config/constants';
 
 vi.mock('@/lib/rateLimit', () => ({
   checkRateLimit: vi.fn().mockReturnValue(null),
@@ -139,9 +140,9 @@ describe('POST /api/flagornot/judge', () => {
       expect(response.status).toBe(400);
     });
 
-    it('rejette un texte trop long (> 500 caractères)', async () => {
+    it('rejette un texte trop long (> limite Oracle)', async () => {
       const { POST } = await import('@/app/api/flagornot/judge/route');
-      const response = await POST(makeRequest({ text: 'a'.repeat(501) }));
+      const response = await POST(makeRequest({ text: 'a'.repeat(MAX_FLAGORNOT_TEXT_LENGTH + 1) }));
 
       expect(response.status).toBe(400);
     });

@@ -14,6 +14,18 @@ interface OracleSubmission {
   timestamp: number;
 }
 
+function formatGender(gender?: 'homme' | 'femme' | 'autre'): string {
+  if (gender === 'homme') return '♂ Homme';
+  if (gender === 'femme') return '♀ Femme';
+  if (gender === 'autre') return '⚧ Autre';
+  return '—';
+}
+
+function truncateText(value: string, max: number): string {
+  if (value.length <= max) return value;
+  return `${value.slice(0, max)}…`;
+}
+
 export default function AdminOraclePage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
@@ -24,6 +36,7 @@ export default function AdminOraclePage() {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
+  const [selectedSubmission, setSelectedSubmission] = useState<OracleSubmission | null>(null);
   const PAGE_SIZE = 30;
 
   const fetchSubmissions = useCallback(async (token: string, currentPage: number, currentFilter: string, currentSearch: string) => {
@@ -190,16 +203,27 @@ export default function AdminOraclePage() {
                         {sub.verdict === 'red' ? '🚩 RED' : '✅ GREEN'}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-gray-300 text-xs">
-                      {sub.gender === 'homme' ? '♂️' : sub.gender === 'femme' ? '♀️' : sub.gender === 'autre' ? '🤷' : '—'}
+                    <td className="px-3 py-3 text-gray-300 text-xs whitespace-nowrap">
+                      {formatGender(sub.gender)}
                     </td>
-                    <td className="px-3 py-3 text-gray-200 max-w-xs">
-                      <span className="line-clamp-2">{sub.text}</span>
+                    <td className="px-3 py-3 text-gray-200 max-w-xs align-top">
+                      <p className="text-xs leading-relaxed wrap-break-word">
+                        {truncateText(sub.text, 120)}
+                      </p>
                     </td>
-                    <td className="px-3 py-3 text-gray-400 max-w-sm">
-                      <span className="line-clamp-3 text-xs italic">
-                        {sub.justification || '—'}
-                      </span>
+                    <td className="px-3 py-3 text-gray-400 max-w-sm align-top">
+                      <p className="text-xs italic leading-relaxed wrap-break-word">
+                        {sub.justification ? truncateText(sub.justification, 160) : '—'}
+                      </p>
+                      {(sub.text.length > 120 || (sub.justification?.length ?? 0) > 160) && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedSubmission(sub)}
+                          className="mt-2 text-[11px] text-purple-300 hover:text-purple-200 underline underline-offset-2"
+                        >
+                          Lire complet
+                        </button>
+                      )}
                     </td>
                     <td className="px-3 py-3 text-gray-500 text-xs whitespace-nowrap">
                       {new Date(sub.timestamp).toLocaleDateString('fr-FR', {
@@ -238,6 +262,77 @@ export default function AdminOraclePage() {
               >
                 Suivant →
               </button>
+            </div>
+          </div>
+        )}
+
+        {selectedSubmission && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-6">
+            <button
+              type="button"
+              aria-label="Fermer le detail"
+              onClick={() => setSelectedSubmission(null)}
+              className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+            />
+
+            <div
+              role="dialog"
+              aria-modal="true"
+              className="relative w-full max-w-3xl max-h-[88vh] overflow-y-auto rounded-2xl border border-white/15 bg-[#101010] p-5 sm:p-6 shadow-2xl"
+            >
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div>
+                  <h2 className="text-lg font-bold text-white">Detail soumission Oracle</h2>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {new Date(selectedSubmission.timestamp).toLocaleDateString('fr-FR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedSubmission(null)}
+                  className="px-3 py-1.5 rounded-lg bg-white/10 text-gray-200 text-sm hover:bg-white/20"
+                >
+                  Fermer
+                </button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <span className={`inline-block px-2.5 py-1 rounded text-xs font-bold ${
+                  selectedSubmission.verdict === 'red'
+                    ? 'bg-red-600/30 text-red-300'
+                    : 'bg-green-600/30 text-green-300'
+                }`}>
+                  {selectedSubmission.verdict === 'red' ? '🚩 RED' : '✅ GREEN'}
+                </span>
+                <span className="inline-block px-2.5 py-1 rounded text-xs font-medium bg-white/10 text-gray-200">
+                  {formatGender(selectedSubmission.gender)}
+                </span>
+              </div>
+
+              <section className="mb-4">
+                <h3 className="text-xs uppercase tracking-wide text-gray-400 mb-1">Texte utilisateur</h3>
+                <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                  <p className="text-sm text-gray-100 whitespace-pre-wrap wrap-break-word leading-relaxed">
+                    {selectedSubmission.text}
+                  </p>
+                </div>
+              </section>
+
+              <section>
+                <h3 className="text-xs uppercase tracking-wide text-gray-400 mb-1">Justification IA</h3>
+                <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                  <p className="text-sm text-gray-200 whitespace-pre-wrap wrap-break-word leading-relaxed italic">
+                    {selectedSubmission.justification || '—'}
+                  </p>
+                </div>
+              </section>
             </div>
           </div>
         )}

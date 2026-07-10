@@ -3,6 +3,7 @@ import { withApiHandler, apiError } from '@/lib/apiHelpers';
 import { judgeWithGemini } from '@/lib/gemini';
 import { sanitizeText } from '@/lib/sanitize';
 import { saveSubmission } from '@/lib/repositories';
+import { MAX_FLAGORNOT_TEXT_LENGTH } from '@/config/constants';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -64,19 +65,26 @@ TONE FINAL:
 // ---------------------------------------------------------------------------
 
 type JudgeResult = { verdict: 'red' | 'green'; justification: string };
+type PersistenceResult = { persisted: boolean; persistenceWarning?: string };
 
 async function persistSubmissionSafely(
   text: string,
   result: JudgeResult,
   isPrivate: boolean,
   gender?: 'homme' | 'femme' | 'autre',
-): Promise<void> {
-  if (isPrivate) return;
+): Promise<PersistenceResult> {
+  if (isPrivate) return { persisted: false };
 
   try {
     await saveSubmission(text, result.verdict, result.justification, gender);
+    return { persisted: true };
   } catch (error) {
-    console.warn('[FlagOrNot] saveSubmission failed:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.warn('[FlagOrNot] saveSubmission failed:', message);
+    return {
+      persisted: false,
+      persistenceWarning: 'Le verdict a ete calcule, mais sa sauvegarde Oracle a echoue.',
+    };
   }
 }
 
@@ -190,12 +198,12 @@ export const POST = withApiHandler(async (request: NextRequest) => {
     return apiError('VALIDATION_ERROR', 'Le champ "text" est requis.', 400);
   }
 
-  const text = sanitizeText(rawText, 500);
+  const text = sanitizeText(rawText, MAX_FLAGORNOT_TEXT_LENGTH);
   if (text.length === 0) {
     return apiError('VALIDATION_ERROR', 'Le texte est vide après nettoyage.', 400);
   }
-  if (rawText.length > 500) {
-    return apiError('VALIDATION_ERROR', 'Texte trop long (max 500 caractères).', 400);
+  if (rawText.length > MAX_FLAGORNOT_TEXT_LENGTH) {
+    return apiError('VALIDATION_ERROR', `Texte trop long (max ${MAX_FLAGORNOT_TEXT_LENGTH} caracteres).`, 400);
   }
 
   // Try providers in order: Gemini → OpenAI → local fallback
@@ -207,8 +215,17 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   for (const { name, fn } of providers) {
     try {
       const result = await fn();
-      await persistSubmissionSafely(text, result, isPrivate, gender);
-      return NextResponse.json({ ...result, provider: name });
+      const persistence = await persistSubmissionSafely(text, result, isPrivate, gender);
+      return NextResponse.json({
+        ...result,
+        provider: name,
+        ...(isPrivate
+          ? {}
+          : {
+              persisted: persistence.persisted,
+              ...(persistence.persistenceWarning ? { persistenceWarning: persistence.persistenceWarning } : {}),
+            }),
+      });
     } catch (err) {
       console.warn(`[FlagOrNot] ${name} failed:`, err);
     }
@@ -216,6 +233,15 @@ export const POST = withApiHandler(async (request: NextRequest) => {
 
   // Final fallback: local keyword analysis
   const result = judgeLocally(text);
-  await persistSubmissionSafely(text, result, isPrivate, gender);
-  return NextResponse.json({ ...result, provider: 'local' });
+  const persistence = await persistSubmissionSafely(text, result, isPrivate, gender);
+  return NextResponse.json({
+    ...result,
+    provider: 'local',
+    ...(isPrivate
+      ? {}
+      : {
+          persisted: persistence.persisted,
+          ...(persistence.persistenceWarning ? { persistenceWarning: persistence.persistenceWarning } : {}),
+        }),
+  });
 }, { rateLimit: true });

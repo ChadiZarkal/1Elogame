@@ -6,6 +6,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import { MAX_FLAGORNOT_TEXT_LENGTH } from '@/config/constants';
 
 vi.mock('@/lib/supabase', () => ({
   createServerClient: vi.fn(),
@@ -89,6 +90,16 @@ describe('/api/flagornot/community', () => {
     it('rejette un body sans texte', async () => {
       const { POST } = await import('@/app/api/flagornot/community/route');
       const response = await POST(makePostRequest({ verdict: 'green' }));
+
+      expect(response.status).toBe(400);
+    });
+
+    it('rejette un texte trop long (> limite Oracle)', async () => {
+      const { POST } = await import('@/app/api/flagornot/community/route');
+      const response = await POST(makePostRequest({
+        text: 'a'.repeat(MAX_FLAGORNOT_TEXT_LENGTH + 1),
+        verdict: 'green',
+      }));
 
       expect(response.status).toBe(400);
     });
