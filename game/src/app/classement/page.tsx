@@ -22,21 +22,50 @@ interface RankEntry {
 type RankMode = 'redflag' | 'greenflag';
 type ViewMode = 'global' | 'homme' | 'femme' | '16-18' | '19-22' | '23-26' | '27+';
 
-const VIEW_CONFIG: { value: ViewMode; label: string; emoji: string; group: 'gender' | 'age' }[] = [
-  { value: 'global', label: 'Tous', emoji: '🌍', group: 'gender' },
-  { value: 'homme', label: 'Hommes', emoji: '♂️', group: 'gender' },
-  { value: 'femme', label: 'Femmes', emoji: '♀️', group: 'gender' },
-  { value: '16-18', label: '16-18', emoji: '🎓', group: 'age' },
-  { value: '19-22', label: '19-22', emoji: '🎯', group: 'age' },
-  { value: '23-26', label: '23-26', emoji: '💼', group: 'age' },
-  { value: '27+', label: '27+', emoji: '🧠', group: 'age' },
+const MODE_CONFIG: Record<RankMode, {
+  label: string;
+  emoji: string;
+  color: string;
+  soft: string;
+  border: string;
+  shadow: string;
+}> = {
+  redflag: {
+    label: 'Red Flag',
+    emoji: '🚩',
+    color: '#EF4444',
+    soft: 'rgba(239,68,68,0.14)',
+    border: 'rgba(239,68,68,0.35)',
+    shadow: '0 12px 30px rgba(239,68,68,0.25)',
+  },
+  greenflag: {
+    label: 'Green Flag',
+    emoji: '🟢',
+    color: '#10B981',
+    soft: 'rgba(16,185,129,0.14)',
+    border: 'rgba(16,185,129,0.35)',
+    shadow: '0 12px 30px rgba(16,185,129,0.25)',
+  },
+};
+
+const POPULATION_FILTERS: { value: ViewMode; label: string; emoji: string }[] = [
+  { value: 'global', label: 'Tous', emoji: '🌍' },
+  { value: 'homme', label: 'Hommes', emoji: '♂️' },
+  { value: 'femme', label: 'Femmes', emoji: '♀️' },
+];
+
+const AGE_FILTERS: { value: ViewMode; label: string; emoji: string }[] = [
+  { value: '16-18', label: '16-18', emoji: '🎓' },
+  { value: '19-22', label: '19-22', emoji: '🎯' },
+  { value: '23-26', label: '23-26', emoji: '💼' },
+  { value: '27+', label: '27+', emoji: '🧠' },
 ];
 
 const CATEGORY_FILTERS = [
-  { value: '', label: 'Toutes', emoji: '🌐' },
+  { value: '', label: 'Toutes categories', emoji: '🌐' },
   { value: 'sexe', label: 'Sexe & Kinks', emoji: '🔥' },
   { value: 'quotidien', label: 'Quotidien', emoji: '🤷' },
-  { value: 'metiers', label: 'Métiers', emoji: '💼' },
+  { value: 'metiers', label: 'Metiers', emoji: '💼' },
 ];
 
 function getEloForView(r: RankEntry, view: ViewMode): number {
@@ -104,6 +133,17 @@ export default function LeaderboardPage() {
     setCategoryFilter(nextCategory);
   }, [categoryFilter]);
 
+  const handleResetFilters = useCallback(() => {
+    setError('');
+    setMode('redflag');
+    setView('global');
+
+    if (categoryFilter !== '') {
+      setIsLoading(true);
+      setCategoryFilter('');
+    }
+  }, [categoryFilter]);
+
   const rankings = mode === 'redflag' ? redRankings : greenRankings;
 
   const sorted = useMemo(() => {
@@ -113,21 +153,33 @@ export default function LeaderboardPage() {
     });
   }, [rankings, view, mode]);
 
+  const top3 = sorted.slice(0, 3);
+  const rest = sorted.slice(3);
+  const activeMode = MODE_CONFIG[mode];
+
+  const selectedPopulationLabel = useMemo(() => {
+    const filter = [...POPULATION_FILTERS, ...AGE_FILTERS].find((item) => item.value === view);
+    return filter?.label ?? 'Tous';
+  }, [view]);
+
+  const selectedCategoryLabel = useMemo(() => {
+    const filter = CATEGORY_FILTERS.find((item) => item.value === categoryFilter);
+    return filter?.label ?? 'Toutes categories';
+  }, [categoryFilter]);
+
+  const avgVotesPerElement = totalElements > 0 ? Math.round(totalVotes / totalElements) : 0;
+
   const handleShareClassement = useCallback(() => {
     const top = sorted[0];
     const topText = top ? ` Le n°1 : "${top.texte}"` : '';
-    const text = `🏆 Classement Red or Green !${topText}\nViens voter et compare tes résultats →`;
+    const text = `🏆 Classement Red or Green !${topText}\nViens voter et compare tes resultats →`;
+
     if (navigator.share) {
       navigator.share({ text, url: 'https://redorgreen.fr/classement' }).catch(() => {});
     } else {
       navigator.clipboard.writeText(`${text} redorgreen.fr/classement`).catch(() => {});
     }
   }, [sorted]);
-
-  const isRed = mode === 'redflag';
-  const accent = isRed ? '#EF4444' : '#10B981';
-  const accentDim = isRed ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)';
-  const accentBorder = isRed ? 'rgba(239,68,68,0.35)' : 'rgba(16,185,129,0.35)';
 
   if (isLoading) {
     return (
@@ -137,292 +189,330 @@ export default function LeaderboardPage() {
     );
   }
 
-  const top3 = sorted.slice(0, 3);
-  const rest = sorted.slice(3);
+  const topElo = sorted.length > 0 ? getEloForView(sorted[0], view) : 0;
+  const bottomElo = sorted.length > 0 ? getEloForView(sorted[sorted.length - 1], view) : 0;
+  const eloRange = Math.abs(topElo - bottomElo) || 1;
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: '#0A0A0A' }}>
-
-      {/* ── HEADER ── */}
-      <div
-        className="px-5 pt-[max(20px,env(safe-area-inset-top))] pb-6"
-        style={{ background: `linear-gradient(180deg, ${accentDim} 0%, transparent 100%)` }}
-      >
-        <div className="max-w-md mx-auto">
-          <Link
-            href="/"
-            className="text-[#6B7280] hover:text-[#FAFAFA] text-sm mb-5 flex items-center gap-1.5 transition-colors py-1"
-          >
-            ← Accueil
-          </Link>
-
-          <div className="text-center mb-6">
-            <h1 className="text-[26px] sm:text-[30px] font-black text-[#FAFAFA] tracking-tight">
-              🏆 Classement
-            </h1>
-            <div className="flex justify-center items-center gap-3 mt-2 text-[13px] text-[#6B7280]">
-              <span>{totalElements} éléments</span>
-              <span className="text-[#333]">•</span>
-              <span>{totalVotes.toLocaleString('fr-FR')} votes</span>
-            </div>
-          </div>
-
-          {/* RED / GREEN toggle - larger touch targets */}
-          <div className="flex justify-center mb-5">
-            <div className="inline-flex p-1.5 rounded-2xl w-full max-w-xs" style={{ background: '#141414', border: '1px solid #2A2A2A' }}>
-              <button
-                onClick={() => setMode('redflag')}
-                className="flex-1 py-3 rounded-xl text-[15px] font-black transition-all"
-                style={isRed
-                  ? { background: '#EF4444', color: '#fff', boxShadow: '0 4px 20px rgba(239,68,68,0.4)' }
-                  : { color: '#6B7280' }}
-              >
-                🚩 Red Flag
-              </button>
-              <button
-                onClick={() => setMode('greenflag')}
-                className="flex-1 py-3 rounded-xl text-[15px] font-black transition-all"
-                style={!isRed
-                  ? { background: '#10B981', color: '#fff', boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }
-                  : { color: '#6B7280' }}
-              >
-                🟢 Green Flag
-              </button>
-            </div>
-          </div>
-
-          {/* Segment filter — two rows for clarity */}
-          <div className="space-y-3">
-            {/* Gender/Age view filter */}
-            <div className="overflow-x-auto -mx-5 px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <div className="flex items-center gap-2 w-max">
-                {VIEW_CONFIG.map((v, i) => (
-                  <span key={v.value} className="contents">
-                    {i > 0 && VIEW_CONFIG[i - 1].group !== v.group && (
-                      <span className="text-[#333] text-sm mx-0.5 select-none">|</span>
-                    )}
-                    <button
-                      onClick={() => setView(v.value)}
-                      className="text-[13px] px-4 py-2 rounded-xl font-semibold transition-all whitespace-nowrap"
-                      style={view === v.value
-                        ? { background: accentDim, color: accent, border: `1.5px solid ${accentBorder}` }
-                        : { color: '#6B7280', border: '1.5px solid transparent', background: 'rgba(255,255,255,0.03)' }}
-                    >
-                      {v.emoji} {v.label}
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Category filter */}
-            <div className="overflow-x-auto -mx-5 px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <div className="flex items-center gap-2 w-max">
-                {CATEGORY_FILTERS.map((cat) => (
-                  <button
-                    key={cat.value}
-                    onClick={() => handleCategoryFilterChange(cat.value)}
-                    className="text-[13px] px-4 py-2 rounded-xl font-semibold transition-all whitespace-nowrap"
-                    style={categoryFilter === cat.value
-                      ? { background: accentDim, color: accent, border: `1.5px solid ${accentBorder}` }
-                      : { color: '#555', border: '1.5px solid transparent', background: 'rgba(255,255,255,0.03)' }}
-                  >
-                    {cat.emoji} {cat.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="relative min-h-screen overflow-hidden pb-24" style={{ background: '#08090B' }}>
+      <div className="pointer-events-none absolute inset-0">
+        <div
+          className="absolute -top-40 left-1/2 -translate-x-1/2 h-96 w-96 rounded-full blur-[130px] opacity-70"
+          style={{ background: activeMode.soft }}
+        />
+        <div className="absolute -bottom-28 -left-24 h-80 w-80 rounded-full bg-white/2 blur-[100px]" />
+        <div className="absolute top-28 -right-24 h-80 w-80 rounded-full bg-white/2 blur-[100px]" />
       </div>
 
-      {error && (
-        <div className="max-w-md mx-auto px-5 mb-4">
-          <div className="rounded-2xl p-4 text-center text-sm" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
-            {error}
+      <main className="relative z-10 mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 pt-[max(20px,env(safe-area-inset-top))]">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#FAFAFA] transition-colors py-1"
+        >
+          ← Accueil
+        </Link>
+
+        <header className="mt-4 mb-6 sm:mb-8">
+          <h1 className="text-[30px] sm:text-[40px] leading-none font-black tracking-tight text-[#FAFAFA]">
+            Leaderboards qui claquent
+          </h1>
+          <p className="mt-2 text-sm sm:text-base text-[#9CA3AF] max-w-2xl">
+            Lis en un regard: qui est top, sur quel filtre, et pourquoi. Format optimise pour screenshot et partage.
+          </p>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-[#E5E7EB]">
+              🧩 {totalElements} elements
+            </span>
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-[#E5E7EB]">
+              🗳 {totalVotes.toLocaleString('fr-FR')} votes
+            </span>
+            <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ background: activeMode.soft, color: activeMode.color }}>
+              {activeMode.emoji} {activeMode.label}
+            </span>
           </div>
-        </div>
-      )}
+        </header>
 
-      <div className="max-w-md mx-auto px-5">
-        <AnimatePresence mode="wait">
-          {sorted.length === 0 ? (
-            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
-              <span className="text-6xl block mb-4">🏜️</span>
-              <p className="text-[#6B7280] text-base">Aucun résultat pour ces filtres</p>
-            </motion.div>
-          ) : (
-            <motion.div key={mode + view + categoryFilter} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+        <section className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(330px,1fr)]">
+          <article
+            className="rounded-3xl border p-4 sm:p-6"
+            style={{ background: 'rgba(14,14,17,0.82)', borderColor: activeMode.border, boxShadow: activeMode.shadow }}
+          >
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.16em] text-[#9CA3AF] font-black">Carte resume</p>
+                <h2 className="text-xl sm:text-2xl font-black text-[#FAFAFA] mt-1">Pret a partager</h2>
+              </div>
+              <button
+                onClick={handleShareClassement}
+                className="px-3 py-2 rounded-xl text-xs font-semibold text-[#D1D5DB] bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+              >
+                📤 Partager
+              </button>
+            </div>
 
-              {/* Section title */}
-              <p className="text-center text-[12px] font-bold uppercase tracking-[0.15em] mb-5 mt-3" style={{ color: '#4B5563' }}>
-                {isRed ? '🚩 Les plus Red Flag' : '🟢 Les plus Green Flag'}
-              </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+              <div className="rounded-xl p-3 bg-white/5 border border-white/10">
+                <p className="text-[10px] uppercase tracking-wider text-[#6B7280]">Mode</p>
+                <p className="text-sm font-bold text-[#FAFAFA] mt-1">{activeMode.emoji} {activeMode.label}</p>
+              </div>
+              <div className="rounded-xl p-3 bg-white/5 border border-white/10">
+                <p className="text-[10px] uppercase tracking-wider text-[#6B7280]">Population</p>
+                <p className="text-sm font-bold text-[#FAFAFA] mt-1">👥 {selectedPopulationLabel}</p>
+              </div>
+              <div className="rounded-xl p-3 bg-white/5 border border-white/10 col-span-2 sm:col-span-1">
+                <p className="text-[10px] uppercase tracking-wider text-[#6B7280]">Categorie</p>
+                <p className="text-sm font-bold text-[#FAFAFA] mt-1">🗂 {selectedCategoryLabel}</p>
+              </div>
+            </div>
 
-              {/* ── TOP 3 PODIUM ── */}
-              {top3.length >= 1 && (
-                <div className="mb-8">
-                  {/* #1 — Hero card */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="rounded-2xl p-5 mb-4 relative overflow-hidden"
-                    style={{
-                      background: isRed
-                        ? 'linear-gradient(160deg, rgba(239,68,68,0.2) 0%, rgba(239,68,68,0.05) 100%)'
-                        : 'linear-gradient(160deg, rgba(16,185,129,0.2) 0%, rgba(16,185,129,0.05) 100%)',
-                      border: `1.5px solid ${accentBorder}`,
-                      boxShadow: `0 8px 40px ${isRed ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)'}`,
-                    }}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="flex flex-col items-center gap-1 shrink-0">
-                        <span className="text-2xl">👑</span>
-                        <span className="text-3xl">🥇</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[#FAFAFA] text-[16px] sm:text-[18px] font-bold leading-snug mb-3">
-                          {top3[0].texte}
-                        </p>
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-[13px] font-semibold" style={{ color: accent }}>
-                            {top3[0].nb_participations} votes
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  {/* #2 and #3 side by side */}
-                  <div className="grid grid-cols-2 gap-3">
-                    {top3[1] && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.15 }}
-                        className="rounded-2xl p-4"
-                        style={{
-                          background: 'linear-gradient(160deg, rgba(156,163,175,0.12) 0%, rgba(156,163,175,0.04) 100%)',
-                          border: '1px solid rgba(156,163,175,0.25)',
-                        }}
-                      >
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xl">🥈</span>
-                          <span className="text-[11px] font-bold text-[#6B7280] uppercase">#2</span>
-                        </div>
-                        <p className="text-[#FAFAFA] text-[14px] font-semibold leading-snug mb-3 line-clamp-3">
-                          {top3[1].texte}
-                        </p>
-                        <div className="flex items-baseline gap-1.5">
-                          <span className="text-[12px] font-semibold" style={{ color: '#9CA3AF' }}>
-                            {top3[1].nb_participations} votes
-                          </span>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {top3[2] && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="rounded-2xl p-4"
-                        style={{
-                          background: isRed
-                            ? 'linear-gradient(160deg, rgba(217,119,6,0.12) 0%, rgba(217,119,6,0.04) 100%)'
-                            : 'linear-gradient(160deg, rgba(110,231,183,0.12) 0%, rgba(110,231,183,0.04) 100%)',
-                          border: isRed ? '1px solid rgba(217,119,6,0.25)' : '1px solid rgba(110,231,183,0.25)',
-                        }}
-                      >
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xl">🥉</span>
-                          <span className="text-[11px] font-bold text-[#6B7280] uppercase">#3</span>
-                        </div>
-                        <p className="text-[#FAFAFA] text-[14px] font-semibold leading-snug mb-3 line-clamp-3">
-                          {top3[2].texte}
-                        </p>
-                        <div className="flex items-baseline gap-1.5">
-                          <span className="text-[12px] font-semibold" style={{ color: isRed ? '#F59E0B' : '#6EE7B7' }}>
-                            {top3[2].nb_participations} votes
-                          </span>
-                        </div>
-                      </motion.div>
-                    )}
-                  </div>
+            {sorted[0] ? (
+              <div
+                className="rounded-2xl p-4 sm:p-5 border"
+                style={{ background: activeMode.soft, borderColor: activeMode.border }}
+              >
+                <p className="text-[11px] uppercase tracking-[0.16em] text-[#9CA3AF] font-black">TOP #1</p>
+                <p className="mt-2 text-lg sm:text-2xl font-black text-[#FAFAFA] leading-tight">
+                  {sorted[0].texte}
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-black/20 text-[#F3F4F6]">
+                    {sorted[0].nb_participations} votes
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-black/20 text-[#F3F4F6]">
+                    moyenne {avgVotesPerElement} votes/element
+                  </span>
                 </div>
-              )}
+              </div>
+            ) : (
+              <div className="rounded-2xl p-5 text-sm text-[#9CA3AF] bg-white/5 border border-white/10">
+                Aucun resultat avec ces filtres.
+              </div>
+            )}
 
-              {/* ── REST OF LIST ── */}
-              {rest.length > 0 && (
-                <div className="space-y-2.5">
-                  {rest.map((entry, idx) => {
-                    const elo = getEloForView(entry, view);
-                    const maxElo = getEloForView(sorted[0], view) || 1;
-                    const minElo = getEloForView(sorted[sorted.length - 1], view) || 0;
-                    const range = maxElo - minElo || 1;
-                    const percent = isRed
-                      ? ((elo - minElo) / range) * 100
-                      : ((maxElo - elo) / range) * 100;
+            <p className="mt-4 text-xs text-[#6B7280]">
+              Tip: prends un screenshot de ce bloc pour partager rapidement les infos cles.
+            </p>
+          </article>
+
+          <aside className="rounded-3xl border p-4 sm:p-5 lg:sticky lg:top-4 h-fit" style={{ background: 'rgba(14,14,17,0.9)', borderColor: '#24262B' }}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-black uppercase tracking-[0.13em] text-[#D1D5DB]">Filtres</h3>
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="text-[11px] font-semibold text-[#6B7280] hover:text-[#F3F4F6] transition-colors"
+              >
+                Reinitialiser
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <section>
+                <p className="text-[12px] font-semibold text-[#A1A1AA] mb-2">1) Type</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(Object.keys(MODE_CONFIG) as RankMode[]).map((item) => {
+                    const conf = MODE_CONFIG[item];
+                    const selected = mode === item;
 
                     return (
-                      <motion.div
-                        key={entry.texte}
-                        initial={{ opacity: 0, x: -8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: Math.min(idx * 0.02, 0.4) }}
-                        className="rounded-2xl p-4 flex items-center gap-3 relative overflow-hidden"
-                        style={{ background: '#141414', border: '1px solid #1F1F1F' }}
+                      <button
+                        key={item}
+                        onClick={() => setMode(item)}
+                        className="px-2 py-2.5 rounded-xl text-[13px] font-black transition-all"
+                        style={selected
+                          ? { background: conf.soft, color: conf.color, border: `1.5px solid ${conf.border}` }
+                          : { color: '#737373', border: '1.5px solid #27272A', background: '#17181B' }}
                       >
-                        {/* Progress bar bg */}
-                        <div
-                          className="absolute left-0 top-0 bottom-0 rounded-2xl transition-all"
-                          style={{ width: `${Math.max(percent, 3)}%`, background: isRed ? 'rgba(239,68,68,0.06)' : 'rgba(16,185,129,0.06)' }}
-                        />
-                        {/* Rank badge */}
-                        <div
-                          className="w-9 h-9 rounded-full flex items-center justify-center font-black text-[14px] shrink-0 z-10"
-                          style={{ background: '#1F1F1F', color: '#9CA3AF' }}
-                        >
-                          {idx + 4}
-                        </div>
-                        {/* Text */}
-                        <div className="flex-1 min-w-0 z-10">
-                          <p className="text-[#F0F0F0] text-[15px] font-medium leading-snug">
-                            {entry.texte}
-                          </p>
-                          <p className="text-[#555] text-[12px] mt-1">
-                            {entry.nb_participations} votes
-                          </p>
-                        </div>
-                      </motion.div>
+                        {conf.emoji} {conf.label}
+                      </button>
                     );
                   })}
                 </div>
-              )}
+              </section>
 
-              {/* CTA + Share */}
-              <div className="mt-10 flex flex-col items-center gap-4">
-                <motion.a
-                  href="/jeu"
-                  className="w-full max-w-xs block px-8 py-4 rounded-2xl font-black text-[16px] text-white transition-transform active:scale-95 text-center"
-                  style={{ background: accent, boxShadow: `0 8px 32px ${isRed ? 'rgba(239,68,68,0.35)' : 'rgba(16,185,129,0.35)'}` }}
-                  whileTap={{ scale: 0.96 }}
-                >
-                  {isRed ? '🚩 Jouer et voter !' : '🟢 Jouer et voter !'}
-                </motion.a>
-                <button
-                  onClick={handleShareClassement}
-                  className="text-[#6B7280] hover:text-[#FAFAFA] text-[14px] flex items-center gap-2 transition-colors py-3 px-5"
-                >
-                  📤 Partager le classement
-                </button>
+              <section>
+                <p className="text-[12px] font-semibold text-[#A1A1AA] mb-2">2) Population</p>
+                <div className="grid grid-cols-3 gap-2 mb-2.5">
+                  {POPULATION_FILTERS.map((item) => (
+                    <button
+                      key={item.value}
+                      onClick={() => setView(item.value)}
+                      className="px-2 py-2 rounded-xl text-[12px] font-semibold transition-all"
+                      style={view === item.value
+                        ? { background: activeMode.soft, color: activeMode.color, border: `1.5px solid ${activeMode.border}` }
+                        : { color: '#737373', border: '1.5px solid #27272A', background: '#17181B' }}
+                    >
+                      {item.emoji} {item.label}
+                    </button>
+                  ))}
+                </div>
+
+                <p className="text-[12px] font-semibold text-[#A1A1AA] mb-2">Age</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {AGE_FILTERS.map((item) => (
+                    <button
+                      key={item.value}
+                      onClick={() => setView(item.value)}
+                      className="px-2 py-2 rounded-xl text-[12px] font-semibold transition-all"
+                      style={view === item.value
+                        ? { background: activeMode.soft, color: activeMode.color, border: `1.5px solid ${activeMode.border}` }
+                        : { color: '#737373', border: '1.5px solid #27272A', background: '#17181B' }}
+                    >
+                      {item.emoji} {item.label}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section>
+                <p className="text-[12px] font-semibold text-[#A1A1AA] mb-2">3) Categorie</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {CATEGORY_FILTERS.map((cat) => (
+                    <button
+                      key={cat.value}
+                      onClick={() => handleCategoryFilterChange(cat.value)}
+                      className={`px-2 py-2 rounded-xl text-[12px] font-semibold transition-all ${cat.value === '' ? 'col-span-2' : ''}`}
+                      style={categoryFilter === cat.value
+                        ? { background: activeMode.soft, color: activeMode.color, border: `1.5px solid ${activeMode.border}` }
+                        : { color: '#737373', border: '1.5px solid #27272A', background: '#17181B' }}
+                    >
+                      {cat.emoji} {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <div className="pt-3 border-t border-[#26272B] flex flex-wrap items-center gap-2">
+                <span className="text-[10px] text-[#6B7280] uppercase tracking-wider">Actifs:</span>
+                <span className="px-2 py-1 rounded-lg text-[11px] font-semibold" style={{ background: activeMode.soft, color: activeMode.color }}>
+                  {activeMode.emoji} {activeMode.label}
+                </span>
+                <span className="px-2 py-1 rounded-lg text-[11px] font-semibold bg-white/5 text-[#D1D5DB]">
+                  👥 {selectedPopulationLabel}
+                </span>
+                <span className="px-2 py-1 rounded-lg text-[11px] font-semibold bg-white/5 text-[#D1D5DB]">
+                  🗂 {selectedCategoryLabel}
+                </span>
               </div>
+            </div>
+          </aside>
+        </section>
 
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+        {error && (
+          <div className="mt-4 rounded-2xl p-4 text-center text-sm" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5' }}>
+            {error}
+          </div>
+        )}
+
+        <section className="mt-7 sm:mt-9">
+          <AnimatePresence mode="wait">
+            {sorted.length === 0 ? (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="rounded-2xl border border-white/10 bg-white/3 text-center py-20"
+              >
+                <span className="text-6xl block mb-4">🏜️</span>
+                <p className="text-[#9CA3AF] text-base">Aucun resultat pour ces filtres</p>
+              </motion.div>
+            ) : (
+              <motion.div key={`${mode}-${view}-${categoryFilter}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+                <div className="grid gap-5 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
+                  <div className="space-y-3">
+                    <p className="text-[11px] uppercase tracking-[0.14em] font-black text-[#6B7280]">Podium</p>
+                    {top3.map((entry, index) => {
+                      const medals = ['🥇', '🥈', '🥉'];
+                      const medal = medals[index] ?? '🏅';
+                      const indexLabel = `#${index + 1}`;
+
+                      return (
+                        <motion.div
+                          key={`${entry.texte}-podium-${index}`}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.06 }}
+                          className="rounded-2xl border p-4"
+                          style={{
+                            background: index === 0 ? activeMode.soft : 'rgba(255,255,255,0.03)',
+                            borderColor: index === 0 ? activeMode.border : 'rgba(255,255,255,0.08)',
+                          }}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-lg">{medal}</span>
+                            <span className="text-[11px] font-black uppercase tracking-wider text-[#9CA3AF]">{indexLabel}</span>
+                          </div>
+                          <p className="text-[15px] font-bold text-[#F3F4F6] leading-snug">{entry.texte}</p>
+                          <p className="text-xs mt-2" style={{ color: index === 0 ? activeMode.color : '#9CA3AF' }}>
+                            {entry.nb_participations} votes
+                          </p>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.14em] font-black text-[#6B7280] mb-3">Classement complet</p>
+                    <div className="space-y-2.5">
+                      {rest.map((entry, idx) => {
+                        const elo = getEloForView(entry, view);
+                        const score = mode === 'redflag'
+                          ? (elo - bottomElo) / eloRange
+                          : (bottomElo - elo) / eloRange;
+                        const width = Math.max(9, Math.round(score * 100));
+
+                        return (
+                          <motion.div
+                            key={`${entry.texte}-rest-${idx}`}
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: Math.min(idx * 0.02, 0.35) }}
+                            className="rounded-2xl border p-4 flex items-center gap-3 relative overflow-hidden"
+                            style={{ background: '#121317', borderColor: 'rgba(255,255,255,0.08)' }}
+                          >
+                            <div
+                              className="absolute inset-y-0 left-0 rounded-2xl"
+                              style={{ width: `${width}%`, background: activeMode.soft }}
+                            />
+
+                            <div className="relative z-10 w-9 h-9 rounded-full flex items-center justify-center text-sm font-black bg-black/35 text-[#D1D5DB] shrink-0">
+                              {idx + 4}
+                            </div>
+
+                            <div className="relative z-10 flex-1 min-w-0">
+                              <p className="text-[15px] font-medium text-[#F3F4F6] leading-snug">{entry.texte}</p>
+                              <p className="text-xs mt-1 text-[#8A8A93]">{entry.nb_participations} votes</p>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </section>
+
+        <section className="mt-10 pb-2 flex flex-col items-center gap-4">
+          <motion.a
+            href="/jeu"
+            className="w-full max-w-xs block px-8 py-4 rounded-2xl font-black text-[16px] text-white transition-transform active:scale-95 text-center"
+            style={{ background: activeMode.color, boxShadow: activeMode.shadow }}
+            whileTap={{ scale: 0.96 }}
+          >
+            {activeMode.emoji} Jouer et voter !
+          </motion.a>
+
+          <button
+            onClick={handleShareClassement}
+            className="text-[#7B7B85] hover:text-[#FAFAFA] text-[14px] flex items-center gap-2 transition-colors py-3 px-5"
+          >
+            📤 Partager le classement
+          </button>
+        </section>
+      </main>
     </div>
   );
 }
