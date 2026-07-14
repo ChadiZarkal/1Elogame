@@ -36,7 +36,6 @@ type RankMode = 'redflag' | 'greenflag';
 type ViewMode = 'global' | 'homme' | 'femme' | '16-18' | '19-22' | '23-26' | '27+';
 
 const PAGE_SIZE = 30;
-const SEARCH_DEBOUNCE_MS = 280;
 
 const MODE_CONFIG: Record<
   RankMode,
@@ -90,7 +89,7 @@ const CATEGORY_META: Record<string, { label: string; emoji: string }> = {
   metiers: { label: 'Metiers', emoji: '💼' },
 };
 
-function getEloForView(r: RankEntry, view: ViewMode): number {
+function getScoreForView(r: RankEntry, view: ViewMode): number {
   switch (view) {
     case 'homme':
       return r.elo_homme;
@@ -127,17 +126,6 @@ export default function LeaderboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setPage(1);
-      setSearchQuery(searchInput.trim());
-    }, SEARCH_DEBOUNCE_MS);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [searchInput]);
 
   useEffect(() => {
     let isActive = true;
@@ -237,6 +225,7 @@ export default function LeaderboardPage() {
     return selected?.label ?? 'Toutes categories';
   }, [categoryFilter]);
 
+  const hasContextualFilter = searchQuery.length > 0 || categoryFilter !== '' || view !== 'global';
   const loadedElements = rankings.length;
   const canLoadMore = hasMore && !isLoadingMore;
 
@@ -286,6 +275,21 @@ export default function LeaderboardPage() {
     setError('');
   }, []);
 
+  const handleSearchSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      setPage(1);
+      setSearchQuery(searchInput.trim());
+    },
+    [searchInput],
+  );
+
+  const handleSearchClear = useCallback(() => {
+    setSearchInput('');
+    setSearchQuery('');
+    setPage(1);
+  }, []);
+
   const handleLoadMore = useCallback(() => {
     if (!canLoadMore) {
       return;
@@ -298,14 +302,14 @@ export default function LeaderboardPage() {
     const lines = rankings
       .slice(0, 8)
       .map((entry) => {
-        const elo = getEloForView(entry, view);
-        return `${entry.rank}. ${entry.texte} - ELO ${elo} - ${entry.nb_participations} votes`;
+        const score = getScoreForView(entry, view);
+        return `${entry.rank}. ${entry.texte} - Score ${score} - ${entry.nb_participations} votes`;
       })
       .join('\n');
 
     const text = [
       `🏆 ${activeMode.emoji} ${activeMode.label}`,
-      'Tri principal: ELO',
+      'Tri principal: score',
       `👤 Profil: ${selectedProfileLabel}`,
       `🗂 Categorie: ${selectedCategoryLabel}`,
       lines,
@@ -340,11 +344,11 @@ export default function LeaderboardPage() {
 
         <header className="mt-4 mb-5">
           <h1 className="text-[30px] sm:text-[38px] leading-none font-black tracking-tight text-[#FAFAFA]">
-            Classement General qui donne envie de jouer
+            Les comportements qui font le plus reagir
           </h1>
           <p className="mt-2 text-sm sm:text-base text-[#9CA3AF] max-w-3xl">
             Lis chaque ligne en entier, cherche un mot, filtre en un tap et explore tout le classement.
-            Le rang est calcule par ELO, les votes sont seulement contextuels.
+            Le rang suit un score communaute facile a lire, les votes restent un indicateur de contexte.
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
@@ -361,7 +365,7 @@ export default function LeaderboardPage() {
               className="px-3 py-1 rounded-full text-xs font-semibold"
               style={{ background: activeMode.soft, color: activeMode.color }}
             >
-              🎯 Tri principal: ELO
+              🎯 Tri principal: Score
             </span>
             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-[#E5E7EB]">
               📚 Affiche {loadedElements} / {totalElements}
@@ -388,19 +392,37 @@ export default function LeaderboardPage() {
               </button>
             </div>
 
-            <label className="block mb-3">
+            <form className="mb-3" onSubmit={handleSearchSubmit}>
               <span className="text-[12px] font-semibold text-[#A1A1AA]">Recherche</span>
               <input
                 type="search"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Ex: haleine, cryptobro, onlyfans..."
+                enterKeyHint="search"
+                autoComplete="off"
                 className="mt-1 w-full rounded-xl border border-white/10 bg-[#13151A] px-3 py-2.5 text-sm text-[#F3F4F6] placeholder:text-[#6B7280] focus:outline-none focus:ring-2"
                 style={{
                   boxShadow: `0 0 0 0 ${activeMode.soft}`,
                 }}
               />
-            </label>
+
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button
+                  type="submit"
+                  className="px-3 py-2 rounded-xl text-[12px] font-semibold border text-[#E5E7EB] bg-white/5 border-white/10 hover:bg-white/10 transition-colors"
+                >
+                  Rechercher
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSearchClear}
+                  className="px-3 py-2 rounded-xl text-[12px] font-semibold border text-[#A1A1AA] bg-[#17181B] border-[#27272A] hover:text-[#E5E7EB] transition-colors"
+                >
+                  Effacer
+                </button>
+              </div>
+            </form>
 
             <section className="mb-4">
               <p className="text-[12px] font-semibold text-[#A1A1AA] mb-2">Type</p>
@@ -504,7 +526,7 @@ export default function LeaderboardPage() {
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.14em] text-[#9CA3AF] font-black">Lecture simple</p>
                   <h2 className="text-lg sm:text-xl font-black text-[#FAFAFA] mt-1">
-                    Rang = ELO, texte complet, votes en contexte
+                    Rang par score, texte complet, votes en contexte
                   </h2>
                 </div>
                 <button
@@ -545,8 +567,8 @@ export default function LeaderboardPage() {
               <ol className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                 {rankings.map((entry, index) => {
                   const categoryMeta = getCategoryMeta(entry.categorie);
-                  const elo = getEloForView(entry, view);
-                  const isPodium = entry.rank <= 3;
+                  const score = getScoreForView(entry, view);
+                  const isPodium = !hasContextualFilter && entry.rank <= 3;
 
                   return (
                     <motion.li
@@ -557,12 +579,21 @@ export default function LeaderboardPage() {
                       className="rounded-2xl border p-3.5"
                       style={{
                         borderColor: isPodium ? activeMode.border : 'rgba(255,255,255,0.10)',
-                        background: isPodium ? activeMode.soft : 'rgba(16,17,22,0.85)',
+                        background: isPodium
+                          ? `linear-gradient(135deg, ${activeMode.soft}, rgba(16,17,22,0.9))`
+                          : 'rgba(16,17,22,0.85)',
+                        boxShadow: isPodium ? activeMode.shadow : 'none',
                       }}
                     >
                       <div className="flex items-start gap-3">
                         <span className="shrink-0 inline-flex min-w-11 h-8 items-center justify-center rounded-full bg-black/30 text-[11px] font-black text-[#F3F4F6] px-2">
-                          {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : `#${entry.rank}`}
+                          {isPodium
+                            ? entry.rank === 1
+                              ? '🥇'
+                              : entry.rank === 2
+                                ? '🥈'
+                                : '🥉'
+                            : `#${entry.rank}`}
                         </span>
 
                         <div className="min-w-0 flex-1">
@@ -581,9 +612,9 @@ export default function LeaderboardPage() {
                         </div>
 
                         <div className="shrink-0 text-right">
-                          <p className="text-[10px] uppercase tracking-wider text-[#9CA3AF]">ELO</p>
+                          <p className="text-[10px] uppercase tracking-wider text-[#9CA3AF]">Score</p>
                           <p className="text-[16px] font-black" style={{ color: activeMode.color }}>
-                            {elo}
+                            {score}
                           </p>
                         </div>
                       </div>
