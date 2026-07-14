@@ -25,7 +25,7 @@ describe('categorieSchema', () => {
     expect(categorieSchema.parse('sexe')).toBe('sexe');
     expect(categorieSchema.parse('quotidien')).toBe('quotidien');
     expect(categorieSchema.parse('quotidien')).toBe('quotidien');
-    expect(categorieSchema.parse('metiers')).toBe('metiers');
+    expect(categorieSchema.parse('quotidien')).toBe('quotidien');
   });
 
   it('rejette les catégories invalides', () => {
@@ -176,7 +176,7 @@ describe('elementsQuerySchema', () => {
     const result = elementsQuerySchema.parse({
       page: '2',
       limit: '50',
-      category: 'metiers',
+      category: 'quotidien',
       active: 'true',
       search: 'test',
     });

@@ -251,12 +251,15 @@ export type LeaderboardOptions = {
   category?: string | null;
   view?: LeaderboardView;
   search?: string | null;
+  /** Filter by a single tag (array containment) */
+  tag?: string | null;
 };
 
 type LeaderboardRow = {
   id: string;
   texte: string;
   categorie: string;
+  tags: string[];
   elo_global: number;
   elo_homme: number;
   elo_femme: number;
@@ -314,6 +317,11 @@ export async function getLeaderboard(options: LeaderboardOptions): Promise<Leade
       elements = elements.filter((e) => e.categorie === options.category);
     }
 
+    if (options.tag) {
+      const tag = options.tag;
+      elements = elements.filter((e) => (e.tags || []).includes(tag));
+    }
+
     if (search) {
       elements = elements.filter((e) => e.texte.toLowerCase().includes(search));
     }
@@ -334,6 +342,7 @@ export async function getLeaderboard(options: LeaderboardOptions): Promise<Leade
         id: e.id,
         texte: e.texte,
         categorie: e.categorie,
+        tags: e.tags || [],
         elo_global: e.elo_global,
         elo_homme: e.elo_homme,
         elo_femme: e.elo_femme,
@@ -353,7 +362,7 @@ export async function getLeaderboard(options: LeaderboardOptions): Promise<Leade
   let query = supabase
     .from('elements')
     .select(
-      'id, texte, categorie, elo_global, elo_homme, elo_femme, elo_16_18, elo_19_22, elo_23_26, elo_27plus, nb_participations',
+      'id, texte, categorie, tags, elo_global, elo_homme, elo_femme, elo_16_18, elo_19_22, elo_23_26, elo_27plus, nb_participations',
       { count: 'exact' },
     )
     .eq('actif', true)
@@ -362,6 +371,10 @@ export async function getLeaderboard(options: LeaderboardOptions): Promise<Leade
 
   if (options.category) {
     query = query.eq('categorie', options.category);
+  }
+
+  if (options.tag) {
+    query = query.contains('tags', [options.tag]);
   }
 
   if (search) {

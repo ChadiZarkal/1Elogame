@@ -147,7 +147,7 @@ describe('gameStore', () => {
       const duel1 = mockDuelResponse();
       const duel2 = mockDuelResponse({
         elementA: { id: 'a2', texte: 'Test A2', categorie: 'quotidien' },
-        elementB: { id: 'b2', texte: 'Test B2', categorie: 'metiers' },
+        elementB: { id: 'b2', texte: 'Test B2', categorie: 'quotidien' },
       });
 
       const store = useGameStore.getState();
@@ -378,7 +378,7 @@ describe('gameStore', () => {
     it('should promote nextDuel to currentDuel', () => {
       const nextDuel: Duel = {
         elementA: { id: 'a2', texte: 'A2', categorie: 'quotidien' },
-        elementB: { id: 'b2', texte: 'B2', categorie: 'metiers' },
+          elementB: { id: 'b2', texte: 'B2', categorie: 'quotidien' },
       };
 
       useGameStore.setState({
@@ -423,7 +423,7 @@ describe('gameStore', () => {
         currentDuel,
         nextDuel: {
           elementA: { id: 'a2', texte: 'A2', categorie: 'quotidien' },
-          elementB: { id: 'b2', texte: 'B2', categorie: 'metiers' },
+          elementB: { id: 'b2', texte: 'B2', categorie: 'quotidien' },
         },
         lastResult,
         showingResult: true,
@@ -458,7 +458,7 @@ describe('gameStore', () => {
       useGameStore.setState({
         currentDuel: {
           elementA: { id: 'new-a', texte: 'New A', categorie: 'quotidien' },
-          elementB: { id: 'new-b', texte: 'New B', categorie: 'metiers' },
+          elementB: { id: 'new-b', texte: 'New B', categorie: 'quotidien' },
         },
         nextDuel: {
           elementA: { id: 'next-a', texte: 'Next A', categorie: 'sexe' },

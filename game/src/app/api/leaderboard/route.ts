@@ -20,6 +20,7 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   const parsedOffset = Number(searchParams.get('offset') || 0);
   const offset = Math.max(0, Number.isFinite(parsedOffset) ? parsedOffset : 0);
   const category = searchParams.get('category') || null;
+  const tag = searchParams.get('tag') || null;
   const view = parseView(searchParams.get('view'));
   const search = searchParams.get('search')?.trim() || null;
 
@@ -28,6 +29,7 @@ export const GET = withApiHandler(async (request: NextRequest) => {
     limit,
     offset,
     category,
+    tag,
     view,
     search,
   });
@@ -36,6 +38,7 @@ export const GET = withApiHandler(async (request: NextRequest) => {
     rank: offset + i + 1,
     texte: e.texte,
     categorie: e.categorie,
+    tags: e.tags || [],
     elo_global: Math.round(e.elo_global),
     elo_homme: Math.round(e.elo_homme ?? e.elo_global),
     elo_femme: Math.round(e.elo_femme ?? e.elo_global),

@@ -129,7 +129,7 @@ export function aggregateRealDemographics(sessions: AnalyticsSessionData[]): Dem
     .sort((a, b) => b.votes - a.votes);
 
   if (categoryPopularity.length === 0) {
-    for (const cat of ['sexe', 'quotidien', 'metiers']) {
+    for (const cat of ['sexe', 'quotidien']) {
       categoryPopularity.push({ category: cat, votes: 0, percentage: 0 });
     }
   }

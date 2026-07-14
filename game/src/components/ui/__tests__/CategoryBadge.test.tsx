@@ -35,7 +35,7 @@ describe('CategoryBadge', () => {
   });
 
   it('applique les classes CSS pill correctement', () => {
-    const { container } = render(<CategoryBadge categorie="metiers" variant="pill" />);
+    const { container } = render(<CategoryBadge categorie="quotidien" variant="pill" />);
     const span = container.querySelector('span.rounded-full');
     expect(span).toBeDefined();
   });

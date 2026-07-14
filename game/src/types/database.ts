@@ -1,11 +1,10 @@
 // Database types for Supabase
 
-// Catégories disponibles - 3 catégories 2026
+// Catégories disponibles — 2 catégories 2026
 // IMPORTANT: Doit correspondre aux clés dans src/config/categories.ts
-export type Categorie = 
-  | 'sexe'      // Sexe & Kinks - relations, dating, intimité, flirt
-  | 'quotidien' // Quotidien - comportements et habitudes du quotidien
-  | 'metiers';  // Métiers - comportements et attitudes au travail, professions
+export type Categorie =
+  | 'sexe'      // Amour & Sexe — relations, dating, intimité, flirt
+  | 'quotidien'; // Quotidien — comportements et habitudes du quotidien (inclut ex-métiers)
 
 export type SexeVotant = 'homme' | 'femme' | 'autre';
 
@@ -36,6 +35,8 @@ export interface Element {
   nb_participations_19_22: number;
   nb_participations_23_26: number;
   nb_participations_27plus: number;
+  /** Tags sémantiques — sous-catégorisation, filtre classement uniquement */
+  tags: string[];
   created_at: string;
   updated_at: string;
 }

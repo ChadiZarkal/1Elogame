@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
-// Enum schemas - Nouvelles catégories 2026
-export const categorieSchema = z.enum(['sexe', 'quotidien', 'metiers']);
+// Enum schemas - 2 catégories 2026
+export const categorieSchema = z.enum(['sexe', 'quotidien']);
+export const tagSchema = z.string().min(1).max(30).regex(/^[a-z_]+$/, 'Tag invalide (lettres minuscules et _ uniquement)');
 export const sexeVotantSchema = z.enum(['homme', 'femme', 'autre']);
 export const ageVotantSchema = z.enum(['16-18', '19-22', '23-26', '27+']);
 export const feedbackTypeSchema = z.enum(['star', 'thumbs_up', 'thumbs_down']);
@@ -19,6 +20,7 @@ export const elementCreateSchema = z.object({
     .max(200, 'Le texte ne doit pas dépasser 200 caractères'),
   categorie: categorieSchema,
   niveau_provocation: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).default(2),
+  tags: z.array(tagSchema).max(10, 'Maximum 10 tags').default([]),
 });
 
 export const elementUpdateSchema = z.object({
@@ -29,6 +31,7 @@ export const elementUpdateSchema = z.object({
   categorie: categorieSchema.optional(),
   niveau_provocation: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
   actif: z.boolean().optional(),
+  tags: z.array(tagSchema).max(10).optional(),
 });
 
 // Vote schema

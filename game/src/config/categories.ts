@@ -1,38 +1,35 @@
 /**
- * Configuration des catégories
- * 
- * Ce fichier permet d'ajouter facilement de nouvelles catégories.
- * Pour ajouter une catégorie :
- * 1. Ajouter une entrée dans CATEGORIES_CONFIG
- * 2. Ajouter la valeur dans le type Categorie (types/database.ts)
- * 3. Ajouter dans la base de données si nécessaire
+ * Configuration des catégories et des tags
+ *
+ * 2 catégories principales (jeu + classement)
+ * N tags sémantiques (filtrage classement uniquement — pas de gameplay)
  */
 
 export interface CategoryConfig {
   id: string;
   label: string;
   labelFr: string;
-  color: string; // Tailwind bg color
-  textColor: string; // Tailwind text color
+  color: string;
+  textColor: string;
   emoji?: string;
 }
 
-/**
- * CATÉGORIES DISPONIBLES
- * 
- * Les 3 catégories principales du jeu :
- * - Sexe & Kinks : relations, dating, intimité, flirt
- * - Quotidien : comportements et habitudes du quotidien
- * - Métiers : comportements et attitudes au travail, professions
- */
+export interface TagConfig {
+  id: string;
+  label: string;
+  emoji: string;
+  description: string;
+}
+
+/** Deux catégories principales du jeu */
 export const CATEGORIES_CONFIG: Record<string, CategoryConfig> = {
   sexe: {
     id: 'sexe',
-    label: 'Sexe & Kinks',
-    labelFr: 'Sexe & Kinks',
+    label: 'Amour & Sexe',
+    labelFr: 'Amour & Sexe',
     color: 'bg-[#DC2626]/20',
     textColor: 'text-[#FCA5A5]',
-    emoji: '🔥'
+    emoji: '❤️‍🔥'
   },
   quotidien: {
     id: 'quotidien',
@@ -42,21 +39,83 @@ export const CATEGORIES_CONFIG: Record<string, CategoryConfig> = {
     textColor: 'text-[#6EE7B7]',
     emoji: '🤷'
   },
-  metiers: {
-    id: 'metiers',
+};
+
+/** Tags sémantiques — sous-catégorisation, filtre classement uniquement */
+export const TAGS_CONFIG: Record<string, TagConfig> = {
+  metier: {
+    id: 'metier',
     label: 'Métiers',
-    labelFr: 'Métiers',
-    color: 'bg-[#1E3A5F]/50',
-    textColor: 'text-[#60A5FA]',
-    emoji: '💼'
+    emoji: '💼',
+    description: 'Professions et comportements au travail',
+  },
+  couple: {
+    id: 'couple',
+    label: 'Couple',
+    emoji: '❤️',
+    description: 'Relations romantiques et intimité',
+  },
+  hygiene: {
+    id: 'hygiene',
+    label: 'Hygiène',
+    emoji: '🚿',
+    description: 'Hygiène et propreté corporelle',
+  },
+  argent: {
+    id: 'argent',
+    label: 'Argent',
+    emoji: '💰',
+    description: 'Finance, économie et comportements liés à l\'argent',
+  },
+  numerique: {
+    id: 'numerique',
+    label: 'Numérique',
+    emoji: '📱',
+    description: 'Technologie, réseaux sociaux et internet',
+  },
+  social: {
+    id: 'social',
+    label: 'Social',
+    emoji: '🌍',
+    description: 'Comportements en public et interactions sociales',
+  },
+  sport: {
+    id: 'sport',
+    label: 'Sport',
+    emoji: '🏋️',
+    description: 'Sport, fitness et bien-être physique',
+  },
+  nourriture: {
+    id: 'nourriture',
+    label: 'Nourriture',
+    emoji: '🍽️',
+    description: 'Alimentation et comportements à table',
+  },
+  emotionnel: {
+    id: 'emotionnel',
+    label: 'Émotionnel',
+    emoji: '💔',
+    description: 'Maturité émotionnelle et comportements relationnels',
+  },
+  transport: {
+    id: 'transport',
+    label: 'Transport',
+    emoji: '🚗',
+    description: 'Comportements dans les transports et sur la route',
+  },
+  politique: {
+    id: 'politique',
+    label: 'Politique',
+    emoji: '🏛️',
+    description: 'Politique et engagement civique',
   },
 };
 
-// Liste des catégories pour les dropdowns
 export const CATEGORIES_LIST = Object.values(CATEGORIES_CONFIG);
-
-// IDs de catégories pour le type
+export const TAGS_LIST = Object.values(TAGS_CONFIG);
 export const CATEGORY_IDS = Object.keys(CATEGORIES_CONFIG);
+export const TAG_IDS = Object.keys(TAGS_CONFIG);
+
 
 // Fonction pour obtenir une catégorie
 export function getCategory(id: string): CategoryConfig | undefined {

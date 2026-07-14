@@ -13,18 +13,44 @@ declare global {
 
 const now = new Date().toISOString();
 
-// Helper to create an element with default values
+/**
+ * Helper: create a mock element with auto-migration and auto-tagging.
+ * Accepts legacy 'metiers' category — auto-converts to 'quotidien' (or 'sexe')
+ * and prepends the 'metier' tag.
+ */
 function createElement(
   id: string,
   texte: string,
-  categorie: Categorie = 'quotidien',
+  categorie: Categorie | 'metiers' = 'quotidien',
   niveau_provocation: 1 | 2 | 3 | 4 = 2,
-  elo: number = 1000
+  elo: number = 1000,
 ): Element {
+  // ── Migrate metiers → quotidien / sexe ────────────────────────────────────
+  const isMetier = (categorie as string) === 'metiers';
+  const isSexualWork = isMetier && /coucher avec.*(boss|chef)|draguer.*(collègu|boss|chef)/i.test(texte);
+  const finalCategorie: Categorie = isMetier
+    ? (isSexualWork ? 'sexe' : 'quotidien')
+    : (categorie as Categorie);
+
+  // ── Auto-tag by content ───────────────────────────────────────────────────
+  const tags: string[] = isMetier ? ['metier'] : [];
+  const t = texte.toLowerCase();
+  if (/haleine|brosser les dents|tirer la chasse|crottes de nez|cracher par terre|ongles/.test(t)) tags.push('hygiene');
+  if (/crypto|bitcoin|trader|radin|addition au centime|investisseur|mlm|dropshipping|patrimoine/.test(t)) tags.push('argent');
+  if (/tiktok|instagram|onlyfans|mym|linkedin|slack|teams|streamer|gamer|jeux vidéo|influenceur|youtube/.test(t)) tags.push('numerique');
+  if (/transports|klaxon|atterrissage/.test(t)) tags.push('transport');
+  if (/muscu|workout|sport |gym|ski|surf|fitness|coach sportif|personal trainer/.test(t)) tags.push('sport');
+  if (/manger|bouffe|frigo|micro.onde|poisson|vegan|végétar|roter/.test(t)) tags.push('nourriture');
+  if (/burnout|jaloux|toxique|manipulation/.test(t)) tags.push('emotionnel');
+  if (/politicien|politique|lobbyi|militant/.test(t)) tags.push('politique');
+  if (/son ex|ses ex|partenaire|premier date|premier soir|stalker|ghoste|sexting|nude|porno|coucher avec|draguer.*(collègu|boss)|relation longue distance/.test(t)) {
+    if (!tags.includes('couple')) tags.push('couple');
+  }
+
   return {
     id,
     texte,
-    categorie,
+    categorie: finalCategorie,
     niveau_provocation,
     actif: true,
     elo_global: elo,
@@ -43,6 +69,7 @@ function createElement(
     nb_participations_19_22: 0,
     nb_participations_23_26: 0,
     nb_participations_27plus: 0,
+    tags,
     created_at: now,
     updated_at: now,
   };

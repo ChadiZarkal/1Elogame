@@ -118,7 +118,7 @@ describe('/api/admin/elements', () => {
       const { POST } = await import('@/app/api/admin/elements/route');
       const response = await POST(makePostRequest({
         texte: 'Test element',
-        categorie: 'metiers',
+        categorie: 'quotidien',
         niveau_provocation: 3,
       }));
 

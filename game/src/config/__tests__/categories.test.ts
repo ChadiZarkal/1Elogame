@@ -20,7 +20,7 @@ describe('CATEGORIES_CONFIG', () => {
   it('contient les catégories attendues', () => {
     expect(CATEGORIES_CONFIG).toHaveProperty('sexe');
     expect(CATEGORIES_CONFIG).toHaveProperty('quotidien');
-    expect(CATEGORIES_CONFIG).toHaveProperty('metiers');
+    expect(CATEGORIES_CONFIG).toHaveProperty('quotidien');
   });
 
   it('chaque catégorie a les propriétés requises', () => {
@@ -47,7 +47,7 @@ describe('CATEGORIES_LIST', () => {
 
 describe('CATEGORY_IDS', () => {
   it('contient les 3 IDs', () => {
-    expect(CATEGORY_IDS).toEqual(['sexe', 'quotidien', 'metiers']);
+    expect(CATEGORY_IDS).toEqual(['sexe', 'quotidien']);
   });
 });
 
@@ -65,7 +65,7 @@ describe('getCategory', () => {
 
 describe('getCategoryClasses', () => {
   it('retourne les classes CSS pour un ID valide', () => {
-    const classes = getCategoryClasses('metiers');
+    const classes = getCategoryClasses('quotidien');
     expect(classes).toContain('bg-');
     expect(classes).toContain('text-');
   });

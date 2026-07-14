@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
 import { CategoryBadge } from '@/components/ui/CategoryBadge';
 import { Element, Categorie } from '@/types';
-import { CATEGORIES_LIST } from '@/config/categories';
+import { CATEGORIES_LIST, TAGS_LIST } from '@/config/categories';
 import { AdminNav } from '@/components/admin/AdminNav';
 
 export default function AdminElementsPage() {
@@ -257,6 +257,7 @@ export default function AdminElementsPage() {
                 <tr className="border-b border-[#333]">
                   <th className="text-left p-4 text-[#A3A3A3] font-medium">Texte</th>
                   <th className="text-center p-4 text-[#A3A3A3] font-medium w-28">Catégorie</th>
+                  <th className="text-left p-4 text-[#A3A3A3] font-medium">Tags</th>
                   <th className="text-center p-4 text-[#A3A3A3] font-medium w-20">ELO</th>
                   <th className="text-center p-4 text-[#A3A3A3] font-medium w-20">Statut</th>
                   <th className="text-right p-4 text-[#A3A3A3] font-medium w-28">Actions</th>
@@ -275,6 +276,15 @@ export default function AdminElementsPage() {
                       <td className="p-4 text-[#F5F5F5]">{element.texte}</td>
                       <td className="p-4 text-center">
                         <CategoryBadge categorie={element.categorie} variant="pill" />
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-wrap gap-1">
+                          {(element.tags || []).map((tag) => (
+                            <span key={tag} className="px-1.5 py-0.5 rounded-md bg-[#27272A] text-[#A1A1AA] text-[10px] font-semibold">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                       </td>
                       <td className="p-4 text-center text-[#F5F5F5] font-mono">
                         {Math.round(element.elo_global)}
@@ -555,12 +565,19 @@ function ElementModal({
   const [texte, setTexte] = useState(element?.texte || '');
   const [categorie, setCategorie] = useState<Categorie>(element?.categorie || 'quotidien');
   const [niveauProvocation, setNiveauProvocation] = useState<1 | 2 | 3 | 4>(element?.niveau_provocation || 2);
+  const [tags, setTags] = useState<string[]>(element?.tags || []);
   const [isSaving, setIsSaving] = useState(false);
+
+  const toggleTag = (tagId: string) => {
+    setTags((prev) =>
+      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId],
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    await onSave({ texte, categorie, niveau_provocation: niveauProvocation });
+    await onSave({ texte, categorie, niveau_provocation: niveauProvocation, tags });
     setIsSaving(false);
   };
 
@@ -627,6 +644,28 @@ function ElementModal({
               <span>Moyen</span>
               <span>Fort</span>
               <span>Extrême</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm text-[#A3A3A3] mb-2">
+              Tags <span className="text-[#737373] font-normal">(thèmes pour le classement)</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {TAGS_LIST.map((tag) => (
+                <button
+                  key={tag.id}
+                  type="button"
+                  onClick={() => toggleTag(tag.id)}
+                  className={`px-2.5 py-1 rounded-lg text-[12px] font-semibold transition-colors border ${
+                    tags.includes(tag.id)
+                      ? 'bg-[#DC2626]/20 border-[#DC2626]/60 text-[#FCA5A5]'
+                      : 'bg-[#27272A] border-[#3F3F46] text-[#A1A1AA] hover:border-[#52525B]'
+                  }`}
+                >
+                  {tag.emoji} {tag.label}
+                </button>
+              ))}
             </div>
           </div>
 

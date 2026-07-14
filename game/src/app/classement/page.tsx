@@ -11,6 +11,7 @@ interface RankEntry {
   rank: number;
   texte: string;
   categorie: string;
+  tags: string[];
   elo_global: number;
   elo_homme: number;
   elo_femme: number;
@@ -93,15 +94,41 @@ const PROFILE_FILTERS: { value: ViewMode; label: string; emoji: string }[] = [
 
 const CATEGORY_FILTERS = [
   { value: '', label: 'Tout', emoji: '⚡' },
-  { value: 'sexe', label: 'Sexe & Kinks', emoji: '🔥' },
+  { value: 'sexe', label: 'Amour & Sexe', emoji: '❤️‍🔥' },
   { value: 'quotidien', label: 'Quotidien', emoji: '🤷' },
-  { value: 'metiers', label: 'Métiers', emoji: '💼' },
+];
+
+const TAG_FILTERS = [
+  { value: 'metier', label: 'Métiers', emoji: '💼' },
+  { value: 'couple', label: 'Couple', emoji: '❤️' },
+  { value: 'hygiene', label: 'Hygiène', emoji: '🚿' },
+  { value: 'argent', label: 'Argent', emoji: '💰' },
+  { value: 'numerique', label: 'Numérique', emoji: '📱' },
+  { value: 'sport', label: 'Sport', emoji: '🏋️' },
+  { value: 'nourriture', label: 'Nourriture', emoji: '🍽️' },
+  { value: 'emotionnel', label: 'Émotionnel', emoji: '💔' },
+  { value: 'social', label: 'Social', emoji: '🌍' },
+  { value: 'transport', label: 'Transport', emoji: '🚗' },
+  { value: 'politique', label: 'Politique', emoji: '🏛️' },
 ];
 
 const CATEGORY_META: Record<string, { label: string; emoji: string }> = {
-  sexe: { label: 'Sexe & Kinks', emoji: '🔥' },
+  sexe: { label: 'Amour & Sexe', emoji: '❤️‍🔥' },
   quotidien: { label: 'Quotidien', emoji: '🤷' },
-  metiers: { label: 'Métiers', emoji: '💼' },
+};
+
+const TAG_META: Record<string, { label: string; emoji: string }> = {
+  metier: { label: 'Métier', emoji: '💼' },
+  couple: { label: 'Couple', emoji: '❤️' },
+  hygiene: { label: 'Hygiène', emoji: '🚿' },
+  argent: { label: 'Argent', emoji: '💰' },
+  numerique: { label: 'Numérique', emoji: '📱' },
+  sport: { label: 'Sport', emoji: '🏋️' },
+  nourriture: { label: 'Nourriture', emoji: '🍽️' },
+  emotionnel: { label: 'Émotionnel', emoji: '💔' },
+  social: { label: 'Social', emoji: '🌍' },
+  transport: { label: 'Transport', emoji: '🚗' },
+  politique: { label: 'Politique', emoji: '🏛️' },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -145,6 +172,7 @@ export default function LeaderboardPage() {
   const [mode, setMode] = useState<RankMode>('redflag');
   const [view, setView] = useState<ViewMode>('global');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [tagFilter, setTagFilter] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -163,6 +191,7 @@ export default function LeaderboardPage() {
         offset: String(offset),
       });
       if (categoryFilter) params.set('category', categoryFilter);
+      if (tagFilter) params.set('tag', tagFilter);
       if (searchQuery) params.set('search', searchQuery);
 
       const isFirstPage = page === 1;
@@ -211,17 +240,18 @@ export default function LeaderboardPage() {
       isActive = false;
       controller.abort();
     };
-  }, [categoryFilter, mode, page, searchQuery, view]);
+  }, [categoryFilter, tagFilter, mode, page, searchQuery, view]);
 
   const cfg = MODE_CONFIG[mode];
   const loadedCount = rankings.length;
   const canLoadMore = hasMore && !isLoadingMore;
   const hasContextualFilter =
-    searchQuery.length > 0 || categoryFilter !== '' || view !== 'global';
+    searchQuery.length > 0 || categoryFilter !== '' || tagFilter !== '' || view !== 'global';
   const isFiltered =
     mode !== 'redflag' ||
     view !== 'global' ||
     categoryFilter !== '' ||
+    tagFilter !== '' ||
     searchQuery !== '';
 
   const maxScore = useMemo(
@@ -256,10 +286,19 @@ export default function LeaderboardPage() {
     [categoryFilter],
   );
 
+  const setTagAndReset = useCallback(
+    (t: string) => {
+      setTagFilter((prev) => (prev === t ? '' : t));
+      setPage(1);
+    },
+    [],
+  );
+
   const resetAll = useCallback(() => {
     setMode('redflag');
     setView('global');
     setCategoryFilter('');
+    setTagFilter('');
     setSearchInput('');
     setSearchQuery('');
     setPage(1);
@@ -395,6 +434,17 @@ export default function LeaderboardPage() {
             <span className="px-3 py-1 rounded-full bg-white/[0.05] text-[#9CA3AF] text-[12px] font-semibold border border-white/[0.07]">
               📊 {loadedCount} / {totalElements}
             </span>
+            {tagFilter && (
+              <button
+                type="button"
+                onClick={() => setTagAndReset(tagFilter)}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold"
+                style={{ background: cfg.soft, color: cfg.color, border: `1px solid ${cfg.border}` }}
+              >
+                {TAG_META[tagFilter]?.emoji ?? '🏷️'} {TAG_META[tagFilter]?.label ?? tagFilter}
+                <span className="opacity-60">×</span>
+              </button>
+            )}
             {searchQuery && (
               <button
                 type="button"
@@ -479,6 +529,30 @@ export default function LeaderboardPage() {
                 {f.emoji} {f.label}
               </button>
             ))}
+          </div>
+
+          {/* Tag filter chips */}
+          <div>
+            <p className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider mb-2">
+              🏷️ Filtrer par thème
+            </p>
+            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+              {TAG_FILTERS.map((tag) => (
+                <button
+                  key={tag.value}
+                  type="button"
+                  onClick={() => setTagAndReset(tag.value)}
+                  className="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all whitespace-nowrap"
+                  style={
+                    tagFilter === tag.value
+                      ? { background: cfg.soft, color: cfg.color, border: `1.5px solid ${cfg.border}` }
+                      : { background: 'rgba(255,255,255,0.04)', color: '#4B5563', border: '1.5px solid #1C1D22' }
+                  }
+                >
+                  {tag.emoji} {tag.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {isFiltered && (
@@ -590,6 +664,27 @@ export default function LeaderboardPage() {
                       }
                     >
                       {cat.emoji} {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider">🏷️ Thème</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {TAG_FILTERS.map((tag) => (
+                    <button
+                      key={tag.value}
+                      type="button"
+                      onClick={() => setTagAndReset(tag.value)}
+                      className="px-2 py-1 rounded-lg text-[11px] font-semibold transition-all"
+                      style={
+                        tagFilter === tag.value
+                          ? { background: cfg.soft, color: cfg.color, border: `1.5px solid ${cfg.border}` }
+                          : { color: '#4B5563', border: '1.5px solid #1A1B21', background: '#0B0C0F' }
+                      }
+                    >
+                      {tag.emoji} {tag.label}
                     </button>
                   ))}
                 </div>
@@ -779,8 +874,16 @@ export default function LeaderboardPage() {
                               <p className="text-[14px] sm:text-[15px] font-semibold text-[#E8EAED] leading-snug">
                                 {entry.texte}
                               </p>
-                              <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#3D404A]">
+                              <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#3D404A] flex-wrap">
                                 <span>{meta.emoji} {meta.label}</span>
+                                {entry.tags && entry.tags.length > 0 && TAG_META[entry.tags[0]] && (
+                                  <>
+                                    <span>·</span>
+                                    <span className="text-[#2D2F37]">
+                                      {TAG_META[entry.tags[0]].emoji} {TAG_META[entry.tags[0]].label}
+                                    </span>
+                                  </>
+                                )}
                                 <span>·</span>
                                 <span>{entry.nb_participations} votes</span>
                               </div>
