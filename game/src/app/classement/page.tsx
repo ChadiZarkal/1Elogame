@@ -1,9 +1,11 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Loading } from '@/components/ui/Loading';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface RankEntry {
   rank: number;
@@ -35,6 +37,8 @@ interface LeaderboardPayload {
 type RankMode = 'redflag' | 'greenflag';
 type ViewMode = 'global' | 'homme' | 'femme' | '16-18' | '19-22' | '23-26' | '27+';
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 const PAGE_SIZE = 30;
 
 const MODE_CONFIG: Record<
@@ -46,23 +50,34 @@ const MODE_CONFIG: Record<
     soft: string;
     border: string;
     shadow: string;
+    glow: string;
+    headline: string;
+    sub: (n: number) => string;
   }
 > = {
   redflag: {
     label: 'Red Flag',
     emoji: '🚩',
     color: '#EF4444',
-    soft: 'rgba(239,68,68,0.14)',
+    soft: 'rgba(239,68,68,0.15)',
     border: 'rgba(239,68,68,0.35)',
-    shadow: '0 12px 30px rgba(239,68,68,0.20)',
+    shadow: '0 16px 50px rgba(239,68,68,0.25)',
+    glow: 'rgba(239,68,68,0.12)',
+    headline: 'Ce que personne\nne supporte.',
+    sub: (n) =>
+      `Le verdict de la communauté. ${n} comportements jugés, classés par score collectif — sans filtre, sans diplomatie.`,
   },
   greenflag: {
     label: 'Green Flag',
     emoji: '🟢',
     color: '#10B981',
-    soft: 'rgba(16,185,129,0.14)',
+    soft: 'rgba(16,185,129,0.15)',
     border: 'rgba(16,185,129,0.35)',
-    shadow: '0 12px 30px rgba(16,185,129,0.20)',
+    shadow: '0 16px 50px rgba(16,185,129,0.25)',
+    glow: 'rgba(16,185,129,0.12)',
+    headline: 'Ce que tout\nle monde valide.',
+    sub: (n) =>
+      `Pour une fois, quelque chose d'unanime. ${n} comportements que la communauté a approuvés.`,
   },
 };
 
@@ -77,17 +92,19 @@ const PROFILE_FILTERS: { value: ViewMode; label: string; emoji: string }[] = [
 ];
 
 const CATEGORY_FILTERS = [
-  { value: '', label: 'Toutes categories', emoji: '🌐' },
+  { value: '', label: 'Tout', emoji: '⚡' },
   { value: 'sexe', label: 'Sexe & Kinks', emoji: '🔥' },
   { value: 'quotidien', label: 'Quotidien', emoji: '🤷' },
-  { value: 'metiers', label: 'Metiers', emoji: '💼' },
+  { value: 'metiers', label: 'Métiers', emoji: '💼' },
 ];
 
 const CATEGORY_META: Record<string, { label: string; emoji: string }> = {
   sexe: { label: 'Sexe & Kinks', emoji: '🔥' },
   quotidien: { label: 'Quotidien', emoji: '🤷' },
-  metiers: { label: 'Metiers', emoji: '💼' },
+  metiers: { label: 'Métiers', emoji: '💼' },
 };
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getScoreForView(r: RankEntry, view: ViewMode): number {
   switch (view) {
@@ -108,9 +125,15 @@ function getScoreForView(r: RankEntry, view: ViewMode): number {
   }
 }
 
-function getCategoryMeta(category: string): { label: string; emoji: string } {
-  return CATEGORY_META[category] ?? { label: category || 'Autre', emoji: '🏷️' };
+function getCategoryMeta(cat: string): { label: string; emoji: string } {
+  return CATEGORY_META[cat] ?? { label: cat || 'Autre', emoji: '🏷️' };
 }
+
+function heatPct(score: number, maxScore: number): number {
+  return Math.min(Math.max(((score - 900) / Math.max(maxScore - 900, 100)) * 100, 3), 100);
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function LeaderboardPage() {
   const [rankings, setRankings] = useState<RankEntry[]>([]);
@@ -139,53 +162,37 @@ export default function LeaderboardPage() {
         limit: String(PAGE_SIZE),
         offset: String(offset),
       });
-
-      if (categoryFilter) {
-        params.set('category', categoryFilter);
-      }
-
-      if (searchQuery) {
-        params.set('search', searchQuery);
-      }
+      if (categoryFilter) params.set('category', categoryFilter);
+      if (searchQuery) params.set('search', searchQuery);
 
       const isFirstPage = page === 1;
 
       try {
-        if (isFirstPage) {
-          setIsLoading(true);
-        } else {
-          setIsLoadingMore(true);
-        }
+        if (isFirstPage) setIsLoading(true);
+        else setIsLoadingMore(true);
         setError('');
 
-        const response = await fetch(`/api/leaderboard?${params.toString()}`, {
+        const res = await fetch(`/api/leaderboard?${params.toString()}`, {
           signal: controller.signal,
         });
-        const payload = (await response.json()) as LeaderboardPayload;
+        const payload = (await res.json()) as LeaderboardPayload;
 
-        if (!isActive) {
-          return;
-        }
+        if (!isActive) return;
+        if (!res.ok || !payload.success) throw new Error('Erreur chargement');
 
-        if (!response.ok || !payload.success) {
-          throw new Error('Impossible de charger le classement');
-        }
-
-        const fetchedRankings = payload.data.rankings ?? [];
-        setRankings((prev) => (isFirstPage ? fetchedRankings : [...prev, ...fetchedRankings]));
+        const fetched = payload.data.rankings ?? [];
+        setRankings((prev) => (isFirstPage ? fetched : [...prev, ...fetched]));
         setTotalElements(payload.data.totalElements ?? 0);
         setVisibleVotes((prev) =>
-          isFirstPage ? payload.data.visibleVotes ?? 0 : prev + (payload.data.visibleVotes ?? 0),
+          isFirstPage
+            ? (payload.data.visibleVotes ?? 0)
+            : prev + (payload.data.visibleVotes ?? 0),
         );
         setHasMore(Boolean(payload.data.hasMore));
       } catch (err) {
-        const isAbortError = err instanceof DOMException && err.name === 'AbortError';
-        if (!isActive || isAbortError) {
-          return;
-        }
-
+        const isAbort = err instanceof DOMException && err.name === 'AbortError';
+        if (!isActive || isAbort) return;
         setError('Impossible de charger le classement');
-
         if (page === 1) {
           setRankings([]);
           setHasMore(false);
@@ -193,79 +200,63 @@ export default function LeaderboardPage() {
           setVisibleVotes(0);
         }
       } finally {
-        if (!isActive) {
-          return;
-        }
-
-        if (page === 1) {
-          setIsLoading(false);
-        } else {
-          setIsLoadingMore(false);
-        }
+        if (!isActive) return;
+        if (page === 1) setIsLoading(false);
+        else setIsLoadingMore(false);
       }
     };
 
     void fetchRankings();
-
     return () => {
       isActive = false;
       controller.abort();
     };
   }, [categoryFilter, mode, page, searchQuery, view]);
 
-  const activeMode = MODE_CONFIG[mode];
-
-  const selectedProfileLabel = useMemo(() => {
-    const selected = PROFILE_FILTERS.find((item) => item.value === view);
-    return selected?.label ?? 'Tous';
-  }, [view]);
-
-  const selectedCategoryLabel = useMemo(() => {
-    const selected = CATEGORY_FILTERS.find((item) => item.value === categoryFilter);
-    return selected?.label ?? 'Toutes categories';
-  }, [categoryFilter]);
-
-  const hasContextualFilter = searchQuery.length > 0 || categoryFilter !== '' || view !== 'global';
-  const loadedElements = rankings.length;
+  const cfg = MODE_CONFIG[mode];
+  const loadedCount = rankings.length;
   const canLoadMore = hasMore && !isLoadingMore;
+  const hasContextualFilter =
+    searchQuery.length > 0 || categoryFilter !== '' || view !== 'global';
+  const isFiltered =
+    mode !== 'redflag' ||
+    view !== 'global' ||
+    categoryFilter !== '' ||
+    searchQuery !== '';
 
-  const handleModeChange = useCallback(
-    (nextMode: RankMode) => {
-      if (nextMode === mode) {
-        return;
-      }
+  const maxScore = useMemo(
+    () => Math.max(...rankings.map((r) => getScoreForView(r, view)), 1000),
+    [rankings, view],
+  );
 
-      setMode(nextMode);
+  const setModeAndReset = useCallback(
+    (m: RankMode) => {
+      if (m === mode) return;
+      setMode(m);
       setPage(1);
     },
     [mode],
   );
 
-  const handleViewChange = useCallback(
-    (nextView: ViewMode) => {
-      if (nextView === view) {
-        return;
-      }
-
-      setView(nextView);
+  const setViewAndReset = useCallback(
+    (v: ViewMode) => {
+      if (v === view) return;
+      setView(v);
       setPage(1);
     },
     [view],
   );
 
-  const handleCategoryChange = useCallback(
-    (nextCategory: string) => {
-      if (nextCategory === categoryFilter) {
-        return;
-      }
-
-      setCategoryFilter(nextCategory);
+  const setCatAndReset = useCallback(
+    (c: string) => {
+      if (c === categoryFilter) return;
+      setCategoryFilter(c);
       setPage(1);
     },
     [categoryFilter],
   );
 
-  const handleResetFilters = useCallback(() => {
+  const resetAll = useCallback(() => {
     setMode('redflag');
     setView('global');
     setCategoryFilter('');
@@ -275,386 +266,593 @@ export default function LeaderboardPage() {
     setError('');
   }, []);
 
-  const handleSearchSubmit = useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
+  const onSearchSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
       setPage(1);
       setSearchQuery(searchInput.trim());
     },
     [searchInput],
   );
 
-  const handleSearchClear = useCallback(() => {
+  const clearSearch = useCallback(() => {
     setSearchInput('');
     setSearchQuery('');
     setPage(1);
   }, []);
 
-  const handleLoadMore = useCallback(() => {
-    if (!canLoadMore) {
-      return;
-    }
-
-    setPage((prev) => prev + 1);
+  const loadMore = useCallback(() => {
+    if (canLoadMore) setPage((p) => p + 1);
   }, [canLoadMore]);
 
-  const handleShareClassement = useCallback(() => {
+  const shareEntry = useCallback(
+    (entry: RankEntry) => {
+      const score = getScoreForView(entry, view);
+      const text = `${cfg.emoji} #${entry.rank} — "${entry.texte}"\nScore : ${score} · ${entry.nb_participations} votes\nredorgreen.fr/classement`;
+      if (navigator.share) {
+        navigator.share({ text, url: 'https://redorgreen.fr/classement' }).catch(() => {});
+        return;
+      }
+      navigator.clipboard.writeText(text).catch(() => {});
+    },
+    [cfg.emoji, view],
+  );
+
+  const shareTop = useCallback(() => {
     const lines = rankings
-      .slice(0, 8)
-      .map((entry) => {
-        const score = getScoreForView(entry, view);
-        return `${entry.rank}. ${entry.texte} - Score ${score} - ${entry.nb_participations} votes`;
-      })
+      .slice(0, 5)
+      .map((r) => `${r.rank}. ${r.texte}`)
       .join('\n');
-
-    const text = [
-      `🏆 ${activeMode.emoji} ${activeMode.label}`,
-      'Tri principal: score',
-      `👤 Profil: ${selectedProfileLabel}`,
-      `🗂 Categorie: ${selectedCategoryLabel}`,
-      lines,
-      'redorgreen.fr/classement',
-    ].join('\n');
-
+    const text = `${cfg.emoji} Top 5 ${cfg.label} :\n${lines}\nredorgreen.fr/classement`;
     if (navigator.share) {
       navigator.share({ text, url: 'https://redorgreen.fr/classement' }).catch(() => {});
       return;
     }
-
     navigator.clipboard.writeText(text).catch(() => {});
-  }, [activeMode, rankings, selectedCategoryLabel, selectedProfileLabel, view]);
+  }, [cfg, rankings]);
+
+  const podium = !hasContextualFilter ? rankings.slice(0, 3) : [];
+  const listItems = hasContextualFilter ? rankings : rankings.slice(3);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: '#090A0D' }}>
-        <Loading size="lg" text="Chargement du classement..." />
+      <div className="flex items-center justify-center min-h-screen" style={{ background: '#070809' }}>
+        <Loading size="lg" text="Chargement du verdict..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#090A0D] pb-20">
-      <main className="mx-auto w-full max-w-6xl px-4 sm:px-6 pt-[max(18px,env(safe-area-inset-top))]">
+    <div className="min-h-screen pb-24" style={{ background: '#070809' }}>
+      {/* Ambient glow */}
+      <div
+        aria-hidden
+        className="fixed inset-x-0 top-0 h-[55vh] pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse 90% 60% at 50% -5%, ${cfg.glow}, transparent 70%)`,
+        }}
+      />
+
+      <main
+        id="main-content"
+        className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-[max(16px,env(safe-area-inset-top))]"
+      >
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#FAFAFA] transition-colors py-1"
+          className="inline-flex items-center gap-1.5 text-sm text-[#4B5563] hover:text-white transition-colors py-1.5"
         >
           ← Accueil
         </Link>
 
-        <header className="mt-4 mb-5">
-          <h1 className="text-[30px] sm:text-[38px] leading-none font-black tracking-tight text-[#FAFAFA]">
-            Les comportements qui font le plus reagir
-          </h1>
-          <p className="mt-2 text-sm sm:text-base text-[#9CA3AF] max-w-3xl">
-            Lis chaque ligne en entier, cherche un mot, filtre en un tap et explore tout le classement.
-            Le rang suit un score communaute facile a lire, les votes restent un indicateur de contexte.
-          </p>
+        {/* HEADER */}
+        <header className="mt-5 mb-6">
+          <div className="flex gap-2 mb-5">
+            {(['redflag', 'greenflag'] as const).map((m) => {
+              const c = MODE_CONFIG[m];
+              const sel = mode === m;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setModeAndReset(m)}
+                  className="px-4 py-1.5 rounded-full text-[13px] font-black transition-all"
+                  style={
+                    sel
+                      ? { background: c.soft, color: c.color, border: `1.5px solid ${c.border}` }
+                      : { background: 'rgba(255,255,255,0.04)', color: '#4B5563', border: '1.5px solid #1C1D22' }
+                  }
+                >
+                  {c.emoji} {c.label}
+                </button>
+              );
+            })}
+          </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-[#E5E7EB]">
-              {activeMode.emoji} {activeMode.label}
+          <motion.h1
+            key={`h1-${mode}`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="text-[40px] sm:text-[56px] font-black tracking-tight text-white leading-[1.03] whitespace-pre-line"
+          >
+            {cfg.headline}
+          </motion.h1>
+
+          <motion.p
+            key={`sub-${mode}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1, duration: 0.3 }}
+            className="mt-4 text-[#6B7280] text-[15px] sm:text-[16px] leading-relaxed max-w-xl"
+          >
+            {cfg.sub(totalElements)}
+          </motion.p>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            <span className="px-3 py-1 rounded-full bg-white/[0.05] text-[#9CA3AF] text-[12px] font-semibold border border-white/[0.07]">
+              🗳️ {visibleVotes.toLocaleString('fr-FR')} votes
             </span>
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-[#E5E7EB]">
-              👤 {selectedProfileLabel}
+            <span className="px-3 py-1 rounded-full bg-white/[0.05] text-[#9CA3AF] text-[12px] font-semibold border border-white/[0.07]">
+              📊 {loadedCount} / {totalElements}
             </span>
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-[#E5E7EB]">
-              🗂 {selectedCategoryLabel}
-            </span>
-            <span
-              className="px-3 py-1 rounded-full text-xs font-semibold"
-              style={{ background: activeMode.soft, color: activeMode.color }}
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold"
+                style={{ background: cfg.soft, color: cfg.color, border: `1px solid ${cfg.border}` }}
+              >
+                🔍 &quot;{searchQuery}&quot; <span className="opacity-60">×</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={shareTop}
+              className="px-3 py-1 rounded-full bg-white/[0.05] text-[#6B7280] text-[12px] font-semibold border border-white/[0.07] hover:text-white hover:bg-white/10 transition-colors"
             >
-              🎯 Tri principal: Score
-            </span>
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-[#E5E7EB]">
-              📚 Affiche {loadedElements} / {totalElements}
-            </span>
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-[#E5E7EB]">
-              🗳 {visibleVotes.toLocaleString('fr-FR')} votes visibles
-            </span>
+              📤 Partager
+            </button>
           </div>
         </header>
 
-        <section className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <aside
-            className="rounded-3xl border p-4 sm:p-5 h-fit lg:sticky lg:top-4"
-            style={{ background: 'rgba(14,14,17,0.92)', borderColor: '#252830' }}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-black uppercase tracking-[0.13em] text-[#D1D5DB]">Filtres utiles</h2>
+        {/* MOBILE FILTER BAR */}
+        <div className="mb-5 lg:hidden space-y-3">
+          <form onSubmit={onSearchSubmit} className="flex gap-2">
+            <input
+              type="search"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="🔍  Cherche un comportement..."
+              enterKeyHint="search"
+              autoComplete="off"
+              className="flex-1 rounded-xl border border-white/[0.09] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder:text-[#3D404A] focus:outline-none focus:border-white/20"
+            />
+            {searchInput && (
               <button
                 type="button"
-                onClick={handleResetFilters}
-                className="text-[11px] font-semibold text-[#6B7280] hover:text-[#F3F4F6] transition-colors"
+                onClick={clearSearch}
+                className="px-3 rounded-xl bg-white/[0.04] border border-white/[0.09] text-[#6B7280] text-xl leading-none"
               >
-                Reinitialiser
+                ×
               </button>
-            </div>
+            )}
+            <button
+              type="submit"
+              className="px-4 py-2.5 rounded-xl text-sm font-black text-white"
+              style={{ background: cfg.color }}
+            >
+              OK
+            </button>
+          </form>
 
-            <form className="mb-3" onSubmit={handleSearchSubmit}>
-              <span className="text-[12px] font-semibold text-[#A1A1AA]">Recherche</span>
-              <input
-                type="search"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Ex: haleine, cryptobro, onlyfans..."
-                enterKeyHint="search"
-                autoComplete="off"
-                className="mt-1 w-full rounded-xl border border-white/10 bg-[#13151A] px-3 py-2.5 text-sm text-[#F3F4F6] placeholder:text-[#6B7280] focus:outline-none focus:ring-2"
-                style={{
-                  boxShadow: `0 0 0 0 ${activeMode.soft}`,
-                }}
-              />
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+            {CATEGORY_FILTERS.map((cat) => (
+              <button
+                key={cat.value}
+                type="button"
+                onClick={() => setCatAndReset(cat.value)}
+                className="shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all whitespace-nowrap"
+                style={
+                  categoryFilter === cat.value
+                    ? { background: cfg.soft, color: cfg.color, border: `1.5px solid ${cfg.border}` }
+                    : { background: 'rgba(255,255,255,0.05)', color: '#6B7280', border: '1.5px solid #1C1D22' }
+                }
+              >
+                {cat.emoji} {cat.label}
+              </button>
+            ))}
+          </div>
 
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <button
-                  type="submit"
-                  className="px-3 py-2 rounded-xl text-[12px] font-semibold border text-[#E5E7EB] bg-white/5 border-white/10 hover:bg-white/10 transition-colors"
-                >
-                  Rechercher
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSearchClear}
-                  className="px-3 py-2 rounded-xl text-[12px] font-semibold border text-[#A1A1AA] bg-[#17181B] border-[#27272A] hover:text-[#E5E7EB] transition-colors"
-                >
-                  Effacer
-                </button>
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+            {PROFILE_FILTERS.map((f) => (
+              <button
+                key={f.value}
+                type="button"
+                onClick={() => setViewAndReset(f.value)}
+                className="shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all whitespace-nowrap"
+                style={
+                  view === f.value
+                    ? { background: cfg.soft, color: cfg.color, border: `1.5px solid ${cfg.border}` }
+                    : { background: 'rgba(255,255,255,0.05)', color: '#6B7280', border: '1.5px solid #1C1D22' }
+                }
+              >
+                {f.emoji} {f.label}
+              </button>
+            ))}
+          </div>
+
+          {isFiltered && (
+            <button type="button" onClick={resetAll} className="text-xs text-[#4B5563] hover:text-white transition-colors">
+              ↺ Réinitialiser les filtres
+            </button>
+          )}
+        </div>
+
+        {/* MAIN GRID */}
+        <div className="grid gap-6 lg:grid-cols-[252px_1fr]">
+          {/* Desktop sidebar */}
+          <aside className="hidden lg:block">
+            <div
+              className="sticky top-4 rounded-2xl border p-4 space-y-5"
+              style={{ background: 'rgba(11,11,15,0.92)', borderColor: '#18191F' }}
+            >
+              <div className="flex justify-between items-center">
+                <span className="text-[11px] font-black uppercase tracking-[0.15em] text-[#4B5563]">Filtres</span>
+                {isFiltered && (
+                  <button type="button" onClick={resetAll} className="text-[11px] text-[#4B5563] hover:text-white transition-colors">
+                    ↺ Reset
+                  </button>
+                )}
               </div>
-            </form>
 
-            <section className="mb-4">
-              <p className="text-[12px] font-semibold text-[#A1A1AA] mb-2">Type</p>
-              <div className="grid grid-cols-2 gap-2">
-                {(Object.keys(MODE_CONFIG) as RankMode[]).map((item) => {
-                  const conf = MODE_CONFIG[item];
-                  const selected = mode === item;
+              <form onSubmit={onSearchSubmit} className="space-y-2">
+                <label className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider">Recherche</label>
+                <input
+                  type="search"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="haleine, cryptobro..."
+                  enterKeyHint="search"
+                  autoComplete="off"
+                  className="w-full rounded-xl border border-white/[0.07] bg-[#08090C] px-3 py-2 text-sm text-white placeholder:text-[#2D2F37] focus:outline-none focus:border-white/15"
+                />
+                <div className="flex gap-2">
+                  <button type="submit" className="flex-1 py-2 rounded-xl text-[12px] font-black text-white" style={{ background: cfg.color }}>
+                    Rechercher
+                  </button>
+                  {searchQuery && (
+                    <button type="button" onClick={clearSearch} className="px-3 py-2 rounded-xl text-sm text-[#6B7280] bg-white/[0.04] border border-white/[0.07]">
+                      ×
+                    </button>
+                  )}
+                </div>
+              </form>
 
-                  return (
+              <div className="space-y-2">
+                <label className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider">Type</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['redflag', 'greenflag'] as const).map((m) => {
+                    const c = MODE_CONFIG[m];
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setModeAndReset(m)}
+                        className="py-2.5 rounded-xl text-[12px] font-black transition-all"
+                        style={
+                          mode === m
+                            ? { background: c.soft, color: c.color, border: `1.5px solid ${c.border}` }
+                            : { color: '#4B5563', border: '1.5px solid #1A1B21', background: '#0B0C0F' }
+                        }
+                      >
+                        {c.emoji} {c.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider">Profil</label>
+                <p className="text-[10px] text-[#2D2F37]">Un seul profil à la fois</p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {PROFILE_FILTERS.map((f) => (
                     <button
-                      key={item}
-                      onClick={() => handleModeChange(item)}
-                      className="px-2 py-2.5 rounded-xl text-[13px] font-black transition-all"
+                      key={f.value}
+                      type="button"
+                      onClick={() => setViewAndReset(f.value)}
+                      className="py-2 rounded-xl text-[11px] font-semibold transition-all"
                       style={
-                        selected
-                          ? {
-                              background: conf.soft,
-                              color: conf.color,
-                              border: `1.5px solid ${conf.border}`,
-                            }
-                          : {
-                              color: '#737373',
-                              border: '1.5px solid #27272A',
-                              background: '#17181B',
-                            }
+                        view === f.value
+                          ? { background: cfg.soft, color: cfg.color, border: `1.5px solid ${cfg.border}` }
+                          : { color: '#4B5563', border: '1.5px solid #1A1B21', background: '#0B0C0F' }
                       }
                     >
-                      {conf.emoji} {conf.label}
+                      {f.emoji} {f.label}
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
-            </section>
 
-            <section className="mb-4">
-              <p className="text-[12px] font-semibold text-[#A1A1AA] mb-2">Profil</p>
-              <p className="text-[11px] text-[#6B7280] mb-2">
-                Un seul profil a la fois (meme logique que la version precedente).
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                {PROFILE_FILTERS.map((item) => (
-                  <button
-                    key={item.value}
-                    onClick={() => handleViewChange(item.value)}
-                    className="px-2 py-2 rounded-xl text-[12px] font-semibold transition-all"
-                    style={
-                      view === item.value
-                        ? {
-                            background: activeMode.soft,
-                            color: activeMode.color,
-                            border: `1.5px solid ${activeMode.border}`,
-                          }
-                        : {
-                            color: '#737373',
-                            border: '1.5px solid #27272A',
-                            background: '#17181B',
-                          }
-                    }
-                  >
-                    {item.emoji} {item.label}
-                  </button>
-                ))}
+              <div className="space-y-2">
+                <label className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider">Catégorie</label>
+                <div className="space-y-1.5">
+                  {CATEGORY_FILTERS.map((cat) => (
+                    <button
+                      key={cat.value}
+                      type="button"
+                      onClick={() => setCatAndReset(cat.value)}
+                      className="w-full py-2 rounded-xl text-[12px] font-semibold transition-all"
+                      style={
+                        categoryFilter === cat.value
+                          ? { background: cfg.soft, color: cfg.color, border: `1.5px solid ${cfg.border}` }
+                          : { color: '#4B5563', border: '1.5px solid #1A1B21', background: '#0B0C0F' }
+                      }
+                    >
+                      {cat.emoji} {cat.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </section>
-
-            <section>
-              <p className="text-[12px] font-semibold text-[#A1A1AA] mb-2">Categorie</p>
-              <div className="grid grid-cols-2 gap-2">
-                {CATEGORY_FILTERS.map((cat) => (
-                  <button
-                    key={cat.value}
-                    onClick={() => handleCategoryChange(cat.value)}
-                    className={`px-2 py-2 rounded-xl text-[12px] font-semibold transition-all ${cat.value === '' ? 'col-span-2' : ''}`}
-                    style={
-                      categoryFilter === cat.value
-                        ? {
-                            background: activeMode.soft,
-                            color: activeMode.color,
-                            border: `1.5px solid ${activeMode.border}`,
-                          }
-                        : {
-                            color: '#737373',
-                            border: '1.5px solid #27272A',
-                            background: '#17181B',
-                          }
-                    }
-                  >
-                    {cat.emoji} {cat.label}
-                  </button>
-                ))}
-              </div>
-            </section>
+            </div>
           </aside>
 
-          <section className="space-y-4">
-            <div
-              className="rounded-3xl border p-4 sm:p-5"
-              style={{ background: 'rgba(14,14,17,0.9)', borderColor: activeMode.border, boxShadow: activeMode.shadow }}
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-[#9CA3AF] font-black">Lecture simple</p>
-                  <h2 className="text-lg sm:text-xl font-black text-[#FAFAFA] mt-1">
-                    Rang par score, texte complet, votes en contexte
-                  </h2>
-                </div>
-                <button
-                  onClick={handleShareClassement}
-                  className="px-3 py-2 rounded-xl text-xs font-semibold text-[#D1D5DB] bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
-                >
-                  📤 Partager
-                </button>
-              </div>
-
-              {searchQuery && (
-                <p className="mt-3 text-sm text-[#9CA3AF]">
-                  Resultats pour <span className="font-semibold text-[#F3F4F6]">{`"${searchQuery}"`}</span>
-                </p>
-              )}
-            </div>
-
+          {/* RANKINGS */}
+          <section className="min-w-0">
             {error && (
               <div
-                className="rounded-2xl p-4 text-center text-sm"
-                style={{
-                  background: 'rgba(239,68,68,0.1)',
-                  border: '1px solid rgba(239,68,68,0.35)',
-                  color: '#FCA5A5',
-                }}
+                className="rounded-2xl p-4 text-sm mb-4 text-center"
+                style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#FCA5A5' }}
               >
                 {error}
               </div>
             )}
 
+            {searchQuery && rankings.length > 0 && (
+              <p className="text-sm text-[#6B7280] mb-4">
+                <span className="font-bold text-white">{totalElements}</span> résultat
+                {totalElements !== 1 ? 's' : ''} pour{' '}
+                <span style={{ color: cfg.color }}>&quot;{searchQuery}&quot;</span>
+              </p>
+            )}
+
             {rankings.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-white/2 text-center py-16 px-4">
-                <span className="text-5xl block mb-3">🔎</span>
-                <p className="text-[#E5E7EB] text-base font-semibold">Aucune ligne trouvee</p>
-                <p className="text-[#9CA3AF] text-sm mt-1">Essaie un autre mot cle ou retire des filtres.</p>
+              <div className="text-center py-24 space-y-3">
+                <span className="text-6xl block">🔎</span>
+                <p className="text-white font-black text-xl">Rien trouvé</p>
+                <p className="text-[#4B5563] text-sm">Essaie un autre mot ou change les filtres.</p>
+                <button type="button" onClick={resetAll} className="mt-2 text-sm underline" style={{ color: cfg.color }}>
+                  Tout réinitialiser
+                </button>
               </div>
             ) : (
-              <ol className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-                {rankings.map((entry, index) => {
-                  const categoryMeta = getCategoryMeta(entry.categorie);
-                  const score = getScoreForView(entry, view);
-                  const isPodium = !hasContextualFilter && entry.rank <= 3;
-
-                  return (
-                    <motion.li
-                      key={`${entry.rank}-${entry.texte}-${index}`}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: Math.min(index * 0.015, 0.22) }}
-                      className="rounded-2xl border p-3.5"
+              <>
+                {/* PODIUM TOP 3 */}
+                {podium.length === 3 && (
+                  <div className="mb-5 space-y-3">
+                    <motion.div
+                      key={`p1-${mode}-${view}`}
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.35 }}
+                      className="relative overflow-hidden rounded-2xl p-5 sm:p-6"
                       style={{
-                        borderColor: isPodium ? activeMode.border : 'rgba(255,255,255,0.10)',
-                        background: isPodium
-                          ? `linear-gradient(135deg, ${activeMode.soft}, rgba(16,17,22,0.9))`
-                          : 'rgba(16,17,22,0.85)',
-                        boxShadow: isPodium ? activeMode.shadow : 'none',
+                        background: `linear-gradient(140deg, ${cfg.soft} 0%, rgba(9,9,13,0.97) 55%)`,
+                        border: `1.5px solid ${cfg.border}`,
+                        boxShadow: cfg.shadow,
                       }}
                     >
-                      <div className="flex items-start gap-3">
-                        <span className="shrink-0 inline-flex min-w-11 h-8 items-center justify-center rounded-full bg-black/30 text-[11px] font-black text-[#F3F4F6] px-2">
-                          {isPodium
-                            ? entry.rank === 1
-                              ? '🥇'
-                              : entry.rank === 2
-                                ? '🥈'
-                                : '🥉'
-                            : `#${entry.rank}`}
-                        </span>
-
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[15px] leading-snug text-[#F8FAFC] wrap-break-word whitespace-normal">
-                            {entry.texte}
+                      <span
+                        aria-hidden
+                        className="absolute -right-3 top-1/2 -translate-y-1/2 text-[130px] font-black leading-none select-none pointer-events-none"
+                        style={{ color: cfg.color, opacity: 0.06 }}
+                      >
+                        1
+                      </span>
+                      <div className="relative flex items-start gap-4">
+                        <span className="text-[44px] shrink-0 leading-none">🥇</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[21px] sm:text-[26px] font-black text-white leading-tight">
+                            {podium[0].texte}
                           </p>
-
-                          <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
-                            <span className="rounded-lg px-2 py-1 bg-black/25 text-[#D1D5DB]">
-                              {categoryMeta.emoji} {categoryMeta.label}
+                          <div className="mt-2.5 flex flex-wrap gap-2 text-[12px]">
+                            {(() => {
+                              const m = getCategoryMeta(podium[0].categorie);
+                              return (
+                                <span className="px-2.5 py-1 rounded-full bg-black/40 text-[#D1D5DB]">{m.emoji} {m.label}</span>
+                              );
+                            })()}
+                            <span className="px-2.5 py-1 rounded-full bg-black/40 text-[#9CA3AF]">
+                              {podium[0].nb_participations} votes
                             </span>
-                            <span className="rounded-lg px-2 py-1 bg-black/25 text-[#A1A1AA]">
-                              {entry.nb_participations} votes
+                          </div>
+                          <div className="mt-3.5 flex items-center gap-3">
+                            <div className="flex-1 h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${heatPct(getScoreForView(podium[0], view), maxScore)}%` }}
+                                transition={{ delay: 0.3, duration: 0.7, ease: 'easeOut' }}
+                                className="h-full rounded-full"
+                                style={{ background: `linear-gradient(90deg, ${cfg.color}70, ${cfg.color})` }}
+                              />
+                            </div>
+                            <span className="text-[13px] font-black shrink-0" style={{ color: cfg.color }}>
+                              {getScoreForView(podium[0], view)}
                             </span>
                           </div>
                         </div>
-
-                        <div className="shrink-0 text-right">
-                          <p className="text-[10px] uppercase tracking-wider text-[#9CA3AF]">Score</p>
-                          <p className="text-[16px] font-black" style={{ color: activeMode.color }}>
-                            {score}
-                          </p>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => shareEntry(podium[0])}
+                          className="shrink-0 p-2 rounded-xl bg-black/25 hover:bg-black/50 text-[#4B5563] hover:text-white transition-all"
+                          aria-label="Partager cette entrée"
+                        >
+                          📤
+                        </button>
                       </div>
-                    </motion.li>
-                  );
-                })}
-              </ol>
+                    </motion.div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      {podium.slice(1).map((entry, i) => {
+                        const medal = i === 0 ? '🥈' : '🥉';
+                        const rn = i + 2;
+                        const score = getScoreForView(entry, view);
+                        const hp = heatPct(score, maxScore);
+                        const meta = getCategoryMeta(entry.categorie);
+                        return (
+                          <motion.div
+                            key={`p${rn}-${mode}-${view}`}
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 + i * 0.08, duration: 0.3 }}
+                            className="relative overflow-hidden rounded-2xl p-4 flex flex-col gap-2"
+                            style={{ background: 'rgba(12,12,17,0.94)', border: `1px solid ${cfg.border}` }}
+                          >
+                            <span
+                              aria-hidden
+                              className="absolute right-1 top-1/2 -translate-y-1/2 text-[75px] font-black leading-none select-none pointer-events-none"
+                              style={{ color: cfg.color, opacity: 0.06 }}
+                            >
+                              {rn}
+                            </span>
+                            <span className="text-[30px] leading-none">{medal}</span>
+                            <p className="text-[14px] font-bold text-white leading-snug">{entry.texte}</p>
+                            <p className="text-[11px] text-[#4B5563]">{meta.emoji} {meta.label} · {entry.nb_participations} votes</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <div className="flex-1 h-[3px] rounded-full bg-white/[0.07] overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${hp}%` }}
+                                  transition={{ delay: 0.35 + i * 0.1, duration: 0.5 }}
+                                  className="h-full rounded-full"
+                                  style={{ background: cfg.color }}
+                                />
+                              </div>
+                              <span className="text-[12px] font-black shrink-0" style={{ color: cfg.color }}>{score}</span>
+                              <button type="button" onClick={() => shareEntry(entry)} className="text-[12px] text-[#3D404A] hover:text-white transition-colors" aria-label="Partager">
+                                📤
+                              </button>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* LIST */}
+                {listItems.length > 0 && (
+                  <ol className="space-y-1.5">
+                    {listItems.map((entry, idx) => {
+                      const score = getScoreForView(entry, view);
+                      const hp = heatPct(score, maxScore);
+                      const meta = getCategoryMeta(entry.categorie);
+                      const isTop = hasContextualFilter && entry.rank <= 3;
+                      const medal = isTop
+                        ? entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉'
+                        : null;
+
+                      return (
+                        <motion.li
+                          key={`${entry.rank}-${entry.texte}`}
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: Math.min(idx * 0.01, 0.18) }}
+                        >
+                          <div
+                            className="group flex items-center gap-3 rounded-xl px-3.5 py-3 hover:bg-white/[0.02] transition-colors"
+                            style={{
+                              border: '1px solid rgba(255,255,255,0.065)',
+                              background: isTop
+                                ? `linear-gradient(135deg, ${cfg.soft}, rgba(9,9,13,0.94))`
+                                : 'rgba(11,11,15,0.87)',
+                            }}
+                          >
+                            <span
+                              className="shrink-0 text-[12px] font-black w-8 text-center tabular-nums"
+                              style={{ color: isTop ? cfg.color : '#2D2F37' }}
+                            >
+                              {medal ?? `#${entry.rank}`}
+                            </span>
+
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[14px] sm:text-[15px] font-semibold text-[#E8EAED] leading-snug">
+                                {entry.texte}
+                              </p>
+                              <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#3D404A]">
+                                <span>{meta.emoji} {meta.label}</span>
+                                <span>·</span>
+                                <span>{entry.nb_participations} votes</span>
+                              </div>
+                              <div className="mt-1.5 h-[2px] rounded-full bg-white/[0.05] overflow-hidden max-w-[150px]">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${hp}%` }}
+                                  transition={{ delay: Math.min(idx * 0.007, 0.12), duration: 0.4, ease: 'easeOut' }}
+                                  className="h-full rounded-full"
+                                  style={{ background: `linear-gradient(90deg, ${cfg.color}45, ${cfg.color})` }}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="shrink-0 flex items-center gap-1">
+                              <span className="text-[13px] font-black tabular-nums" style={{ color: cfg.color }}>
+                                {score}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => shareEntry(entry)}
+                                className="opacity-0 group-hover:opacity-100 ml-1 p-1.5 rounded-lg bg-white/[0.04] hover:bg-white/10 text-[#4B5563] hover:text-white transition-all text-[11px]"
+                                aria-label="Partager"
+                              >
+                                📤
+                              </button>
+                            </div>
+                          </div>
+                        </motion.li>
+                      );
+                    })}
+                  </ol>
+                )}
+
+                <div className="flex flex-col items-center gap-2 mt-8 pb-2">
+                  {hasMore ? (
+                    <button
+                      type="button"
+                      onClick={loadMore}
+                      disabled={!canLoadMore}
+                      className="px-8 py-3 rounded-2xl text-sm font-black border transition-all disabled:opacity-40"
+                      style={{ color: cfg.color, borderColor: cfg.border, background: cfg.soft }}
+                    >
+                      {isLoadingMore
+                        ? 'Chargement...'
+                        : `Voir ${Math.min(PAGE_SIZE, Math.max(totalElements - loadedCount, 0))} de plus`}
+                    </button>
+                  ) : (
+                    <p className="text-[12px] text-[#2D2F37]">Tout est affiché — {totalElements} comportements</p>
+                  )}
+                </div>
+              </>
             )}
-
-            <div className="flex flex-col items-center gap-2 pt-1">
-              {hasMore ? (
-                <button
-                  onClick={handleLoadMore}
-                  disabled={!canLoadMore}
-                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-[#E5E7EB] border border-white/15 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isLoadingMore
-                    ? 'Chargement...'
-                    : `Voir ${Math.min(PAGE_SIZE, Math.max(totalElements - loadedElements, 0))} lignes de plus`}
-                </button>
-              ) : (
-                rankings.length > 0 && (
-                  <p className="text-xs text-[#6B7280]">Tout le classement disponible est affiche.</p>
-                )
-              )}
-            </div>
           </section>
-        </section>
-
-        <section className="mt-8 pb-2 flex flex-col items-center gap-3">
-          <motion.a
-            href="/jeu"
-            className="w-full max-w-xs block px-8 py-4 rounded-2xl font-black text-[16px] text-white transition-transform active:scale-95 text-center"
-            style={{ background: activeMode.color, boxShadow: activeMode.shadow }}
-            whileTap={{ scale: 0.96 }}
-          >
-            {activeMode.emoji} Jouer et voter
-          </motion.a>
-        </section>
+        </div>
       </main>
+
+      {/* STICKY CTA */}
+      <div
+        className="fixed bottom-0 left-0 right-0 px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-6"
+        style={{ background: 'linear-gradient(to top, rgba(7,8,9,0.99) 55%, transparent)', pointerEvents: 'none' }}
+      >
+        <div className="mx-auto max-w-sm" style={{ pointerEvents: 'all' }}>
+          <Link
+            href="/jeu"
+            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-black text-[15px] text-white transition-transform active:scale-95"
+            style={{ background: cfg.color, boxShadow: cfg.shadow }}
+          >
+            {cfg.emoji} Donner mon vote
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
