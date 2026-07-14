@@ -154,7 +154,7 @@ export async function createElement(data: { texte: string; categorie: string; ni
       categorie: data.categorie as Element['categorie'],
       niveau_provocation: data.niveau_provocation as Element['niveau_provocation'],
       actif: true,
-      elo_global: 1000, elo_homme: 1000, elo_femme: 1000, elo_nonbinaire: 1000, elo_autre: 1000,
+      elo_global: 1000, elo_homme: 1000, elo_femme: 1000, elo_autre: 1000,
       elo_16_18: 1000, elo_19_22: 1000, elo_23_26: 1000, elo_27plus: 1000,
       nb_participations: 0, nb_participations_homme: 0, nb_participations_femme: 0, nb_participations_autre: 0,
       nb_participations_16_18: 0, nb_participations_19_22: 0, nb_participations_23_26: 0, nb_participations_27plus: 0,

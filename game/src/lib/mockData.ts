@@ -30,7 +30,6 @@ function createElement(
     elo_global: elo,
     elo_homme: elo,
     elo_femme: elo,
-    elo_nonbinaire: elo,
     elo_autre: elo,
     elo_16_18: elo,
     elo_19_22: elo,

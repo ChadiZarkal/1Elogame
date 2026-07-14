@@ -22,7 +22,6 @@ export interface Element {
   elo_global: number;
   elo_homme: number;
   elo_femme: number;
-  elo_nonbinaire: number;
   elo_autre: number;
   elo_16_18: number;
   elo_19_22: number;
@@ -126,11 +125,10 @@ export interface Database {
     Tables: {
       elements: {
         Row: Element;
-        Insert: Omit<Element, 'id' | 'created_at' | 'updated_at' | 'nb_participations' | 'elo_global' | 'elo_homme' | 'elo_femme' | 'elo_nonbinaire' | 'elo_autre' | 'elo_16_18' | 'elo_19_22' | 'elo_23_26' | 'elo_27plus'> & {
+        Insert: Omit<Element, 'id' | 'created_at' | 'updated_at' | 'nb_participations' | 'elo_global' | 'elo_homme' | 'elo_femme' | 'elo_autre' | 'elo_16_18' | 'elo_19_22' | 'elo_23_26' | 'elo_27plus'> & {
           elo_global?: number;
           elo_homme?: number;
           elo_femme?: number;
-          elo_nonbinaire?: number;
           elo_autre?: number;
           elo_16_18?: number;
           elo_19_22?: number;

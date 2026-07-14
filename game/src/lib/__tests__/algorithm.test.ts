@@ -32,7 +32,6 @@ function createMockElement(overrides: Partial<Element> = {}): Element {
     elo_global: 1000,
     elo_homme: 1000,
     elo_femme: 1000,
-    elo_nonbinaire: 1000,
     elo_autre: 1000,
     elo_16_18: 1000,
     elo_19_22: 1000,

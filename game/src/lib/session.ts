@@ -9,6 +9,8 @@ const STORAGE_KEYS = {
 } as const;
 
 const MAX_SEEN_DUELS = 200;
+/** Max tracked elements in appearance map (prevents oversized API params). */
+const MAX_ELEMENT_APPEARANCES = 150;
 
 export function isLocalStorageAvailable(): boolean {
   if (typeof window === 'undefined') return false;
@@ -81,6 +83,16 @@ export function markDuelAsSeen(idA: string, idB: string): void {
   if (!session.elementAppearances) session.elementAppearances = {};
   session.elementAppearances[idA] = (session.elementAppearances[idA] || 0) + 1;
   session.elementAppearances[idB] = (session.elementAppearances[idB] || 0) + 1;
+
+  // Cap appearance map size to prevent oversized query params
+  if (Object.keys(session.elementAppearances).length > MAX_ELEMENT_APPEARANCES) {
+    const sorted = Object.entries(session.elementAppearances).sort((a, b) => a[1] - b[1]);
+    const trimmed: Record<string, number> = {};
+    for (const [id, count] of sorted.slice(sorted.length - MAX_ELEMENT_APPEARANCES)) {
+      trimmed[id] = count;
+    }
+    session.elementAppearances = trimmed;
+  }
 
   if (!session.recentElementIds) session.recentElementIds = [];
   session.recentElementIds.push(idA, idB);

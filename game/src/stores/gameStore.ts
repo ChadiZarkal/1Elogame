@@ -275,6 +275,12 @@ export const useGameStore = create<GameState>((set, get) => ({
         throw new Error(data.error?.message || 'Failed to fetch duel');
       }
       
+      // Route returns 200 OK with allExhausted:true when no pairs remain
+      if (data.data?.allExhausted) {
+        set({ allDuelsExhausted: true, isLoadingDuel: false });
+        return;
+      }
+
       const { currentDuel } = get();
       
       if (!currentDuel) {

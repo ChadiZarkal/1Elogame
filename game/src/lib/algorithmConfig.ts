@@ -111,11 +111,13 @@ export const DEFAULT_ALGORITHM_CONFIG: AlgorithmConfig = {
   candidatePoolSize: 10,
 };
 
-// ─── In-memory cache ──────────────────────────────────────────────────────────
+// ─── In-memory cache (5-minute TTL) ─────────────────────────────────────────
+
+const CONFIG_CACHE_TTL_MS = 5 * 60 * 1000;
 
 declare global {
   var __algorithmConfig: AlgorithmConfig | undefined;
-  var __algorithmConfigLoaded: boolean | undefined;
+  var __algorithmConfigLoadedAt: number | undefined;
 }
 
 function isMockMode(): boolean {
@@ -140,9 +142,14 @@ export function getAlgorithmConfig(): AlgorithmConfig {
  * Call this once at startup or on admin page load.
  */
 export async function loadAlgorithmConfig(): Promise<AlgorithmConfig> {
-  // Return cache if already loaded
-  if (globalThis.__algorithmConfigLoaded && globalThis.__algorithmConfig) {
-    return ensureModeField(globalThis.__algorithmConfig);
+  // Return cache if still fresh
+  const now = Date.now();
+  const isCacheFresh =
+    globalThis.__algorithmConfigLoadedAt !== undefined &&
+    now - globalThis.__algorithmConfigLoadedAt < CONFIG_CACHE_TTL_MS &&
+    globalThis.__algorithmConfig !== undefined;
+  if (isCacheFresh) {
+    return ensureModeField(globalThis.__algorithmConfig!);
   }
 
   if (isMockMode()) {
@@ -162,7 +169,7 @@ export async function loadAlgorithmConfig(): Promise<AlgorithmConfig> {
     if (!error && data?.config) {
       const loaded = ensureModeField(data.config as AlgorithmConfig);
       globalThis.__algorithmConfig = loaded;
-      globalThis.__algorithmConfigLoaded = true;
+      globalThis.__algorithmConfigLoadedAt = Date.now();
       return loaded;
     }
   } catch (e) {
@@ -170,7 +177,7 @@ export async function loadAlgorithmConfig(): Promise<AlgorithmConfig> {
   }
 
   // No saved config → use defaults
-  globalThis.__algorithmConfigLoaded = true;
+  globalThis.__algorithmConfigLoadedAt = Date.now();
   return getAlgorithmConfig();
 }
 
@@ -204,7 +211,7 @@ export async function setAlgorithmConfig(config: AlgorithmConfig): Promise<{ suc
 
   // Update in-memory cache
   globalThis.__algorithmConfig = { ...validated };
-  globalThis.__algorithmConfigLoaded = true;
+  globalThis.__algorithmConfigLoadedAt = Date.now();
 
   // Persist to Supabase (production only)
   if (!isMockMode()) {
@@ -235,7 +242,7 @@ export async function setAlgorithmConfig(config: AlgorithmConfig): Promise<{ suc
 /** Reset config to defaults. Removes from Supabase. */
 export async function resetAlgorithmConfig(): Promise<void> {
   globalThis.__algorithmConfig = undefined;
-  globalThis.__algorithmConfigLoaded = true;
+  globalThis.__algorithmConfigLoadedAt = undefined;
 
   if (!isMockMode()) {
     try {
