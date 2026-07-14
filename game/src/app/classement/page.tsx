@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Loading } from '@/components/ui/Loading';
 
 interface RankEntry {
@@ -19,14 +19,24 @@ interface RankEntry {
   nb_participations: number;
 }
 
+interface LeaderboardPayload {
+  success: boolean;
+  data: {
+    rankings: RankEntry[];
+    totalElements: number;
+    visibleElements: number;
+    visibleVotes: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
+}
+
 type RankMode = 'redflag' | 'greenflag';
 type ViewMode = 'global' | 'homme' | 'femme' | '16-18' | '19-22' | '23-26' | '27+';
 
-type RankedEntry = {
-  rank: number;
-  entry: RankEntry;
-  elo: number;
-};
+const PAGE_SIZE = 30;
+const SEARCH_DEBOUNCE_MS = 280;
 
 const MODE_CONFIG: Record<
   RankMode,
@@ -45,7 +55,7 @@ const MODE_CONFIG: Record<
     color: '#EF4444',
     soft: 'rgba(239,68,68,0.14)',
     border: 'rgba(239,68,68,0.35)',
-    shadow: '0 10px 30px rgba(239,68,68,0.20)',
+    shadow: '0 12px 30px rgba(239,68,68,0.20)',
   },
   greenflag: {
     label: 'Green Flag',
@@ -53,17 +63,14 @@ const MODE_CONFIG: Record<
     color: '#10B981',
     soft: 'rgba(16,185,129,0.14)',
     border: 'rgba(16,185,129,0.35)',
-    shadow: '0 10px 30px rgba(16,185,129,0.20)',
+    shadow: '0 12px 30px rgba(16,185,129,0.20)',
   },
 };
 
-const POPULATION_FILTERS: { value: ViewMode; label: string; emoji: string }[] = [
+const PROFILE_FILTERS: { value: ViewMode; label: string; emoji: string }[] = [
   { value: 'global', label: 'Tous', emoji: '🌍' },
   { value: 'homme', label: 'Hommes', emoji: '♂️' },
   { value: 'femme', label: 'Femmes', emoji: '♀️' },
-];
-
-const AGE_FILTERS: { value: ViewMode; label: string; emoji: string }[] = [
   { value: '16-18', label: '16-18', emoji: '🎓' },
   { value: '19-22', label: '19-22', emoji: '🎯' },
   { value: '23-26', label: '23-26', emoji: '💼' },
@@ -106,66 +113,106 @@ function getCategoryMeta(category: string): { label: string; emoji: string } {
   return CATEGORY_META[category] ?? { label: category || 'Autre', emoji: '🏷️' };
 }
 
-function getWallColumns(entries: RankedEntry[]): RankedEntry[][] {
-  if (entries.length === 0) {
-    return [];
-  }
-
-  const columnCount = entries.length >= 42 ? 3 : entries.length >= 18 ? 2 : 1;
-  const chunkSize = Math.ceil(entries.length / columnCount);
-
-  return Array.from({ length: columnCount }, (_, index) =>
-    entries.slice(index * chunkSize, (index + 1) * chunkSize),
-  );
-}
-
 export default function LeaderboardPage() {
-  const [redRankings, setRedRankings] = useState<RankEntry[]>([]);
-  const [greenRankings, setGreenRankings] = useState<RankEntry[]>([]);
+  const [rankings, setRankings] = useState<RankEntry[]>([]);
   const [totalElements, setTotalElements] = useState(0);
-  const [totalVotes, setTotalVotes] = useState(0);
+  const [visibleVotes, setVisibleVotes] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [mode, setMode] = useState<RankMode>('redflag');
   const [view, setView] = useState<ViewMode>('global');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setPage(1);
+      setSearchQuery(searchInput.trim());
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchInput]);
+
+  useEffect(() => {
     let isActive = true;
+    const controller = new AbortController();
 
     const fetchRankings = async () => {
-      const catParam = categoryFilter ? `&category=${categoryFilter}` : '';
+      const offset = (page - 1) * PAGE_SIZE;
+      const params = new URLSearchParams({
+        order: mode === 'redflag' ? 'desc' : 'asc',
+        view,
+        limit: String(PAGE_SIZE),
+        offset: String(offset),
+      });
+
+      if (categoryFilter) {
+        params.set('category', categoryFilter);
+      }
+
+      if (searchQuery) {
+        params.set('search', searchQuery);
+      }
+
+      const isFirstPage = page === 1;
 
       try {
-        const [redData, greenData] = await Promise.all([
-          fetch(`/api/leaderboard?order=desc${catParam}`).then((r) => r.json()),
-          fetch(`/api/leaderboard?order=asc${catParam}`).then((r) => r.json()),
-        ]);
+        if (isFirstPage) {
+          setIsLoading(true);
+        } else {
+          setIsLoadingMore(true);
+        }
+        setError('');
+
+        const response = await fetch(`/api/leaderboard?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        const payload = (await response.json()) as LeaderboardPayload;
 
         if (!isActive) {
           return;
         }
 
-        if (redData.success) {
-          setRedRankings(redData.data.rankings);
-          setTotalElements(redData.data.totalElements || 0);
-          setTotalVotes(redData.data.totalVotes || 0);
+        if (!response.ok || !payload.success) {
+          throw new Error('Impossible de charger le classement');
         }
 
-        if (greenData.success) {
-          setGreenRankings(greenData.data.rankings);
+        const fetchedRankings = payload.data.rankings ?? [];
+        setRankings((prev) => (isFirstPage ? fetchedRankings : [...prev, ...fetchedRankings]));
+        setTotalElements(payload.data.totalElements ?? 0);
+        setVisibleVotes((prev) =>
+          isFirstPage ? payload.data.visibleVotes ?? 0 : prev + (payload.data.visibleVotes ?? 0),
+        );
+        setHasMore(Boolean(payload.data.hasMore));
+      } catch (err) {
+        const isAbortError = err instanceof DOMException && err.name === 'AbortError';
+        if (!isActive || isAbortError) {
+          return;
         }
 
-        if (!redData.success && !greenData.success) {
-          setError('Impossible de charger le classement');
-        }
-      } catch {
-        if (isActive) {
-          setError('Erreur de connexion');
+        setError('Impossible de charger le classement');
+
+        if (page === 1) {
+          setRankings([]);
+          setHasMore(false);
+          setTotalElements(0);
+          setVisibleVotes(0);
         }
       } finally {
-        if (isActive) {
+        if (!isActive) {
+          return;
+        }
+
+        if (page === 1) {
           setIsLoading(false);
+        } else {
+          setIsLoadingMore(false);
         }
       }
     };
@@ -174,106 +221,94 @@ export default function LeaderboardPage() {
 
     return () => {
       isActive = false;
+      controller.abort();
     };
+  }, [categoryFilter, mode, page, searchQuery, view]);
+
+  const activeMode = MODE_CONFIG[mode];
+
+  const selectedProfileLabel = useMemo(() => {
+    const selected = PROFILE_FILTERS.find((item) => item.value === view);
+    return selected?.label ?? 'Tous';
+  }, [view]);
+
+  const selectedCategoryLabel = useMemo(() => {
+    const selected = CATEGORY_FILTERS.find((item) => item.value === categoryFilter);
+    return selected?.label ?? 'Toutes categories';
   }, [categoryFilter]);
 
-  const handleCategoryFilterChange = useCallback(
+  const loadedElements = rankings.length;
+  const canLoadMore = hasMore && !isLoadingMore;
+
+  const handleModeChange = useCallback(
+    (nextMode: RankMode) => {
+      if (nextMode === mode) {
+        return;
+      }
+
+      setMode(nextMode);
+      setPage(1);
+    },
+    [mode],
+  );
+
+  const handleViewChange = useCallback(
+    (nextView: ViewMode) => {
+      if (nextView === view) {
+        return;
+      }
+
+      setView(nextView);
+      setPage(1);
+    },
+    [view],
+  );
+
+  const handleCategoryChange = useCallback(
     (nextCategory: string) => {
       if (nextCategory === categoryFilter) {
         return;
       }
 
-      setIsLoading(true);
-      setError('');
       setCategoryFilter(nextCategory);
+      setPage(1);
     },
     [categoryFilter],
   );
 
   const handleResetFilters = useCallback(() => {
-    setError('');
     setMode('redflag');
     setView('global');
+    setCategoryFilter('');
+    setSearchInput('');
+    setSearchQuery('');
+    setPage(1);
+    setError('');
+  }, []);
 
-    if (categoryFilter !== '') {
-      setIsLoading(true);
-      setCategoryFilter('');
+  const handleLoadMore = useCallback(() => {
+    if (!canLoadMore) {
+      return;
     }
-  }, [categoryFilter]);
 
-  const rankings = mode === 'redflag' ? redRankings : greenRankings;
-
-  const sorted = useMemo(() => {
-    return [...rankings].sort((a, b) => {
-      const direction = mode === 'redflag' ? -1 : 1;
-      return direction * (getEloForView(a, view) - getEloForView(b, view));
-    });
-  }, [rankings, view, mode]);
-
-  const rankedEntries = useMemo<RankedEntry[]>(() => {
-    return sorted.map((entry, index) => ({
-      rank: index + 1,
-      entry,
-      elo: getEloForView(entry, view),
-    }));
-  }, [sorted, view]);
-
-  const wallColumns = useMemo(() => getWallColumns(rankedEntries), [rankedEntries]);
-
-  const topElo = rankedEntries[0]?.elo ?? 0;
-  const floorElo = rankedEntries[rankedEntries.length - 1]?.elo ?? 0;
-  const eloSpread = Math.max(1, topElo - floorElo);
-
-  const selectedPopulationLabel = useMemo(() => {
-    const filter = [...POPULATION_FILTERS, ...AGE_FILTERS].find((item) => item.value === view);
-    return filter?.label ?? 'Tous';
-  }, [view]);
-
-  const selectedCategoryLabel = useMemo(() => {
-    const filter = CATEGORY_FILTERS.find((item) => item.value === categoryFilter);
-    return filter?.label ?? 'Toutes categories';
-  }, [categoryFilter]);
-
-  const topCategorySlices = useMemo(() => {
-    const byCategory = new Map<string, { count: number; bestRank: number }>();
-
-    rankedEntries.slice(0, 24).forEach((item) => {
-      const key = item.entry.categorie || 'autre';
-      const current = byCategory.get(key);
-
-      if (current) {
-        current.count += 1;
-        current.bestRank = Math.min(current.bestRank, item.rank);
-        return;
-      }
-
-      byCategory.set(key, { count: 1, bestRank: item.rank });
-    });
-
-    return Array.from(byCategory.entries())
-      .map(([key, value]) => ({
-        key,
-        count: value.count,
-        bestRank: value.bestRank,
-        ...getCategoryMeta(key),
-      }))
-      .sort((a, b) => a.bestRank - b.bestRank);
-  }, [rankedEntries]);
+    setPage((prev) => prev + 1);
+  }, [canLoadMore]);
 
   const handleShareClassement = useCallback(() => {
-    const topLines = rankedEntries
+    const lines = rankings
       .slice(0, 8)
-      .map(
-        (item) =>
-          `${item.rank}. ${item.entry.texte} - ELO ${item.elo} - ${item.entry.nb_participations} votes`,
-      )
+      .map((entry) => {
+        const elo = getEloForView(entry, view);
+        return `${entry.rank}. ${entry.texte} - ELO ${elo} - ${entry.nb_participations} votes`;
+      })
       .join('\n');
 
     const text = [
-      `🏆 ${MODE_CONFIG[mode].emoji} ${MODE_CONFIG[mode].label}`,
-      `Tri principal: ELO (classement)`,
-      `👥 ${selectedPopulationLabel} • 🗂 ${selectedCategoryLabel}`,
-      topLines,
+      `🏆 ${activeMode.emoji} ${activeMode.label}`,
+      'Tri principal: ELO',
+      `👤 Profil: ${selectedProfileLabel}`,
+      `🗂 Categorie: ${selectedCategoryLabel}`,
+      lines,
       'redorgreen.fr/classement',
     ].join('\n');
 
@@ -283,21 +318,19 @@ export default function LeaderboardPage() {
     }
 
     navigator.clipboard.writeText(text).catch(() => {});
-  }, [rankedEntries, mode, selectedPopulationLabel, selectedCategoryLabel]);
-
-  const activeMode = MODE_CONFIG[mode];
+  }, [activeMode, rankings, selectedCategoryLabel, selectedProfileLabel, view]);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: '#0A0A0A' }}>
+      <div className="flex items-center justify-center min-h-screen" style={{ background: '#090A0D' }}>
         <Loading size="lg" text="Chargement du classement..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#08090C] pb-24">
-      <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-[max(20px,env(safe-area-inset-top))]">
+    <div className="min-h-screen bg-[#090A0D] pb-20">
+      <main className="mx-auto w-full max-w-6xl px-4 sm:px-6 pt-[max(18px,env(safe-area-inset-top))]">
         <Link
           href="/"
           className="inline-flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#FAFAFA] transition-colors py-1"
@@ -305,29 +338,21 @@ export default function LeaderboardPage() {
           ← Accueil
         </Link>
 
-        <header className="mt-4 mb-6">
-          <h1 className="text-[28px] sm:text-[36px] leading-tight font-black text-[#FAFAFA] tracking-tight">
-            Mur de classement ultra dense
+        <header className="mt-4 mb-5">
+          <h1 className="text-[30px] sm:text-[38px] leading-none font-black tracking-tight text-[#FAFAFA]">
+            Classement General qui donne envie de jouer
           </h1>
-          <p className="mt-2 text-sm sm:text-base text-[#9CA3AF] max-w-4xl">
-            Le rang est calcule par le score ELO. Le nombre de votes est affiche a part, pour le contexte.
-            Pas de confusion possible entre classement et popularite.
+          <p className="mt-2 text-sm sm:text-base text-[#9CA3AF] max-w-3xl">
+            Lis chaque ligne en entier, cherche un mot, filtre en un tap et explore tout le classement.
+            Le rang est calcule par ELO, les votes sont seulement contextuels.
           </p>
+
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-[#E5E7EB]">
-              🧩 {totalElements} elements
-            </span>
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-[#E5E7EB]">
-              🗳 {totalVotes.toLocaleString('fr-FR')} votes
-            </span>
-            <span
-              className="px-3 py-1 rounded-full text-xs font-semibold"
-              style={{ background: activeMode.soft, color: activeMode.color }}
-            >
               {activeMode.emoji} {activeMode.label}
             </span>
             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-[#E5E7EB]">
-              👥 {selectedPopulationLabel}
+              👤 {selectedProfileLabel}
             </span>
             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-[#E5E7EB]">
               🗂 {selectedCategoryLabel}
@@ -338,16 +363,22 @@ export default function LeaderboardPage() {
             >
               🎯 Tri principal: ELO
             </span>
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-[#E5E7EB]">
+              📚 Affiche {loadedElements} / {totalElements}
+            </span>
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-[#E5E7EB]">
+              🗳 {visibleVotes.toLocaleString('fr-FR')} votes visibles
+            </span>
           </div>
         </header>
 
-        <section className="grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <section className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
           <aside
-            className="rounded-3xl border p-4 sm:p-5 lg:sticky lg:top-4 h-fit"
-            style={{ background: 'rgba(14,14,17,0.92)', borderColor: '#24262B' }}
+            className="rounded-3xl border p-4 sm:p-5 h-fit lg:sticky lg:top-4"
+            style={{ background: 'rgba(14,14,17,0.92)', borderColor: '#252830' }}
           >
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-black uppercase tracking-[0.13em] text-[#D1D5DB]">Filtres</h3>
+              <h2 className="text-sm font-black uppercase tracking-[0.13em] text-[#D1D5DB]">Filtres utiles</h2>
               <button
                 type="button"
                 onClick={handleResetFilters}
@@ -357,54 +388,38 @@ export default function LeaderboardPage() {
               </button>
             </div>
 
-            <div className="space-y-4">
-              <section>
-                <p className="text-[12px] font-semibold text-[#A1A1AA] mb-2">1) Type</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {(Object.keys(MODE_CONFIG) as RankMode[]).map((item) => {
-                    const conf = MODE_CONFIG[item];
-                    const selected = mode === item;
+            <label className="block mb-3">
+              <span className="text-[12px] font-semibold text-[#A1A1AA]">Recherche</span>
+              <input
+                type="search"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Ex: haleine, cryptobro, onlyfans..."
+                className="mt-1 w-full rounded-xl border border-white/10 bg-[#13151A] px-3 py-2.5 text-sm text-[#F3F4F6] placeholder:text-[#6B7280] focus:outline-none focus:ring-2"
+                style={{
+                  boxShadow: `0 0 0 0 ${activeMode.soft}`,
+                }}
+              />
+            </label>
 
-                    return (
-                      <button
-                        key={item}
-                        onClick={() => setMode(item)}
-                        className="px-2 py-2.5 rounded-xl text-[13px] font-black transition-all"
-                        style={
-                          selected
-                            ? {
-                                background: conf.soft,
-                                color: conf.color,
-                                border: `1.5px solid ${conf.border}`,
-                              }
-                            : {
-                                color: '#737373',
-                                border: '1.5px solid #27272A',
-                                background: '#17181B',
-                              }
-                        }
-                      >
-                        {conf.emoji} {conf.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
+            <section className="mb-4">
+              <p className="text-[12px] font-semibold text-[#A1A1AA] mb-2">Type</p>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(MODE_CONFIG) as RankMode[]).map((item) => {
+                  const conf = MODE_CONFIG[item];
+                  const selected = mode === item;
 
-              <section>
-                <p className="text-[12px] font-semibold text-[#A1A1AA] mb-2">2) Population</p>
-                <div className="grid grid-cols-3 gap-2 mb-2.5">
-                  {POPULATION_FILTERS.map((item) => (
+                  return (
                     <button
-                      key={item.value}
-                      onClick={() => setView(item.value)}
-                      className="px-2 py-2 rounded-xl text-[12px] font-semibold transition-all"
+                      key={item}
+                      onClick={() => handleModeChange(item)}
+                      className="px-2 py-2.5 rounded-xl text-[13px] font-black transition-all"
                       style={
-                        view === item.value
+                        selected
                           ? {
-                              background: activeMode.soft,
-                              color: activeMode.color,
-                              border: `1.5px solid ${activeMode.border}`,
+                              background: conf.soft,
+                              color: conf.color,
+                              border: `1.5px solid ${conf.border}`,
                             }
                           : {
                               color: '#737373',
@@ -413,77 +428,106 @@ export default function LeaderboardPage() {
                             }
                       }
                     >
-                      {item.emoji} {item.label}
+                      {conf.emoji} {conf.label}
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
+              </div>
+            </section>
 
-                <p className="text-[12px] font-semibold text-[#A1A1AA] mb-2">Age</p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {AGE_FILTERS.map((item) => (
-                    <button
-                      key={item.value}
-                      onClick={() => setView(item.value)}
-                      className="px-2 py-2 rounded-xl text-[12px] font-semibold transition-all"
-                      style={
-                        view === item.value
-                          ? {
-                              background: activeMode.soft,
-                              color: activeMode.color,
-                              border: `1.5px solid ${activeMode.border}`,
-                            }
-                          : {
-                              color: '#737373',
-                              border: '1.5px solid #27272A',
-                              background: '#17181B',
-                            }
-                      }
-                    >
-                      {item.emoji} {item.label}
-                    </button>
-                  ))}
-                </div>
-              </section>
+            <section className="mb-4">
+              <p className="text-[12px] font-semibold text-[#A1A1AA] mb-2">Profil</p>
+              <p className="text-[11px] text-[#6B7280] mb-2">
+                Un seul profil a la fois (meme logique que la version precedente).
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {PROFILE_FILTERS.map((item) => (
+                  <button
+                    key={item.value}
+                    onClick={() => handleViewChange(item.value)}
+                    className="px-2 py-2 rounded-xl text-[12px] font-semibold transition-all"
+                    style={
+                      view === item.value
+                        ? {
+                            background: activeMode.soft,
+                            color: activeMode.color,
+                            border: `1.5px solid ${activeMode.border}`,
+                          }
+                        : {
+                            color: '#737373',
+                            border: '1.5px solid #27272A',
+                            background: '#17181B',
+                          }
+                    }
+                  >
+                    {item.emoji} {item.label}
+                  </button>
+                ))}
+              </div>
+            </section>
 
-              <section>
-                <p className="text-[12px] font-semibold text-[#A1A1AA] mb-2">3) Categorie</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {CATEGORY_FILTERS.map((cat) => (
-                    <button
-                      key={cat.value}
-                      onClick={() => handleCategoryFilterChange(cat.value)}
-                      className={`px-2 py-2 rounded-xl text-[12px] font-semibold transition-all ${
-                        cat.value === '' ? 'col-span-2' : ''
-                      }`}
-                      style={
-                        categoryFilter === cat.value
-                          ? {
-                              background: activeMode.soft,
-                              color: activeMode.color,
-                              border: `1.5px solid ${activeMode.border}`,
-                            }
-                          : {
-                              color: '#737373',
-                              border: '1.5px solid #27272A',
-                              background: '#17181B',
-                            }
-                      }
-                    >
-                      {cat.emoji} {cat.label}
-                    </button>
-                  ))}
-                </div>
-              </section>
-            </div>
+            <section>
+              <p className="text-[12px] font-semibold text-[#A1A1AA] mb-2">Categorie</p>
+              <div className="grid grid-cols-2 gap-2">
+                {CATEGORY_FILTERS.map((cat) => (
+                  <button
+                    key={cat.value}
+                    onClick={() => handleCategoryChange(cat.value)}
+                    className={`px-2 py-2 rounded-xl text-[12px] font-semibold transition-all ${cat.value === '' ? 'col-span-2' : ''}`}
+                    style={
+                      categoryFilter === cat.value
+                        ? {
+                            background: activeMode.soft,
+                            color: activeMode.color,
+                            border: `1.5px solid ${activeMode.border}`,
+                          }
+                        : {
+                            color: '#737373',
+                            border: '1.5px solid #27272A',
+                            background: '#17181B',
+                          }
+                    }
+                  >
+                    {cat.emoji} {cat.label}
+                  </button>
+                ))}
+              </div>
+            </section>
           </aside>
 
-          <div className="space-y-5">
+          <section className="space-y-4">
+            <div
+              className="rounded-3xl border p-4 sm:p-5"
+              style={{ background: 'rgba(14,14,17,0.9)', borderColor: activeMode.border, boxShadow: activeMode.shadow }}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-[#9CA3AF] font-black">Lecture simple</p>
+                  <h2 className="text-lg sm:text-xl font-black text-[#FAFAFA] mt-1">
+                    Rang = ELO, texte complet, votes en contexte
+                  </h2>
+                </div>
+                <button
+                  onClick={handleShareClassement}
+                  className="px-3 py-2 rounded-xl text-xs font-semibold text-[#D1D5DB] bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                >
+                  📤 Partager
+                </button>
+              </div>
+
+              {searchQuery && (
+                <p className="mt-3 text-sm text-[#9CA3AF]">
+                  Resultats pour <span className="font-semibold text-[#F3F4F6]">{`"${searchQuery}"`}</span>
+                </p>
+              )}
+            </div>
+
             {error && (
               <div
                 className="rounded-2xl p-4 text-center text-sm"
                 style={{
                   background: 'rgba(239,68,68,0.1)',
-                  border: '1px solid rgba(239,68,68,0.3)',
+                  border: '1px solid rgba(239,68,68,0.35)',
                   color: '#FCA5A5',
                 }}
               >
@@ -491,187 +535,82 @@ export default function LeaderboardPage() {
               </div>
             )}
 
-            <AnimatePresence mode="wait">
-              {rankedEntries.length === 0 ? (
-                <motion.div
-                  key="empty"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="rounded-2xl border border-white/10 bg-white/3 text-center py-20"
-                >
-                  <span className="text-6xl block mb-4">🏜️</span>
-                  <p className="text-[#9CA3AF] text-base">Aucun resultat pour ces filtres</p>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key={`${mode}-${view}-${categoryFilter}`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-5"
-                >
-                  <section
-                    className="rounded-3xl border p-4 sm:p-5"
-                    style={{
-                      background: 'rgba(14,14,17,0.88)',
-                      borderColor: activeMode.border,
-                      boxShadow: activeMode.shadow,
-                    }}
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-[0.16em] text-[#9CA3AF] font-black">
-                          Lecture claire
-                        </p>
-                        <h2 className="text-lg sm:text-xl font-black text-[#FAFAFA] mt-1">
-                          Rang = ELO, Votes = secondaire
-                        </h2>
-                      </div>
-                      <button
-                        onClick={handleShareClassement}
-                        className="px-3 py-2 rounded-xl text-xs font-semibold text-[#D1D5DB] bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
-                      >
-                        📤 Partager
-                      </button>
-                    </div>
+            {rankings.length === 0 ? (
+              <div className="rounded-2xl border border-white/10 bg-white/2 text-center py-16 px-4">
+                <span className="text-5xl block mb-3">🔎</span>
+                <p className="text-[#E5E7EB] text-base font-semibold">Aucune ligne trouvee</p>
+                <p className="text-[#9CA3AF] text-sm mt-1">Essaie un autre mot cle ou retire des filtres.</p>
+              </div>
+            ) : (
+              <ol className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                {rankings.map((entry, index) => {
+                  const categoryMeta = getCategoryMeta(entry.categorie);
+                  const elo = getEloForView(entry, view);
+                  const isPodium = entry.rank <= 3;
 
-                    <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-                      <span className="px-2.5 py-1 rounded-lg bg-white/5 text-[#E5E7EB] font-semibold">
-                        # = position
-                      </span>
-                      <span
-                        className="px-2.5 py-1 rounded-lg font-semibold"
-                        style={{ background: activeMode.soft, color: activeMode.color }}
-                      >
-                        ELO = ordre du classement
-                      </span>
-                      <span className="px-2.5 py-1 rounded-lg bg-white/5 text-[#A1A1AA] font-semibold">
-                        Votes = contexte de popularite
-                      </span>
-                    </div>
+                  return (
+                    <motion.li
+                      key={`${entry.rank}-${entry.texte}-${index}`}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: Math.min(index * 0.015, 0.22) }}
+                      className="rounded-2xl border p-3.5"
+                      style={{
+                        borderColor: isPodium ? activeMode.border : 'rgba(255,255,255,0.10)',
+                        background: isPodium ? activeMode.soft : 'rgba(16,17,22,0.85)',
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="shrink-0 inline-flex min-w-11 h-8 items-center justify-center rounded-full bg-black/30 text-[11px] font-black text-[#F3F4F6] px-2">
+                          {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : `#${entry.rank}`}
+                        </span>
 
-                    {topCategorySlices.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {topCategorySlices.map((slice) => (
-                          <span
-                            key={slice.key}
-                            className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border"
-                            style={{
-                              borderColor: 'rgba(255,255,255,0.10)',
-                              background: 'rgba(255,255,255,0.03)',
-                              color: '#D1D5DB',
-                            }}
-                          >
-                            {slice.emoji} {slice.label}: {slice.count} dans le top 24
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </section>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[15px] leading-snug text-[#F8FAFC] wrap-break-word whitespace-normal">
+                            {entry.texte}
+                          </p>
 
-                  <section
-                    className="rounded-3xl border"
-                    style={{ background: 'rgba(14,14,17,0.9)', borderColor: '#27292F' }}
-                  >
-                    <div className="px-4 sm:px-5 py-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-2">
-                      <h3 className="text-sm font-black uppercase tracking-[0.13em] text-[#D1D5DB]">
-                        Mur de classement
-                      </h3>
-                      <p className="text-xs text-[#6B7280]">{rankedEntries.length} lignes visibles</p>
-                    </div>
-
-                    <div className="p-3 sm:p-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                      {wallColumns.map((column, columnIndex) => {
-                        const start = column[0]?.rank ?? 0;
-                        const end = column[column.length - 1]?.rank ?? 0;
-
-                        return (
-                          <div
-                            key={`wall-col-${columnIndex}`}
-                            className="rounded-2xl border"
-                            style={{
-                              borderColor: 'rgba(255,255,255,0.09)',
-                              background: 'rgba(10,11,15,0.88)',
-                            }}
-                          >
-                            <div className="px-2.5 py-2 border-b border-white/10 flex items-center justify-between">
-                              <p className="text-[11px] font-black uppercase tracking-wider text-[#A1A1AA]">
-                                Rangs {start}-{end}
-                              </p>
-                              <p className="text-[10px] text-[#6B7280]">{column.length} entrees</p>
-                            </div>
-
-                            <div className="px-2.5 py-1.5">
-                              <div className="grid grid-cols-[30px_minmax(0,1fr)_62px_46px] sm:grid-cols-[34px_minmax(0,1fr)_72px_56px] gap-2 text-[10px] uppercase tracking-wide text-[#6B7280] mb-1.5 px-1">
-                                <span>#</span>
-                                <span>Element</span>
-                                <span className="text-right">ELO</span>
-                                <span className="text-right">Votes</span>
-                              </div>
-
-                              <div className="space-y-1">
-                                {column.map((item) => {
-                                  const cat = getCategoryMeta(item.entry.categorie);
-                                  const eloPercent = Math.round(((item.elo - floorElo) / eloSpread) * 100);
-                                  const isTop3 = item.rank <= 3;
-
-                                  return (
-                                    <div
-                                      key={`${item.entry.texte}-${item.rank}`}
-                                      className="grid grid-cols-[30px_minmax(0,1fr)_62px_46px] sm:grid-cols-[34px_minmax(0,1fr)_72px_56px] items-center gap-2 rounded-lg border px-2 py-1.5"
-                                      style={{
-                                        borderColor: isTop3 ? activeMode.border : 'rgba(255,255,255,0.09)',
-                                        background: isTop3 ? activeMode.soft : 'rgba(255,255,255,0.02)',
-                                      }}
-                                    >
-                                      <span className="text-[11px] font-black text-[#E5E7EB]">
-                                        {item.rank === 1
-                                          ? '🥇'
-                                          : item.rank === 2
-                                            ? '🥈'
-                                            : item.rank === 3
-                                              ? '🥉'
-                                              : `#${item.rank}`}
-                                      </span>
-
-                                      <div className="min-w-0 flex items-center gap-1.5">
-                                        <span className="text-[11px]">{cat.emoji}</span>
-                                        <span className="truncate text-[12px] text-[#F3F4F6]">
-                                          {item.entry.texte}
-                                        </span>
-                                      </div>
-
-                                      <div className="text-right">
-                                        <p className="text-[12px] font-black" style={{ color: activeMode.color }}>
-                                          {item.elo}
-                                        </p>
-                                        <div className="h-0.5 mt-0.5 rounded-full bg-white/10 overflow-hidden">
-                                          <div
-                                            className="h-full rounded-full"
-                                            style={{
-                                              width: `${Math.max(8, eloPercent)}%`,
-                                              background: activeMode.color,
-                                            }}
-                                          />
-                                        </div>
-                                      </div>
-
-                                      <span className="text-right text-[11px] text-[#9CA3AF]">
-                                        {item.entry.nb_participations}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
+                          <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+                            <span className="rounded-lg px-2 py-1 bg-black/25 text-[#D1D5DB]">
+                              {categoryMeta.emoji} {categoryMeta.label}
+                            </span>
+                            <span className="rounded-lg px-2 py-1 bg-black/25 text-[#A1A1AA]">
+                              {entry.nb_participations} votes
+                            </span>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </section>
-                </motion.div>
+                        </div>
+
+                        <div className="shrink-0 text-right">
+                          <p className="text-[10px] uppercase tracking-wider text-[#9CA3AF]">ELO</p>
+                          <p className="text-[16px] font-black" style={{ color: activeMode.color }}>
+                            {elo}
+                          </p>
+                        </div>
+                      </div>
+                    </motion.li>
+                  );
+                })}
+              </ol>
+            )}
+
+            <div className="flex flex-col items-center gap-2 pt-1">
+              {hasMore ? (
+                <button
+                  onClick={handleLoadMore}
+                  disabled={!canLoadMore}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-[#E5E7EB] border border-white/15 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isLoadingMore
+                    ? 'Chargement...'
+                    : `Voir ${Math.min(PAGE_SIZE, Math.max(totalElements - loadedElements, 0))} lignes de plus`}
+                </button>
+              ) : (
+                rankings.length > 0 && (
+                  <p className="text-xs text-[#6B7280]">Tout le classement disponible est affiche.</p>
+                )
               )}
-            </AnimatePresence>
-          </div>
+            </div>
+          </section>
         </section>
 
         <section className="mt-8 pb-2 flex flex-col items-center gap-3">

@@ -223,32 +223,161 @@ export async function getStarredPairs(): Promise<{ element_a_id: string; element
 // Rankings
 // ---------------------------------------------------------------------------
 
+export type LeaderboardView = 'global' | 'homme' | 'femme' | '16-18' | '19-22' | '23-26' | '27+';
+
+type LeaderboardSortField =
+  | 'elo_global'
+  | 'elo_homme'
+  | 'elo_femme'
+  | 'elo_16_18'
+  | 'elo_19_22'
+  | 'elo_23_26'
+  | 'elo_27plus';
+
+const LEADERBOARD_SORT_FIELDS: Record<LeaderboardView, LeaderboardSortField> = {
+  global: 'elo_global',
+  homme: 'elo_homme',
+  femme: 'elo_femme',
+  '16-18': 'elo_16_18',
+  '19-22': 'elo_19_22',
+  '23-26': 'elo_23_26',
+  '27+': 'elo_27plus',
+};
+
+export type LeaderboardOptions = {
+  sort?: 'asc' | 'desc' | string;
+  limit?: number;
+  offset?: number;
+  category?: string | null;
+  view?: LeaderboardView;
+  search?: string | null;
+};
+
+type LeaderboardRow = {
+  id: string;
+  texte: string;
+  categorie: string;
+  elo_global: number;
+  elo_homme: number;
+  elo_femme: number;
+  elo_16_18: number;
+  elo_19_22: number;
+  elo_23_26: number;
+  elo_27plus: number;
+  nb_participations: number;
+};
+
+export type LeaderboardResult = {
+  elements: LeaderboardRow[];
+  total: number;
+};
+
+function getSortValue(element: Element, view: LeaderboardView): number {
+  switch (view) {
+    case 'homme':
+      return element.elo_homme;
+    case 'femme':
+      return element.elo_femme;
+    case '16-18':
+      return element.elo_16_18;
+    case '19-22':
+      return element.elo_19_22;
+    case '23-26':
+      return element.elo_23_26;
+    case '27+':
+      return element.elo_27plus;
+    default:
+      return element.elo_global;
+  }
+}
+
+function normalizeSearch(search?: string | null): string | null {
+  const normalized = search?.trim().toLowerCase();
+  return normalized ? normalized : null;
+}
+
 /** Get element rankings for leaderboard. */
-export async function getLeaderboard(options: { sort?: string; limit?: number; category?: string | null }) {
+export async function getLeaderboard(options: LeaderboardOptions): Promise<LeaderboardResult> {
+  const view: LeaderboardView = options.view ?? 'global';
+  const sortField = LEADERBOARD_SORT_FIELDS[view];
+  const sortAscending = options.sort === 'asc';
+  const limit = options.limit && options.limit > 0 ? options.limit : undefined;
+  const offset = Math.max(0, options.offset || 0);
+  const search = normalizeSearch(options.search);
+
   if (isMockMode()) {
     const { getMockElements } = await import('@/lib/mockData');
+
     let elements = getMockElements().filter((e) => e.actif);
-    if (options.category) elements = elements.filter((e) => e.categorie === options.category);
-    elements.sort((a, b) => options.sort === 'asc' ? a.elo_global - b.elo_global : b.elo_global - a.elo_global);
-    if (options.limit) elements = elements.slice(0, options.limit);
-    return elements.map((e) => ({
-      id: e.id, texte: e.texte, categorie: e.categorie,
-      elo_global: e.elo_global, elo_homme: e.elo_homme, elo_femme: e.elo_femme,
-      elo_16_18: e.elo_16_18, elo_19_22: e.elo_19_22, elo_23_26: e.elo_23_26, elo_27plus: e.elo_27plus,
-      nb_participations: e.nb_participations,
-    }));
+
+    if (options.category) {
+      elements = elements.filter((e) => e.categorie === options.category);
+    }
+
+    if (search) {
+      elements = elements.filter((e) => e.texte.toLowerCase().includes(search));
+    }
+
+    elements.sort((a, b) => {
+      const left = getSortValue(a, view);
+      const right = getSortValue(b, view);
+      return sortAscending ? left - right : right - left;
+    });
+
+    const total = elements.length;
+    const pagedElements = typeof limit === 'number'
+      ? elements.slice(offset, offset + limit)
+      : elements.slice(offset);
+
+    return {
+      elements: pagedElements.map((e) => ({
+        id: e.id,
+        texte: e.texte,
+        categorie: e.categorie,
+        elo_global: e.elo_global,
+        elo_homme: e.elo_homme,
+        elo_femme: e.elo_femme,
+        elo_16_18: e.elo_16_18,
+        elo_19_22: e.elo_19_22,
+        elo_23_26: e.elo_23_26,
+        elo_27plus: e.elo_27plus,
+        nb_participations: e.nb_participations,
+      })),
+      total,
+    };
   }
 
   const { createServerClient } = await import('@/lib/supabase');
   const supabase = createServerClient();
+
   let query = supabase
     .from('elements')
-    .select('id, texte, categorie, elo_global, elo_homme, elo_femme, elo_16_18, elo_19_22, elo_23_26, elo_27plus, nb_participations')
+    .select(
+      'id, texte, categorie, elo_global, elo_homme, elo_femme, elo_16_18, elo_19_22, elo_23_26, elo_27plus, nb_participations',
+      { count: 'exact' },
+    )
     .eq('actif', true)
-    .order('elo_global', { ascending: options.sort === 'asc' });
-  if (options.category) query = query.eq('categorie', options.category);
-  if (options.limit) query = query.limit(options.limit);
-  const { data, error } = await query;
+    .order(sortField, { ascending: sortAscending })
+    .order('id', { ascending: true });
+
+  if (options.category) {
+    query = query.eq('categorie', options.category);
+  }
+
+  if (search) {
+    query = query.ilike('texte', `%${search}%`);
+  }
+
+  if (typeof limit === 'number') {
+    query = query.range(offset, offset + limit - 1);
+  }
+
+  const { data, error, count } = await query;
+
   if (error) throw new Error(`DB error fetching leaderboard: ${error.message}`);
-  return data || [];
+
+  return {
+    elements: (data as LeaderboardRow[]) || [],
+    total: count ?? (data?.length || 0),
+  };
 }
