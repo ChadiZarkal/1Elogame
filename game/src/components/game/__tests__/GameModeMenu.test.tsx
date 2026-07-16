@@ -26,12 +26,11 @@ describe('GameModeMenu', () => {
     expect(screen.getByText('Classique')).toBeDefined();
   });
 
-  it('affiche les 3 catégories dans le menu', () => {
+  it('affiche les 2 catégories dans le menu', () => {
     render(<GameModeMenu currentSelection={defaultSelection} onSelectionChange={onSelectionChange} />);
     fireEvent.click(screen.getByTitle('Changer de catégorie'));
-    expect(screen.getByText('Sexe & Kinks')).toBeDefined();
+    expect(screen.getByText('Amour & Sexe')).toBeDefined();
     expect(screen.getByText('Quotidien')).toBeDefined();
-    expect(screen.getByText('Métiers')).toBeDefined();
   });
 
   it('appelle onSelectionChange avec la catégorie sélectionnée', () => {

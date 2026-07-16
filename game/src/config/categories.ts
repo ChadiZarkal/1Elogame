@@ -45,7 +45,7 @@ export const CATEGORIES_CONFIG: Record<string, CategoryConfig> = {
 export const TAGS_CONFIG: Record<string, TagConfig> = {
   metier: {
     id: 'metier',
-    label: 'Métiers',
+    label: 'Travail',
     emoji: '💼',
     description: 'Professions et comportements au travail',
   },

@@ -168,7 +168,7 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
                 <p className="text-lg font-bold text-white">{cat.labelFr}</p>
                 <p className="text-xs text-[#6B7280] mt-0.5">
                   {cat.id === 'sexe' && 'Relations, flirt, intimité, kinks'}
-                  {cat.id === 'quotidien' && 'Habitudes, comportements du quotidien (métiers inclus)'}
+                  {cat.id === 'quotidien' && 'Comportements, habitudes, travail, argent...'}
                 </p>
               </div>
               <div

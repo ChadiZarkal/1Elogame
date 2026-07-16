@@ -99,7 +99,7 @@ const CATEGORY_FILTERS = [
 ];
 
 const TAG_FILTERS = [
-  { value: 'metier', label: 'Métiers', emoji: '💼' },
+  { value: 'metier', label: 'Travail', emoji: '💼' },
   { value: 'couple', label: 'Couple', emoji: '❤️' },
   { value: 'hygiene', label: 'Hygiène', emoji: '🚿' },
   { value: 'argent', label: 'Argent', emoji: '💰' },
@@ -118,7 +118,7 @@ const CATEGORY_META: Record<string, { label: string; emoji: string }> = {
 };
 
 const TAG_META: Record<string, { label: string; emoji: string }> = {
-  metier: { label: 'Métier', emoji: '💼' },
+  metier: { label: 'Travail', emoji: '💼' },
   couple: { label: 'Couple', emoji: '❤️' },
   hygiene: { label: 'Hygiène', emoji: '🚿' },
   argent: { label: 'Argent', emoji: '💰' },

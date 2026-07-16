@@ -11,11 +11,10 @@ import { CategorySelector } from '@/components/game/CategorySelector';
 describe('CategorySelector', () => {
   const onStart = vi.fn();
 
-  it('affiche les 3 catégories', () => {
+  it('affiche les 2 catégories', () => {
     render(<CategorySelector onStart={onStart} />);
-    expect(screen.getByText('Sexe & Kinks')).toBeDefined();
+    expect(screen.getByText('Amour & Sexe')).toBeDefined();
     expect(screen.getByText('Quotidien')).toBeDefined();
-    expect(screen.getByText('Métiers')).toBeDefined();
   });
 
   it('le bouton start est désactivé sans sélection', () => {
@@ -26,20 +25,20 @@ describe('CategorySelector', () => {
 
   it('sélectionne une catégorie au clic', () => {
     render(<CategorySelector onStart={onStart} />);
-    fireEvent.click(screen.getByText('Sexe & Kinks'));
+    fireEvent.click(screen.getByText('Amour & Sexe'));
     expect(screen.getByText(/🚩 LANCER/i)).toBeDefined();
   });
 
   it('appelle onStart avec les catégories sélectionnées', () => {
     render(<CategorySelector onStart={onStart} />);
-    fireEvent.click(screen.getByText('Sexe & Kinks'));
+    fireEvent.click(screen.getByText('Amour & Sexe'));
     fireEvent.click(screen.getByText(/🚩 LANCER/i));
     expect(onStart).toHaveBeenCalledWith(['sexe'], 15);
   });
 
   it('permet la multi-sélection', () => {
     render(<CategorySelector onStart={onStart} />);
-    fireEvent.click(screen.getByText('Sexe & Kinks'));
+    fireEvent.click(screen.getByText('Amour & Sexe'));
     fireEvent.click(screen.getByText('Quotidien'));
     fireEvent.click(screen.getByText(/🚩 LANCER/i));
     expect(onStart).toHaveBeenCalledWith(expect.arrayContaining(['sexe', 'quotidien']), 15);
@@ -47,8 +46,8 @@ describe('CategorySelector', () => {
 
   it('permet de désélectionner', () => {
     render(<CategorySelector onStart={onStart} />);
-    fireEvent.click(screen.getByText('Sexe & Kinks'));
-    fireEvent.click(screen.getByText('Sexe & Kinks')); // deselect
+    fireEvent.click(screen.getByText('Amour & Sexe'));
+    fireEvent.click(screen.getByText('Amour & Sexe')); // deselect
     expect(screen.getByText('Sélectionne au moins une catégorie')).toBeDefined();
   });
 });
