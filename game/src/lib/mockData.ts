@@ -15,25 +15,28 @@ const now = new Date().toISOString();
 
 /**
  * Helper: create a mock element with auto-migration and auto-tagging.
- * Accepts legacy 'metiers' category — auto-converts to 'quotidien' (or 'sexe')
- * and prepends the 'metier' tag.
+ * Accepts legacy categories ('metiers', 'bureau', 'lifestyle') — auto-converts to
+ * 'quotidien' (or 'sexe') and applies relevant tags.
  */
 function createElement(
   id: string,
   texte: string,
-  categorie: Categorie | 'metiers' = 'quotidien',
+  categorie: Categorie | 'metiers' | 'bureau' | 'lifestyle' = 'quotidien',
   niveau_provocation: 1 | 2 | 3 | 4 = 2,
   elo: number = 1000,
 ): Element {
-  // ── Migrate metiers → quotidien / sexe ────────────────────────────────────
-  const isMetier = (categorie as string) === 'metiers';
-  const isSexualWork = isMetier && /coucher avec.*(boss|chef)|draguer.*(collègu|boss|chef)/i.test(texte);
-  const finalCategorie: Categorie = isMetier
+  // ── Migrate legacy categories → sexe / quotidien ─────────────────────────
+  const legacyCat = categorie as string;
+  const isLegacyWork = legacyCat === 'metiers' || legacyCat === 'bureau';
+  const isLegacyLifestyle = legacyCat === 'lifestyle';
+  const isLegacy = isLegacyWork || isLegacyLifestyle;
+  const isSexualWork = isLegacyWork && /coucher avec.*(boss|chef)|draguer.*(collègu|boss|chef)/i.test(texte);
+  const finalCategorie: Categorie = isLegacy
     ? (isSexualWork ? 'sexe' : 'quotidien')
     : (categorie as Categorie);
 
   // ── Auto-tag by content ───────────────────────────────────────────────────
-  const tags: string[] = isMetier ? ['metier'] : [];
+  const tags: string[] = isLegacyWork ? ['metier'] : [];
   const t = texte.toLowerCase();
   if (/haleine|brosser les dents|tirer la chasse|crottes de nez|cracher par terre|ongles/.test(t)) tags.push('hygiene');
   if (/crypto|bitcoin|trader|radin|addition au centime|investisseur|mlm|dropshipping|patrimoine/.test(t)) tags.push('argent');

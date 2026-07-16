@@ -49,7 +49,7 @@ describe('getMockElements', () => {
   });
 
   it('retourne des éléments avec des catégories valides', () => {
-    const validCategories = ['sexe', 'quotidien', 'metiers'];
+    const validCategories = ['sexe', 'quotidien'];
     const elements = getMockElements();
     for (const el of elements) {
       expect(validCategories).toContain(el.categorie);
@@ -189,7 +189,8 @@ describe('mockElements structure', () => {
     
     expect(byCat['sexe']).toBeGreaterThan(0);
     expect(byCat['quotidien']).toBeGreaterThan(0);
-    expect(byCat['metiers']).toBeGreaterThan(0);
+    // 'metiers' auto-migrated to 'quotidien' — check quotidien increased
+    expect(byCat['quotidien']).toBeGreaterThan(0);
   });
 
   it('chaque élément a un texte non vide', () => {

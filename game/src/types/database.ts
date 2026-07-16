@@ -35,8 +35,9 @@ export interface Element {
   nb_participations_19_22: number;
   nb_participations_23_26: number;
   nb_participations_27plus: number;
-  /** Tags sémantiques — sous-catégorisation, filtre classement uniquement */
-  tags: string[];
+  /** Tags sémantiques — sous-catégorisation, filtre classement uniquement.
+   * Optional until migration 015 DDL (ADD COLUMN) has been applied. */
+  tags?: string[];
   created_at: string;
   updated_at: string;
 }

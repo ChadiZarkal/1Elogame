@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migration 015 - Red or Green</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 16px; }
+        .content { padding: 30px; }
+        .section {
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+            padding-left: 20px;
+        }
+        .section h2 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .steps ol {
+            margin-left: 20px;
+        }
+        .steps li {
+            margin-bottom: 12px;
+            line-height: 1.6;
+            color: #555;
+        }
+        .steps strong { color: #333; }
+        .sql-container {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 0;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        .sql-header {
+            background: #333;
+            color: #fff;
+            padding: 12px 15px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sql-code {
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #333;
+            overflow-x: auto;
+            background: #f9f9f9;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .copy-btn:hover { background: #764ba2; }
+        .copy-btn.copied { background: #4caf50; }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .warning strong { color: #856404; }
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .info {
+            background: #cfe2ff;
+            border-left: 4px solid #0d6efd;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .info strong { color: #084298; }
+        .command {
+            background: #222;
+            color: #0f0;
+            padding: 12px 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            word-break: break-all;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .dashboard-link {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            margin: 10px 0;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .dashboard-link:hover { background: #764ba2; }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .table th, .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .table th {
+            background: #f5f5f5;
+            font-weight: 600;
+            color: #333;
+        }
+        .table tr:hover { background: #f9f9f9; }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status.pending { background: #ffc107; color: #fff; }
+        .status.complete { background: #28a745; color: #fff; }
+        footer {
+            background: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            border-top: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Migration 015</h1>
+            <p>2 Categories + Semantic Tags System</p>
+        </div>
+        
+        <div class="content">
+            <!-- Section 1: Overview -->
+            <div class="section">
+                <h2><span class="step-number">1</span> Présentation de la Migration</h2>
+                <p style="margin-bottom: 15px;">Cette migration remodèle l'architecture des catégories :</p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li><strong>De :</strong> 3 catégories (sexe, quotidien, metiers)</li>
+                    <li><strong>À :</strong> 2 catégories (sexe, quotidien) + 11 tags sémantiques</li>
+                </ul>
+                <div class="success">
+                    <strong>✓ Avantages :</strong>
+                    <ul style="margin-top: 8px;">
+                        <li>Gameplay clarifié avec 2 catégories nettes</li>
+                        <li>Tags permettent un filtrage fin au classement sans modifier le jeu</li>
+                        <li>Conservation totale des données ELO et votes</li>
+                        <li>Réassignation intelligente des métiers</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 2: What Changes -->
+            <div class="section">
+                <h2><span class="step-number">2</span> Changements dans la Base de Données</h2>
+                
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Aspect</th>
+                            <th>Avant</th>
+                            <th>Après</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Catégories</strong></td>
+                            <td>sexe, quotidien, metiers</td>
+                            <td>sexe, quotidien</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tags</strong></td>
+                            <td>-</td>
+                            <td>metier, couple, hygiene, argent, numerique, sport, nourriture, emotionnel, social, transport, politique</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Métiers sexuels</strong></td>
+                            <td>categorie='metiers'</td>
+                            <td>categorie='sexe' + tags=['metier', 'couple']</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Autres métiers</strong></td>
+                            <td>categorie='metiers'</td>
+                            <td>categorie='quotidien' + tags=['metier']</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ELO & Votes</strong></td>
+                            <td>-</td>
+                            <td>Inchangés ✓</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Section 3: SQL to Execute -->
+            <div class="section">
+                <h2><span class="step-number">3</span> SQL à Exécuter</h2>
+                
+                <div class="info">
+                    <strong>ℹ️ Option 1 : Dashboard Supabase (Recommandé)</strong>
+                    <p style="margin-top: 8px;">Cliquez le bouton ci-dessous, collez le SQL, et exécutez :</p>
+                </div>
+                
+                <a href="https://supabase.com/dashboard/project/jcrtkvoxizrfttzerhfp/sql/new" target="_blank" class="dashboard-link">
+                    → Ouvrir Supabase SQL Editor
+                </a>
+
+                <div class="sql-container">
+                    <div class="sql-header">
+                        <span>migration_015_categories_tags.sql</span>
+                        <button class="copy-btn" onclick="copySql()" id="copy-btn">📋 Copier</button>
+                    </div>
+                    <div class="sql-code" id="sql-code">-- Migration 015: Reduce to 2 categories (sexe, quotidien) + add tags system
+-- Date: 14 juillet 2026
+
+-- ─── Step 1: tags column ───────────────────────────────────────────────────────
+ALTER TABLE elements ADD COLUMN IF NOT EXISTS tags text[] NOT NULL DEFAULT '{}';
+CREATE INDEX IF NOT EXISTS elements_tags_gin ON elements USING GIN(tags);
+
+-- ─── Step 2: Tag existing elements by content ──────────────────────────────────
+
+-- All metiers elements → tag 'metier'
+UPDATE elements SET tags = array_append(tags, 'metier') WHERE categorie = 'metiers';
+
+-- Hygiene
+UPDATE elements SET tags = array_append(tags, 'hygiene')
+WHERE texte ~* 'haleine|brosser les dents|tirer la chasse|crottes de nez|cracher par terre|ongles longs';
+
+-- Money / finance
+UPDATE elements SET tags = array_append(tags, 'argent')
+WHERE texte ~* 'crypto|bitcoin|trader|radin|addition au centime|investisseur|MLM|dropshipping|patrimoine|fiscali|impôts|fortune';
+
+-- Digital / social media / tech
+UPDATE elements SET tags = array_append(tags, 'numerique')
+WHERE texte ~* 'TikTok|Instagram|OnlyFans|MYM|LinkedIn|Slack|Teams|streamer|gamer|jeux vidéo|influenceur|Intelligence Artificielle|community manager|YouTube|contenu en ligne|Métavers';
+
+-- Sport / fitness
+UPDATE elements SET tags = array_append(tags, 'sport')
+WHERE texte ~* 'muscu|workout|sport|gym|ski|surf|fitness|coach sportif|personal trainer|marathon|trail';
+
+-- Food / eating behaviors
+UPDATE elements SET tags = array_append(tags, 'nourriture')
+WHERE texte ~* 'manger|bouffe|repas|frigo|micro.onde|vegan|végétar|roter|poisson';
+
+-- Emotional maturity
+UPDATE elements SET tags = array_append(tags, 'emotionnel')
+WHERE texte ~* 'burnout|jaloux|colère|toxique|manipulation|ghoste|narcissique|anxieux|dépression';
+
+-- Transport / road behaviors
+UPDATE elements SET tags = array_append(tags, 'transport')
+WHERE texte ~* 'transport|klaxon|atterrissage|avion|feu vert|poids lourd|marin pêcheur|routier';
+
+-- Political / social commentary
+UPDATE elements SET tags = array_append(tags, 'politique')
+WHERE texte ~* 'politicien|lobbyi|militant|diplomate|huissier|inspecteur des impôts|fonctionnaire';
+
+-- Couple / romantic (add to existing sexe + some that cross over)
+UPDATE elements SET tags = array_append(tags, 'couple')
+WHERE texte ~* 'son ex|ses ex|son/sa partenaire|premier date|premier soir|stalker|ghoste|sexting|nude|porno|chaussettes.*amour|coucher avec|draguer.*(collègu|boss)|relation longue distance|polyamour';
+
+-- ─── Step 3: Move sexual metiers behaviors → sexe ──────────────────────────────
+UPDATE elements SET categorie = 'sexe', updated_at = NOW()
+WHERE categorie = 'metiers'
+AND texte ~* 'coucher avec.*(boss|chef)|draguer.*(collègu|boss|chef)';
+
+-- ─── Step 4: Move all remaining metiers → quotidien ───────────────────────────
+UPDATE elements SET categorie = 'quotidien', updated_at = NOW()
+WHERE categorie = 'metiers';
+
+-- ─── Step 5: Update CHECK constraint ──────────────────────────────────────────
+ALTER TABLE elements DROP CONSTRAINT IF EXISTS elements_categorie_check;
+ALTER TABLE elements ADD CONSTRAINT elements_categorie_check
+  CHECK (categorie IN ('sexe', 'quotidien'));
+
+-- ─── Verify ────────────────────────────────────────────────────────────────────
+DO $$
+DECLARE
+  remaining_metiers int;
+BEGIN
+  SELECT COUNT(*) INTO remaining_metiers FROM elements WHERE categorie = 'metiers';
+  IF remaining_metiers > 0 THEN
+    RAISE EXCEPTION 'Migration 015 FAILED: % elements still have metiers category', remaining_metiers;
+  END IF;
+  RAISE NOTICE 'Migration 015 OK: 0 metiers elements remain';
+END $$;
+
+SELECT categorie, COUNT(*) AS count FROM elements GROUP BY categorie ORDER BY count DESC;
+SELECT unnest(tags) AS tag, COUNT(*) AS count
+  FROM elements WHERE tags != '{}'
+  GROUP BY tag ORDER BY count DESC;</div>
+                </div>
+
+                <div class="info">
+                    <strong>ℹ️ Option 2 : Supabase CLI</strong>
+                    <p style="margin-top: 8px;">Si tu préfères la ligne de commande :</p>
+                    <div class="command">
+                        <code>supabase db push</code>
+                        <button class="copy-btn" onclick="copyCommand(this)">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Verification -->
+            <div class="section">
+                <h2><span class="step-number">4</span> Vérification Post-Migration</h2>
+                
+                <p style="margin-bottom: 15px;">Après exécution, tu verras dans Supabase :</p>
+                <div class="sql-container">
+                    <div class="sql-header">
+                        <span>Vérification des Résultats</span>
+                    </div>
+                    <div class="sql-code" style="max-height: 200px;">-- Vérifier que 0 éléments restent avec métiers
+SELECT COUNT(*) FROM elements WHERE categorie = 'metiers';
+-- Résultat attendu: 0
+
+-- Voir la répartition des catégories
+SELECT categorie, COUNT(*) FROM elements GROUP BY categorie;
+-- Résultat attendu: sexe (100+), quotidien (200+)
+
+-- Voir les tags distribués
+SELECT unnest(tags) AS tag, COUNT(*) AS count 
+FROM elements WHERE tags != '{}' 
+GROUP BY tag ORDER BY count DESC;
+-- Tags attendus: metier (100+), couple (50+), argent (30+), etc.</div>
+                </div>
+
+                <div class="success">
+                    <strong>✓ Succès si :</strong>
+                    <ul style="margin-top: 8px;">
+                        <li>Aucun élément avec <code>categorie = 'metiers'</code></li>
+                        <li>Tous les éléments ont <code>categorie IN ('sexe', 'quotidien')</code></li>
+                        <li>Tags distribuées correctement sur ~200+ éléments</li>
+                        <li>Aucune erreur de contrainte CHECK</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 5: Next Steps -->
+            <div class="section">
+                <h2><span class="step-number">5</span> Prochaines Étapes</h2>
+                
+                <ol class="steps">
+                    <li>
+                        <strong>Exécute le SQL :</strong>
+                        <div class="dashboard-link" style="display: inline-block; text-decoration: none; margin: 10px 0;">
+                            Option 1 : Supabase Dashboard > SQL Editor
+                        </div>
+                        ou utilise <code>supabase db push</code> (Option 2)
+                    </li>
+                    <li>
+                        <strong>Vérifie les résultats :</strong>
+                        Exécute les requêtes de vérification en haut de cette section
+                    </li>
+                    <li>
+                        <strong>Test l'app :</strong>
+                        <ul style="margin-top: 8px;">
+                            <li>Mode dev (<code>npm run dev</code>) : mockData auto-migre, pas de changement visible</li>
+                            <li>Classement : tu peux filtrer par tag (ex: ?tag=metier)</li>
+                            <li>Admin : tu peux voir/éditer les tags sur les éléments</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Deploy :</strong>
+                        <code>git push origin main</code> → Vercel déploiera automatiquement
+                    </li>
+                </ol>
+
+                <div class="warning">
+                    <strong>⚠️ Important :</strong>
+                    <ul style="margin-top: 8px;">
+                        <li>Sauvegarde la migration SQL avant de l'exécuter (fichier présent dans <code>supabase/migrations/015_two_categories_with_tags.sql</code>)</li>
+                        <li>Prévois ~30 secondes pour la migration (dépend du nombre d'éléments)</li>
+                        <li>Les données ELO et votes ne sont PAS affectées</li>
+                        <li>La migration est <strong>idempotente</strong> : tu peux la relancer sans risque</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="section">
+                <h2><span class="step-number">6</span> Timeline du Projet</h2>
+                
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Phase</th>
+                            <th>Status</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Audit & Bug Fixes</strong></td>
+                            <td><span class="status complete">✓ Complété</span></td>
+                            <td>6 bugs fixés (commit 608b62f)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Design Architecture</strong></td>
+                            <td><span class="status complete">✓ Complété</span></td>
+                            <td>2 catégories + 11 tags sémantiques</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Code Implementation</strong></td>
+                            <td><span class="status complete">✓ Complété</span></td>
+                            <td>15 fichiers modifiés (commit 8c242da)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Database Migration</strong></td>
+                            <td><span class="status pending">⏳ En cours</span></td>
+                            <td>Migration SQL préparée, attente d'exécution</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Testing & Deployment</strong></td>
+                            <td><span class="status pending">⏳ À faire</span></td>
+                            <td>Test en prod + déploiement Vercel</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer>
+            <p>🎮 Red or Green • Migration 015 • Generated 14 juillet 2026</p>
+            <p style="margin-top: 10px;">Tous les fichiers de code et SQL sont prêts à l'emploi. Besoin d'aide ? Consulte la migration SQL ou les docs du projet.</p>
+        </footer>
+    </div>
+
+    <script>
+        function copySql() {
+            const sqlCode = document.getElementById('sql-code').textContent;
+            navigator.clipboard.writeText(sqlCode).then(() => {
+                const btn = document.getElementById('copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copié!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        function copyCommand(btn) {
+            const command = btn.previousElementSibling.textContent;
+            navigator.clipboard.writeText(command).then(() => {
+                const originalText = btn.textContent;
+                btn.textContent = '✓';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

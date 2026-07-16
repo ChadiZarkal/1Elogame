@@ -61,9 +61,9 @@ describe('GameModeMenu', () => {
   });
 
   it('affiche le label de la catégorie en mode thématique', () => {
-    const thematicSelection: GameModeSelection = { mode: 'thematique', category: 'metiers' };
+    const thematicSelection: GameModeSelection = { mode: 'thematique', category: 'quotidien' };
     render(<GameModeMenu currentSelection={thematicSelection} onSelectionChange={onSelectionChange} />);
-    expect(screen.getByText('Métiers')).toBeDefined();
+    expect(screen.getByText('Quotidien')).toBeDefined();
   });
 
   it('affiche le bouton "Revenir au mode classique" si filtre actif', () => {
