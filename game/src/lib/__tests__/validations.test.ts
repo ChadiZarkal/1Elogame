@@ -24,8 +24,12 @@ describe('categorieSchema', () => {
   it('accepte les catégories valides', () => {
     expect(categorieSchema.parse('sexe')).toBe('sexe');
     expect(categorieSchema.parse('quotidien')).toBe('quotidien');
-    expect(categorieSchema.parse('quotidien')).toBe('quotidien');
-    expect(categorieSchema.parse('quotidien')).toBe('quotidien');
+  });
+
+  it('rejette les anciennes catégories (metiers, bureau, lifestyle)', () => {
+    expect(() => categorieSchema.parse('metiers')).toThrow();
+    expect(() => categorieSchema.parse('bureau')).toThrow();
+    expect(() => categorieSchema.parse('lifestyle')).toThrow();
   });
 
   it('rejette les catégories invalides', () => {

@@ -96,9 +96,9 @@ describe('trackProfile', () => {
 
 describe('trackCategoryChange', () => {
   it('met à jour la catégorie', () => {
-    trackCategoryChange('metiers');
+    trackCategoryChange('quotidien');
     const stats = getCurrentSessionStats();
-    expect(stats.category).toBe('metiers');
+    expect(stats.category).toBe('quotidien');
   });
 });
 

@@ -124,7 +124,7 @@ describe('findCrossCategoryPairs', () => {
   it('trouve des paires de catégories différentes', () => {
     const elements = [
       createMockElement({ id: 'a', categorie: 'sexe' }),
-      createMockElement({ id: 'b', categorie: 'metiers' }),
+      createMockElement({ id: 'b', categorie: 'quotidien' }),
       createMockElement({ id: 'c', categorie: 'sexe' }),
     ];
     const pairs = findCrossCategoryPairs(elements, new Set(), emptyContext);
@@ -157,12 +157,12 @@ describe('findRandomPairs', () => {
 
 describe('toElementDTO', () => {
   it('extrait uniquement id, texte, categorie', () => {
-    const element = createMockElement({ id: 'test-1', texte: 'Hello', categorie: 'metiers' });
+    const element = createMockElement({ id: 'test-1', texte: 'Hello', categorie: 'quotidien' });
     const dto = toElementDTO(element);
     expect(dto).toEqual({
       id: 'test-1',
       texte: 'Hello',
-      categorie: 'metiers',
+      categorie: 'quotidien',
     });
     expect(Object.keys(dto)).toHaveLength(3);
   });
