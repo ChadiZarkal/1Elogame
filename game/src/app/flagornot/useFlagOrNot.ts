@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { trackAIRequest } from '@/lib/analytics';
-import type { GamePhase, JudgmentResult, HistoryItem, CommunitySubmission } from './constants';
+import type { GamePhase, JudgmentResult, HistoryItem, CommunitySubmission, FlagOrNotGender, FlagOrNotAge } from './constants';
 import { LOADING_PHRASES, PLACEHOLDERS, MIN_LOADING_MS, FALLBACK_SUGGESTIONS } from './constants';
 
 /**
@@ -10,8 +10,9 @@ import { LOADING_PHRASES, PLACEHOLDERS, MIN_LOADING_MS, FALLBACK_SUGGESTIONS } f
  * Keeps the page component purely presentational.
  */
 export function useFlagOrNot() {
-  const [phase, setPhase] = useState<GamePhase>('gender-select');
-  const [gender, setGender] = useState<'homme' | 'femme' | 'autre' | null>(null);
+  const [phase, setPhase] = useState<GamePhase>('profile-select');
+  const [gender, setGender] = useState<FlagOrNotGender | null>(null);
+  const [age, setAge] = useState<FlagOrNotAge | null>(null);
   const [input, setInput] = useState('');
   const [submittedText, setSubmittedText] = useState('');
   const [result, setResult] = useState<JudgmentResult | null>(null);
@@ -90,10 +91,15 @@ export function useFlagOrNot() {
     const saved = localStorage.getItem('flagornot_show_justification');
     if (saved !== null) setShowJustification(saved === 'true');
 
-    // Restore gender from localStorage — skip selection if already set
+    // Restore profile from localStorage — skip selection if both gender and age are already set
     const savedGender = localStorage.getItem('flagornot_gender');
-    if (savedGender && ['homme', 'femme', 'autre'].includes(savedGender)) {
-      setGender(savedGender as 'homme' | 'femme' | 'autre');
+    const savedAge    = localStorage.getItem('flagornot_age');
+    if (
+      savedGender && ['homme', 'femme', 'autre'].includes(savedGender) &&
+      savedAge    && ['16-18', '19-22', '23-26', '27+'].includes(savedAge)
+    ) {
+      setGender(savedGender as FlagOrNotGender);
+      setAge(savedAge as FlagOrNotAge);
       setPhase('idle');
     }
 
@@ -169,7 +175,7 @@ export function useFlagOrNot() {
       const res = await fetch('/api/flagornot/judge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, private: privateMode, gender }),
+        body: JSON.stringify({ text, private: privateMode, gender, age }),
       });
       if (!res.ok) throw new Error('API error');
       const data: JudgmentResult = await res.json();
@@ -198,7 +204,7 @@ export function useFlagOrNot() {
       setPhase('reveal');
       if (navigator.vibrate) navigator.vibrate(40);
     }
-  }, [input, phase, privateMode, gender, fetchCommunitySubmissions, fetchGlobalCounts]);
+  }, [input, phase, privateMode, gender, age, fetchCommunitySubmissions, fetchGlobalCounts]);
 
   const handleNext = useCallback(() => {
     setResult(null);
@@ -241,9 +247,11 @@ export function useFlagOrNot() {
     return 'radial-gradient(ellipse at 50% 60%, rgba(50,50,50,0.08) 0%, #0A0A0A 70%)';
   }, [phase, result]);
 
-  const selectGender = useCallback((g: 'homme' | 'femme' | 'autre') => {
+  const selectGender = useCallback((g: FlagOrNotGender, a: FlagOrNotAge) => {
     setGender(g);
+    setAge(a);
     localStorage.setItem('flagornot_gender', g);
+    localStorage.setItem('flagornot_age', a);
     setPhase('idle');
   }, []);
 

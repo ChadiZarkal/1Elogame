@@ -13,7 +13,8 @@ const mockCommunityStore: CommunitySubmission[] = [];
 
 const JUSTIFICATION_COLUMNS = ['justification', 'justification_ai', 'justification_ia', 'justif'] as const;
 const GENDER_COLUMNS = ['gender', 'genre', 'sexe'] as const;
-const CORE_SUBMISSION_COLUMNS = new Set(['id', 'text', 'verdict', 'created_at', ...JUSTIFICATION_COLUMNS, ...GENDER_COLUMNS]);
+const AGE_COLUMNS = ['age', 'age_votant', 'tranche_age'] as const;
+const CORE_SUBMISSION_COLUMNS = new Set(['id', 'text', 'verdict', 'created_at', ...JUSTIFICATION_COLUMNS, ...GENDER_COLUMNS, ...AGE_COLUMNS]);
 const EMBEDDED_META_MARKER = '\n<<<ORACLE_META>>>';
 
 function hasMissingColumnError(message: string | null | undefined, columnName: string): boolean {
@@ -32,6 +33,9 @@ function hasAnyMissingOptionalColumnError(message: string | null | undefined): b
     if (hasMissingColumnError(message, column)) return true;
   }
   for (const column of GENDER_COLUMNS) {
+    if (hasMissingColumnError(message, column)) return true;
+  }
+  for (const column of AGE_COLUMNS) {
     if (hasMissingColumnError(message, column)) return true;
   }
   return false;
@@ -168,53 +172,66 @@ function buildInsertPayloads(
   verdict: 'red' | 'green',
   justification?: string,
   gender?: 'homme' | 'femme' | 'autre',
+  age?: '16-18' | '19-22' | '23-26' | '27+',
 ): Array<Record<string, unknown>> {
   const payloads: Array<Record<string, unknown>> = [];
-  const basePayload: Record<string, unknown> = {
-    text,
-    verdict,
-  };
+  const basePayload: Record<string, unknown> = { text, verdict };
+
+  // Best payload: all optional fields together
+  if (justification && gender && age) {
+    for (const jCol of JUSTIFICATION_COLUMNS) {
+      for (const gCol of GENDER_COLUMNS) {
+        for (const aCol of AGE_COLUMNS) {
+          payloads.push({ ...basePayload, [jCol]: justification, [gCol]: gender, [aCol]: age });
+        }
+      }
+    }
+  }
 
   if (justification && gender) {
-    for (const justificationColumn of JUSTIFICATION_COLUMNS) {
-      for (const genderColumn of GENDER_COLUMNS) {
-        payloads.push({
-          ...basePayload,
-          [justificationColumn]: justification,
-          [genderColumn]: gender,
-        });
+    for (const jCol of JUSTIFICATION_COLUMNS) {
+      for (const gCol of GENDER_COLUMNS) {
+        payloads.push({ ...basePayload, [jCol]: justification, [gCol]: gender });
+      }
+    }
+  }
+
+  if (justification && age) {
+    for (const jCol of JUSTIFICATION_COLUMNS) {
+      for (const aCol of AGE_COLUMNS) {
+        payloads.push({ ...basePayload, [jCol]: justification, [aCol]: age });
       }
     }
   }
 
   if (justification) {
-    for (const justificationColumn of JUSTIFICATION_COLUMNS) {
-      payloads.push({
-        ...basePayload,
-        [justificationColumn]: justification,
-      });
+    for (const jCol of JUSTIFICATION_COLUMNS) {
+      payloads.push({ ...basePayload, [jCol]: justification });
+    }
+  }
+
+  if (gender && age) {
+    for (const gCol of GENDER_COLUMNS) {
+      for (const aCol of AGE_COLUMNS) {
+        payloads.push({ ...basePayload, [gCol]: gender, [aCol]: age });
+      }
     }
   }
 
   if (gender) {
-    for (const genderColumn of GENDER_COLUMNS) {
-      payloads.push({
-        ...basePayload,
-        [genderColumn]: gender,
-      });
+    for (const gCol of GENDER_COLUMNS) {
+      payloads.push({ ...basePayload, [gCol]: gender });
     }
   }
 
-  if (justification || gender) {
-    const textWithEmbeddedMeta = encodeTextWithEmbeddedMeta(text, justification, gender);
-    if (textWithEmbeddedMeta.length <= MAX_FLAGORNOT_TEXT_LENGTH) {
-      payloads.push({
-        ...basePayload,
-        text: textWithEmbeddedMeta,
-      });
+  if (age) {
+    for (const aCol of AGE_COLUMNS) {
+      payloads.push({ ...basePayload, [aCol]: age });
     }
   }
 
+  // Last resort: base payload only (no optional data)
+  // Logged as warning to detect DB schema issues early
   payloads.push(basePayload);
   return payloads;
 }
@@ -237,7 +254,13 @@ export async function getRecentSubmissions(limit = 20): Promise<CommunitySubmiss
 }
 
 /** Save a new community submission. */
-export async function saveSubmission(text: string, verdict: 'red' | 'green', justification?: string, gender?: 'homme' | 'femme' | 'autre'): Promise<CommunitySubmission> {
+export async function saveSubmission(
+  text: string,
+  verdict: 'red' | 'green',
+  justification?: string,
+  gender?: 'homme' | 'femme' | 'autre',
+  age?: '16-18' | '19-22' | '23-26' | '27+',
+): Promise<CommunitySubmission> {
   const sanitized = sanitizeText(text, MAX_FLAGORNOT_TEXT_LENGTH);
 
   if (isMockMode()) {
@@ -258,14 +281,19 @@ export async function saveSubmission(text: string, verdict: 'red' | 'green', jus
   const { createServerClient, typedInsert } = await import('@/lib/supabase');
   const supabase = createServerClient();
 
-  const payloads = buildInsertPayloads(sanitized, verdict, justification, gender);
+  const payloads = buildInsertPayloads(sanitized, verdict, justification, gender, age);
   let lastOptionalColumnError: string | null = null;
   let inserted = false;
 
-  for (const payload of payloads) {
+  for (let i = 0; i < payloads.length; i++) {
+    const payload = payloads[i];
+    const isLastPayload = i === payloads.length - 1;
     const insertResult = await typedInsert(supabase, 'flagornot_submissions', payload);
 
     if (!insertResult.error) {
+      if (isLastPayload && (justification || gender || age)) {
+        console.error('[FlagOrNot] ⚠️ Saved submission WITHOUT justification/gender/age — DB columns missing? Run migrations 011, 012, 016.');
+      }
       inserted = true;
       break;
     }

@@ -72,11 +72,12 @@ async function persistSubmissionSafely(
   result: JudgeResult,
   isPrivate: boolean,
   gender?: 'homme' | 'femme' | 'autre',
+  age?: '16-18' | '19-22' | '23-26' | '27+',
 ): Promise<PersistenceResult> {
   if (isPrivate) return { persisted: false };
 
   try {
-    await saveSubmission(text, result.verdict, result.justification, gender);
+    await saveSubmission(text, result.verdict, result.justification, gender, age);
     return { persisted: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
@@ -192,7 +193,8 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   const body = await request.json();
   const rawText = body?.text?.trim();
   const isPrivate = body?.private === true;
-  const gender = ['homme', 'femme', 'autre'].includes(body?.gender) ? body.gender : undefined;
+  const gender = ['homme', 'femme', 'autre'].includes(body?.gender) ? body.gender as 'homme' | 'femme' | 'autre' : undefined;
+  const age = ['16-18', '19-22', '23-26', '27+'].includes(body?.age) ? body.age as '16-18' | '19-22' | '23-26' | '27+' : undefined;
 
   if (!rawText || typeof rawText !== 'string') {
     return apiError('VALIDATION_ERROR', 'Le champ "text" est requis.', 400);
@@ -215,7 +217,7 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   for (const { name, fn } of providers) {
     try {
       const result = await fn();
-      const persistence = await persistSubmissionSafely(text, result, isPrivate, gender);
+      const persistence = await persistSubmissionSafely(text, result, isPrivate, gender, age);
       return NextResponse.json({
         ...result,
         provider: name,
@@ -233,7 +235,7 @@ export const POST = withApiHandler(async (request: NextRequest) => {
 
   // Final fallback: local keyword analysis
   const result = judgeLocally(text);
-  const persistence = await persistSubmissionSafely(text, result, isPrivate, gender);
+  const persistence = await persistSubmissionSafely(text, result, isPrivate, gender, age);
   return NextResponse.json({
     ...result,
     provider: 'local',

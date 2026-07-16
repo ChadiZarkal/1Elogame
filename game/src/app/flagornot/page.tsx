@@ -80,7 +80,7 @@ export default function FlagOrNotPage() {
       {/* Main content */}
       <div className="relative z-10 flex-1 flex flex-col min-h-0">
         <AnimatePresence mode="wait">
-          {phase === 'gender-select' && (
+          {phase === 'profile-select' && (
             <GenderSelect onSelect={selectGender} />
           )}
 

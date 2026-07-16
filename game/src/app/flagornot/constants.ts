@@ -2,7 +2,10 @@
  * Types and constants for the Flag or Not game.
  */
 
-export type GamePhase = 'gender-select' | 'idle' | 'loading' | 'reveal';
+export type GamePhase = 'profile-select' | 'idle' | 'loading' | 'reveal';
+
+export type FlagOrNotGender = 'homme' | 'femme' | 'autre';
+export type FlagOrNotAge = '16-18' | '19-22' | '23-26' | '27+';
 
 export interface JudgmentResult {
   verdict: 'red' | 'green';
