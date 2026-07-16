@@ -1,12 +1,16 @@
 -- Migration 015: Reduce to 2 categories (sexe, quotidien) + add tags system
--- Date: 14 juillet 2026
+-- Date: 16 juillet 2026 (UPDATED - handles real production categories)
+--
+-- Context: Production DB has categories: sexe, quotidien, bureau, lifestyle
+-- (migration 010 was never applied - bureau/lifestyle remain from original schema)
 --
 -- Changes:
 -- 1. Add tags text[] column with GIN index
 -- 2. Auto-tag all elements by content pattern
--- 3. Move sexual/romantic metiers elements → sexe
--- 4. Move all remaining metiers elements → quotidien
--- 5. Update CHECK constraint to allow only (sexe, quotidien)
+-- 3. Move sexual/romantic bureau elements → sexe
+-- 4. Move all remaining bureau elements → quotidien
+-- 5. Move all lifestyle elements → quotidien
+-- 6. Update CHECK constraint to allow only (sexe, quotidien)
 
 -- ─── Step 1: tags column ───────────────────────────────────────────────────────
 ALTER TABLE elements ADD COLUMN IF NOT EXISTS tags text[] NOT NULL DEFAULT '{}';
@@ -14,8 +18,8 @@ CREATE INDEX IF NOT EXISTS elements_tags_gin ON elements USING GIN(tags);
 
 -- ─── Step 2: Tag existing elements by content ──────────────────────────────────
 
--- All metiers elements → tag 'metier'
-UPDATE elements SET tags = array_append(tags, 'metier') WHERE categorie = 'metiers';
+-- All bureau elements (workplace) → tag 'metier'
+UPDATE elements SET tags = array_append(tags, 'metier') WHERE categorie IN ('bureau', 'metiers');
 
 -- Hygiene
 UPDATE elements SET tags = array_append(tags, 'hygiene')
@@ -53,14 +57,18 @@ WHERE texte ~* 'politicien|lobbyi|militant|diplomate|huissier|inspecteur des imp
 UPDATE elements SET tags = array_append(tags, 'couple')
 WHERE texte ~* 'son ex|ses ex|son/sa partenaire|premier date|premier soir|stalker|ghoste|sexting|nude|porno|chaussettes.*amour|coucher avec|draguer.*(collègu|boss)|relation longue distance|polyamour';
 
--- ─── Step 3: Move sexual metiers behaviors → sexe ──────────────────────────────
+-- ─── Step 3: Move sexual bureau behaviors → sexe ────────────────────────────────
 UPDATE elements SET categorie = 'sexe', updated_at = NOW()
-WHERE categorie = 'metiers'
+WHERE categorie IN ('bureau', 'metiers')
 AND texte ~* 'coucher avec.*(boss|chef)|draguer.*(collègu|boss|chef)';
 
--- ─── Step 4: Move all remaining metiers → quotidien ───────────────────────────
+-- ─── Step 4: Move all remaining bureau/metiers → quotidien ───────────────────────
 UPDATE elements SET categorie = 'quotidien', updated_at = NOW()
-WHERE categorie = 'metiers';
+WHERE categorie IN ('bureau', 'metiers');
+
+-- ─── Step 4b: Move lifestyle → quotidien ──────────────────────────────────────────
+UPDATE elements SET categorie = 'quotidien', updated_at = NOW()
+WHERE categorie = 'lifestyle';
 
 -- ─── Step 5: Update CHECK constraint ──────────────────────────────────────────
 ALTER TABLE elements DROP CONSTRAINT IF EXISTS elements_categorie_check;
@@ -70,13 +78,13 @@ ALTER TABLE elements ADD CONSTRAINT elements_categorie_check
 -- ─── Verify ────────────────────────────────────────────────────────────────────
 DO $$
 DECLARE
-  remaining_metiers int;
+  remaining_invalid int;
 BEGIN
-  SELECT COUNT(*) INTO remaining_metiers FROM elements WHERE categorie = 'metiers';
-  IF remaining_metiers > 0 THEN
-    RAISE EXCEPTION 'Migration 015 FAILED: % elements still have metiers category', remaining_metiers;
+  SELECT COUNT(*) INTO remaining_invalid FROM elements WHERE categorie NOT IN ('sexe', 'quotidien');
+  IF remaining_invalid > 0 THEN
+    RAISE EXCEPTION 'Migration 015 FAILED: % elements still have invalid category', remaining_invalid;
   END IF;
-  RAISE NOTICE 'Migration 015 OK: 0 metiers elements remain';
+  RAISE NOTICE 'Migration 015 OK: all elements have valid categories';
 END $$;
 
 SELECT categorie, COUNT(*) AS count FROM elements GROUP BY categorie ORDER BY count DESC;
