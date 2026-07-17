@@ -59,8 +59,8 @@ interface PersistedSessionState {
   sessionSnapshot: SessionData | null;
 }
 
-const FLASHFLAG_SESSION_STATE_VERSION = 1;
-const FLASHFLAG_SESSION_STATE_PREFIX = 'flashflag_session_state_v1:';
+const FLASHFLAG_SESSION_STATE_VERSION = 2;
+const FLASHFLAG_SESSION_STATE_PREFIX = 'flashflag_session_state_v2:';
 const FLASHFLAG_LAST_SESSION_KEY = 'flashflag_last_session_v1';
 
 function buildSessionStateStorageKey(code: string): string {
@@ -124,7 +124,86 @@ function decodeBase64Url(token: string): string {
   return atob(padded);
 }
 
-function parseInlineSessionFromHash(hash: string): SessionData | null {
+function decodeHtmlEntities(input: string): string {
+  return input
+    .replace(/&#39;|&#x27;|&apos;/gi, "'")
+    .replace(/&quot;/gi, '"')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>');
+}
+
+function normalizeFrenchApostrophes(input: string): string {
+  return decodeHtmlEntities(input)
+    .replace(/[’`]/g, "'")
+    .replace(/\b([cdjlmnstCDJLMNST])\s+(?=[aeiouhyAEIOUHY])/g, "$1'")
+    .replace(/\b([Qq])u\s+(?=[aeiouhyAEIOUHY])/g, "$1u'")
+    .replace(/\b([Ll])orsqu\s+(?=[aeiouhyAEIOUHY])/g, "$1orsqu'")
+    .replace(/\b([Pp])uisqu\s+(?=[aeiouhyAEIOUHY])/g, "$1uisqu'")
+    .replace(/\b([Jj])usqu\s+(?=[aeiouhyAEIOUHY])/g, "$1usqu'");
+}
+
+function createSeedFromCode(code: string): number {
+  let hash = 2166136261;
+  for (let index = 0; index < code.length; index += 1) {
+    hash ^= code.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function createSeededRandom(seed: number): () => number {
+  return () => {
+    let value = seed += 0x6D2B79F5;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffleWithRandom<T>(items: T[], random: () => number): T[] {
+  const copy = [...items];
+
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+  }
+
+  return copy;
+}
+
+function prepareSessionData(source: SessionData, code: string): SessionData {
+  const random = createSeededRandom(createSeedFromCode(code));
+
+  const normalizedQuestions = source.test.questions.map((question) => ({
+    ...question,
+    text: normalizeFrenchApostrophes(question.text),
+    options: question.options.map((option) => ({
+      ...option,
+      text: normalizeFrenchApostrophes(option.text),
+    })),
+  }));
+
+  const shuffledQuestions = shuffleWithRandom(normalizedQuestions, random).map((question) => ({
+    ...question,
+    options: shuffleWithRandom(question.options, random),
+  }));
+
+  return {
+    ...source,
+    test: {
+      ...source.test,
+      questions: shuffledQuestions,
+    },
+    answers: source.answers.map((answer) => ({
+      ...answer,
+      question_text: normalizeFrenchApostrophes(answer.question_text),
+      selected_option: answer.selected_option ? normalizeFrenchApostrophes(answer.selected_option) : null,
+    })),
+  };
+}
+
+function parseInlineSessionFromHash(hash: string, code: string): SessionData | null {
   const marker = 'payload=';
   const index = hash.indexOf(marker);
   if (index === -1) return null;
@@ -144,7 +223,7 @@ function parseInlineSessionFromHash(hash: string): SessionData | null {
       return null;
     }
 
-    return {
+    const sessionData: SessionData = {
       status: 'pending',
       mode: parsed.mode,
       sourceType: parsed.sourceType,
@@ -166,6 +245,8 @@ function parseInlineSessionFromHash(hash: string): SessionData | null {
       },
       answers: [],
     };
+
+    return prepareSessionData(sessionData, code);
   } catch {
     return null;
   }
@@ -338,7 +419,7 @@ export default function FlashFlagSessionPage() {
     if (!hasHydratedState) return;
 
     if (typeof window !== 'undefined' && window.location.hash.includes('payload=')) {
-      const inlineSession = parseInlineSessionFromHash(window.location.hash);
+      const inlineSession = parseInlineSessionFromHash(window.location.hash, code);
       if (inlineSession) {
         setSession((prev) => prev || inlineSession);
         setLoading(false);
@@ -358,7 +439,7 @@ export default function FlashFlagSessionPage() {
         if (!ok || !json.success) throw new Error(json.error?.message || 'Session introuvable');
         if (!active) return;
 
-        const loaded = json.data as SessionData;
+        const loaded = prepareSessionData(json.data as SessionData, code);
         setSession(loaded);
         setError('');
 
