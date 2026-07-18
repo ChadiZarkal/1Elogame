@@ -23,6 +23,12 @@ export const metadata: Metadata = {
       'Choisis entre deux comportements lequel est le pire Red Flag. Gratuit et anonyme.',
     url: '/redflag',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Red Flag — Le party game qui fait débat 🚩',
+    description:
+      'Choisis entre deux comportements lequel est le pire Red Flag. Gratuit et anonyme.',
+  },
   alternates: { canonical: '/redflag' },
 };
 

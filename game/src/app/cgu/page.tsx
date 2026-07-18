@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: "Conditions Générales d'Utilisation",
-  robots: { index: false, follow: false },
+  robots: { index: false, follow: true },
 };
 
 export default function CGUPage() {

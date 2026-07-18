@@ -18,6 +18,11 @@ export const metadata: Metadata = {
     description: 'Choisis entre deux comportements : lequel est le plus gros Red Flag ? Un party game addictif et gratuit.',
     url: '/jeu',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Red or Green — Quel est le plus gros Red Flag ?',
+    description: 'Choisis entre deux comportements : lequel est le plus gros Red Flag ? Un party game addictif et gratuit.',
+  },
   alternates: { canonical: '/jeu' },
 };
 

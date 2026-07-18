@@ -17,6 +17,11 @@ export const metadata: Metadata = {
     description: 'Quels sont les pires Red Flags selon la communauté ? Découvre le classement en temps réel.',
     url: '/classement',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Classement Red Flag — Top des pires comportements',
+    description: 'Quels sont les pires Red Flags selon la communauté ? Découvre le classement en temps réel.',
+  },
   alternates: { canonical: '/classement' },
 };
 

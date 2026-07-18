@@ -17,6 +17,11 @@ export const metadata: Metadata = {
     description: 'Soumets n\'importe quoi et découvre si c\'est un Red Flag ou un Green Flag. Rejoins la communauté !',
     url: '/flagornot',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Oracle — Red Flag ou Green Flag ?',
+    description: 'Soumets n\'importe quoi et découvre si c\'est un Red Flag ou un Green Flag. Rejoins la communauté !',
+  },
   alternates: { canonical: '/flagornot' },
 };
 

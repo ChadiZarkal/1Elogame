@@ -18,6 +18,12 @@ export const metadata: Metadata = {
       'Évalue ta situation avec nos outils anonymes : violentomètre, consentomètre, harcèlomètre et plus. Gratuit et confidentiel.',
     url: '/ressources',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Violentomètre & Consentomètre — Outils d\'auto-évaluation gratuits',
+    description:
+      'Évalue ta situation avec nos outils anonymes : violentomètre, consentomètre, harcèlomètre et plus. Gratuit et confidentiel.',
+  },
   alternates: { canonical: '/ressources' },
 };
 
