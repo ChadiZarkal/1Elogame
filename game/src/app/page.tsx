@@ -487,6 +487,18 @@ export default function HubPage() {
                   </div>
                   <ArrowRight size={14} className="text-[#10B981] opacity-70 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
+
+                <Link
+                  href="/guide"
+                  onClick={() => { handleTap(); setSafeZoneOpen(false); }}
+                  className="group flex items-center justify-between rounded-xl bg-[#12241C]/40 border border-[#10B981]/15 px-4 py-3.5 text-xs font-semibold text-[#D1FAE5] transition hover:bg-[#153427] hover:border-[#10B981]/30"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-base select-none">🏳️</span>
+                    <span className="font-bold">Guide des flags : Green, Red, Black...</span>
+                  </div>
+                  <ArrowRight size={14} className="text-[#10B981] opacity-70 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
               </div>
 
               <div className="mt-6 border-t border-white/4 pt-4 text-center">
