@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { ArrowRight, ExternalLink, Shield, Trophy, Flame, HelpCircle, Activity, Sparkles, MessageSquare, Info, X, Zap, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHaptics } from '@/lib/hooks';
+import { AdBanner } from '@/components/ads/AdBanner';
 
 type PersonaKey = 'redflag' | 'group' | 'dating' | 'doubt';
 
@@ -592,6 +593,15 @@ export default function HubPage() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Google AdSense Banner - Bottom of page */}
+      <div className="relative z-20 w-full mt-8 mb-4 px-4">
+        <AdBanner 
+          slot="3749254789" 
+          format="responsive"
+          className="w-full"
+        />
+      </div>
 
     </div>
   );
