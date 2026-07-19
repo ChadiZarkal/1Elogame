@@ -16,6 +16,7 @@ export interface Element {
   categorie: Categorie;
   niveau_provocation: 1 | 2 | 3 | 4;
   actif: boolean;
+  is_starred?: boolean;
   
   // ELO Scores
   elo_global: number;

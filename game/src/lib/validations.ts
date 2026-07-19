@@ -31,6 +31,7 @@ export const elementUpdateSchema = z.object({
   categorie: categorieSchema.optional(),
   niveau_provocation: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
   actif: z.boolean().optional(),
+  is_starred: z.boolean().optional(),
   tags: z.array(tagSchema).max(10).optional(),
 });
 
