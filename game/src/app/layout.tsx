@@ -74,6 +74,7 @@ export const metadata: Metadata = {
   classification: 'Entertainment',
   other: {
     'google-site-verification': process.env.GOOGLE_SITE_VERIFICATION || '',
+    'google-adsense-account': `ca-pub-${process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ID?.replace('ca-pub-', '') || '9698016157098549'}`,
   },
 };
 
