@@ -2,6 +2,12 @@
 
 import { useEffect } from 'react';
 
+declare global {
+  interface Window {
+    adsbygoogle?: Array<Record<string, unknown>>;
+  }
+}
+
 interface AdBannerProps {
   slot: string;
   format?: 'responsive' | 'horizontal' | 'vertical' | 'rectangle';
@@ -13,30 +19,35 @@ export function AdBanner({
   format = 'responsive',
   className = ''
 }: AdBannerProps) {
+  const rawAdSenseId = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ID?.trim() || '';
+  const adSenseId = rawAdSenseId
+    ? (rawAdSenseId.startsWith('ca-pub-') ? rawAdSenseId : `ca-pub-${rawAdSenseId}`)
+    : '';
+
   useEffect(() => {
+    if (!adSenseId) {
+      return;
+    }
+
     try {
-      // Vérifier que adsbygoogle est disponible
-      if ((window as any).adsbygoogle === undefined) {
-        (window as any).adsbygoogle = [];
+      if (window.adsbygoogle === undefined) {
+        window.adsbygoogle = [];
       }
-      // Pusher une nouvelle annonce à traiter
-      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch (e) {
       console.error('AdSense error:', e);
     }
-  }, [slot]);
+  }, [adSenseId, slot]);
 
-  // Ne pas afficher si pas de Publisher ID configuré
-  const adSenseId = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ID;
   if (!adSenseId) {
     return null;
   }
 
   return (
-    <div className={`ad-container ${className}`}>
+    <div className={`ad-container ${className}`} aria-label="Publicite Google AdSense">
       <ins
         className="adsbygoogle"
-        style={{ display: 'block' }}
+        style={{ display: 'block', minHeight: 90 }}
         data-ad-client={adSenseId}
         data-ad-slot={slot}
         data-ad-format={format}

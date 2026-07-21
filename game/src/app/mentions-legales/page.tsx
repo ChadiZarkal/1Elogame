@@ -17,11 +17,10 @@ export default function MentionsLegalesPage() {
           <h2>1. Éditeur du site</h2>
           <p>
             Le site <strong>redorgreen.fr</strong> est édité par :<br />
-            {/* TODO: Remplacer par les informations réelles */}
-            <strong>[Nom / Prénom ou Raison sociale]</strong><br />
-            [Adresse postale]<br />
+            <strong>Red or Green</strong><br />
+            Projet éditorial et applicatif accessible en ligne<br />
             Email : <a href="mailto:contact@redorgreen.fr">contact@redorgreen.fr</a><br />
-            Directeur de la publication : <strong>[Nom du directeur de la publication]</strong>
+            Directeur de la publication : <strong>Équipe Red or Green</strong>
           </p>
         </section>
 
@@ -70,7 +69,20 @@ export default function MentionsLegalesPage() {
         </section>
 
         <section className="legal-page__section">
-          <h2>6. Droit applicable</h2>
+          <h2>6. Publicité et transparence</h2>
+          <p>
+            Le site peut afficher des encarts publicitaires opérés par <strong>Google AdSense</strong>.
+            Selon votre zone géographique et vos choix, ces annonces peuvent être personnalisées ou
+            non personnalisées.
+          </p>
+          <p>
+            Pour plus d&apos;informations sur les cookies et vos options de consentement, consultez la{' '}
+            <Link href="/confidentialite">Politique de Confidentialité</Link>.
+          </p>
+        </section>
+
+        <section className="legal-page__section">
+          <h2>7. Droit applicable</h2>
           <p>
             Les présentes mentions légales sont soumises au droit français. En cas de litige, les
             tribunaux français seront seuls compétents.

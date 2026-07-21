@@ -26,9 +26,12 @@ export default function ConfidentialitePage() {
         <section className="legal-page__section">
           <h2>2. Responsable du traitement</h2>
           <p>
-            {/* TODO: Remplacer par les informations réelles */}
-            <strong>[Nom / Prénom ou Raison sociale]</strong><br />
+            <strong>Red or Green</strong> (éditeur du site redorgreen.fr)<br />
             Email : <a href="mailto:contact@redorgreen.fr">contact@redorgreen.fr</a>
+          </p>
+          <p>
+            Pour toute demande relative au traitement des données personnelles, vous pouvez nous
+            contacter à cette adresse.
           </p>
         </section>
 
@@ -46,6 +49,7 @@ export default function ConfidentialitePage() {
             <li><strong>Données de session</strong> — durée de visite, pages consultées, événements d&apos;interaction (analytics internes).</li>
             <li><strong>Adresse IP</strong> — utilisée uniquement pour la limitation de débit (rate limiting) afin de protéger le service contre les abus. Non stockée en base de données.</li>
             <li><strong>Données techniques</strong> — type de navigateur, système d&apos;exploitation, taille d&apos;écran (via Vercel Analytics et Speed Insights).</li>
+            <li><strong>Données de consentement publicitaire</strong> — choix de consentement (accepter, refuser, personnaliser) nécessaires pour appliquer vos préférences de publicité.</li>
           </ul>
 
           <h3>3.3 Stockage local (localStorage)</h3>
@@ -69,6 +73,7 @@ export default function ConfidentialitePage() {
               <tr><td>Analyse de l&apos;Oracle par IA</td><td>Consentement (soumission volontaire)</td></tr>
               <tr><td>Analytics et amélioration du service</td><td>Intérêt légitime</td></tr>
               <tr><td>Protection contre les abus (rate limiting)</td><td>Intérêt légitime</td></tr>
+              <tr><td>Diffusion de publicités (Google AdSense)</td><td>Consentement (lorsqu&apos;exigé) / Intérêt légitime selon zone géographique et paramétrage</td></tr>
             </tbody>
           </table>
         </section>
@@ -124,19 +129,43 @@ export default function ConfidentialitePage() {
           </p>
           <ul>
             <li><strong>Cookies essentiels</strong> — nécessaires au fonctionnement du site (session, préférences).</li>
-            <li><strong>Analytics</strong> — Vercel Analytics et Speed Insights pour mesurer la performance du site. Ces outils utilisent des cookies anonymisés.</li>
+            <li><strong>Analytics</strong> — Vercel Analytics et Speed Insights pour mesurer la performance du site.</li>
+            <li><strong>Publicité</strong> — Google AdSense peut utiliser des cookies/identifiants pour afficher des annonces et limiter la répétition publicitaire.</li>
           </ul>
           <p>
-            Aucun cookie publicitaire ou de suivi tiers n&apos;est utilisé sur ce site.
+            Lorsque la réglementation locale l&apos;exige (notamment EEE, Royaume-Uni et Suisse),
+            l&apos;affichage d&apos;annonces personnalisées est conditionné à votre consentement via
+            une interface de gestion conforme au cadre de transparence et de consentement (TCF).
           </p>
           <p>
-            Vous pouvez configurer votre navigateur pour refuser les cookies. Cela n&apos;affectera
-            pas le fonctionnement principal du jeu.
+            Vous pouvez retirer ou modifier vos choix de consentement à tout moment depuis les
+            paramètres de confidentialité affichés sur le site. Vous pouvez aussi configurer votre
+            navigateur pour limiter les cookies.
+          </p>
+          <p>
+            Plus d&apos;informations sur la gestion des données publicitaires par Google :{' '}
+            <a href="https://policies.google.com/technologies/ads?hl=fr" target="_blank" rel="noopener noreferrer">
+              policies.google.com/technologies/ads
+            </a>.
           </p>
         </section>
 
         <section className="legal-page__section">
-          <h2>9. Sécurité</h2>
+          <h2>9. Partage avec des partenaires et sous-traitants</h2>
+          <p>
+            Nous partageons certaines données uniquement avec des prestataires techniques nécessaires
+            au fonctionnement du service (hébergement, analytique, diffusion publicitaire, base de
+            données), dans la limite de leurs besoins opérationnels.
+          </p>
+          <ul>
+            <li><strong>Google AdSense</strong> — diffusion et mesure publicitaire.</li>
+            <li><strong>Vercel</strong> — hébergement, logs techniques et mesures de performance.</li>
+            <li><strong>Supabase</strong> — stockage des données applicatives.</li>
+          </ul>
+        </section>
+
+        <section className="legal-page__section">
+          <h2>10. Sécurité</h2>
           <p>
             Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour
             protéger vos données, notamment :
@@ -150,7 +179,7 @@ export default function ConfidentialitePage() {
         </section>
 
         <section className="legal-page__section">
-          <h2>10. Mineurs</h2>
+          <h2>11. Mineurs</h2>
           <p>
             Ce site est destiné aux personnes de <strong>16 ans et plus</strong>.
             Les outils d&apos;auto-évaluation abordent des sujets sensibles (violence, consentement)

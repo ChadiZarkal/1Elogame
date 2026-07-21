@@ -116,7 +116,21 @@ export default function CGUPage() {
         </section>
 
         <section className="legal-page__section">
-          <h2>9. Propriété intellectuelle</h2>
+          <h2>9. Publicité et consentement</h2>
+          <p>
+            Le Service peut inclure des annonces publicitaires fournies par Google AdSense.
+            Selon votre zone géographique, le Service peut vous demander de choisir vos préférences
+            publicitaires (accepter, refuser, personnaliser) avant l&apos;affichage d&apos;annonces
+            personnalisées.
+          </p>
+          <p>
+            Vous pouvez modifier ces préférences à tout moment depuis les paramètres de
+            confidentialité disponibles sur le site.
+          </p>
+        </section>
+
+        <section className="legal-page__section">
+          <h2>10. Propriété intellectuelle</h2>
           <p>
             L&apos;ensemble du Service (code, design, textes, graphismes, mécaniques de jeu) est
             protégé par le droit de la propriété intellectuelle. Toute reproduction non autorisée
@@ -129,7 +143,7 @@ export default function CGUPage() {
         </section>
 
         <section className="legal-page__section">
-          <h2>10. Limitation de responsabilité</h2>
+          <h2>11. Limitation de responsabilité</h2>
           <p>
             Le Service est fourni « en l&apos;état ». L&apos;éditeur ne garantit pas la
             disponibilité permanente du Service ni l&apos;absence d&apos;erreurs.
@@ -141,7 +155,7 @@ export default function CGUPage() {
         </section>
 
         <section className="legal-page__section">
-          <h2>11. Modification des CGU</h2>
+          <h2>12. Modification des CGU</h2>
           <p>
             L&apos;éditeur se réserve le droit de modifier les présentes CGU à tout moment.
             Les utilisateurs seront informés des modifications par la mise à jour de la date
@@ -151,7 +165,7 @@ export default function CGUPage() {
         </section>
 
         <section className="legal-page__section">
-          <h2>12. Droit applicable et juridiction</h2>
+          <h2>13. Droit applicable et juridiction</h2>
           <p>
             Les présentes CGU sont régies par le droit français. Tout litige relatif à
             l&apos;interprétation ou à l&apos;exécution des présentes sera soumis aux
@@ -160,7 +174,7 @@ export default function CGUPage() {
         </section>
 
         <section className="legal-page__section">
-          <h2>13. Contact</h2>
+          <h2>14. Contact</h2>
           <p>
             Pour toute question concernant les présentes CGU, vous pouvez nous contacter à :{' '}
             <a href="mailto:contact@redorgreen.fr">contact@redorgreen.fr</a>
