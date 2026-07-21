@@ -199,11 +199,10 @@ export default function RootLayout({
             {/* Google AdSense - Property verification */}
             <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
             <link rel="preconnect" href="https://googleads.g.doubleclick.net" />
-            <Script
+            <script
               async
               src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adSenseClientId}`}
               crossOrigin="anonymous"
-              strategy="afterInteractive"
             />
           </>
         )}
