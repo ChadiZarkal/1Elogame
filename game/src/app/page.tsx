@@ -449,42 +449,18 @@ export default function HubPage() {
 
               <h3 className="text-lg font-black text-white">Besoin d&apos;aide ou d&apos;éclaircissement ?</h3>
               <p className="text-xs text-[#A7C5B8] leading-relaxed font-semibold mt-1">
-                Le respect n&apos;est pas négocable. Découvre nos outils interactifs gratuits pour évaluer la toxicité dans un couple, comprendre le consentement ou trouver des professionnels.
+                Le respect n&apos;est pas négociable. Retrouve un espace centralisé avec des outils interactifs, des repères utiles et des ressources d&apos;accompagnement.
               </p>
 
               <div className="mt-5 space-y-3">
-                <Link
-                  href="/ressources/violentometre"
-                  onClick={() => { handleTap(); setSafeZoneOpen(false); }}
-                  className="group flex items-center justify-between rounded-xl bg-[#12241C]/40 border border-[#10B981]/15 px-4 py-3.5 text-xs font-semibold text-[#D1FAE5] transition hover:bg-[#153427] hover:border-[#10B981]/30"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-base select-none">📈</span>
-                    <span className="font-bold">Violentomètre interactif : es-tu en danger ?</span>
-                  </div>
-                  <ArrowRight size={14} className="text-[#10B981] opacity-70 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-                
-                <Link
-                  href="/ressources/consentometre"
-                  onClick={() => { handleTap(); setSafeZoneOpen(false); }}
-                  className="group flex items-center justify-between rounded-xl bg-[#12241C]/40 border border-[#10B981]/15 px-4 py-3.5 text-xs font-semibold text-[#D1FAE5] transition hover:bg-[#153427] hover:border-[#10B981]/30"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-base select-none">🤝</span>
-                    <span className="font-bold">Consentomètre : décryptez vos envies</span>
-                  </div>
-                  <ArrowRight size={14} className="text-[#10B981] opacity-70 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-
                 <Link
                   href="/ressources"
                   onClick={() => { handleTap(); setSafeZoneOpen(false); }}
                   className="group flex items-center justify-between rounded-xl bg-[#12241C]/40 border border-[#10B981]/15 px-4 py-3.5 text-xs font-semibold text-[#D1FAE5] transition hover:bg-[#153427] hover:border-[#10B981]/30"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-base select-none">📚</span>
-                    <span className="font-bold">Dossiers d&apos;information & numéros d&apos;urgence</span>
+                    <span className="text-base select-none">🧭</span>
+                    <span className="font-bold">Violentomètre, interactif et autres tests</span>
                   </div>
                   <ArrowRight size={14} className="text-[#10B981] opacity-70 group-hover:translate-x-0.5 transition-transform" />
                 </Link>

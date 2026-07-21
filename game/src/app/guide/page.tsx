@@ -54,7 +54,7 @@ const FLAGS: FlagDef[] = [
     tagline: 'Signal neutre — à observer',
     badge: '○ Neutre',
     definition:
-      "Un White Flag est un comportement ni positif ni négatif, banal ou simplement ambigu. En soi, il n'est pas inquiétant. Mais une relation composée uniquement de White Flags peut manquer de profondeur ou de connexion réelle.",
+      "Un White Flag est un comportement neutre, explicable et sans charge négative. Il n'y a pas de jugement particulier à poser : ce n'est pas un mauvais indicateur.",
     colorPrimary: '#9CA3AF',
     colorBg: 'rgba(156,163,175,0.07)',
     colorBorder: 'rgba(156,163,175,0.28)',
@@ -68,8 +68,8 @@ const FLAGS: FlagDef[] = [
       "N'est ni très sociable ni asocial(e)",
     ],
     context:
-      "Beaucoup de White Flags ensemble peuvent indiquer une relation sans vraie connexion. Pas nécessairement dangereux, mais peut-être pas ce que tu recherches.",
-    tip: "Si tu ne vois que des White Flags, demande-toi si cette personne t'inspire vraiment quelque chose.",
+      "Dans un couple, un White Flag n'est généralement pas un sujet en soi. Tu peux le noter, puis passer à autre chose sans te prendre la tête.",
+    tip: "Ne suranalyse pas un White Flag isolé : concentre-toi surtout sur la dynamique globale de la relation.",
   },
   {
     id: 'orange',
@@ -102,7 +102,7 @@ const FLAGS: FlagDef[] = [
     tagline: "Signal d'alarme — action requise",
     badge: '❌ Ne pas ignorer',
     definition:
-      "Un Red Flag est un comportement sérieusement problématique : contrôle, manque de respect, manipulation ou schéma toxique. Il exige une réponse claire et ne doit pas être banalisé. Plusieurs Red Flags signalent une relation nocive.",
+      "Un Red Flag est un comportement réellement problématique : contrôle, manque de respect, manipulation ou schéma toxique. C'est sérieux, mais cela peut parfois se travailler si la personne reconnaît le problème et change concrètement.",
     colorPrimary: '#EF4444',
     colorBg: 'rgba(239,68,68,0.07)',
     colorBorder: 'rgba(239,68,68,0.3)',
@@ -116,7 +116,7 @@ const FLAGS: FlagDef[] = [
       "Les règles de la relation ne s'appliquent pas pareil pour les deux",
     ],
     context:
-      "Les Red Flags s'accumulent souvent progressivement. Si tu en identifies plusieurs ou si les comportements s'intensifient, ne l'ignore pas. Parles-en à quelqu'un de confiance.",
+      "Un Red Flag isolé mérite une discussion claire et des limites nettes. Ce qui devient vraiment nocif, c'est l'accumulation des Red Flags et leur intensification dans le temps.",
     tip: "Tu n'as pas besoin de justifier pourquoi un comportement te dérange. Ton ressenti compte.",
   },
   {
@@ -380,9 +380,9 @@ export default function GuidePage() {
             La nuance est essentielle
           </h2>
           <p style={{ color: '#9CA3AF', fontSize: 13, margin: 0, lineHeight: 1.65 }}>
-            Un comportement isolé ne définit pas une personne. Ces catégories sont des outils pour réfléchir,
-            pas des verdicts définitifs. Le contexte, la régularité et l&apos;ensemble du comportement comptent
-            autant que les exemples individuels.
+            Un drapeau isolé ne définit pas une personne. Ces catégories sont des repères pour réfléchir,
+            pas des verdicts définitifs. Ce qui pèse le plus dans une relation, c&apos;est l&apos;accumulation,
+            la fréquence et l&apos;évolution des comportements dans le temps.
           </p>
         </aside>
 
@@ -437,7 +437,7 @@ export default function GuidePage() {
         {/* Hidden SEO content for search engines */}
         <section className="sr-only" aria-label="Informations complémentaires">
           <h2>Red Flag définition</h2>
-          <p>Un red flag est un comportement d&apos;alerte dans une relation amoureuse, amicale ou professionnelle. Il signale un problème potentiel qui nécessite attention et conversation.</p>
+          <p>Un red flag est un comportement problématique dans une relation. Pris isolément, il peut parfois se travailler avec une vraie remise en question. Ce qui devient réellement nocif, c&apos;est l&apos;accumulation de red flags.</p>
           <h2>Green Flag définition</h2>
           <p>Un green flag est un signal positif dans une relation. Il indique un comportement sain, mature et respectueux. Parmi les green flags courants : communication ouverte, respect des limites, cohérence entre paroles et actes.</p>
           <h2>Black Flag signification</h2>
@@ -445,7 +445,7 @@ export default function GuidePage() {
           <h2>Orange Flag relation</h2>
           <p>Un orange flag est un signal d&apos;attention qui mérite une conversation. Moins grave qu&apos;un red flag, il indique quelque chose à surveiller et à éclaircir dans la relation.</p>
           <h2>White Flag couple</h2>
-          <p>Un white flag désigne un comportement neutre ou ambigu qui ne suscite ni inquiétude ni enthousiasme particulier dans une relation.</p>
+          <p>Un white flag désigne un comportement neutre, explicable et sans gravité. Ce n&apos;est pas un mauvais indicateur : dans une relation, ce n&apos;est généralement pas un sujet en soi.</p>
         </section>
 
       </div>

@@ -54,7 +54,7 @@ function GuideJsonLd() {
             name: "Qu'est-ce qu'un Red Flag ?",
             acceptedAnswer: {
               '@type': 'Answer',
-              text: "Un Red Flag est un comportement sérieusement problématique : contrôle, manque de respect, manipulation ou schéma toxique. Il exige une réponse claire et ne doit pas être ignoré ou banalisé.",
+              text: "Un Red Flag est un comportement réellement problématique : contrôle, manque de respect, manipulation ou schéma toxique. Pris isolément, il peut parfois se travailler avec une vraie remise en question, mais l'accumulation de Red Flags est nocive.",
             },
           },
           {
@@ -86,7 +86,7 @@ function GuideJsonLd() {
             name: "Qu'est-ce qu'un White Flag ?",
             acceptedAnswer: {
               '@type': 'Answer',
-              text: "Un White Flag est un comportement neutre ou ambigu qui ne suscite ni inquiétude ni enthousiasme. En soi, il n'est pas problématique, mais beaucoup ensemble peuvent indiquer un manque de connexion.",
+              text: "Un White Flag est un comportement neutre, explicable et sans charge négative. Ce n'est pas un mauvais indicateur : dans une relation, ce n'est généralement pas un sujet en soi.",
             },
           },
           {
