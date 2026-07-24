@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
+import { motion } from 'framer-motion';
 import { useGameStore, type PartySize } from '@/stores/gameStore';
 import { useOnlineStatus, useHaptics } from '@/lib/hooks';
 import { DuelInterface } from '@/components/game/DuelInterface';
@@ -350,14 +351,17 @@ export default function JouerPage() {
           </div>
         )}
         
-        {/* First duel hint */}
-        {duelCount < 3 && !showingResult && currentDuel && (
-          <div
+        {/* First duel hint — auto-fades after 3s */}
+        {duelCount === 0 && !showingResult && currentDuel && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: [0, 1, 1, 0] }}
+            transition={{ duration: 3.5, times: [0, 0.12, 0.7, 1], ease: 'easeInOut' }}
             className="absolute left-1/2 -translate-x-1/2 z-10 bg-[#DC2626]/90 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-red-900/30 pointer-events-none"
             style={{ top: `calc(max(12px, env(safe-area-inset-top)) + ${isOnline ? 56 : 88}px)` }}
           >
-            👆 Choisis le plus red flag 🚩
-          </div>
+            🚩 Votez pour l&apos;option la plus red flag
+          </motion.div>
         )}
 
         {showBackToLive && duelHistory.length > 0 && (
@@ -381,6 +385,8 @@ export default function JouerPage() {
               streak={streak}
               streakEmoji={streakEmoji}
               onNext={showNextDuel}
+              duelCount={duelCount}
+              totalDuels={partyConfig?.size}
             />
           </div>
         ) : (

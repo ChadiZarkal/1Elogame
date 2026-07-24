@@ -98,8 +98,11 @@ export function ProfileForm() {
             draggable={false}
           />
         </div>
-        <p className="text-sm font-medium" style={{ color: '#52525B' }}>
-          2 infos rapides avant de jouer
+        <p className="text-sm font-bold" style={{ color: '#EF4444' }}>
+          🚩 Votez pour le plus red flag
+        </p>
+        <p className="text-xs font-medium mt-1" style={{ color: '#52525B' }}>
+          2 infos rapides avant de commencer
         </p>
       </div>
       

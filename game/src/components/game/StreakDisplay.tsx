@@ -74,7 +74,7 @@ export function StreakDisplay({ streak, streakEmoji, duelCount }: StreakDisplayP
             className="font-bold text-sm"
             style={{ color: isMilestone ? '#FCA5A5' : '#F5F5F5' }}
           >
-            {streak} {streakEmoji}
+            Streak {streak} {streakEmoji}
           </span>
           {isMilestone && (
             <span

@@ -11,6 +11,8 @@ interface ResultDisplayProps {
   streak: number;
   streakEmoji: string;
   onNext: () => void;
+  duelCount?: number;
+  totalDuels?: number;
 }
 
 export function ResultDisplay({
@@ -19,6 +21,8 @@ export function ResultDisplay({
   streak,
   streakEmoji,
   onNext,
+  duelCount,
+  totalDuels,
 }: ResultDisplayProps) {
   const [showNextCta, setShowNextCta] = useState(false);
   const [canClickToAdvance, setCanClickToAdvance] = useState(false);
@@ -174,21 +178,6 @@ export function ResultDisplay({
       
       <div className="relative h-0 z-30 pointer-events-none">
         <div className="absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2">
-          <AnimatePresence>
-            {showNextCta && streak > 0 && (
-              <motion.div
-                className="rounded-full border border-white/30 bg-black/35 px-4 py-1.5 text-sm font-bold text-white backdrop-blur-md"
-                initial={{ opacity: 0, y: 8, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                transition={{ duration: 0.18 }}
-              >
-                Streak: {streak} {streakEmoji}
-                {result.streak.matched ? <span className="ml-2 text-[#34D399]">+1 🎯</span> : null}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
           <AnimatePresence mode="wait" initial={false}>
             {showNextCta ? (
               <motion.button
@@ -249,6 +238,23 @@ export function ResultDisplay({
           transition={{ duration: 1.5, repeat: Infinity }}
         >
           <span className="text-white/50 text-sm">Touchez pour continuer</span>
+        </motion.div>
+      )}
+
+      {/* Compteur de duels — bas droite */}
+      {duelCount !== undefined && totalDuels !== undefined && (
+        <motion.div
+          className="absolute z-30 pointer-events-none"
+          style={{ bottom: 'max(14px, env(safe-area-inset-bottom))', right: 14 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <div className="bg-black/40 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1">
+            <span className="text-white/80 text-xs font-bold">{duelCount}</span>
+            <span className="text-white/40 text-xs">/</span>
+            <span className="text-white/50 text-xs">{totalDuels}</span>
+          </div>
         </motion.div>
       )}
     </div>

@@ -112,6 +112,9 @@ export function ResultCard({ element, stats, flexValue, isOptimistic }: ResultCa
             <p className={`font-black text-white ${isMoreRedFlag ? 'text-4xl sm:text-5xl' : 'text-xl sm:text-2xl'}`}>
               <AnimatedPercent value={stats.percentage} delay={isMoreRedFlag ? 0.15 : 0.25} />
             </p>
+            <p className="text-white/60 text-[11px] sm:text-xs font-medium">
+              {isMoreRedFlag ? 'pensent que c\'est le plus red flag' : 'ont voté pour ça'}
+            </p>
             <p className="text-white/70 text-xs sm:text-sm">{formatNumber(stats.votes)} votes</p>
           </motion.div>
         )}

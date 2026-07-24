@@ -70,11 +70,12 @@ export default function RedFlagHome() {
           transition={{ delay: 0.4 }}
         >
           <p className="text-[#F5F5F5] text-lg leading-relaxed">
-            Entre deux choix, lequel est le plus gros{' '}
-            <strong className="text-[#DC2626]">Red Flag</strong> ?
+            Votez pour le plus{' '}
+            <strong className="text-[#DC2626]">red flag</strong>{' '}
+            des deux
           </p>
           <p className="text-[#A3A3A3] mt-2">
-            Découvre ce que pensent les autres et débat avec tes amis ! 🎉
+            et comparez votre avis à celui de la majorité 🚩
           </p>
         </motion.div>
 
