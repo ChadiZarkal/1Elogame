@@ -385,8 +385,6 @@ export default function JouerPage() {
               streak={streak}
               streakEmoji={streakEmoji}
               onNext={showNextDuel}
-              duelCount={duelCount}
-              totalDuels={partyConfig?.size}
             />
           </div>
         ) : (

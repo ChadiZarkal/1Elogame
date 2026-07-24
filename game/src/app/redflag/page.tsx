@@ -75,7 +75,7 @@ export default function RedFlagHome() {
             des deux
           </p>
           <p className="text-[#A3A3A3] mt-2">
-            et comparez votre avis à celui de la majorité 🚩
+            et découvrez quel pourcentage de la communauté est d&apos;accord avec vous 📊
           </p>
         </motion.div>
 

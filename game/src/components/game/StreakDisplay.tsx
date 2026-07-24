@@ -71,7 +71,7 @@ export function StreakDisplay({ streak, streakEmoji, duelCount }: StreakDisplayP
           }}
         >
           <span
-            className="font-bold text-sm"
+            className="font-bold text-xs sm:text-sm whitespace-nowrap"
             style={{ color: isMilestone ? '#FCA5A5' : '#F5F5F5' }}
           >
             Streak {streak} {streakEmoji}

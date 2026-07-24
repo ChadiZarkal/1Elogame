@@ -11,8 +11,6 @@ interface ResultDisplayProps {
   streak: number;
   streakEmoji: string;
   onNext: () => void;
-  duelCount?: number;
-  totalDuels?: number;
 }
 
 export function ResultDisplay({
@@ -21,8 +19,6 @@ export function ResultDisplay({
   streak,
   streakEmoji,
   onNext,
-  duelCount,
-  totalDuels,
 }: ResultDisplayProps) {
   const [showNextCta, setShowNextCta] = useState(false);
   const [canClickToAdvance, setCanClickToAdvance] = useState(false);
@@ -238,23 +234,6 @@ export function ResultDisplay({
           transition={{ duration: 1.5, repeat: Infinity }}
         >
           <span className="text-white/50 text-sm">Touchez pour continuer</span>
-        </motion.div>
-      )}
-
-      {/* Compteur de duels — bas droite */}
-      {duelCount !== undefined && totalDuels !== undefined && (
-        <motion.div
-          className="absolute z-30 pointer-events-none"
-          style={{ bottom: 'max(14px, env(safe-area-inset-bottom))', right: 14 }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <div className="bg-black/40 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1">
-            <span className="text-white/80 text-xs font-bold">{duelCount}</span>
-            <span className="text-white/40 text-xs">/</span>
-            <span className="text-white/50 text-xs">{totalDuels}</span>
-          </div>
         </motion.div>
       )}
     </div>
