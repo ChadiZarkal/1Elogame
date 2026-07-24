@@ -51,9 +51,9 @@ const CARDS_DATA: Record<PersonaKey, {
     glowColor: 'rgba(46, 204, 113, 0.4)',
     tag: '👥 JEU DE GROUPE',
     title: 'RED OR GREEN DUEL',
-    tagline: 'Comparer vos avis rapidement.',
-    desc: 'Vous votez sur des situations à deux choix. C est utile pour lancer une discussion, voir les désaccords, et comparer votre groupe à la communauté.',
-    bullets: ['👥 Solo ou groupe', '🗳 Vote rapide en duel', '🏆 Classement en direct'],
+    tagline: 'Voter pour le plus red flag.',
+    desc: 'Entre deux choix, votez pour celui qui est le plus red flag. Découvrez ensuite quel pourcentage de la communauté est d accord avec vous.',
+    bullets: ['👥 Solo ou groupe', '🚩 Vote pour le pire des deux', '📊 Comparaison avec la communauté'],
     cta: 'LANCER LE DUEL',
     href: '/jeu',
     emoji: '🔥',
@@ -545,8 +545,8 @@ export default function HubPage() {
                 <div className="flex gap-3">
                   <div className="w-7 h-7 rounded-lg bg-[#2ECC71]/10 flex items-center justify-center text-[#2ECC71] shrink-0 text-sm">🎮</div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-black text-white uppercase tracking-wide">Comparer vos avis (Red or Green Duel)</p>
-                    <p className="text-[11px] text-[#A6A6A6]">Vous votez en duel sur des situations. C est simple, rapide et utile pour lancer des discussions en groupe.</p>
+                    <p className="text-xs font-black text-white uppercase tracking-wide">Voter pour le plus red flag (Red or Green Duel)</p>
+                    <p className="text-[11px] text-[#A6A6A6]">Entre deux choix, votez pour le plus red flag. Comparez votre avis au pourcentage de la communauté.</p>
                   </div>
                 </div>
 

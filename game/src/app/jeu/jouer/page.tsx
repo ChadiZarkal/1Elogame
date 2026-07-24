@@ -351,16 +351,16 @@ export default function JouerPage() {
           </div>
         )}
         
-        {/* First duel hint — auto-fades after 3s */}
+        {/* First duel hint — shows for 6s then auto-fades */}
         {duelCount === 0 && !showingResult && currentDuel && (
           <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: [0, 1, 1, 0] }}
-            transition={{ duration: 3.5, times: [0, 0.12, 0.7, 1], ease: 'easeInOut' }}
-            className="absolute left-1/2 -translate-x-1/2 z-10 bg-[#DC2626]/90 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-red-900/30 pointer-events-none"
+            initial={{ opacity: 0, y: -8, scale: 0.92 }}
+            animate={{ opacity: [0, 1, 1, 1, 0], y: [-8, 0, 0, 0, -8], scale: [0.92, 1, 1, 1, 0.92] }}
+            transition={{ duration: 6, times: [0, 0.15, 0.4, 0.8, 1], ease: 'easeInOut' }}
+            className="absolute left-1/2 -translate-x-1/2 z-40 bg-[#DC2626] text-white text-sm font-black px-5 py-2.5 rounded-full shadow-2xl pointer-events-none"
             style={{ top: `calc(max(12px, env(safe-area-inset-top)) + ${isOnline ? 56 : 88}px)` }}
           >
-            🚩 Votez pour l&apos;option la plus red flag
+            🚩 Votez pour le plus red flag
           </motion.div>
         )}
 
