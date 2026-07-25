@@ -60,8 +60,8 @@ describe('GET /api/stats/public', () => {
   describe('production mode', () => {
     beforeEach(() => {
       process.env.NEXT_PUBLIC_MOCK_MODE = 'false';
-      process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-key';
+      process.env.NEXT_PUBLIC_SUPABASE_DIXMAIS_URL = 'https://test.supabase.co';
+      process.env.NEXT_PUBLIC_SUPABASE_DIXMAIS_ANON_KEY = 'test-key';
     });
 
     it('retourne les stats depuis Supabase', async () => {
