@@ -182,8 +182,7 @@ INSERT INTO dixmais_statements (text, type, category) VALUES
 
   -- Santé
   ('Il ne va jamais chez le médecin',                   'negative', 'sante'),
-  ('Il prend des stéroïdes',                            'negative', 'sante')
-ON CONFLICT (text) DO NOTHING;
+  ('Il prend des stéroïdes',                            'negative', 'sante');
 
 -- POSITIVE statements (green flags)
 INSERT INTO dixmais_statements (text, type, category) VALUES
@@ -221,5 +220,4 @@ INSERT INTO dixmais_statements (text, type, category) VALUES
 
   -- Santé
   ('Il parle à son psy régulièrement',                  'positive', 'sante'),
-  ('Il est mannequin',                                  'positive', 'sante')
-ON CONFLICT (text) DO NOTHING;
+  ('Il est mannequin',                                  'positive', 'sante');
