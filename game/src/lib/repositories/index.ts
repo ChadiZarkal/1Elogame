@@ -25,3 +25,14 @@ export {
 	updateAdminFlashFlagTest,
 	disableAdminFlashFlagTest,
 } from './flashflag';
+
+export {
+	getRandomStatements,
+	recordDixMaisVote,
+	getDixMaisLeaderboard,
+	getAllDixMaisStatements,
+	createDixMaisStatement,
+	updateDixMaisStatement,
+	deleteDixMaisStatement,
+} from './dixmais';
+export type { RecordVoteParams, LeaderboardEntry } from './dixmais';

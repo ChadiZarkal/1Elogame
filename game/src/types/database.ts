@@ -1,5 +1,39 @@
 // Database types for Supabase
 
+// ─── DixMais game ────────────────────────────────────────────────────────────
+
+export type DixMaisStatementType = 'positive' | 'negative';
+
+export interface DixMaisStatement {
+  id: string;
+  text: string;
+  type: DixMaisStatementType;
+  category: string;
+  is_active: boolean;
+  is_approved: boolean;
+  votes_count: number;
+  total_delta: number;
+  elimination_count: number;
+  created_at: string;
+  /** Computed in view only */
+  avg_delta?: number;
+  elimination_rate?: number;
+}
+
+export interface DixMaisVote {
+  id: string;
+  statement_id: string;
+  session_id: string | null;
+  previous_score: number;
+  new_score: number;
+  delta: number;
+  is_elimination: boolean;
+  created_at: string;
+}
+
+// ─── End DixMais ─────────────────────────────────────────────────────────────
+
+
 // Catégories disponibles — 2 catégories 2026
 // IMPORTANT: Doit correspondre aux clés dans src/config/categories.ts
 export type Categorie =
