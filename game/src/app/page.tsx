@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useHaptics } from '@/lib/hooks';
 import { AdBanner } from '@/components/ads/AdBanner';
 
-type PersonaKey = 'redflag' | 'group' | 'dating' | 'doubt';
+type PersonaKey = 'redflag' | 'group' | 'dating' | 'doubt' | 'dixmais';
 
 interface StatsData {
   totalVotes: number;
@@ -86,6 +86,20 @@ const CARDS_DATA: Record<PersonaKey, {
     href: '/flagornot',
     emoji: '🔮',
     shortcut: 'Oracle'
+  },
+  dixmais: {
+    id: 'dixmais',
+    themeColor: '#F59E0B',
+    glowColor: 'rgba(245, 158, 11, 0.4)',
+    tag: '⭐ JEU DE NOTATION',
+    title: "C'EST UN 10 MAIS...",
+    tagline: 'Combien vaut-il vraiment ?',
+    desc: 'Il commence à 10. Puis les révélations s\'enchaînent. À chaque info, tu réévalues sa note. Jusqu\'où va-t-il chuter ?',
+    bullets: ['⭐ 5 profils à noter de 0 à 10', '📉 Note qui évolue à chaque révélation', '🚫 Le 0 est éliminatoire — fin du profil'],
+    cta: 'JOUER MAINTENANT',
+    href: '/dixmais',
+    emoji: '⭐',
+    shortcut: '10?'
   }
 };
 
@@ -555,6 +569,14 @@ export default function HubPage() {
                   <div className="space-y-0.5">
                     <p className="text-xs font-black text-white uppercase tracking-wide">Obtenir un premier avis (Oracle IA)</p>
                     <p className="text-[11px] text-[#A6A6A6]">Tu écris ton doute et l IA donne un verdict red ou green avec explication. Pratique pour prendre du recul.</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-[#F59E0B]/10 flex items-center justify-center text-[#F59E0B] shrink-0 text-sm">⭐</div>
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-black text-white uppercase tracking-wide">Combien vaut-il vraiment ? (C&apos;est un 10 mais...)</p>
+                    <p className="text-[11px] text-[#A6A6A6]">Chaque profil commence à 10. Les révélations s&apos;enchaînent. Note après chaque info. Le 0 est éliminatoire.</p>
                   </div>
                 </div>
               </div>
