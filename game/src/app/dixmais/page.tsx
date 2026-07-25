@@ -10,12 +10,20 @@ import type { DixMaisStatement } from '@/types/database';
 // ─── Color helpers ────────────────────────────────────────────────────────────
 
 const RATING_COLORS: Record<number, string> = {
-  0: '#EF4444', 1: '#EF4444', 2: '#F87171', 3: '#FB923C',
-  4: '#F97316', 5: '#EAB308', 6: '#84CC16', 7: '#22C55E',
-  8: '#10B981', 9: '#14B8A6', 10: '#FFD700',
+  0: '#DC2626',  // Red intense
+  1: '#DC2626',  // Red intense
+  2: '#EF4444',  // Red
+  3: '#F97316',  // Orange
+  4: '#F97316',  // Orange
+  5: '#F59E0B',  // Amber
+  6: '#F59E0B',  // Amber
+  7: '#FBBF24',  // Yellow-amber
+  8: '#FBBF24',  // Yellow-amber
+  9: '#FFD700',  // Gold
+  10: '#FFD700', // Gold
 };
 function rc(r: number) { return RATING_COLORS[Math.max(0, Math.min(10, r))] ?? '#EF4444'; }
-function rb(r: number) { return `${rc(r)}22`; }
+function rb(r: number) { return `${rc(r)}18`; }
 function re(r: number) {
   if (r === 0) return '🚫'; if (r <= 2) return '💀'; if (r <= 4) return '😬';
   if (r <= 6) return '🤷'; if (r <= 8) return '😏'; if (r === 9) return '🔥'; return '⭐';
@@ -389,8 +397,15 @@ function GameScreen({ statements, stmtIdx, ratings, justRated, onRate, locked, r
 function RatingBtn({ n, onRate, disabled }: { n: number; onRate: (r: number) => void; disabled: boolean }) {
   return (
     <motion.button whileTap={{ scale: 0.88 }} onClick={() => onRate(n)} disabled={disabled}
-      className="aspect-square rounded-xl font-black flex items-center justify-center cursor-pointer"
-      style={{ fontSize: 'clamp(1.1rem,5vw,1.6rem)', color: rc(n), background: rb(n), border: `2px solid ${rc(n)}30`, opacity: disabled ? 0.4 : 1 }}>
+      className="aspect-square rounded-xl font-black flex items-center justify-center cursor-pointer transition-all"
+      style={{
+        fontSize: 'clamp(1.3rem,6vw,1.8rem)',
+        color: '#FFFFFF',
+        background: rb(n),
+        border: `2.5px solid ${rc(n)}`,
+        opacity: disabled ? 0.4 : 1,
+        textShadow: `0 1px 3px rgba(0,0,0,0.4)`
+      }}>
       {n}
     </motion.button>
   );

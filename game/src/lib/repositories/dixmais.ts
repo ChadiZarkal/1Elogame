@@ -125,16 +125,13 @@ export interface RecordVoteParams {
 export async function recordDixMaisVote(params: RecordVoteParams): Promise<void> {
   const { statement_id, session_id, previous_score, new_score } = params;
 
-  // Determine whether to record per business rules:
-  // - Always record non-zero votes
-  // - Record zero ONLY when previous_score was 10
   const isElimination = new_score === 0;
-  const shouldRecord = new_score > 0 || previous_score === 10;
-  if (!shouldRecord) return;
-
   const delta = new_score - previous_score;
 
-  if (isMockMode()) return; // skip in mock mode
+  if (isMockMode()) {
+    console.log('[MOCK] Vote recorded:', { statement_id, previous_score, new_score, delta });
+    return;
+  }
 
   const { createServerClient } = await import('@/lib/supabase');
   const supabase = createServerClient();
@@ -150,6 +147,7 @@ export async function recordDixMaisVote(params: RecordVoteParams): Promise<void>
   } as any);
 
   if (error) {
+    console.warn('[VOTE] RPC failed, using fallback:', error.message);
     // Fallback: direct insert + update
     await Promise.all([
       (supabase.from('dixmais_votes') as any).insert({
@@ -158,7 +156,7 @@ export async function recordDixMaisVote(params: RecordVoteParams): Promise<void>
       (supabase.from('dixmais_statements') as any).update({
         votes_count: (supabase as any).rpc('coalesce', {}),
       }).eq('id', statement_id),
-    ]).catch(() => null);
+    ]).catch((e: any) => console.warn('[VOTE] Fallback also failed:', e.message));
   }
 }
 
