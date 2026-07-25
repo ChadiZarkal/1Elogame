@@ -64,9 +64,7 @@ export function validateEnv(): void {
       '',
     ].join('\n');
 
-    if (isProduction) {
-      throw new Error(msg);
-    }
+    // Log warning but never throw — app degrades gracefully
     console.warn(msg);
   }
 }

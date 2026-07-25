@@ -3,10 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Trash2, Eye, EyeOff, CheckCircle, XCircle, Trophy, BarChart2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Eye, EyeOff, CheckCircle, XCircle, Trophy, BarChart2, RefreshCw, Check, AlertCircle } from 'lucide-react';
 import type { DixMaisStatement } from '@/types/database';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 type Tab = 'statements' | 'leaderboard';
 
@@ -15,16 +13,10 @@ interface AdminStatement extends DixMaisStatement {
   elimination_rate: number;
 }
 
-// ─── Auth helpers ─────────────────────────────────────────────────────────────
-
+// ─── Auth helpers (kept for localStorage compat) ──────────────────────────────
 const TOKEN_KEY = 'dixmais_admin_token';
-
-function getToken() {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(TOKEN_KEY);
-}
-function setToken(t: string) { localStorage.setItem(TOKEN_KEY, t); }
-function clearToken() { localStorage.removeItem(TOKEN_KEY); }
+function getToken() { return typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) ?? 'open' : 'open'; }
+function setToken(t: string) { if (typeof window !== 'undefined') localStorage.setItem(TOKEN_KEY, t); }
 
 async function adminFetch(url: string, opts: RequestInit = {}) {
   const token = getToken();
@@ -34,108 +26,97 @@ async function adminFetch(url: string, opts: RequestInit = {}) {
   });
 }
 
-// ─── Root component ───────────────────────────────────────────────────────────
-
-export default function AdminPage() {
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [checked, setChecked] = useState(false);
-
-  useEffect(() => {
-    setLoggedIn(!!getToken());
-    setChecked(true);
-  }, []);
-
-  if (!checked) return null;
-  if (!loggedIn) return <LoginScreen onLogin={() => setLoggedIn(true)} />;
-  return <Dashboard onLogout={() => { clearToken(); setLoggedIn(false); }} />;
-}
-
-// ─── Login Screen ─────────────────────────────────────────────────────────────
-
-function LoginScreen({ onLogin }: { onLogin: () => void }) {
-  const [pw, setPw] = useState('');
-  const [err, setErr] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!pw) return;
-    setLoading(true);
-    setErr('');
-    try {
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pw }),
-      });
-      const json = await res.json();
-      if (!res.ok) { setErr(json.error?.message ?? 'Mot de passe incorrect'); return; }
-      setToken(json.data.token);
-      onLogin();
-    } catch { setErr('Erreur réseau'); }
-    finally { setLoading(false); }
-  }
-
+// ─── Toast notification ────────────────────────────────────────────────────────
+function Toast({ msg, type }: { msg: string; type: 'ok' | 'err' }) {
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center px-6" style={{ background: '#060606' }}>
-      <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
-        style={{ backgroundImage: 'linear-gradient(to right,#fff 1px,transparent 1px),linear-gradient(to bottom,#fff 1px,transparent 1px)', backgroundSize: '28px 28px' }} />
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 w-full max-w-sm">
-        <Link href="/dixmais" className="flex items-center gap-1.5 text-white/30 mb-8 hover:text-white/60 transition-colors">
-          <ArrowLeft size={16} /><span className="text-[10px] font-black uppercase tracking-[0.2em]">Jeu</span>
-        </Link>
-        <h1 className="text-2xl font-black text-white mb-1">Admin Panel</h1>
-        <p className="text-sm text-white/40 mb-6">C&apos;est un 10 mais... — Gestion des affirmations</p>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="Mot de passe admin"
-            className="w-full px-4 py-3.5 rounded-xl text-white font-semibold text-sm placeholder:text-white/25 outline-none"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
-          {err && <p className="text-[#EF4444] text-xs font-bold">{err}</p>}
-          <button type="submit" disabled={loading}
-            className="w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest text-black cursor-pointer"
-            style={{ background: 'linear-gradient(135deg,#F59E0B,#FFD700)', opacity: loading ? 0.6 : 1 }}>
-            {loading ? 'Connexion...' : 'SE CONNECTER'}
-          </button>
-        </form>
-      </motion.div>
-    </div>
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 20, scale: 0.95 }}
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 rounded-xl font-bold text-sm shadow-2xl"
+      style={{
+        background: type === 'ok' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+        border: `1.5px solid ${type === 'ok' ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)'}`,
+        color: type === 'ok' ? '#22C55E' : '#EF4444',
+        backdropFilter: 'blur(12px)',
+      }}>
+      {type === 'ok' ? <Check size={14} /> : <AlertCircle size={14} />}
+      {msg}
+    </motion.div>
   );
 }
 
-// ─── Dashboard ────────────────────────────────────────────────────────────────
+// ─── Root ─────────────────────────────────────────────────────────────────────
+export default function AdminPage() {
+  const [ready, setReady] = useState(false);
 
-function Dashboard({ onLogout }: { onLogout: () => void }) {
+  useEffect(() => {
+    // Auto-login with open token
+    setToken('open');
+    setReady(true);
+  }, []);
+
+  if (!ready) return null;
+  return <Dashboard />;
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+function Dashboard() {
   const [tab, setTab] = useState<Tab>('statements');
   const [statements, setStatements] = useState<AdminStatement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
+
+  function showToast(msg: string, type: 'ok' | 'err') {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  }
 
   const loadStatements = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
       const res = await adminFetch('/api/admin/dixmais/statements');
-      if (res.status === 401) { clearToken(); onLogout(); return; }
       const json = await res.json();
+      if (!res.ok) {
+        setError(json.error?.message ?? `Erreur ${res.status}`);
+        return;
+      }
       setStatements(json.data ?? []);
-    } catch { setError('Erreur de chargement'); }
-    finally { setLoading(false); }
-  }, [onLogout]);
+    } catch {
+      setError('Erreur réseau — vérifie ta connexion');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => { loadStatements(); }, [loadStatements]);
 
   async function toggleField(id: string, field: 'is_active' | 'is_approved', val: boolean) {
-    await adminFetch(`/api/admin/dixmais/statements/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ [field]: val }),
-    });
-    setStatements(prev => prev.map(s => s.id === id ? { ...s, [field]: val } : s));
+    try {
+      const res = await adminFetch(`/api/admin/dixmais/statements/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ [field]: val }),
+      });
+      if (!res.ok) { showToast('Mise à jour échouée', 'err'); return; }
+      setStatements(prev => prev.map(s => s.id === id ? { ...s, [field]: val } : s));
+    } catch { showToast('Erreur réseau', 'err'); }
   }
 
   async function deleteStatement(id: string) {
-    if (!confirm('Supprimer cette affirmation ?')) return;
-    await adminFetch(`/api/admin/dixmais/statements/${id}`, { method: 'DELETE' });
-    setStatements(prev => prev.filter(s => s.id !== id));
+    if (!confirm('Supprimer définitivement cette affirmation ?')) return;
+    try {
+      const res = await adminFetch(`/api/admin/dixmais/statements/${id}`, { method: 'DELETE' });
+      if (!res.ok) { showToast('Suppression échouée', 'err'); return; }
+      setStatements(prev => prev.filter(s => s.id !== id));
+      showToast('Affirmation supprimée', 'ok');
+    } catch { showToast('Erreur réseau', 'err'); }
+  }
+
+  function handleAdded(s: DixMaisStatement) {
+    setStatements(prev => [{ ...s, avg_delta: 0, elimination_rate: 0 }, ...prev]);
+    showToast('Affirmation ajoutée ✓', 'ok');
   }
 
   const totalVotes = statements.reduce((a, s) => a + s.votes_count, 0);
@@ -153,17 +134,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         <div className="flex items-center gap-3">
           <Link href="/dixmais" className="text-white/30 hover:text-white/60 transition-colors"><ArrowLeft size={18} /></Link>
           <div>
-            <h1 className="text-base font-black text-white leading-none">Admin Panel</h1>
+            <h1 className="text-base font-black text-white leading-none">Admin</h1>
             <p className="text-[10px] text-white/30 font-bold uppercase tracking-wider mt-0.5">C&apos;est un 10 mais...</p>
           </div>
         </div>
-        <button onClick={onLogout} className="text-[10px] font-black uppercase tracking-wider text-white/30 hover:text-white/60 transition-colors cursor-pointer">
-          Déconnexion
-        </button>
+        {totalVotes > 0 && (
+          <span className="text-[10px] font-bold px-2 py-1 rounded-lg" style={{ background: 'rgba(245,158,11,0.1)', color: '#F59E0B' }}>
+            {totalVotes.toLocaleString()} votes
+          </span>
+        )}
       </div>
 
       <div className="relative z-10 max-w-2xl mx-auto px-5 py-5">
-        {/* Stats bar */}
+        {/* Stats */}
         <div className="grid grid-cols-4 gap-2 mb-5">
           {[
             { label: 'Total', value: statements.length, color: '#F59E0B' },
@@ -182,7 +165,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         <div className="flex gap-2 mb-5 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
           {[
             { key: 'statements', label: 'Affirmations', icon: <BarChart2 size={12} /> },
-            { key: 'leaderboard', label: 'Classement red flags', icon: <Trophy size={12} /> },
+            { key: 'leaderboard', label: 'Red Flags', icon: <Trophy size={12} /> },
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key as Tab)}
               className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-black uppercase tracking-wide transition-all cursor-pointer"
@@ -195,77 +178,116 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         <AnimatePresence mode="wait">
           {tab === 'statements' && (
             <motion.div key="stmts" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <AddStatementForm onAdded={s => setStatements(prev => [s as AdminStatement, ...prev])} />
+              <AddStatementForm onAdded={handleAdded} />
+
               <div className="flex items-center justify-between mb-3 mt-5">
                 <p className="text-xs font-black uppercase tracking-wider text-white/40">{statements.length} affirmations</p>
                 <button onClick={loadStatements} className="flex items-center gap-1 text-white/30 hover:text-white/60 cursor-pointer transition-colors">
                   <RefreshCw size={12} /><span className="text-[10px] font-bold">Rafraîchir</span>
                 </button>
               </div>
+
               {loading ? (
-                <p className="text-center text-white/30 text-sm py-8">Chargement...</p>
+                <div className="text-center py-10">
+                  <div className="inline-block w-6 h-6 rounded-full border-2 border-transparent animate-spin mb-2"
+                    style={{ borderTopColor: '#F59E0B', borderRightColor: 'rgba(245,158,11,0.3)' }} />
+                  <p className="text-xs text-white/30">Chargement...</p>
+                </div>
               ) : error ? (
-                <p className="text-center text-[#EF4444] text-sm py-8">{error}</p>
+                <div className="px-4 py-4 rounded-xl" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                  <p className="text-sm font-bold text-[#EF4444] flex items-start gap-2">
+                    <AlertCircle size={14} className="mt-0.5 shrink-0" />{error}
+                  </p>
+                  {error.includes('relation') && (
+                    <p className="text-xs text-white/40 mt-2">
+                      💡 La migration SQL n&apos;a pas été exécutée. Lance <code className="bg-white/10 px-1 rounded">017_dixmais_game.sql</code> sur Supabase.
+                    </p>
+                  )}
+                  <button onClick={loadStatements} className="mt-3 text-xs font-bold text-white/40 hover:text-white/60 underline cursor-pointer">
+                    Réessayer
+                  </button>
+                </div>
               ) : (
                 <div className="space-y-2">
-                  {statements.map(stmt => (
-                    <StatementRow key={stmt.id} stmt={stmt} onToggle={toggleField} onDelete={deleteStatement} />
-                  ))}
+                  {statements.length === 0 ? (
+                    <div className="text-center py-10 text-white/25">
+                      <p className="text-2xl mb-2">📭</p>
+                      <p className="text-sm font-bold">Aucune affirmation pour l&apos;instant</p>
+                      <p className="text-xs mt-1">Clique sur &quot;Ajouter une affirmation&quot; pour commencer</p>
+                    </div>
+                  ) : (
+                    statements.map(stmt => (
+                      <StatementRow key={stmt.id} stmt={stmt} onToggle={toggleField} onDelete={deleteStatement} />
+                    ))
+                  )}
                 </div>
               )}
             </motion.div>
           )}
+
           {tab === 'leaderboard' && (
             <motion.div key="lb" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               <p className="text-[11px] font-bold text-white/35 mb-4">
-                Classement des affirmations qui font le plus chuter la note. Données de {totalVotes.toLocaleString()} votes.
+                Affirmations qui font le plus chuter la note ({totalVotes.toLocaleString()} votes au total)
               </p>
-              <div className="space-y-2">
-                {[...statements]
-                  .filter(s => s.votes_count > 0)
-                  .sort((a, b) => a.avg_delta - b.avg_delta)
-                  .map((stmt, i) => (
-                    <div key={stmt.id} className="flex items-center gap-3 px-4 py-3 rounded-xl"
-                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                      <span className="text-lg font-black w-7 text-center" style={{ color: i < 3 ? '#F59E0B' : 'rgba(255,255,255,0.3)' }}>
-                        #{i + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{stmt.text}</p>
-                        <p className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                          {stmt.votes_count} votes · Élim. {stmt.elimination_rate.toFixed(0)}%
-                        </p>
+              {statements.filter(s => s.votes_count > 0).length === 0 ? (
+                <div className="text-center py-10 text-white/25">
+                  <p className="text-2xl mb-2">📊</p>
+                  <p className="text-sm font-bold">Pas encore de votes</p>
+                  <p className="text-xs mt-1">Joue quelques parties pour remplir le classement</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {[...statements]
+                    .filter(s => s.votes_count > 0)
+                    .sort((a, b) => a.avg_delta - b.avg_delta)
+                    .map((stmt, i) => (
+                      <div key={stmt.id} className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                        <span className="text-base font-black w-7 text-center shrink-0"
+                          style={{ color: i < 3 ? '#F59E0B' : 'rgba(255,255,255,0.3)' }}>
+                          {i < 3 ? ['🥇','🥈','🥉'][i] : `#${i+1}`}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-white truncate">{stmt.text}</p>
+                          <p className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                            {stmt.votes_count} votes · Élim. {stmt.elimination_rate.toFixed(0)}%
+                          </p>
+                        </div>
+                        <span className="font-black text-sm shrink-0 px-2.5 py-1 rounded-lg"
+                          style={{ color: '#EF4444', background: 'rgba(239,68,68,0.12)' }}>
+                          {stmt.avg_delta > 0 ? '+' : ''}{stmt.avg_delta.toFixed(1)}
+                        </span>
                       </div>
-                      <span className="font-black text-sm shrink-0 px-2.5 py-1 rounded-lg"
-                        style={{ color: '#EF4444', background: 'rgba(239,68,68,0.12)' }}>
-                        {stmt.avg_delta.toFixed(1)}
-                      </span>
-                    </div>
-                  ))}
-                {statements.filter(s => s.votes_count > 0).length === 0 && (
-                  <p className="text-center text-white/25 py-8 text-sm">Pas encore de votes enregistrés.</p>
-                )}
-              </div>
+                    ))}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {/* Toast */}
+      <AnimatePresence>
+        {toast && <Toast key="toast" msg={toast.msg} type={toast.type} />}
+      </AnimatePresence>
     </div>
   );
 }
 
-// ─── Statement Row ────────────────────────────────────────────────────────────
-
+// ─── Statement Row ─────────────────────────────────────────────────────────────
 function StatementRow({ stmt, onToggle, onDelete }: {
   stmt: AdminStatement;
   onToggle: (id: string, field: 'is_active' | 'is_approved', val: boolean) => void;
   onDelete: (id: string) => void;
 }) {
   return (
-    <div className="px-4 py-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', opacity: stmt.is_active ? 1 : 0.5 }}>
+    <motion.div layout
+      className="px-4 py-3 rounded-xl transition-opacity"
+      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', opacity: stmt.is_active ? 1 : 0.45 }}>
       <div className="flex items-start justify-between gap-2 mb-2">
         <p className="text-sm font-bold text-white leading-snug flex-1">{stmt.text}</p>
-        <button onClick={() => onDelete(stmt.id)} className="text-white/20 hover:text-[#EF4444] transition-colors cursor-pointer shrink-0 mt-0.5">
+        <button onClick={() => onDelete(stmt.id)} className="text-white/15 hover:text-[#EF4444] transition-colors cursor-pointer shrink-0 mt-0.5">
           <Trash2 size={14} />
         </button>
       </div>
@@ -276,9 +298,7 @@ function StatementRow({ stmt, onToggle, onDelete }: {
         </span>
         <span className="text-[9px] font-bold text-white/30 px-1.5 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.05)' }}>{stmt.category}</span>
         {stmt.votes_count > 0 && (
-          <span className="text-[9px] font-bold" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            {stmt.votes_count} votes · Δ {stmt.avg_delta.toFixed(1)}
-          </span>
+          <span className="text-[9px] font-bold text-white/30">{stmt.votes_count} votes · Δ {stmt.avg_delta.toFixed(1)}</span>
         )}
         <div className="ml-auto flex items-center gap-2">
           <button onClick={() => onToggle(stmt.id, 'is_active', !stmt.is_active)}
@@ -295,13 +315,12 @@ function StatementRow({ stmt, onToggle, onDelete }: {
           </button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
-// ─── Add Statement Form ───────────────────────────────────────────────────────
-
-const CATEGORIES = ['general', 'politique', 'caractere', 'dating', 'lifestyle', 'social', 'argent', 'travail', 'sante', 'famille'];
+// ─── Add Statement Form ────────────────────────────────────────────────────────
+const CATEGORIES = ['general','politique','caractere','dating','lifestyle','social','argent','travail','sante','famille'];
 
 function AddStatementForm({ onAdded }: { onAdded: (s: DixMaisStatement) => void }) {
   const [open, setOpen] = useState(false);
@@ -322,36 +341,60 @@ function AddStatementForm({ onAdded }: { onAdded: (s: DixMaisStatement) => void 
         body: JSON.stringify({ text: text.trim(), type, category }),
       });
       const json = await res.json();
-      if (!res.ok) { setErr(json.error?.message ?? 'Erreur'); return; }
+      if (!res.ok) {
+        // Show the actual error from the server
+        const errMsg = json.error?.message ?? json.error ?? `Erreur ${res.status}`;
+        const details = json.error?.details?.map((d: any) => d.message).join(', ');
+        setErr(details ? `${errMsg}: ${details}` : errMsg);
+        return;
+      }
       onAdded(json.data);
       setText('');
+      setType('negative');
       setOpen(false);
-    } catch { setErr('Erreur réseau'); }
-    finally { setLoading(false); }
+    } catch (e: any) {
+      setErr(`Erreur réseau: ${e?.message ?? 'inconnue'}`);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(245,158,11,0.2)', background: 'rgba(245,158,11,0.04)' }}>
-      <button onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-2 px-4 py-3 cursor-pointer"
+    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(245,158,11,0.25)', background: 'rgba(245,158,11,0.04)' }}>
+      <button onClick={() => { setOpen(o => !o); setErr(''); }}
+        className="w-full flex items-center justify-between px-4 py-3.5 cursor-pointer"
         style={{ color: '#F59E0B' }}>
-        <Plus size={16} />
-        <span className="text-xs font-black uppercase tracking-wider">Ajouter une affirmation</span>
+        <div className="flex items-center gap-2">
+          <Plus size={16} />
+          <span className="text-xs font-black uppercase tracking-wider">Ajouter une affirmation</span>
+        </div>
+        <motion.span animate={{ rotate: open ? 45 : 0 }} className="text-lg font-black leading-none">+</motion.span>
       </button>
+
       <AnimatePresence>
         {open && (
-          <motion.form onSubmit={handleSubmit} initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+          <motion.form onSubmit={handleSubmit}
+            initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
             className="px-4 pb-4 space-y-3 overflow-hidden">
-            <textarea value={text} onChange={e => setText(e.target.value)} rows={2} placeholder="Ex: Il met le lait avant les céréales"
+            <textarea
+              value={text}
+              onChange={e => setText(e.target.value)}
+              rows={3}
+              placeholder="Ex: Il met le lait avant les céréales"
               className="w-full px-3 py-2.5 rounded-lg text-sm text-white font-semibold placeholder:text-white/25 outline-none resize-none"
               style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
+
             <div className="flex gap-2">
               <div className="flex gap-1 flex-1">
                 {(['negative', 'positive'] as const).map(t => (
                   <button type="button" key={t} onClick={() => setType(t)}
-                    className="flex-1 py-2 rounded-lg text-xs font-black uppercase tracking-wide cursor-pointer transition-all"
-                    style={{ background: type === t ? (t === 'negative' ? '#EF4444' : '#22C55E') : 'rgba(255,255,255,0.06)', color: type === t ? '#fff' : 'rgba(255,255,255,0.4)' }}>
-                    {t === 'negative' ? '🚩 Négatif' : '🟢 Positif'}
+                    className="flex-1 py-2.5 rounded-lg text-xs font-black uppercase tracking-wide cursor-pointer transition-all"
+                    style={{
+                      background: type === t ? (t === 'negative' ? '#EF4444' : '#22C55E') : 'rgba(255,255,255,0.06)',
+                      color: type === t ? '#fff' : 'rgba(255,255,255,0.4)',
+                    }}>
+                    {t === 'negative' ? '🚩 Red Flag' : '🟢 Green Flag'}
                   </button>
                 ))}
               </div>
@@ -361,12 +404,26 @@ function AddStatementForm({ onAdded }: { onAdded: (s: DixMaisStatement) => void 
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            {err && <p className="text-[#EF4444] text-xs font-bold">{err}</p>}
-            <button type="submit" disabled={loading || !text.trim()}
-              className="w-full py-3 rounded-xl text-black font-black text-xs uppercase tracking-widest cursor-pointer"
-              style={{ background: 'linear-gradient(135deg,#F59E0B,#FFD700)', opacity: (loading || !text.trim()) ? 0.5 : 1 }}>
-              {loading ? 'Ajout...' : 'AJOUTER'}
-            </button>
+
+            {err && (
+              <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                <AlertCircle size={13} className="text-[#EF4444] mt-0.5 shrink-0" />
+                <p className="text-[11px] font-bold text-[#EF4444] leading-snug">{err}</p>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button type="button" onClick={() => { setOpen(false); setErr(''); setText(''); }}
+                className="flex-1 py-3 rounded-xl text-white/40 font-black text-xs uppercase tracking-widest cursor-pointer"
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                Annuler
+              </button>
+              <button type="submit" disabled={loading || !text.trim()}
+                className="flex-1 py-3 rounded-xl text-black font-black text-xs uppercase tracking-widest cursor-pointer"
+                style={{ background: 'linear-gradient(135deg,#F59E0B,#FFD700)', opacity: (loading || !text.trim()) ? 0.5 : 1 }}>
+                {loading ? '...' : 'AJOUTER ✓'}
+              </button>
+            </div>
           </motion.form>
         )}
       </AnimatePresence>
