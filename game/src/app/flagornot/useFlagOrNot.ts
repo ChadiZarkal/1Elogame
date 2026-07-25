@@ -138,12 +138,13 @@ export function useFlagOrNot() {
     }
   }, [history]);
 
-  useEffect(() => {
-    if (phase === 'idle') {
-      const t = setTimeout(() => inputRef.current?.focus(), 150);
-      return () => clearTimeout(t);
-    }
-  }, [phase]);
+  // Auto-focus disabled to let user read instructions first
+  // useEffect(() => {
+  //   if (phase === 'idle') {
+  //     const t = setTimeout(() => inputRef.current?.focus(), 150);
+  //     return () => clearTimeout(t);
+  //   }
+  // }, [phase]);
 
   useEffect(() => {
     const interval = setInterval(() => {
