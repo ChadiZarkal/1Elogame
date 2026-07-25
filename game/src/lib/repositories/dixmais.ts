@@ -147,7 +147,7 @@ export async function recordDixMaisVote(params: RecordVoteParams): Promise<void>
     p_new_score: new_score,
     p_delta: delta,
     p_is_elimination: isElimination,
-  });
+  } as any);
 
   if (error) {
     // Fallback: direct insert + update
