@@ -39,15 +39,15 @@ export function validateEnv(): void {
     );
   }
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_DIXMAIS_URL) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     errors.push(
-      'NEXT_PUBLIC_SUPABASE_DIXMAIS_URL is not set. The app may run in mock mode with an insecure admin login.',
+      'NEXT_PUBLIC_SUPABASE_URL is not set. The app may run in mock mode with an insecure admin login.',
     );
   }
 
-  if (!process.env.SUPABASE_DIXMAIS_SERVICE_ROLE_KEY) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     errors.push(
-      'SUPABASE_DIXMAIS_SERVICE_ROLE_KEY is not set. Database operations will fail.',
+      'SUPABASE_SERVICE_ROLE_KEY is not set. Database operations will fail.',
     );
   }
 
@@ -84,7 +84,7 @@ export const ADMIN_TOKEN_SECRET =
 export const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
 
 /** Supabase URL. */
-export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_DIXMAIS_URL;
+export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 /** Supabase service role key (server-only). */
-export const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_DIXMAIS_SERVICE_ROLE_KEY;
+export const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;

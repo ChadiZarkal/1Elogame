@@ -9,8 +9,8 @@ import { Database } from '@/types/database';
  * Falls back to empty strings to avoid throwing at module load time;
  * actual validation happens when the client is first used.
  */
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_DIXMAIS_URL ?? '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_DIXMAIS_ANON_KEY ?? '';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 // Client-side Supabase client (singleton)
 let clientInstance: ReturnType<typeof createClient<Database>> | null = null;
@@ -38,7 +38,7 @@ export function getSupabaseClient() {
  * Uses the service role key for privileged operations.
  */
 export function createServerClient() {
-  const serviceRoleKey = process.env.SUPABASE_DIXMAIS_SERVICE_ROLE_KEY;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   
   if (!supabaseUrl) {
     throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL');

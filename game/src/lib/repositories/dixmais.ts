@@ -77,8 +77,8 @@ export async function getRandomStatements(count = 7): Promise<DixMaisStatement[]
     return [...neg, ...pos].sort(() => Math.random() - 0.5);
   }
 
-  const { createServerClient } = await import('@/lib/supabase');
-  const supabase = createServerClient();
+  const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
+  const supabase = createDixmaisServerClient();
 
   const [{ data: negData }, { data: posData }] = await Promise.all([
     (supabase
@@ -133,8 +133,8 @@ export async function recordDixMaisVote(params: RecordVoteParams): Promise<void>
     return;
   }
 
-  const { createServerClient } = await import('@/lib/supabase');
-  const supabase = createServerClient();
+  const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
+  const supabase = createDixmaisServerClient();
 
   // Use atomic RPC if available, fallback to two-step
   const { error } = await supabase.rpc('record_dixmais_vote', {
@@ -177,8 +177,8 @@ export async function getDixMaisLeaderboard(limit = 50): Promise<LeaderboardEntr
     }));
   }
 
-  const { createServerClient } = await import('@/lib/supabase');
-  const supabase = createServerClient();
+  const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
+  const supabase = createDixmaisServerClient();
 
   const { data, error } = await (supabase
     .from('dixmais_statement_rankings') as any)
@@ -198,8 +198,8 @@ export async function getAllDixMaisStatements(): Promise<LeaderboardEntry[]> {
     return buildMockStatements().map(s => ({ ...s, avg_delta: 0, elimination_rate: 0 }));
   }
 
-  const { createServerClient } = await import('@/lib/supabase');
-  const supabase = createServerClient();
+  const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
+  const supabase = createDixmaisServerClient();
 
   const { data, error } = await (supabase
     .from('dixmais_statements') as any)
@@ -226,8 +226,8 @@ export async function createDixMaisStatement(data: {
     return { ...data, id: `mock-${Date.now()}`, is_active: true, is_approved: true, votes_count: 0, total_delta: 0, elimination_count: 0, created_at: new Date().toISOString() };
   }
 
-  const { createServerClient } = await import('@/lib/supabase');
-  const supabase = createServerClient();
+  const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
+  const supabase = createDixmaisServerClient();
 
   const { data: inserted, error } = await (supabase
     .from('dixmais_statements') as any)
@@ -247,8 +247,8 @@ export async function updateDixMaisStatement(id: string, updates: Partial<Pick<D
     return { id, text: '', type: 'negative', category: 'general', is_active: true, is_approved: true, votes_count: 0, total_delta: 0, elimination_count: 0, created_at: new Date().toISOString(), ...updates };
   }
 
-  const { createServerClient } = await import('@/lib/supabase');
-  const supabase = createServerClient();
+  const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
+  const supabase = createDixmaisServerClient();
 
   const { data, error } = await (supabase
     .from('dixmais_statements') as any)
@@ -267,8 +267,8 @@ export async function updateDixMaisStatement(id: string, updates: Partial<Pick<D
 export async function deleteDixMaisStatement(id: string): Promise<void> {
   if (isMockMode()) return;
 
-  const { createServerClient } = await import('@/lib/supabase');
-  const supabase = createServerClient();
+  const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
+  const supabase = createDixmaisServerClient();
 
   const { error } = await (supabase
     .from('dixmais_statements') as any)
