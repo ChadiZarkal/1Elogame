@@ -81,15 +81,15 @@ export async function getRandomStatements(count = 7): Promise<DixMaisStatement[]
   const supabase = createServerClient();
 
   const [{ data: negData }, { data: posData }] = await Promise.all([
-    supabase
-      .from('dixmais_statements')
+    (supabase
+      .from('dixmais_statements') as any)
       .select('*')
       .eq('is_active', true)
       .eq('is_approved', true)
       .eq('type', 'negative')
       .order('id'), // stable order before shuffle
-    supabase
-      .from('dixmais_statements')
+    (supabase
+      .from('dixmais_statements') as any)
       .select('*')
       .eq('is_active', true)
       .eq('is_approved', true)
@@ -152,11 +152,11 @@ export async function recordDixMaisVote(params: RecordVoteParams): Promise<void>
   if (error) {
     // Fallback: direct insert + update
     await Promise.all([
-      supabase.from('dixmais_votes').insert({
+      (supabase.from('dixmais_votes') as any).insert({
         statement_id, session_id, previous_score, new_score, delta, is_elimination: isElimination,
       }),
-      supabase.from('dixmais_statements').update({
-        votes_count: supabase.rpc('coalesce', {}) as unknown as number, // handled by DB
+      (supabase.from('dixmais_statements') as any).update({
+        votes_count: (supabase as any).rpc('coalesce', {}),
       }).eq('id', statement_id),
     ]).catch(() => null);
   }
@@ -182,8 +182,8 @@ export async function getDixMaisLeaderboard(limit = 50): Promise<LeaderboardEntr
   const { createServerClient } = await import('@/lib/supabase');
   const supabase = createServerClient();
 
-  const { data, error } = await supabase
-    .from('dixmais_statement_rankings')
+  const { data, error } = await (supabase
+    .from('dixmais_statement_rankings') as any)
     .select('*')
     .order('avg_delta', { ascending: true }) // most negative = most red flag
     .limit(limit);
@@ -203,8 +203,8 @@ export async function getAllDixMaisStatements(): Promise<LeaderboardEntry[]> {
   const { createServerClient } = await import('@/lib/supabase');
   const supabase = createServerClient();
 
-  const { data, error } = await supabase
-    .from('dixmais_statements')
+  const { data, error } = await (supabase
+    .from('dixmais_statements') as any)
     .select('*')
     .order('created_at', { ascending: false });
 
@@ -231,8 +231,8 @@ export async function createDixMaisStatement(data: {
   const { createServerClient } = await import('@/lib/supabase');
   const supabase = createServerClient();
 
-  const { data: inserted, error } = await supabase
-    .from('dixmais_statements')
+  const { data: inserted, error } = await (supabase
+    .from('dixmais_statements') as any)
     .insert({ text: data.text, type: data.type, category: data.category })
     .select()
     .single();
@@ -252,8 +252,8 @@ export async function updateDixMaisStatement(id: string, updates: Partial<Pick<D
   const { createServerClient } = await import('@/lib/supabase');
   const supabase = createServerClient();
 
-  const { data, error } = await supabase
-    .from('dixmais_statements')
+  const { data, error } = await (supabase
+    .from('dixmais_statements') as any)
     .update(updates)
     .eq('id', id)
     .select()
@@ -272,8 +272,8 @@ export async function deleteDixMaisStatement(id: string): Promise<void> {
   const { createServerClient } = await import('@/lib/supabase');
   const supabase = createServerClient();
 
-  const { error } = await supabase
-    .from('dixmais_statements')
+  const { error } = await (supabase
+    .from('dixmais_statements') as any)
     .delete()
     .eq('id', id);
 
