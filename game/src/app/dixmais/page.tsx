@@ -11,10 +11,11 @@ import type { DixMaisStatement } from '@/types/database';
 
 function scoreColor(n: number) {
   if (n === 0) return '#DC2626';
-  if (n <= 3)  return '#EF4444';
+  if (n <= 2)  return '#EF4444';
+  if (n <= 4)  return '#F97316';
   if (n <= 6)  return '#F59E0B';
-  if (n <= 8)  return '#FBBF24';
-  return '#FFD700';
+  if (n <= 8)  return '#84CC16';
+  return '#22C55E';
 }
 
 function scoreLabel(n: number) {
@@ -354,8 +355,8 @@ function Game({ stmts, idx, ratings, flash, onRate, locked, round }: {
         <p className="text-center text-[10px] font-black uppercase tracking-[0.3em] text-white/30 mb-3">
           Note le profil après tout ça
         </p>
-        <RatingGrid onRate={onRate} disabled={locked} />
         <ZeroBtn onRate={onRate} disabled={locked} />
+        <RatingGrid onRate={onRate} disabled={locked} />
       </div>
     </motion.div>
   );
@@ -440,11 +441,6 @@ function CurrentCard({ stmt, flash }: { stmt: DixMaisStatement; flash: number | 
 
 // ─── Rating ───────────────────────────────────────────────────────────────────
 
-const BTN_COLORS: Record<number, string> = {
-  1: '#DC2626', 2: '#DC2626', 3: '#EF4444', 4: '#EF4444', 5: '#F59E0B',
-  6: '#F59E0B', 7: '#FBBF24', 8: '#FBBF24', 9: '#FFD700', 10: '#FFD700',
-};
-
 function RatingGrid({ onRate, disabled }: { onRate: (n: number) => void; disabled: boolean }) {
   return (
     <div className="grid grid-cols-5 gap-2 mb-2">
@@ -458,8 +454,8 @@ function RatingGrid({ onRate, disabled }: { onRate: (n: number) => void; disable
           style={{
             fontSize: 'clamp(1.2rem, 5.5vw, 1.7rem)',
             color: '#fff',
-            background: `${BTN_COLORS[n]}25`,
-            border: `2.5px solid ${BTN_COLORS[n]}`,
+            background: `${scoreColor(n)}25`,
+            border: `2.5px solid ${scoreColor(n)}`,
             opacity: disabled ? 0.4 : 1,
             textShadow: '0 1px 4px rgba(0,0,0,0.5)',
           }}>
@@ -476,14 +472,19 @@ function ZeroBtn({ onRate, disabled }: { onRate: (n: number) => void; disabled: 
       whileTap={{ scale: 0.96 }}
       onClick={() => onRate(0)}
       disabled={disabled}
-      className="w-full py-3.5 rounded-xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer"
+      className="w-full py-2.5 pl-2.5 pr-4 rounded-xl font-black flex items-center gap-3 cursor-pointer mb-2"
       style={{
         background: 'rgba(220,38,38,0.12)',
-        border: '2px solid rgba(220,38,38,0.45)',
-        color: '#EF4444',
+        border: '2.5px solid #DC2626',
         opacity: disabled ? 0.4 : 1,
       }}>
-      🚫 ZÉRO — ÉLIMINATOIRE
+      <span className="aspect-square h-10 rounded-lg flex items-center justify-center shrink-0 font-black text-xl text-white"
+        style={{ background: 'rgba(220,38,38,0.35)', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+        0
+      </span>
+      <span className="text-sm font-black uppercase tracking-widest text-[#EF4444]">
+        🚫 ZÉRO — ÉLIMINATOIRE
+      </span>
     </motion.button>
   );
 }
