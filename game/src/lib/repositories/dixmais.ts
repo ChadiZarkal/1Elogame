@@ -74,6 +74,18 @@ function pickRandom<T>(arr: T[], count: number): T[] {
   return shuffle(arr).slice(0, Math.max(0, Math.min(count, arr.length)));
 }
 
+/** The opening statement of a profile must always be a red flag — swap it with
+ * the first negative statement in the list if the shuffle put a positive first.
+ * No-op if there is no negative to swap with (fully-positive round). */
+function ensureFirstIsNegative(list: DixMaisStatement[]): DixMaisStatement[] {
+  if (list.length === 0 || list[0].type !== 'positive') return list;
+  const negIdx = list.findIndex(s => s.type === 'negative');
+  if (negIdx === -1) return list;
+  const copy = [...list];
+  [copy[0], copy[negIdx]] = [copy[negIdx], copy[0]];
+  return copy;
+}
+
 /** Picks negCount/posCount from the (already exclude-filtered) pools, topping up
  * from whichever pool has leftovers if one side runs short, so a session doesn't
  * degrade to fewer statements than requested just because e.g. all unseen
@@ -97,7 +109,7 @@ function selectFromPools(
     combined = [...combined, ...pickRandom(leftover, need)];
   }
 
-  return shuffle(combined);
+  return ensureFirstIsNegative(shuffle(combined));
 }
 
 // ---------------------------------------------------------------------------
