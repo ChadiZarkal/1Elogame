@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useHaptics } from '@/lib/hooks';
 import { AdBanner } from '@/components/ads/AdBanner';
 
-type PersonaKey = 'redflag' | 'group' | 'dating' | 'doubt' | 'dixmais';
+type PersonaKey = 'redflag' | 'group' | 'doubt' | 'dixmais';
 
 interface StatsData {
   totalVotes: number;
@@ -58,20 +58,6 @@ const CARDS_DATA: Record<PersonaKey, {
     href: '/jeu',
     emoji: '🔥',
     shortcut: 'Duel'
-  },
-  dating: {
-    id: 'flashflag',
-    themeColor: '#FF3B30',
-    glowColor: 'rgba(255, 59, 48, 0.4)',
-    tag: '⚡ TEST CHRONOMÉTRÉ',
-    title: 'FLASH FLAG SPRINT',
-    tagline: 'Tester les réactions à chaud.',
-    desc: 'Tu lances un test de 10 questions avec temps limité. C est pratique pour observer les réponses spontanées, en face à face ou à distance via lien.',
-    bullets: ['⏱ Temps court par question', '🔗 Partage par lien ou téléphone', '📋 Résumé final des réponses'],
-    cta: 'COMMENCER LE SPRINT',
-    href: '/flashflag',
-    emoji: '🥂',
-    shortcut: 'Sprint'
   },
   doubt: {
     id: 'oracle',

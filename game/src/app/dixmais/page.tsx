@@ -29,8 +29,10 @@ function scoreLabel(n: number) {
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
-async function fetchStatements(count: number): Promise<DixMaisStatement[]> {
-  const res = await fetch(`/api/dixmais/statements?count=${count}`, { cache: 'no-store' });
+async function fetchStatements(count: number, excludeIds: string[]): Promise<DixMaisStatement[]> {
+  const params = new URLSearchParams({ count: String(count) });
+  if (excludeIds.length) params.set('exclude', excludeIds.join(','));
+  const res = await fetch(`/api/dixmais/statements?${params.toString()}`, { cache: 'no-store' });
   if (!res.ok) throw new Error('fail');
   return ((await res.json()).data ?? []) as DixMaisStatement[];
 }
@@ -63,6 +65,7 @@ export default function DixMaisPage() {
   const [loadErr, setLoadErr]     = useState(false);
   const [rounds, setRounds]       = useState(0);
   const sid                        = useRef('');
+  const seenIds                    = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     sid.current = typeof crypto !== 'undefined' ? crypto.randomUUID() : `s-${Date.now()}`;
@@ -73,7 +76,8 @@ export default function DixMaisPage() {
     setLoadErr(false);
     try {
       const count = 5 + Math.floor(Math.random() * 5);
-      const data  = await fetchStatements(count);
+      const data  = await fetchStatements(count, Array.from(seenIds.current));
+      data.forEach(s => seenIds.current.add(s.id));
       setStmts(data);
       setIdx(0);
       setRatings([]);
@@ -107,7 +111,7 @@ export default function DixMaisPage() {
   }, [locked, tap, stmts, idx, ratings]);
 
   const next    = useCallback(() => { tap(); load(); }, [tap, load]);
-  const restart = useCallback(() => { tap(); setResults([]); setRounds(0); setPhase('intro'); }, [tap]);
+  const restart = useCallback(() => { tap(); seenIds.current = new Set(); setResults([]); setRounds(0); setPhase('intro'); }, [tap]);
 
   return (
     <div className="relative flex flex-col min-h-dvh overflow-hidden text-white select-none"

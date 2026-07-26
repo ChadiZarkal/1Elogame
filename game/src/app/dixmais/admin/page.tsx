@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Trash2, Eye, EyeOff, CheckCircle, XCircle, Trophy, BarChart2, RefreshCw, Check, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Eye, EyeOff, CheckCircle, XCircle, Trophy, BarChart2, RefreshCw, Check, AlertCircle, Pencil, X } from 'lucide-react';
 import type { DixMaisStatement } from '@/types/database';
 
 type Tab = 'statements' | 'leaderboard';
@@ -102,6 +102,19 @@ function Dashboard() {
       if (!res.ok) { showToast('Mise à jour échouée', 'err'); return; }
       setStatements(prev => prev.map(s => s.id === id ? { ...s, [field]: val } : s));
     } catch { showToast('Erreur réseau', 'err'); }
+  }
+
+  async function updateStatement(id: string, fields: { text: string; type: 'negative' | 'positive'; category: string }) {
+    try {
+      const res = await adminFetch(`/api/admin/dixmais/statements/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(fields),
+      });
+      if (!res.ok) { showToast('Modification échouée', 'err'); return false; }
+      setStatements(prev => prev.map(s => s.id === id ? { ...s, ...fields } : s));
+      showToast('Affirmation modifiée ✓', 'ok');
+      return true;
+    } catch { showToast('Erreur réseau', 'err'); return false; }
   }
 
   async function deleteStatement(id: string) {
@@ -217,7 +230,7 @@ function Dashboard() {
                     </div>
                   ) : (
                     statements.map(stmt => (
-                      <StatementRow key={stmt.id} stmt={stmt} onToggle={toggleField} onDelete={deleteStatement} />
+                      <StatementRow key={stmt.id} stmt={stmt} onToggle={toggleField} onDelete={deleteStatement} onUpdate={updateStatement} />
                     ))
                   )}
                 </div>
@@ -276,20 +289,95 @@ function Dashboard() {
 }
 
 // ─── Statement Row ─────────────────────────────────────────────────────────────
-function StatementRow({ stmt, onToggle, onDelete }: {
+function StatementRow({ stmt, onToggle, onDelete, onUpdate }: {
   stmt: AdminStatement;
   onToggle: (id: string, field: 'is_active' | 'is_approved', val: boolean) => void;
   onDelete: (id: string) => void;
+  onUpdate: (id: string, fields: { text: string; type: 'negative' | 'positive'; category: string }) => Promise<boolean>;
 }) {
+  const [editing, setEditing]   = useState(false);
+  const [text, setText]         = useState(stmt.text);
+  const [type, setType]         = useState<'negative' | 'positive'>(stmt.type);
+  const [category, setCategory] = useState(stmt.category);
+  const [saving, setSaving]     = useState(false);
+
+  function startEdit() {
+    setText(stmt.text);
+    setType(stmt.type);
+    setCategory(stmt.category);
+    setEditing(true);
+  }
+
+  async function save() {
+    if (!text.trim()) return;
+    setSaving(true);
+    const ok = await onUpdate(stmt.id, { text: text.trim(), type, category });
+    setSaving(false);
+    if (ok) setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <motion.div layout
+        className="px-4 py-3 rounded-xl"
+        style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.3)' }}>
+        <textarea
+          value={text}
+          onChange={e => setText(e.target.value)}
+          rows={3}
+          className="w-full px-3 py-2.5 rounded-lg text-sm text-white font-semibold outline-none resize-none mb-2"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
+
+        <div className="flex gap-2 mb-3">
+          <div className="flex gap-1 flex-1">
+            {(['negative', 'positive'] as const).map(t => (
+              <button type="button" key={t} onClick={() => setType(t)}
+                className="flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide cursor-pointer transition-all"
+                style={{
+                  background: type === t ? (t === 'negative' ? '#EF4444' : '#22C55E') : 'rgba(255,255,255,0.06)',
+                  color: type === t ? '#fff' : 'rgba(255,255,255,0.4)',
+                }}>
+                {t === 'negative' ? '🚩 Red Flag' : '🟢 Green Flag'}
+              </button>
+            ))}
+          </div>
+          <select value={category} onChange={e => setCategory(e.target.value)}
+            className="px-2 py-1 rounded-lg text-xs font-bold text-white outline-none cursor-pointer"
+            style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+
+        <div className="flex gap-2">
+          <button type="button" onClick={() => setEditing(false)}
+            className="flex-1 py-2.5 rounded-xl text-white/40 font-black text-[10px] uppercase tracking-widest cursor-pointer flex items-center justify-center gap-1"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <X size={12} /> Annuler
+          </button>
+          <button type="button" onClick={save} disabled={saving || !text.trim()}
+            className="flex-1 py-2.5 rounded-xl text-black font-black text-[10px] uppercase tracking-widest cursor-pointer"
+            style={{ background: 'linear-gradient(135deg,#F59E0B,#FFD700)', opacity: (saving || !text.trim()) ? 0.5 : 1 }}>
+            {saving ? '...' : 'ENREGISTRER ✓'}
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div layout
       className="px-4 py-3 rounded-xl transition-opacity"
       style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', opacity: stmt.is_active ? 1 : 0.45 }}>
       <div className="flex items-start justify-between gap-2 mb-2">
         <p className="text-sm font-bold text-white leading-snug flex-1">{stmt.text}</p>
-        <button onClick={() => onDelete(stmt.id)} className="text-white/15 hover:text-[#EF4444] transition-colors cursor-pointer shrink-0 mt-0.5">
-          <Trash2 size={14} />
-        </button>
+        <div className="flex items-center gap-2 shrink-0 mt-0.5">
+          <button onClick={startEdit} className="text-white/15 hover:text-[#F59E0B] transition-colors cursor-pointer">
+            <Pencil size={14} />
+          </button>
+          <button onClick={() => onDelete(stmt.id)} className="text-white/15 hover:text-[#EF4444] transition-colors cursor-pointer">
+            <Trash2 size={14} />
+          </button>
+        </div>
       </div>
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded"

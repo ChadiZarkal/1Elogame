@@ -56,25 +56,63 @@ function buildMockStatements(): DixMaisStatement[] {
 }
 
 // ---------------------------------------------------------------------------
-// Random selection helper
+// Random selection helpers
 // ---------------------------------------------------------------------------
+
+/** Uniform in-place Fisher-Yates shuffle (unlike `sort(() => Math.random() - 0.5)`,
+ * which is biased and does not produce an even distribution). */
+function shuffle<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 function pickRandom<T>(arr: T[], count: number): T[] {
-  const copy = [...arr].sort(() => Math.random() - 0.5);
-  return copy.slice(0, Math.min(count, copy.length));
+  return shuffle(arr).slice(0, Math.max(0, Math.min(count, arr.length)));
+}
+
+/** Picks negCount/posCount from the (already exclude-filtered) pools, topping up
+ * from whichever pool has leftovers if one side runs short, so a session doesn't
+ * degrade to fewer statements than requested just because e.g. all unseen
+ * negatives were exhausted. */
+function selectFromPools(
+  negPool: DixMaisStatement[],
+  posPool: DixMaisStatement[],
+  count: number,
+): DixMaisStatement[] {
+  const negCount = Math.ceil(count * 0.7);
+  const posCount = count - negCount;
+
+  const neg = pickRandom(negPool, negCount);
+  const pos = pickRandom(posPool, posCount);
+  let combined = [...neg, ...pos];
+
+  if (combined.length < count) {
+    const usedIds = new Set(combined.map(s => s.id));
+    const leftover = [...negPool, ...posPool].filter(s => !usedIds.has(s.id));
+    const need = count - combined.length;
+    combined = [...combined, ...pickRandom(leftover, need)];
+  }
+
+  return shuffle(combined);
 }
 
 // ---------------------------------------------------------------------------
 // Public: fetch random statements for a game round
 // ---------------------------------------------------------------------------
-export async function getRandomStatements(count = 7): Promise<DixMaisStatement[]> {
-  const negCount = Math.ceil(count * 0.7);
-  const posCount = count - negCount;
+export async function getRandomStatements(count = 7, excludeIds: string[] = []): Promise<DixMaisStatement[]> {
+  const exclude = new Set(excludeIds);
 
   if (isMockMode()) {
-    const all = buildMockStatements();
-    const neg = pickRandom(all.filter(s => s.type === 'negative'), negCount);
-    const pos = pickRandom(all.filter(s => s.type === 'positive'), posCount);
-    return [...neg, ...pos].sort(() => Math.random() - 0.5);
+    const all = buildMockStatements().filter(s => !exclude.has(s.id));
+    return selectFromPools(
+      all.filter(s => s.type === 'negative'),
+      all.filter(s => s.type === 'positive'),
+      count,
+    );
   }
 
   const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
@@ -97,16 +135,18 @@ export async function getRandomStatements(count = 7): Promise<DixMaisStatement[]
       .order('id'),
   ]);
 
-  const neg = pickRandom((negData as DixMaisStatement[]) || [], negCount);
-  const pos = pickRandom((posData as DixMaisStatement[]) || [], posCount);
-  const combined = [...neg, ...pos].sort(() => Math.random() - 0.5);
+  const negPool = ((negData as DixMaisStatement[]) || []).filter(s => !exclude.has(s.id));
+  const posPool = ((posData as DixMaisStatement[]) || []).filter(s => !exclude.has(s.id));
+  const combined = selectFromPools(negPool, posPool, count);
 
-  // Fallback if DB is empty
+  // Fallback if DB is empty or the unseen pool ran dry
   if (combined.length < 3) {
-    const seed = buildMockStatements();
-    const sNeg = pickRandom(seed.filter(s => s.type === 'negative'), negCount);
-    const sPos = pickRandom(seed.filter(s => s.type === 'positive'), posCount);
-    return [...sNeg, ...sPos].sort(() => Math.random() - 0.5);
+    const seed = buildMockStatements().filter(s => !exclude.has(s.id));
+    return selectFromPools(
+      seed.filter(s => s.type === 'negative'),
+      seed.filter(s => s.type === 'positive'),
+      count,
+    );
   }
 
   return combined;
