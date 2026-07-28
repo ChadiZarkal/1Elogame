@@ -12,6 +12,10 @@
  * ajustement, pas une saisie. Le joueur voit sa note actuelle avant de toucher
  * quoi que ce soit, et l'écart avec elle s'affiche en direct pendant qu'il
  * glisse.
+ *
+ * Les tailles sont bornées en `vh` autant qu'en `vw` : sur un iPhone SE avec
+ * les barres de Safari (553 px utiles), un dimensionnement purement horizontal
+ * écrasait la carte de profil jusqu'à la rendre illisible.
  */
 
 import { useCallback, useRef } from 'react';
@@ -26,11 +30,9 @@ interface Props {
   onChange: (value: number) => void;
   onCommit: () => void;
   disabled: boolean;
-  /** Affiche l'aide de premier lancement au-dessus de la jauge. */
-  coach: boolean;
 }
 
-export function ScoreDial({ value, previous, onChange, onCommit, disabled, coach }: Props) {
+export function ScoreDial({ value, previous, onChange, onCommit, disabled }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
 
@@ -38,14 +40,18 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled, coach
   const delta = value - previous;
   const untouched = delta === 0;
 
-  /** 11 cellules de largeur égale : l'index est une division directe. */
+  /** 11 cellules de largeur égale : l'index est une division directe.
+   *
+   * Sortir de la piste par la gauche n'est volontairement **pas** ramené à 0 :
+   * 0 est éliminatoire, et un doigt qui dérape hors de la piste ne doit pas
+   * atterrir sur la seule valeur qui met fin à la manche. */
   const pickFrom = useCallback((clientX: number) => {
     const el = trackRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    if (rect.width === 0) return;
+    if (rect.width === 0 || clientX < rect.left) return;
     const index = Math.floor(((clientX - rect.left) / rect.width) * (MAX_SCORE + 1));
-    onChange(Math.min(MAX_SCORE, Math.max(0, index)));
+    onChange(Math.min(MAX_SCORE, index));
   }, [onChange]);
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -57,6 +63,12 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled, coach
 
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!dragging.current || disabled) return;
+    // Un relâchement non livré (onglet masqué, relâchement hors fenêtre)
+    // laisserait la jauge suivre le curseur sans bouton enfoncé.
+    if (e.pointerType === 'mouse' && e.buttons === 0) {
+      dragging.current = false;
+      return;
+    }
     pickFrom(e.clientX);
   };
 
@@ -70,19 +82,8 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled, coach
 
   return (
     <div className="w-full">
-      {coach && (
-        <motion.p
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-2 text-center text-[11px] font-bold leading-tight text-white/55"
-        >
-          Glisse la jauge pour poser ta note —{' '}
-          <span style={{ color: tint }}>elle repartira de là</span> à la révélation suivante.
-        </motion.p>
-      )}
-
       {/* Lecture en direct : la note, et surtout l'écart avec la précédente. */}
-      <div className="mb-1 flex items-center justify-center gap-3">
+      <div className="flex items-center justify-center gap-3">
         <div className="flex items-baseline">
           <motion.span
             key={value}
@@ -91,7 +92,7 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled, coach
             transition={{ type: 'spring', stiffness: 520, damping: 26 }}
             className="font-black leading-none tabular-nums"
             style={{
-              fontSize: 'clamp(3.4rem, 17vw, 4.6rem)',
+              fontSize: 'min(4.6rem, 16vw, 8.5vh)',
               color: tint,
               letterSpacing: '-0.05em',
               textShadow: `0 0 44px ${withAlpha(tint, 0.45)}`,
@@ -99,7 +100,7 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled, coach
           >
             {value}
           </motion.span>
-          <span className="ml-1 text-lg font-black text-white/25">/10</span>
+          <span className="ml-1 text-base font-black text-white/25">/10</span>
         </div>
 
         {!untouched && (
@@ -120,14 +121,15 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled, coach
       </div>
 
       <p
-        className="mb-3 text-center text-[10px] font-black uppercase tracking-[0.28em]"
+        className="mt-0.5 mb-2 text-center text-[9px] font-black uppercase tracking-[0.28em]"
         style={{ color: withAlpha(tint, 0.75) }}
       >
         {scoreLabel(value)}
       </p>
 
       {/* Escalier : la hauteur des barres encode la valeur, le remplissage
-          encode la note choisie. Glissable et tapable. */}
+          encode la note choisie. Glissable et tapable — la zone sensible est
+          toute la piste, les barres ne sont que la partie visible. */}
       <div
         ref={trackRef}
         role="slider"
@@ -141,8 +143,9 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled, coach
         onPointerMove={onPointerMove}
         onPointerUp={stopDragging}
         onPointerCancel={stopDragging}
+        onLostPointerCapture={stopDragging}
         onKeyDown={onKeyDown}
-        className="flex w-full items-end gap-[3px] rounded-2xl px-1 py-2"
+        className="flex w-full items-end gap-[3px] rounded-2xl px-1 py-1.5"
         style={{
           touchAction: 'none',
           opacity: disabled ? 0.45 : 1,
@@ -153,13 +156,12 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled, coach
         {STEPS.map((step) => {
           const filled = step <= value;
           const isCurrent = step === value;
-          const isZero = step === 0;
           return (
             <div
               key={step}
               className="relative flex-1 rounded-md"
               style={{
-                height: 26 + step * 3.8,
+                height: 20 + step * 3,
                 background: filled ? tint : 'rgba(255,255,255,0.055)',
                 border: `1px solid ${
                   isCurrent ? '#FFFFFF' : filled ? withAlpha(tint, 0.9) : 'rgba(255,255,255,0.09)'
@@ -169,9 +171,13 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled, coach
               }}
             >
               <span
-                className="absolute inset-x-0 bottom-1 text-center text-[9px] font-black tabular-nums"
+                className="absolute inset-x-0 bottom-0.5 text-center text-[9px] font-black tabular-nums"
                 style={{
-                  color: filled ? 'rgba(0,0,0,0.55)' : isZero ? '#EF4444' : 'rgba(255,255,255,0.3)',
+                  color: filled
+                    ? 'rgba(0,0,0,0.55)'
+                    : step === 0
+                      ? '#EF4444'
+                      : 'rgba(255,255,255,0.3)',
                 }}
               >
                 {step}
@@ -185,7 +191,7 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled, coach
         whileTap={{ scale: 0.97 }}
         onClick={onCommit}
         disabled={disabled}
-        className="mt-3 w-full cursor-pointer rounded-2xl py-4 text-base font-black uppercase tracking-widest"
+        className="mt-2.5 w-full cursor-pointer rounded-2xl py-3.5 text-base font-black uppercase tracking-widest"
         style={{
           background: value === 0 ? '#DC2626' : tint,
           color: value === 0 ? '#fff' : '#0A0A0B',

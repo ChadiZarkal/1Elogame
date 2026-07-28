@@ -43,7 +43,10 @@ export function ProfileCard({ identity, statements, ratings, index, draft, flash
 
   return (
     <div
-      className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl"
+      // `min-h` : sans plancher, la carte est le seul élément élastique de la
+      // colonne et absorbe toute la réduction de hauteur. Sur un écran court
+      // elle tombait à quelques pixels, masquant la phrase à noter.
+      className="flex min-h-[150px] flex-1 flex-col overflow-hidden rounded-3xl"
       style={{
         background: 'rgba(255,255,255,0.035)',
         border: '1px solid rgba(255,255,255,0.09)',
@@ -102,17 +105,19 @@ export function ProfileCard({ identity, statements, ratings, index, draft, flash
             {past.length > 0 && (
               <Connector word={connectorFor(past[past.length - 1].type, current.type)} />
             )}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={current.id}
-                initial={{ opacity: 0, y: 22, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 26 }}
-              >
-                <CurrentTrait stmt={current} flash={flash} />
-              </motion.div>
-            </AnimatePresence>
+            {/* Pas d'AnimatePresence ici : elle maintiendrait l'ancienne
+                révélation montée le temps de sa sortie, alors que `past` la rend
+                déjà juste au-dessus — la même phrase apparaissait deux fois
+                pendant une demi-seconde. Le changement de clé suffit à rejouer
+                l'animation d'entrée, sans fantôme. */}
+            <motion.div
+              key={current.id}
+              initial={{ opacity: 0, y: 22, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+            >
+              <CurrentTrait stmt={current} flash={flash} />
+            </motion.div>
           </>
         )}
 

@@ -37,9 +37,14 @@ interface Props {
   ratings: number[];
   profileNumber: number;
   onNext: () => void;
+  /** Le chargement du profil suivant a échoué : on reste sur le verdict plutôt
+   * que de le détruire pour afficher un écran d'erreur. */
+  loadFailed: boolean;
 }
 
-export function Verdict({ identity, statements, ratings, profileNumber, onNext }: Props) {
+export function Verdict({
+  identity, statements, ratings, profileNumber, onNext, loadFailed,
+}: Props) {
   const [copied, setCopied] = useState(false);
 
   const traj = readTrajectory(ratings);
@@ -79,11 +84,16 @@ export function Verdict({ identity, statements, ratings, profileNumber, onNext }
       }
       await navigator.clipboard.writeText(`${text} ${SHARE_URL}`);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     } catch {
-      /* partage annulé ou indisponible */
+      /* partage annulé ou presse-papiers indisponible */
     }
   };
+
+  useEffect(() => {
+    if (!copied) return;
+    const id = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(id);
+  }, [copied]);
 
   return (
     <motion.div
@@ -202,6 +212,11 @@ export function Verdict({ identity, statements, ratings, profileNumber, onNext }
 
       {/* ── Suite ────────────────────────────────────────────────────────── */}
       <div className="mt-6 space-y-2">
+        {loadFailed && (
+          <p className="text-center text-xs font-bold text-red-400">
+            Impossible de charger le profil suivant. Réessaie.
+          </p>
+        )}
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={onNext}

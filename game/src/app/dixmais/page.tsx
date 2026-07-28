@@ -9,6 +9,7 @@
  * et le châssis commun.
  */
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, RotateCcw } from 'lucide-react';
@@ -23,6 +24,19 @@ import { scoreColor, withAlpha } from './scale';
 export default function DixMaisPage() {
   const game = useDixMais();
   const { phase, round } = game;
+
+  // Le pied de page du site est un frère de cette page dans la mise en page
+  // racine : le document reste donc défilant derrière le châssis `h-dvh`, et un
+  // glissement vertical hors de la jauge faisait remonter l'en-tête et
+  // apparaître les mentions légales en pleine partie. On neutralise le
+  // défilement du document pendant la notation seulement — l'accueil et le
+  // verdict gardent l'accès au pied de page.
+  useEffect(() => {
+    if (phase !== 'reveal') return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previous; };
+  }, [phase]);
 
   return (
     <div className="relative flex h-dvh flex-col overflow-hidden text-white select-none">
@@ -100,20 +114,31 @@ export default function DixMaisPage() {
                 style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 4px)' }}
               >
                 {/* L'instruction porte tout le sens du jeu : elle est écrite en
-                    clair, pas en légende grise de 10 px comme auparavant. */}
-                <p className="mb-2 text-center text-[13px] font-bold leading-tight text-white/75">
-                  {round.index === 0 ? (
-                    <>
-                      Tu lui mets combien,{' '}
-                      <span style={{ color: '#FBBF24' }}>maintenant que tu sais ça</span> ?
-                    </>
-                  ) : (
-                    <>
-                      Et maintenant, en comptant{' '}
-                      <span style={{ color: '#FBBF24' }}>tout ce qui est écrit au-dessus</span> ?
-                    </>
-                  )}
-                </p>
+                    clair, pas en légende grise de 10 px comme auparavant.
+                    L'aide de premier lancement occupe cet emplacement plutôt
+                    que d'en ajouter un — hauteur réservée pour deux lignes, la
+                    jauge ne bouge donc jamais sous le pouce. */}
+                <div className="mb-2 flex min-h-[34px] items-center justify-center">
+                  <p className="text-center text-[13px] font-bold leading-tight text-white/75">
+                    {game.showCoach && round.index === 0 ? (
+                      <>
+                        Glisse la jauge pour poser ta note —{' '}
+                        <span style={{ color: '#FBBF24' }}>elle repartira de là</span> à la
+                        révélation suivante.
+                      </>
+                    ) : round.index === 0 ? (
+                      <>
+                        Tu lui mets combien,{' '}
+                        <span style={{ color: '#FBBF24' }}>maintenant que tu sais ça</span> ?
+                      </>
+                    ) : (
+                      <>
+                        Et maintenant, en comptant{' '}
+                        <span style={{ color: '#FBBF24' }}>tout ce qui est écrit au-dessus</span> ?
+                      </>
+                    )}
+                  </p>
+                </div>
 
                 <ScoreDial
                   value={game.draft}
@@ -121,7 +146,6 @@ export default function DixMaisPage() {
                   onChange={game.setDraft}
                   onCommit={game.commit}
                   disabled={game.locked}
-                  coach={game.showCoach && round.index === 0}
                 />
               </div>
             </motion.div>
@@ -135,6 +159,7 @@ export default function DixMaisPage() {
               ratings={round.ratings}
               profileNumber={game.profileNumber}
               onNext={game.nextProfile}
+              loadFailed={game.loadFailed}
             />
           )}
         </AnimatePresence>

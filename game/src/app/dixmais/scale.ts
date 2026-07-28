@@ -41,7 +41,10 @@ const LABELS = [
 ];
 
 export function clampScore(n: number): number {
-  if (Number.isNaN(n)) return START_SCORE;
+  // `Number.isNaN` laisse passer `undefined` : la rampe renverrait alors
+  // `undefined` et toutes les couleurs dérivées seraient silencieusement
+  // invalides. `isFinite` couvre NaN, l'infini et les non-nombres.
+  if (!Number.isFinite(n)) return START_SCORE;
   return Math.min(MAX_SCORE, Math.max(MIN_SCORE, Math.round(n)));
 }
 

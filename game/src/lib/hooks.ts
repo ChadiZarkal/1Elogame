@@ -45,18 +45,25 @@ export function useOnlineStatus(): boolean {
   );
 }
 
+function vibrate(pattern: number | number[] = 10) {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    navigator.vibrate(pattern);
+  }
+}
+
+/**
+ * Singleton : le retour ne dépend d'aucun état, et une identité stable permet
+ * de le placer sans dommage dans un tableau de dépendances — un objet recréé à
+ * chaque rendu y annulerait silencieusement toute mémoïsation.
+ */
+const HAPTICS = {
+  tap: () => vibrate(10),
+  success: () => vibrate([10, 30, 10]),
+  error: () => vibrate([50, 20, 50, 20, 50]),
+  select: () => vibrate(5),
+} as const;
+
 /** Trigger haptic feedback on supported devices. */
 export function useHaptics() {
-  const vibrate = (pattern: number | number[] = 10) => {
-    if ('vibrate' in navigator) {
-      navigator.vibrate(pattern);
-    }
-  };
-
-  return {
-    tap: () => vibrate(10),
-    success: () => vibrate([10, 30, 10]),
-    error: () => vibrate([50, 20, 50, 20, 50]),
-    select: () => vibrate(5),
-  };
+  return HAPTICS;
 }

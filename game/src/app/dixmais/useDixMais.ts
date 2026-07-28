@@ -19,8 +19,11 @@ import { generateIdentity, type ProfileIdentity } from './profile';
  * afficher **toutes** les révélations sans jamais en repousser une hors écran. */
 export const REVEALS_PER_PROFILE = 5;
 
-const COMMIT_MS = 900;
+const COMMIT_MS = 620;
 const COACH_KEY = 'dixmais.coached';
+/** Borne la liste d'exclusion : au-delà, l'URL enfle pour rien et le catalogue
+ * a de toute façon été largement parcouru. */
+const MAX_SEEN = 80;
 
 export type Phase = 'intro' | 'loading' | 'error' | 'reveal' | 'verdict';
 
@@ -69,11 +72,20 @@ export function useDixMais() {
   const [shock, setShock] = useState(0);
   const [profileNumber, setProfileNumber] = useState(0);
   const [showCoach, setShowCoach] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const sessionId = useRef('');
-  const seenIds = useRef<Set<string>>(new Set());
+  const seenIds = useRef<string[]>([]);
   const locked = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Jeton de chargement : un fetch dont le jeton a été périmé par un
+   * redémarrage ne doit plus rien écrire. */
+  const runId = useRef(0);
+  /** Valeur courante de la jauge, lisible sans re-mémoïser les callbacks. */
+  const draftRef = useRef(START_SCORE);
+  const phaseRef = useRef<Phase>('intro');
+
+  useEffect(() => { phaseRef.current = phase; }, [phase]);
 
   useEffect(() => {
     sessionId.current =
@@ -105,54 +117,85 @@ export function useDixMais() {
    * curseur : le joueur ajuste une note existante, il n'en saisit pas une neuve. */
   const previousScore = round?.ratings.at(-1) ?? START_SCORE;
 
-  /** La première note posée vaut apprentissage : l'aide ne réapparaît plus,
-   * y compris aux prochaines visites. */
+  const applyDraft = useCallback((value: number) => {
+    draftRef.current = value;
+    setDraftState(value);
+  }, []);
+
+  /** Une fois une note posée, l'aide ne réapparaît plus, y compris aux visites
+   * suivantes. Volontairement appelée depuis `commit` et non depuis `setDraft` :
+   * la faire disparaître au premier contact du doigt escamoterait le texte au
+   * moment précis où le joueur exécute le geste qu'il décrit, et décalerait la
+   * jauge sous son pouce. */
   const dismissCoach = useCallback(() => {
-    setShowCoach(false);
-    try { localStorage.setItem(COACH_KEY, '1'); } catch { /* stockage indisponible */ }
+    setShowCoach((visible) => {
+      if (visible) {
+        try { localStorage.setItem(COACH_KEY, '1'); } catch { /* stockage indisponible */ }
+      }
+      return false;
+    });
   }, []);
 
   const setDraft = useCallback((value: number) => {
     const next = clampScore(value);
-    setDraftState((current) => {
-      if (current !== next) haptics.select();
-      return next;
-    });
-    dismissCoach();
-  }, [haptics, dismissCoach]);
+    if (next === draftRef.current) return;
+    draftRef.current = next;
+    setDraftState(next);
+    haptics.select();
+  }, [haptics]);
 
   const loadProfile = useCallback(async () => {
+    const myRun = ++runId.current;
+    // Un échec au moment d'enchaîner ne doit pas détruire le verdict affiché.
+    const fromVerdict = phaseRef.current === 'verdict';
+
+    if (timer.current) clearTimeout(timer.current);
+    locked.current = false;
+    setLoadFailed(false);
     setPhase('loading');
     setFlash(null);
-    try {
-      const statements = await fetchStatements(
-        REVEALS_PER_PROFILE,
-        Array.from(seenIds.current),
-      );
-      if (!statements.length) throw new Error('empty');
 
-      statements.forEach((s) => seenIds.current.add(s.id));
-
+    const begin = (statements: DixMaisStatement[]) => {
+      seenIds.current = [...seenIds.current, ...statements.map((s) => s.id)].slice(-MAX_SEEN);
       setRound({
         statements,
         identity: generateIdentity(statements.map((s) => s.text)),
         ratings: [],
         index: 0,
       });
-      setDraftState(START_SCORE);
+      applyDraft(START_SCORE);
       setProfileNumber((n) => n + 1);
       setPhase('reveal');
+    };
+
+    try {
+      let statements = await fetchStatements(REVEALS_PER_PROFILE, seenIds.current);
+      if (runId.current !== myRun) return;
+
+      // Catalogue épuisé : ce n'est pas une panne, c'est un tour complet. On
+      // repart de zéro plutôt que d'enfermer le joueur dans une fausse erreur
+      // réseau que « Réessayer » ne pourrait jamais résoudre.
+      if (!statements.length && seenIds.current.length) {
+        seenIds.current = [];
+        statements = await fetchStatements(REVEALS_PER_PROFILE, []);
+        if (runId.current !== myRun) return;
+      }
+
+      if (!statements.length) throw new Error('empty');
+      begin(statements);
     } catch {
-      setPhase('error');
+      if (runId.current !== myRun) return;
+      setLoadFailed(true);
+      setPhase(fromVerdict ? 'verdict' : 'error');
     }
-  }, []);
+  }, [applyDraft]);
 
   const commit = useCallback(() => {
     if (locked.current || !round) return;
     locked.current = true;
     dismissCoach();
 
-    const value = draft;
+    const value = draftRef.current;
     const from = previousScore;
     const delta = value - from;
     const statement = round.statements[round.index];
@@ -174,27 +217,29 @@ export function useDixMais() {
       locked.current = false;
 
       if (value === 0 || isLast) {
-        setRound({ ...round, ratings });
+        setRound((r) => (r ? { ...r, ratings } : r));
         setPhase('verdict');
       } else {
-        setRound({ ...round, ratings, index: round.index + 1 });
+        setRound((r) => (r ? { ...r, ratings, index: r.index + 1 } : r));
         // Le curseur reste sur la note qui vient d'être posée : la note suivante
         // part de là, pas de 10.
-        setDraftState(value);
+        applyDraft(value);
       }
     }, COMMIT_MS);
-  }, [round, draft, previousScore, haptics, dismissCoach]);
+  }, [round, previousScore, haptics, dismissCoach, applyDraft]);
 
   const restart = useCallback(() => {
+    runId.current += 1; // périme tout chargement encore en vol
     if (timer.current) clearTimeout(timer.current);
     locked.current = false;
-    seenIds.current = new Set();
+    seenIds.current = [];
     setRound(null);
     setProfileNumber(0);
     setFlash(null);
-    setDraftState(START_SCORE);
+    setLoadFailed(false);
+    applyDraft(START_SCORE);
     setPhase('intro');
-  }, []);
+  }, [applyDraft]);
 
   /** Teinte du fond : suit le doigt pendant la notation, se fige sur la note
    * finale au verdict. */
@@ -215,6 +260,7 @@ export function useDixMais() {
     ambientScore,
     profileNumber,
     showCoach,
+    loadFailed,
     start: loadProfile,
     nextProfile: loadProfile,
     restart,
