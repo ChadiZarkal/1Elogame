@@ -313,11 +313,9 @@ function Game({ stmts, idx, ratings, flash, onRate, locked, round }: {
           <p className="font-black text-white leading-none tracking-tight"
             style={{ fontSize: 'clamp(1.6rem, 8vw, 2.5rem)' }}>
             C&apos;EST UN{' '}
-            <motion.span key={currentScore}
-              initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-              style={{ color: scoreColor(currentScore), textShadow: `0 0 20px ${scoreColor(currentScore)}80`, display: 'inline-block' }}>
-              {currentScore}
-            </motion.span>
+            <span style={{ color: '#FBBF24', textShadow: `0 0 20px #FBBF2480`, display: 'inline-block' }}>
+              10
+            </span>
             {' '}MAIS...
           </p>
         </div>
