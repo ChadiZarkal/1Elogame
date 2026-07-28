@@ -91,10 +91,9 @@ const CARDS_DATA: Record<PersonaKey, {
 export default function HubPage() {
   const { tap } = useHaptics();
   const [stats, setStats] = useState<StatsData | null>(null);
-  const [selectedVibe, setSelectedVibe] = useState<PersonaKey>('group');
+  const [selectedVibe, setSelectedVibe] = useState<PersonaKey>('redflag');
   const [safeZoneOpen, setSafeZoneOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
-  const [swipeHint, setSwipeHint] = useState(true);
   const touchStartXRef = useRef<number | null>(null);
 
   const vibeOrder = useMemo(() => Object.keys(CARDS_DATA) as PersonaKey[], []);
@@ -319,14 +318,6 @@ export default function HubPage() {
                     </li>
                   ))}
                 </ul>
-
-                {swipeHint && (
-                  <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/4 px-3 py-1 text-[10px] font-black tracking-wider uppercase text-[#C2C2C8]">
-                    <span>⬅</span>
-                    <span>Swipe</span>
-                    <span>➡</span>
-                  </div>
-                )}
               </div>
 
               {/* Massive Tactile Pulse Action Button */}
