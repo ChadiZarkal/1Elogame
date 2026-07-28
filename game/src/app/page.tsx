@@ -118,7 +118,6 @@ export default function HubPage() {
       return vibeOrder[nextIndex];
     });
     tap();
-    setSwipeHint(false);
   }, [tap, vibeOrder]);
 
   const onTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
