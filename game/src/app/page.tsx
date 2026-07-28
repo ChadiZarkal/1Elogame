@@ -76,7 +76,7 @@ const CARDS_DATA: Record<PersonaKey, {
     title: "C'est un 10 mais...",
     tagline: 'Combien vaut-il vraiment ?',
     desc: 'Il commence à 10. Puis les révélations s\'enchaînent. À chaque info, tu réévalues sa note. Jusqu\'où va-t-il chuter ?',
-    bullets: ['⭐ 5 profils à noter de 0 à 10', '📉 Note qui évolue à chaque révélation', '🚫 Le 0 est éliminatoire — fin du profil'],
+    bullets: ['⭐ 5 révélations par profil', '📉 La note se réévalue à chaque révélation', '🚫 Le 0 est éliminatoire — fin du profil'],
     cta: 'JOUER MAINTENANT',
     href: '/dixmais',
     emoji: '⭐'
