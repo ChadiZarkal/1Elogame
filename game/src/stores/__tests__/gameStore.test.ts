@@ -16,8 +16,7 @@ vi.mock('@/lib/analytics', () => ({
 // Helper: mock a successful duel response
 function mockDuelResponse(duel: Partial<Duel> = {}) {
   const defaultDuel: Duel = {
-    elementA: { id: 'a1', texte: 'Test A', categorie: 'sexe' },
-    elementB: { id: 'b1', texte: 'Test B', categorie: 'quotidien' },
+    elements: [{ id: 'a1', texte: 'Test A', categorie: 'sexe' }, { id: 'b1', texte: 'Test B', categorie: 'quotidien' }],
     ...duel,
   };
   mockFetch.mockResolvedValueOnce({
@@ -146,8 +145,7 @@ describe('gameStore', () => {
     it('should preload second duel as nextDuel', async () => {
       const duel1 = mockDuelResponse();
       const duel2 = mockDuelResponse({
-        elementA: { id: 'a2', texte: 'Test A2', categorie: 'quotidien' },
-        elementB: { id: 'b2', texte: 'Test B2', categorie: 'quotidien' },
+        elements: [{ id: 'a2', texte: 'Test A2', categorie: 'quotidien' }, { id: 'b2', texte: 'Test B2', categorie: 'quotidien' }],
       });
 
       const store = useGameStore.getState();
@@ -259,8 +257,7 @@ describe('gameStore', () => {
         profile: { sex: 'homme', age: '19-22' },
         hasProfile: true,
         currentDuel: {
-          elementA: { id: 'a1', texte: 'A', categorie: 'sexe' },
-          elementB: { id: 'b1', texte: 'B', categorie: 'quotidien' },
+          elements: [{ id: 'a1', texte: 'A', categorie: 'sexe' }, { id: 'b1', texte: 'B', categorie: 'quotidien' }],
         },
       });
 
@@ -270,7 +267,7 @@ describe('gameStore', () => {
 
       const store = useGameStore.getState();
       // Don't await — check optimistic state first
-      const promise = store.submitVote('a1', 'b1');
+      const promise = store.submitVote('a1', ['b1']);
 
       // After sync part, state should show result
       const state = useGameStore.getState();
@@ -285,8 +282,7 @@ describe('gameStore', () => {
         profile: { sex: 'femme', age: '23-26' },
         hasProfile: true,
         currentDuel: {
-          elementA: { id: 'a1', texte: 'A', categorie: 'sexe' },
-          elementB: { id: 'b1', texte: 'B', categorie: 'quotidien' },
+          elements: [{ id: 'a1', texte: 'A', categorie: 'sexe' }, { id: 'b1', texte: 'B', categorie: 'quotidien' }],
         },
       });
 
@@ -296,7 +292,7 @@ describe('gameStore', () => {
       });
 
       const store = useGameStore.getState();
-      await store.submitVote('a1', 'b1');
+      await store.submitVote('a1', ['b1']);
 
       const state = useGameStore.getState();
       expect(state.lastResult?.winner.percentage).toBe(72);
@@ -307,7 +303,7 @@ describe('gameStore', () => {
       useGameStore.setState({ profile: null, currentDuel: null });
 
       const store = useGameStore.getState();
-      await store.submitVote('a1', 'b1');
+      await store.submitVote('a1', ['b1']);
 
       expect(mockFetch).not.toHaveBeenCalled();
     });
@@ -320,7 +316,7 @@ describe('gameStore', () => {
       });
 
       const store = useGameStore.getState();
-      await store.submitVote('a1', 'b1');
+      await store.submitVote('a1', ['b1']);
 
       expect(mockFetch).not.toHaveBeenCalled();
     });
@@ -330,8 +326,7 @@ describe('gameStore', () => {
         profile: { sex: 'homme', age: '19-22' },
         hasProfile: true,
         currentDuel: {
-          elementA: { id: 'a1', texte: 'A', categorie: 'sexe' },
-          elementB: { id: 'b1', texte: 'B', categorie: 'quotidien' },
+          elements: [{ id: 'a1', texte: 'A', categorie: 'sexe' }, { id: 'b1', texte: 'B', categorie: 'quotidien' }],
         },
         duelCount: 5,
       });
@@ -340,7 +335,7 @@ describe('gameStore', () => {
       mockVoteResponse();
 
       const store = useGameStore.getState();
-      await store.submitVote('a1', 'b1');
+      await store.submitVote('a1', ['b1']);
 
       expect(useGameStore.getState().duelCount).toBe(6);
     });
@@ -350,8 +345,7 @@ describe('gameStore', () => {
         profile: { sex: 'homme', age: '19-22' },
         hasProfile: true,
         currentDuel: {
-          elementA: { id: 'a1', texte: 'A', categorie: 'sexe' },
-          elementB: { id: 'b1', texte: 'B', categorie: 'quotidien' },
+          elements: [{ id: 'a1', texte: 'A', categorie: 'sexe' }, { id: 'b1', texte: 'B', categorie: 'quotidien' }],
         },
       });
 
@@ -363,7 +357,7 @@ describe('gameStore', () => {
       });
 
       const store = useGameStore.getState();
-      await store.submitVote('a1', 'b1');
+      await store.submitVote('a1', ['b1']);
 
       const state = useGameStore.getState();
       // Should still show result (optimistic), no error set
@@ -377,14 +371,12 @@ describe('gameStore', () => {
   describe('showNextDuel', () => {
     it('should promote nextDuel to currentDuel', () => {
       const nextDuel: Duel = {
-        elementA: { id: 'a2', texte: 'A2', categorie: 'quotidien' },
-          elementB: { id: 'b2', texte: 'B2', categorie: 'quotidien' },
+        elements: [{ id: 'a2', texte: 'A2', categorie: 'quotidien' }, { id: 'b2', texte: 'B2', categorie: 'quotidien' }],
       };
 
       useGameStore.setState({
         currentDuel: {
-          elementA: { id: 'a1', texte: 'A', categorie: 'sexe' },
-          elementB: { id: 'b1', texte: 'B', categorie: 'quotidien' },
+          elements: [{ id: 'a1', texte: 'A', categorie: 'sexe' }, { id: 'b1', texte: 'B', categorie: 'quotidien' }],
         },
         nextDuel,
         lastResult: {
@@ -410,8 +402,7 @@ describe('gameStore', () => {
 
     it('should push current duel to history', () => {
       const currentDuel: Duel = {
-        elementA: { id: 'a1', texte: 'A', categorie: 'sexe' },
-        elementB: { id: 'b1', texte: 'B', categorie: 'quotidien' },
+        elements: [{ id: 'a1', texte: 'A', categorie: 'sexe' }, { id: 'b1', texte: 'B', categorie: 'quotidien' }],
       };
       const lastResult: VoteResult = {
         winner: { id: 'a1', percentage: 60, participations: 10 },
@@ -422,8 +413,7 @@ describe('gameStore', () => {
       useGameStore.setState({
         currentDuel,
         nextDuel: {
-          elementA: { id: 'a2', texte: 'A2', categorie: 'quotidien' },
-          elementB: { id: 'b2', texte: 'B2', categorie: 'quotidien' },
+          elements: [{ id: 'a2', texte: 'A2', categorie: 'quotidien' }, { id: 'b2', texte: 'B2', categorie: 'quotidien' }],
         },
         lastResult,
         showingResult: true,
@@ -445,24 +435,25 @@ describe('gameStore', () => {
       // Pre-fill with 10 entries
       const history = Array.from({ length: 10 }, (_, i) => ({
         duel: {
-          elementA: { id: `a${i}`, texte: `A${i}`, categorie: 'sexe' as const },
-          elementB: { id: `b${i}`, texte: `B${i}`, categorie: 'quotidien' as const },
+          elements: [
+            { id: `a${i}`, texte: `A${i}`, categorie: 'sexe' as const },
+            { id: `b${i}`, texte: `B${i}`, categorie: 'quotidien' as const },
+          ],
         },
         result: {
           winner: { id: `a${i}`, percentage: 50, participations: 1 },
           loser: { id: `b${i}`, percentage: 50, participations: 1 },
           streak: { matched: true, current: 1 },
         },
+        pickedId: `a${i}`,
       }));
 
       useGameStore.setState({
         currentDuel: {
-          elementA: { id: 'new-a', texte: 'New A', categorie: 'quotidien' },
-          elementB: { id: 'new-b', texte: 'New B', categorie: 'quotidien' },
+          elements: [{ id: 'new-a', texte: 'New A', categorie: 'quotidien' }, { id: 'new-b', texte: 'New B', categorie: 'quotidien' }],
         },
         nextDuel: {
-          elementA: { id: 'next-a', texte: 'Next A', categorie: 'sexe' },
-          elementB: { id: 'next-b', texte: 'Next B', categorie: 'quotidien' },
+          elements: [{ id: 'next-a', texte: 'Next A', categorie: 'sexe' }, { id: 'next-b', texte: 'Next B', categorie: 'quotidien' }],
         },
         lastResult: {
           winner: { id: 'new-a', percentage: 50, participations: 1 },
@@ -481,8 +472,8 @@ describe('gameStore', () => {
       const state = useGameStore.getState();
       expect(state.duelHistory).toHaveLength(10);
       // Oldest entry should have been shifted out
-      expect(state.duelHistory[0].duel.elementA.id).toBe('a1');
-      expect(state.duelHistory[9].duel.elementA.id).toBe('new-a');
+      expect(state.duelHistory[0].duel.elements[0].id).toBe('a1');
+      expect(state.duelHistory[9].duel.elements[0].id).toBe('new-a');
     });
   });
 
@@ -530,8 +521,7 @@ describe('gameStore', () => {
         profile: { sex: 'homme', age: '19-22' },
         hasProfile: true,
         currentDuel: {
-          elementA: { id: 'a1', texte: 'A', categorie: 'sexe' },
-          elementB: { id: 'b1', texte: 'B', categorie: 'quotidien' },
+          elements: [{ id: 'a1', texte: 'A', categorie: 'sexe' }, { id: 'b1', texte: 'B', categorie: 'quotidien' }],
         },
         streak: 5,
         duelCount: 10,

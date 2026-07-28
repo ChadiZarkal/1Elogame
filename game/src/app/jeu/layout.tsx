@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Red or Green — Quel est le plus gros Red Flag ?',
-  description: 'Joue au jeu Red or Green : choisis entre deux comportements, lequel est le pire ? Vote, compare tes réponses et débats avec tes amis. Classement en temps réel.',
+  description: "Joue au jeu Red or Green : quatre comportements s'affichent, tu désignes le moins supportable. Vote, compare tes réponses et débats avec tes amis. Classement en temps réel.",
   keywords: [
     'red or green',
     'red flag game',
@@ -15,13 +15,13 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: 'Red or Green — Quel est le plus gros Red Flag ?',
-    description: 'Choisis entre deux comportements : lequel est le plus gros Red Flag ? Un party game addictif et gratuit.',
+    description: 'Quatre comportements, un seul à éliminer : lequel est le plus gros Red Flag ? Un party game addictif et gratuit.',
     url: '/jeu',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Red or Green — Quel est le plus gros Red Flag ?',
-    description: 'Choisis entre deux comportements : lequel est le plus gros Red Flag ? Un party game addictif et gratuit.',
+    description: 'Quatre comportements, un seul à éliminer : lequel est le plus gros Red Flag ? Un party game addictif et gratuit.',
   },
   alternates: { canonical: '/jeu' },
 };
@@ -33,7 +33,7 @@ function JeuJsonLd() {
     '@context': 'https://schema.org',
     '@type': 'VideoGame',
     name: 'Red or Green',
-    description: 'Choisis entre deux comportements : lequel est le plus gros Red Flag ? Un party game addictif et gratuit.',
+    description: 'Quatre comportements, un seul à éliminer : lequel est le plus gros Red Flag ? Un party game addictif et gratuit.',
     url: `${SITE_URL}/jeu`,
     genre: 'Party Game',
     numberOfPlayers: { '@type': 'QuantitativeValue', minValue: 1 },

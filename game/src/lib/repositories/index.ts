@@ -5,8 +5,8 @@
  */
 
 export { getActiveElements, getElementsByIds, getAllElements, getAllElementsEnriched, updateElement, createElement, deleteElement, getStarredPairs, getLeaderboard } from './elements';
-export { processVote } from './votes';
-export type { VoteResultData } from './votes';
+export { processVote, processMultiVote } from './votes';
+export type { VoteResultData, MultiVoteResultData, RankedElement } from './votes';
 export { upsertFeedback } from './feedback';
 export { getPublicStats, getAdminStats, getDailyVoteStats } from './stats';
 export type { DailyVoteStat } from './stats';

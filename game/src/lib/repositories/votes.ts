@@ -21,6 +21,25 @@ export interface VoteResultData {
   streak: { matched: boolean; current: number };
 }
 
+export interface RankedElement {
+  id: string;
+  rank?: number;
+  totalElements?: number;
+  /** Estimation tête-à-tête face au choix du joueur, en %. Absente pour le choix lui-même. */
+  percentage?: number;
+}
+
+export interface MultiVoteResultData extends VoteResultData {
+  /**
+   * Les N éléments du tour, du plus red flag au moins red flag selon la
+   * communauté. Vide lorsque les rangs ne sont pas calculables (mode mock) :
+   * mieux vaut ne rien annoncer qu'annoncer un classement inventé.
+   */
+  ranking: RankedElement[];
+  /** Moyenne des accords tête-à-tête sur l'ensemble des duels du tour, en %. */
+  agreement: number;
+}
+
 // ---------------------------------------------------------------------------
 // Core vote processing
 // ---------------------------------------------------------------------------
@@ -39,6 +58,69 @@ export async function processVote(
     return processMockVote(winnerId, loserId, sexe, age);
   }
   return processProductionVote(winnerId, loserId, sexe, age);
+}
+
+/** Rang absent (mode mock) : relégué en fin de tri plutôt qu'en tête. */
+function rankOf(entry: { rank?: number }): number {
+  return entry.rank ?? Number.MAX_SAFE_INTEGER;
+}
+
+/**
+ * Vote d'un tour à choix multiple.
+ *
+ * Un choix parmi N se décompose en N-1 duels : l'élément retenu affronte chacun
+ * des autres. C'est le traitement usuel d'une comparaison multiple en Elo, et il
+ * n'exige **aucune modification du schéma** — la table des votes reste
+ * strictement deux-à-deux.
+ *
+ * Les duels sont joués en série et non de front : chacun lit puis réécrit le
+ * score du gagnant. Menées en parallèle, les trois écritures partiraient toutes
+ * du même score initial et deux des trois gains seraient perdus.
+ */
+export async function processMultiVote(
+  winnerId: string,
+  loserIds: string[],
+  sexe: SexeVotant,
+  age: AgeVotant,
+): Promise<MultiVoteResultData> {
+  if (loserIds.length === 0) throw new Error('NOT_FOUND');
+
+  const outcomes: VoteResultData[] = [];
+  for (const loserId of loserIds) {
+    outcomes.push(await processVote(winnerId, loserId, sexe, age));
+  }
+
+  const last = outcomes[outcomes.length - 1];
+
+  // L'adversaire le plus sérieux, c'est-à-dire celui que la communauté classe le
+  // plus haut : c'est face à lui que le pourcentage d'accord veut dire quelque
+  // chose. L'opposer au dernier du lot gonflerait le score sans rien apprendre.
+  const runnerUp = outcomes.reduce((best, o) => (rankOf(o.loser) < rankOf(best.loser) ? o : best));
+
+  const ranksAvailable = outcomes.every(o => o.winner.rank != null && o.loser.rank != null);
+  const ranking: RankedElement[] = ranksAvailable
+    ? [
+        { id: winnerId, rank: last.winner.rank, totalElements: last.winner.totalElements },
+        ...outcomes.map(o => ({
+          id: o.loser.id,
+          rank: o.loser.rank,
+          totalElements: o.loser.totalElements,
+          percentage: o.loser.percentage,
+        })),
+      ].sort((a, b) => rankOf(a) - rankOf(b))
+    : [];
+
+  return {
+    winner: { ...last.winner, percentage: runnerUp.winner.percentage },
+    loser: runnerUp.loser,
+    // Le tour ne compte comme réussi que si le choix devance **tous** les
+    // autres : avec quatre propositions, tomber juste au hasard vaut 25 %.
+    streak: { matched: outcomes.every(o => o.streak.matched), current: 0 },
+    ranking,
+    agreement: Math.round(
+      outcomes.reduce((sum, o) => sum + o.winner.percentage, 0) / outcomes.length,
+    ),
+  };
 }
 
 // ---------------------------------------------------------------------------

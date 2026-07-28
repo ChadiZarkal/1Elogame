@@ -38,15 +38,40 @@ export const elementUpdateSchema = z.object({
 // Vote schema
 // Note: winnerId/loserId accept any non-empty string (UUID in prod, simple ID in mock mode)
 // Actual existence is validated by the element lookup in the route handler
+/** Perdants d'un vote, quelle que soit la forme employée par l'appelant. */
+function losersOf(data: { loserId?: string; loserIds?: string[] }): string[] {
+  if (data.loserIds?.length) return data.loserIds;
+  return data.loserId ? [data.loserId] : [];
+}
+
 export const voteSchema = z.object({
   winnerId: z.string().min(1, 'winnerId est requis'),
-  loserId: z.string().min(1, 'loserId est requis'),
+  /** Forme historique, à deux éléments. */
+  loserId: z.string().min(1).optional(),
+  /**
+   * Tour à choix multiple : le gagnant est opposé à chacun des perdants, ce qui
+   * décompose un choix parmi N en N-1 duels deux-à-deux. Le modèle Elo et le
+   * schéma de la base restent inchangés.
+   */
+  loserIds: z.array(z.string().min(1)).min(1).max(3).optional(),
   sexe: sexeVotantSchema,
   age: ageVotantSchema,
-}).refine(data => data.winnerId !== data.loserId, {
-  message: 'Le gagnant et le perdant ne peuvent pas être le même élément',
-  path: ['loserId'],
-});
+})
+  .refine(data => losersOf(data).length > 0, {
+    message: 'loserId ou loserIds est requis',
+    path: ['loserId'],
+  })
+  .refine(data => !losersOf(data).includes(data.winnerId), {
+    message: 'Le gagnant et le perdant ne peuvent pas être le même élément',
+    path: ['loserId'],
+  })
+  .refine(data => {
+    const losers = losersOf(data);
+    return new Set(losers).size === losers.length;
+  }, {
+    message: 'Un même perdant ne peut pas figurer deux fois',
+    path: ['loserIds'],
+  });
 
 // Feedback schema
 export const feedbackSchema = z.object({

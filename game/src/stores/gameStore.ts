@@ -7,13 +7,21 @@ import {
   initSession, 
   clearSession, 
   updateStreak,
-  markDuelAsSeen,
+  markRoundAsSeen,
   getSeenDuelsString,
   getStreakEmoji,
   getRecentElementIdsString,
   getElementAppearancesString,
 } from '@/lib/session';
 import { trackVote, trackProfile, trackCategoryChange } from '@/lib/analytics';
+
+/**
+ * Propositions par tour. Quatre plutôt que deux : désigner la pire de quatre
+ * demande un vrai arbitrage, et surtout la question reste sensée même quand
+ * aucune des propositions n'est franchement choquante — ce qui n'était pas le
+ * cas d'un face-à-face entre deux comportements anodins.
+ */
+export const ROUND_SIZE = 4;
 
 // Types pour le mode de jeu
 export type GameMode = 'default' | 'thematique';
@@ -50,6 +58,8 @@ export function getDefaultGameMode(): GameModeSelection {
 export interface DuelHistoryEntry {
   duel: Duel;
   result: VoteResult;
+  /** Élément désigné comme le pire par le joueur. */
+  pickedId: string;
   /** Time in ms the user took to pick (from duel shown to tap) */
   reactionTimeMs?: number;
 }
@@ -149,7 +159,8 @@ interface GameState {
   clearProfile: () => void;
   
   fetchNextDuel: () => Promise<void>;
-  submitVote: (winnerId: string, loserId: string) => Promise<void>;
+  /** `winnerId` : le pire selon le joueur. `loserIds` : les autres propositions. */
+  submitVote: (winnerId: string, loserIds: string[]) => Promise<void>;
   
   showNextDuel: () => void;
   resetGame: () => void;
@@ -242,7 +253,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const appearances = getElementAppearancesString();
       
       // Construire les paramètres avec le mode de jeu
-      const params = new URLSearchParams();
+      const params = new URLSearchParams({ count: String(ROUND_SIZE) });
       if (seenDuels) {
         params.set('seenDuels', seenDuels);
       }
@@ -265,10 +276,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         params.set('category', gameMode.category);
       }
       
-      const queryString = params.toString();
-      const url = queryString ? `/api/duel?${queryString}` : '/api/duel';
-      
-      const response = await fetch(url, { signal });
+      const response = await fetch(`/api/duel?${params.toString()}`, { signal });
       const data = await response.json();
       
       if (!response.ok) {
@@ -285,14 +293,23 @@ export const useGameStore = create<GameState>((set, get) => ({
         return;
       }
 
+      const elements = (data.data?.elements ?? []) as Duel['elements'];
+      // Moins de deux propositions ne fait pas un tour : traité comme un
+      // épuisement plutôt que comme un écran vide.
+      if (elements.length < 2) {
+        set({ allDuelsExhausted: true, isLoadingDuel: false });
+        return;
+      }
+
+      const duel: Duel = { elements };
       const { currentDuel } = get();
-      
+
       if (!currentDuel) {
         // First duel - set as current (start reaction timer)
-        set({ currentDuel: data.data, isLoadingDuel: false, duelShownAt: Date.now() });
+        set({ currentDuel: duel, isLoadingDuel: false, duelShownAt: Date.now() });
       } else {
         // Preload as next duel
-        set({ nextDuel: data.data, isLoadingDuel: false });
+        set({ nextDuel: duel, isLoadingDuel: false });
       }
     } catch (error) {
       // Ignore abort errors — they're expected during mode switches
@@ -308,22 +325,22 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
   
   // Submit a vote — OPTIMISTIC UI: show instant result, refine with API data
-  submitVote: async (winnerId: string, loserId: string) => {
+  submitVote: async (winnerId: string, loserIds: string[]) => {
     const { profile, currentDuel, duelShownAt } = get();
-    
-    if (!profile || !currentDuel) return;
+
+    if (!profile || !currentDuel || loserIds.length === 0) return;
     if (get().showingResult) return; // double-tap guard
-    
+
     // Capture reaction time
     const reactionTimeMs = duelShownAt > 0 ? Date.now() - duelShownAt : undefined;
-    
+
     set({ error: null });
-    
-    // Mark duel as seen IMMEDIATELY (no need to wait)
-    markDuelAsSeen(currentDuel.elementA.id, currentDuel.elementB.id);
-    
+
+    // Mark round as seen IMMEDIATELY (no need to wait)
+    markRoundAsSeen(winnerId, loserIds);
+
     // OPTIMISTIC RESULT: show instant feedback — neutral state (no percentages yet)
-    const optimisticResult = {
+    const optimisticResult: VoteResult = {
       winner: {
         id: winnerId,
         percentage: 50, // Neutral — will be updated by real API data
@@ -332,7 +349,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         totalElements: 0,
       },
       loser: {
-        id: loserId,
+        id: loserIds[0],
         percentage: 50,
         participations: 0,
         rank: 0,
@@ -342,7 +359,10 @@ export const useGameStore = create<GameState>((set, get) => ({
         matched: true,
         current: 0,
       },
-      isOptimistic: true, // Signals ResultDisplay to show neutral/loading state
+      // Vide tant que l'API n'a pas répondu : l'écran de dépouillement attend
+      // un classement réel plutôt que d'en afficher un provisoire et faux.
+      ranking: [],
+      isOptimistic: true,
     };
     
     // Track vote in analytics
@@ -361,7 +381,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     // ── Party tracking: store the duel result immediately ──
     const { partyActive, partyConfig } = get();
     if (partyActive && currentDuel) {
-      const entry: DuelHistoryEntry = { duel: currentDuel, result: optimisticResult, reactionTimeMs };
+      const entry: DuelHistoryEntry = {
+        duel: currentDuel,
+        result: optimisticResult,
+        pickedId: winnerId,
+        reactionTimeMs,
+      };
       set(state => ({
         partyResults: [...state.partyResults, entry],
       }));
@@ -383,7 +408,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           winnerId,
-          loserId,
+          loserIds,
           sexe: profile.sex,
           age: profile.age,
         }),
@@ -407,7 +432,9 @@ export const useGameStore = create<GameState>((set, get) => ({
 
       // ── Party: update with real data ──
       if (get().partyActive) {
-        const correct = data.data.winner.percentage >= 50;
+        // Avec quatre propositions, un tour n'est réussi que si le choix
+        // devance **toutes** les autres — pas seulement la plus coriace.
+        const correct = data.data.streak.matched;
         set(state => {
           const updatedResults = [...state.partyResults];
           if (updatedResults.length > 0) {
@@ -439,7 +466,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const finalBestStreak = Math.max(state.partyBestStreak, state.streak);
       let finalCorrect = 0;
       for (const entry of state.partyResults) {
-        if (!entry.result.isOptimistic && entry.result.winner.percentage >= 50) finalCorrect++;
+        if (!entry.result.isOptimistic && entry.result.streak.matched) finalCorrect++;
       }
       set({
         partyComplete: true,
@@ -459,7 +486,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     
     // Push current duel+result to history (keep last MAX_HISTORY)
     if (currentDuel && lastResult) {
-      const newHistory = [...duelHistory, { duel: currentDuel, result: lastResult }];
+      const entry: DuelHistoryEntry = {
+        duel: currentDuel,
+        result: lastResult,
+        pickedId: lastResult.winner.id,
+      };
+      const newHistory = [...duelHistory, entry];
       if (newHistory.length > MAX_HISTORY) newHistory.shift();
       set({ duelHistory: newHistory });
     }
@@ -576,7 +608,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const finalBestStreak = Math.max(state.partyBestStreak, state.streak);
     let finalCorrect = 0;
     for (const entry of state.partyResults) {
-      if (!entry.result.isOptimistic && entry.result.winner.percentage >= 50) finalCorrect++;
+      if (!entry.result.isOptimistic && entry.result.streak.matched) finalCorrect++;
     }
     
     set({

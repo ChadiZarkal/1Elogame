@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { selectDuelPair, toElementDTO, AntiRepeatContext } from '@/lib/algorithm';
+import { selectDuelGroup, toElementDTO, AntiRepeatContext } from '@/lib/algorithm';
 import { withApiHandler, apiSuccess, apiError } from '@/lib/apiHelpers';
 import { getActiveElements, getStarredPairs } from '@/lib/repositories';
 import { loadAlgorithmConfig } from '@/lib/algorithmConfig';
@@ -14,6 +14,11 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   const categoryParam = searchParams.get('category') || null;
   const recentElementsParam = searchParams.get('recentElements') || '';
   const appearancesParam = searchParams.get('appearances') || '';
+
+  // Nombre de propositions du tour. 2 par défaut pour rester compatible avec
+  // les appelants historiques ; le jeu en demande 4.
+  const requestedCount = Number.parseInt(searchParams.get('count') ?? '2', 10);
+  const count = Math.min(Math.max(Number.isFinite(requestedCount) ? requestedCount : 2, 2), 4);
 
   // Guard against oversized params
   if (seenDuelsParam.length > MAX_SEEN_DUELS_STRING_LENGTH || recentElementsParam.length > 5_000 || appearancesParam.length > 5_000) {
@@ -55,12 +60,20 @@ export const GET = withApiHandler(async (request: NextRequest) => {
     return apiError('INSUFFICIENT_ELEMENTS', 'Pas assez d\'éléments actifs pour créer un duel', 400);
   }
 
-  const pair = selectDuelPair(elements, seenDuels, antiRepeatContext, starredPairs, algorithmConfig);
+  const group = selectDuelGroup(elements, seenDuels, count, antiRepeatContext, starredPairs, algorithmConfig);
 
-  if (!pair) {
-    return apiSuccess({ elementA: null, elementB: null, allExhausted: true });
+  if (!group) {
+    return apiSuccess({ elements: [], elementA: null, elementB: null, allExhausted: true });
   }
 
-  const [elementA, elementB] = pair;
-  return apiSuccess({ elementA: toElementDTO(elementA), elementB: toElementDTO(elementB), allExhausted: false });
+  const dtos = group.map(toElementDTO);
+
+  // `elementA` / `elementB` restent servis pour les appelants qui attendent
+  // encore la forme à deux éléments.
+  return apiSuccess({
+    elements: dtos,
+    elementA: dtos[0] ?? null,
+    elementB: dtos[1] ?? null,
+    allExhausted: false,
+  });
 }, { rateLimit: true });

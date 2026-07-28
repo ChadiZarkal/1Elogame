@@ -1,403 +1,281 @@
 'use client';
 
-import { useEffect, useCallback, useRef, useState } from 'react';
+/**
+ * @module jeu/jouer/page
+ * « Le pire des quatre » — écran de jeu.
+ *
+ * Deux corrections de fond par rapport à la version précédente.
+ *
+ * 1. **La consigne était invisible.** « Votez pour le plus red flag » n'était
+ *    affiché qu'une fois, dans une bulle qui s'effaçait au bout de six secondes
+ *    au tout premier duel. Passé cela, plus rien à l'écran ne disait ce qu'on
+ *    demandait au joueur. La question est désormais permanente, en tête d'écran.
+ *
+ * 2. **Le face-à-face n'avait pas de sens entre deux comportements anodins.**
+ *    Confrontés à deux propositions inoffensives, les joueurs concluaient que le
+ *    jeu était cassé. Quatre propositions élargissent l'éventail — il y a
+ *    presque toujours un pire relatif — et le dépouillement montre l'échelle de
+ *    gravité au lieu de la laisser deviner.
+ */
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, RotateCcw, Flame } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { motion } from 'framer-motion';
 import { useGameStore, type PartySize } from '@/stores/gameStore';
 import { useOnlineStatus, useHaptics } from '@/lib/hooks';
-import { DuelInterface } from '@/components/game/DuelInterface';
-import { ResultDisplay } from '@/components/game/ResultDisplay';
-import { StreakDisplay } from '@/components/game/StreakDisplay';
 import { CategorySelector } from '@/components/game/CategorySelector';
 import { FullPageLoading } from '@/components/ui/Loading';
+import { Ambient } from './Ambient';
+import { RoundBoard } from './RoundBoard';
+import { ACCENT, roundVerdict, severityColor, withAlpha } from './verdict';
 
-// Lazy-load components only needed rarely
-const AllDuelsExhausted = dynamic(() => import('@/components/game/AllDuelsExhausted').then(m => m.AllDuelsExhausted), { ssr: false });
-const CompactResult = dynamic(() => import('@/components/game/CompactResult').then(m => m.CompactResult), { ssr: false });
+const AllDuelsExhausted = dynamic(
+  () => import('@/components/game/AllDuelsExhausted').then(m => m.AllDuelsExhausted),
+  { ssr: false },
+);
 
 export default function JouerPage() {
   const router = useRouter();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const previousOnlineRef = useRef(true);
-  const [showBackToLive, setShowBackToLive] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const isOnline = useOnlineStatus();
-  const { tap, success: hapticSuccess, error: hapticError } = useHaptics();
-  
+  const haptics = useHaptics();
+  const [pickedId, setPickedId] = useState<string | null>(null);
+
   const {
-    hasProfile,
-    currentDuel,
-    lastResult,
-    showingResult,
-    streak,
-    streakEmoji,
-    duelCount,
-    allDuelsExhausted,
-    isLoadingDuel,
-    error,
-    duelHistory,
-    partyActive,
-    partyConfig,
-    partyComplete,
-    initializeFromStorage,
-    fetchNextDuel,
-    submitVote,
-    showNextDuel,
-    resetGame,
-    clearError,
-    startParty,
+    hasProfile, currentDuel, lastResult, showingResult, streak, duelCount,
+    allDuelsExhausted, isLoadingDuel, error, partyActive, partyConfig, partyComplete,
+    initializeFromStorage, fetchNextDuel, submitVote, showNextDuel, resetGame,
+    clearError, startParty,
   } = useGameStore();
-  
-  // Initialize from storage
+
+  useEffect(() => { initializeFromStorage(); }, [initializeFromStorage]);
+
   useEffect(() => {
-    initializeFromStorage();
-    
-    // Precache canvas-confetti during idle time to avoid micro-freeze on first confetti
-    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      const id = requestIdleCallback(() => { import('canvas-confetti').catch(() => {}); });
-      return () => cancelIdleCallback(id);
-    }
-  }, [initializeFromStorage]);
-  
-  // Redirect if no profile
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!hasProfile) {
-        router.push('/jeu');
-      }
-    }, 100);
+    const timer = setTimeout(() => { if (!hasProfile) router.push('/jeu'); }, 100);
     return () => clearTimeout(timer);
   }, [hasProfile, router]);
-  
-  // Redirect to recap when party completes
+
   useEffect(() => {
-    if (partyComplete) {
-      router.push('/jeu/recap');
-    }
+    if (partyComplete) router.push('/jeu/recap');
   }, [partyComplete, router]);
-  
-  // Fetch first duel when profile is loaded AND party is active
-  // Guard: !error prevents infinite retry loop when API fails (429 / 500)
+
+  // Guard: !error prevents an infinite retry loop when the API fails (429 / 500)
   useEffect(() => {
     if (hasProfile && partyActive && !currentDuel && !isLoadingDuel && !allDuelsExhausted && !error && isOnline) {
       fetchNextDuel();
     }
   }, [hasProfile, partyActive, currentDuel, isLoadingDuel, allDuelsExhausted, error, isOnline, fetchNextDuel]);
-  
-  // Auto-scroll to bottom when new content appears
+
+  // Le choix local est propre au tour : il se remet à zéro quand la manche
+  // suivante s'affiche.
+  useEffect(() => { if (!showingResult) setPickedId(null); }, [showingResult, currentDuel]);
+
+  const ranking = lastResult?.ranking ?? [];
+  const revealed = showingResult && !lastResult?.isOptimistic && ranking.length > 0;
+
+  const pickedPosition = useMemo(
+    () => (revealed && pickedId ? ranking.findIndex(entry => entry.id === pickedId) : -1),
+    [revealed, pickedId, ranking],
+  );
+
+  const verdict = revealed && pickedPosition >= 0
+    ? roundVerdict(pickedPosition, ranking.length, lastResult?.agreement ?? 50)
+    : null;
+
+  // Le fond suit la gravité du choix : vif quand le joueur a désigné le pire,
+  // apaisé quand il a visé le plus toléré.
+  const tint = revealed && pickedPosition >= 0
+    ? severityColor(pickedPosition, ranking.length)
+    : ACCENT;
+
+  // Le verdict connu, une pression sur les confettis pour les tours réussis.
+  const celebrated = useRef<string | null>(null);
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({
-        top: scrollRef.current.scrollHeight,
-        behavior: duelHistory.length > 0 ? 'smooth' : 'instant',
-      });
-    }
-  }, [duelHistory.length, showingResult, currentDuel]);
+    if (verdict?.tone !== 'hit' || !pickedId || celebrated.current === pickedId) return;
+    celebrated.current = pickedId;
+    haptics.success();
+    import('canvas-confetti')
+      .then(({ default: confetti }) => confetti({
+        particleCount: 55, spread: 62, origin: { y: 0.3 },
+        colors: [ACCENT, '#FB7185', '#FFFFFF'], disableForReducedMotion: true,
+      }))
+      .catch(() => {});
+  }, [verdict?.tone, pickedId, haptics]);
 
-  // Detect when user is reading history and offer quick jump back to live duel
-  useEffect(() => {
-    const container = scrollRef.current;
-    if (!container) return;
+  const handlePick = useCallback((id: string) => {
+    if (!currentDuel || showingResult || !isOnline) return;
+    haptics.select();
+    setPickedId(id);
+    const others = currentDuel.elements.filter(e => e.id !== id).map(e => e.id);
+    submitVote(id, others);
+  }, [currentDuel, showingResult, isOnline, haptics, submitVote]);
 
-    const onScroll = () => {
-      const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
-      setShowBackToLive(distanceFromBottom > 180);
-    };
+  const handleStart = useCallback((categories: string[], size: PartySize) => {
+    haptics.tap();
+    localStorage.setItem('default_game_categories', JSON.stringify(categories));
+    localStorage.setItem('default_game_size', String(size));
+    startParty({ size, originalSize: size, categories });
+  }, [haptics, startParty]);
 
-    onScroll();
-    container.addEventListener('scroll', onScroll, { passive: true });
-    return () => container.removeEventListener('scroll', onScroll);
-  }, [duelHistory.length, showingResult, currentDuel]);
+  const handleQuit = useCallback(() => { resetGame(); router.push('/jeu'); }, [resetGame, router]);
 
-  // Mobile resilience: clear feedback when connectivity changes and auto-resume fetch
-  useEffect(() => {
-    const wasOnline = previousOnlineRef.current;
-    if (wasOnline && !isOnline) {
-      hapticError();
-      toast('Connexion perdue', {
-        description: 'Le vote est suspendu tant que vous etes hors ligne.',
-        duration: 2800,
-      });
-    }
+  if (!hasProfile) return <FullPageLoading text="Chargement..." />;
+  if (!partyActive && !partyComplete) return <CategorySelector onStart={handleStart} />;
+  if (allDuelsExhausted) return <AllDuelsExhausted duelCount={duelCount} onReset={handleQuit} />;
 
-    if (!wasOnline && isOnline) {
-      hapticSuccess();
-      toast('Connexion retablie', {
-        description: 'Le jeu reprend normalement.',
-        duration: 2200,
-      });
-
-      if (hasProfile && partyActive && !currentDuel && !isLoadingDuel && !allDuelsExhausted) {
-        fetchNextDuel();
-      }
-    }
-
-    previousOnlineRef.current = isOnline;
-  }, [
-    isOnline,
-    hasProfile,
-    partyActive,
-    currentDuel,
-    isLoadingDuel,
-    allDuelsExhausted,
-    fetchNextDuel,
-    hapticSuccess,
-    hapticError,
-  ]);
-
-  // Streak milestone toasts with viral challenge CTA
-  const prevStreakRef = useRef(0);
-  useEffect(() => {
-    const prev = prevStreakRef.current;
-    prevStreakRef.current = streak;
-    if (streak > prev) {
-      if (streak === 3) toast('🔥 3 de suite !', { description: 'Tu es chaud·e ce soir !', duration: 2500 });
-      else if (streak === 5) {
-        toast('⚡ Streak x5 !', {
-          description: 'Continue, tu es en feu.',
-          duration: 2500,
-        });
-      }
-      else if (streak === 10) {
-        toast('🏆 Streak x10 !', {
-          description: 'Incroyable regularite.',
-          duration: 2800,
-        });
-      }
-      else if (streak >= 15 && streak % 5 === 0) {
-        toast(`🎯 Streak x${streak}`, {
-          description: 'Niveau legendaire.',
-          duration: 2800,
-        });
-      }
-    }
-  }, [streak]);
-
-  // Duel count milestones — viral CTA every 10 duels
-  const prevDuelCountRef = useRef(0);
-  useEffect(() => {
-    const prev = prevDuelCountRef.current;
-    prevDuelCountRef.current = duelCount;
-    if (duelCount > prev && duelCount > 0 && duelCount % 10 === 0) {
-      toast(`🎮 ${duelCount} duels joués !`, {
-        description: 'Tu tiens le rythme, continue.',
-        duration: 2600,
-      });
-    }
-  }, [duelCount]);
-  
-  const handleReset = useCallback(() => { resetGame(); router.push('/jeu'); }, [resetGame, router]);
-
-  const handleRefreshDuel = useCallback(async () => {
-    tap();
-    if (!isOnline) {
-      toast('Connexion requise', {
-        description: 'Reconnecte-toi pour charger un nouveau duel.',
-        duration: 2200,
-      });
-      return;
-    }
-
-    setIsRefreshing(true);
-    clearError();
-    try {
-      await fetchNextDuel();
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [tap, isOnline, clearError, fetchNextDuel]);
-
-  const handleCategoryStart = useCallback((selectedCategories: string[], partySize: PartySize) => {
-    tap();
-    localStorage.setItem('default_game_categories', JSON.stringify(selectedCategories));
-    localStorage.setItem('default_game_size', String(partySize));
-    startParty({ size: partySize, originalSize: partySize, categories: selectedCategories });
-  }, [tap, startParty]);
-  
-  if (!hasProfile) {
-    return <FullPageLoading text="Chargement..." />;
-  }
-
-  // Show category selector / party setup before starting the game
-  if (!partyActive && !partyComplete) {
-    return <CategorySelector onStart={handleCategoryStart} />;
-  }
-  
-  if (allDuelsExhausted) {
-    return <AllDuelsExhausted duelCount={duelCount} onReset={handleReset} />;
-  }
-  
-  if (isLoadingDuel && !currentDuel) {
-    return <FullPageLoading text="Préparation du duel..." />;
-  }
-  
   if (error && !currentDuel) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-dvh bg-[#0D0D0D] p-6">
-        <div className="text-center space-y-4">
-          <span className="text-6xl">😕</span>
-          <h1 className="text-2xl font-bold text-[#F5F5F5]">Oups !</h1>
-          <p className="text-[#A3A3A3]">{error}</p>
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={() => { clearError(); fetchNextDuel(); }}
-              className="px-6 py-2 bg-[#DC2626] text-white rounded-lg hover:bg-[#EF4444] transition-colors"
-            >
-              Réessayer
-            </button>
-            <button
-              onClick={() => { resetGame(); router.push('/jeu/jouer'); }}
-              className="px-6 py-2 bg-[#1A1A1A] text-[#E4E4E7] border border-[#333] rounded-lg hover:border-[#555] transition-colors"
-            >
-              Changer de catégories
-            </button>
-          </div>
-        </div>
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center" style={{ background: '#08080C' }}>
+        <span className="text-5xl">😕</span>
+        <p className="text-sm font-semibold text-white/60">{error}</p>
+        <button
+          onClick={() => { clearError(); fetchNextDuel(); }}
+          className="cursor-pointer rounded-xl px-6 py-3 text-sm font-black uppercase tracking-widest text-white"
+          style={{ background: ACCENT }}
+        >
+          Réessayer
+        </button>
+        <button onClick={handleQuit} className="cursor-pointer text-xs font-bold text-white/40 underline">
+          Changer de catégories
+        </button>
       </div>
     );
   }
-  
-  if (!currentDuel) {
-    return <FullPageLoading text="Chargement du duel..." />;
-  }
-  
+
+  if (!currentDuel) return <FullPageLoading text="Préparation du tour..." />;
+
+  const progress = partyConfig ? Math.min(100, (duelCount / partyConfig.size) * 100) : 0;
+
   return (
-    <div
-      ref={scrollRef}
-      className="relative w-full overflow-y-auto overscroll-y-contain bg-[#0D0D0D]"
-      style={{ height: 'var(--app-height, 100dvh)' }}
-    >
-      {/* History: past duel results */}
-      {duelHistory.length > 0 && (
-        <div className="pt-4 pb-2">
-          {/* Scroll-up hint */}
-          <div className="text-center text-[#555] text-xs mb-3 flex items-center justify-center gap-2">
-            <span className="inline-block w-8 h-px bg-[#333]" />
-            <span>{duelHistory.length} duel{duelHistory.length > 1 ? 's' : ''} précédent{duelHistory.length > 1 ? 's' : ''}</span>
-            <span className="inline-block w-8 h-px bg-[#333]" />
-          </div>
-          {duelHistory.map((entry, i) => (
-            <CompactResult
-              key={`${entry.duel.elementA.id}-${entry.duel.elementB.id}-${i}`}
-              duel={entry.duel}
-              result={entry.result}
-              index={i}
-            />
-          ))}
-        </div>
-      )}
-      
-      {/* Current active duel/result - takes full screen height */}
-      <div
-        className="w-full relative flex flex-col"
-        style={{
-          minHeight: 'var(--app-height, 100dvh)',
-          height: 'var(--app-height, 100dvh)',
-        }}
-      >
-        {/* Top bar: home + streak + party progress */}
-        <div className="absolute left-4 right-4 z-30 flex items-center justify-between" style={{ top: 'max(12px, env(safe-area-inset-top))' }}>
-          <div className="flex items-center gap-2">
-            {/* Home button */}
-            <Link
-              href="/"
-              className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-[#333] rounded-full w-10 h-10 flex items-center justify-center text-[#A3A3A3] hover:text-[#F5F5F5] transition-colors"
-              aria-label="Retour accueil"
-            >
-              ←
-            </Link>
-            <button
-              onClick={handleRefreshDuel}
-              disabled={isLoadingDuel || isRefreshing}
-              className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-[#333] rounded-full w-10 h-10 flex items-center justify-center text-[#A3A3A3] hover:text-[#F5F5F5] disabled:opacity-50 transition-colors"
-              aria-label="Rafraichir le duel"
-            >
-              {isRefreshing ? '…' : '↻'}
-            </button>
-            {/* Streak — hidden instead of unmounted to prevent CLS */}
-            <div style={{ visibility: showingResult ? 'hidden' : 'visible' }}>
-              <StreakDisplay 
-                streak={streak} 
-                streakEmoji={streakEmoji} 
-                duelCount={duelCount} 
+    <div className="relative flex h-dvh flex-col overflow-hidden text-white select-none">
+      <Ambient tint={tint} />
+
+      {/* ── Bandeau ──────────────────────────────────────────────────────── */}
+      <header className="relative z-10 flex shrink-0 items-center gap-3 px-4 pt-3 pb-2">
+        <Link href="/" aria-label="Retour à l'accueil" className="text-white/30 transition-colors hover:text-white/60">
+          <ArrowLeft size={17} />
+        </Link>
+
+        {partyConfig && (
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/10">
+              <motion.div
+                className="h-full rounded-full"
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.4 }}
+                style={{ background: ACCENT }}
               />
             </div>
+            <span className="shrink-0 text-[10px] font-black tabular-nums text-white/40">
+              {duelCount}/{partyConfig.size}
+            </span>
           </div>
-          {/* Party progress */}
-          {partyConfig && (
-            <div className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-[#333] rounded-full px-3 py-1.5 flex items-center gap-2">
-              <span className="text-xs font-bold text-[#999]">
-                {duelCount >= partyConfig.size ? '✅' : `${duelCount}/${partyConfig.size}`}
-              </span>
-              <div className="w-16 h-1.5 bg-[#333] rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[#EF4444] rounded-full transition-all duration-300"
-                  style={{ width: `${Math.min(100, (duelCount / partyConfig.size) * 100)}%` }}
-                />
-              </div>
-            </div>
+        )}
+
+        {streak >= 2 && (
+          <span
+            className="flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[10px] font-black tabular-nums"
+            style={{ background: withAlpha('#FB7185', 0.16), color: '#FB7185' }}
+          >
+            <Flame size={11} /> {streak}
+          </span>
+        )}
+
+        <button onClick={handleQuit} aria-label="Quitter la partie" className="shrink-0 cursor-pointer text-white/25 transition-colors hover:text-white/50">
+          <RotateCcw size={15} />
+        </button>
+      </header>
+
+      {/* ── Consigne ou verdict ──────────────────────────────────────────── */}
+      <div className="relative z-10 shrink-0 px-4 pb-2.5" style={{ minHeight: 78 }}>
+        <AnimatePresence mode="wait">
+          {showingResult ? (
+            <motion.div
+              key="verdict"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="text-center"
+            >
+              {verdict ? (
+                <>
+                  <p
+                    className="font-black uppercase leading-none tracking-tight"
+                    style={{ fontSize: 'clamp(1.4rem, 6.5vw, 1.9rem)', color: tint }}
+                  >
+                    {verdict.title}
+                  </p>
+                  <p className="mt-1.5 text-[12px] font-semibold leading-snug text-white/60">
+                    {verdict.subtitle}
+                  </p>
+                </>
+              ) : (
+                <p className="pt-4 text-sm font-bold text-white/45">
+                  Dépouillement en cours…
+                </p>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="question"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="text-center"
+            >
+              <h1
+                className="font-black uppercase leading-none tracking-tight text-white"
+                style={{ fontSize: 'clamp(1.5rem, 7vw, 2rem)' }}
+              >
+                Lequel est le <span style={{ color: ACCENT }}>pire</span> ?
+              </h1>
+              {/* La phrase qui débloque le jeu : sans elle, quatre comportements
+                  anodins donnent l'impression d'une question absurde. */}
+              <p className="mt-1.5 text-[12px] font-semibold leading-snug text-white/50">
+                Même si aucun ne te choque vraiment : lequel tu supporterais le moins ?
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* ── Bulletin ─────────────────────────────────────────────────────── */}
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-4 pb-3">
+        <RoundBoard
+          elements={currentDuel.elements}
+          pickedId={pickedId}
+          ranking={ranking}
+          revealed={revealed}
+          onPick={handlePick}
+          disabled={!isOnline || isLoadingDuel}
+        />
+
+        <div className="mt-2.5 shrink-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 4px)' }}>
+          {!isOnline && !showingResult && (
+            <p className="pb-2 text-center text-[11px] font-bold text-red-400">
+              📡 Hors ligne — reconnecte-toi pour voter
+            </p>
+          )}
+
+          {showingResult ? (
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => { haptics.tap(); showNextDuel(); }}
+              className="w-full cursor-pointer rounded-2xl py-3.5 text-base font-black uppercase tracking-widest"
+              style={{ background: tint, color: '#08080C', boxShadow: `0 6px 26px ${withAlpha(tint, 0.35)}` }}
+            >
+              {partyConfig && duelCount >= partyConfig.size ? 'Voir le bilan →' : 'Tour suivant →'}
+            </motion.button>
+          ) : (
+            <p className="text-center text-[10px] font-black uppercase tracking-[0.28em] text-white/25">
+              Touche une proposition
+            </p>
           )}
         </div>
-
-        {!isOnline && (
-          <div
-            className="absolute left-1/2 z-30 -translate-x-1/2 rounded-full border border-[#7F1D1D] bg-[#1A1212]/95 px-3 py-1 text-[11px] font-semibold text-[#FCA5A5]"
-            style={{ top: 'calc(max(12px, env(safe-area-inset-top)) + 52px)' }}
-          >
-            📡 Hors ligne: vote desactive
-          </div>
-        )}
-        
-        {/* First duel hint — shows for 6s then auto-fades */}
-        {duelCount === 0 && !showingResult && currentDuel && (
-          <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.92 }}
-            animate={{ opacity: [0, 1, 1, 1, 0], y: [-8, 0, 0, 0, -8], scale: [0.92, 1, 1, 1, 0.92] }}
-            transition={{ duration: 6, times: [0, 0.15, 0.4, 0.8, 1], ease: 'easeInOut' }}
-            className="absolute left-1/2 -translate-x-1/2 z-40 bg-[#DC2626] text-white text-sm font-black px-5 py-2.5 rounded-full shadow-2xl pointer-events-none"
-            style={{ top: `calc(max(12px, env(safe-area-inset-top)) + ${isOnline ? 56 : 88}px)` }}
-          >
-            🚩 Votez pour le plus red flag
-          </motion.div>
-        )}
-
-        {showBackToLive && duelHistory.length > 0 && (
-          <button
-            onClick={() => {
-              if (!scrollRef.current) return;
-              scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-            }}
-            className="absolute right-4 z-30 rounded-full border border-[#EF4444]/40 bg-[#1A1A1A]/90 px-3 py-2 text-xs font-bold text-[#FCA5A5] backdrop-blur-sm hover:bg-[#232326] transition-colors"
-            style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 90px)' }}
-          >
-            ↓ Duel en cours
-          </button>
-        )}
-        
-        {showingResult && lastResult ? (
-          <div className="flex-1 min-h-0 flex flex-col w-full">
-            <ResultDisplay
-              duel={currentDuel}
-              result={lastResult}
-              streak={streak}
-              streakEmoji={streakEmoji}
-              onNext={showNextDuel}
-            />
-          </div>
-        ) : (
-          <div className="flex-1 flex flex-col w-full">
-            <DuelInterface
-              elementA={currentDuel.elementA}
-              elementB={currentDuel.elementB}
-              onVote={submitVote}
-              disabled={showingResult || isLoadingDuel || !isOnline}
-              disabledReason={!isOnline ? '📡 Reconnexion necessaire pour voter' : undefined}
-            />
-          </div>
-        )}
       </div>
     </div>
   );

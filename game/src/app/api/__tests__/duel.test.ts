@@ -34,6 +34,10 @@ vi.mock('@/lib/algorithm', () => ({
     if (elements.length < 2) return null;
     return [elements[0], elements[1]];
   }),
+  selectDuelGroup: vi.fn().mockImplementation((elements: typeof mockElements, _seen: unknown, size: number) => {
+    if (elements.length < 2) return null;
+    return elements.slice(0, Math.min(size, elements.length));
+  }),
   toElementDTO: vi.fn().mockImplementation((el: typeof mockElements[0]) => ({
     id: el.id,
     texte: el.texte,

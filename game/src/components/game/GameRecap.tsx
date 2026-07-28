@@ -4,8 +4,29 @@ import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useGameStore, type PartyStats } from '@/stores/gameStore';
+import { useGameStore, type PartyStats, type DuelHistoryEntry } from '@/stores/gameStore';
 import { CATEGORIES_CONFIG } from '@/config/categories';
+
+/**
+ * Lecture d'un tour joué.
+ *
+ * Un tour compte désormais quatre propositions : « le gagnant » est le choix du
+ * joueur, et l'adversaire retenu pour l'affichage est celui que la communauté
+ * classe le plus haut parmi les trois autres — le seul face-à-face qui apprenne
+ * quelque chose. Le tour n'est réussi que si le choix les devançait **tous**,
+ * ce que porte `streak.matched` : à quatre propositions, viser juste au hasard
+ * arrive une fois sur quatre, un simple « plus de 50 % » ne veut plus rien dire.
+ */
+function readEntry(entry: DuelHistoryEntry) {
+  const picked = entry.duel.elements.find(e => e.id === entry.pickedId);
+  const rival = entry.duel.elements.find(e => e.id === entry.result.loser.id);
+  return {
+    pickedText: picked?.texte ?? '',
+    rivalText: rival?.texte ?? '',
+    others: entry.duel.elements.length - 1,
+    isCorrect: entry.result.streak.matched,
+  };
+}
 
 /* ═══════════════════════════════════════════════════════════════════════
    ARCHETYPE SYSTEM
@@ -59,7 +80,7 @@ function computeDetailedStats(stats: PartyStats) {
   let computedBestStreak = 0;
   for (const entry of stats.results) {
     if (entry.result.isOptimistic) continue;
-    if (entry.result.winner.percentage >= 50) {
+    if (entry.result.streak.matched) {
       correctGuesses++;
       currentStreak++;
       computedBestStreak = Math.max(computedBestStreak, currentStreak);
@@ -95,7 +116,7 @@ function computeDetailedStats(stats: PartyStats) {
   }
 
   const minority = [...nonOptimistic]
-    .filter(e => e.result.winner.percentage < 50)
+    .filter(e => !e.result.streak.matched)
     .sort((a, b) => a.result.winner.percentage - b.result.winner.percentage)[0];
   if (minority) {
     keyDuels.push({
@@ -281,11 +302,8 @@ export function GameRecap() {
             <SectionLabel text="Tes moments clés" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
               {stats.keyDuels.map((kd, i) => {
-                const isA = kd.entry.result.winner.id === kd.entry.duel.elementA.id;
-                const winnerText = isA ? kd.entry.duel.elementA.texte : kd.entry.duel.elementB.texte;
-                const loserText = isA ? kd.entry.duel.elementB.texte : kd.entry.duel.elementA.texte;
+                const { pickedText, rivalText, others, isCorrect } = readEntry(kd.entry);
                 const pct = kd.entry.result.winner.percentage;
-                const isCorrect = pct >= 50;
 
                 return (
                   <div key={i} style={{
@@ -297,7 +315,7 @@ export function GameRecap() {
                     </p>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', marginBottom: '0.2rem' }}>
                       <span style={{ fontSize: '0.63rem', color: '#eee', fontWeight: 700, flex: 1, lineHeight: 1.3 }}>
-                        {winnerText}
+                        {pickedText}
                       </span>
                       <span style={{ fontSize: '0.72rem', fontWeight: 900, flexShrink: 0, color: isCorrect ? '#10B981' : '#EF4444' }}>
                         {pct}%
@@ -306,7 +324,7 @@ export function GameRecap() {
                     <DuelBar percentage={pct} isCorrect={isCorrect} />
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', marginTop: '0.2rem' }}>
                       <span style={{ fontSize: '0.55rem', color: '#666', flex: 1, lineHeight: 1.3 }}>
-                        vs {loserText}
+                        son rival le plus sérieux sur {others} : {rivalText}
                       </span>
                       <span style={{ fontSize: '0.55rem', color: '#555', flexShrink: 0 }}>
                         {100 - pct}%
@@ -340,11 +358,8 @@ export function GameRecap() {
             padding: '0.4rem 0.5rem', border: '1px solid rgba(255,255,255,0.05)',
           }}>
             {partyStats.results.map((entry, i) => {
-              const isA = entry.result.winner.id === entry.duel.elementA.id;
-              const winnerText = isA ? entry.duel.elementA.texte : entry.duel.elementB.texte;
-              const loserText = isA ? entry.duel.elementB.texte : entry.duel.elementA.texte;
+              const { pickedText, rivalText, isCorrect } = readEntry(entry);
               const pct = entry.result.isOptimistic ? null : entry.result.winner.percentage;
-              const isCorrect = pct !== null && pct >= 50;
 
               return (
                 <div key={i} style={{
@@ -356,7 +371,7 @@ export function GameRecap() {
                       {i + 1}
                     </span>
                     <span style={{ fontSize: '0.58rem', color: '#bbb', fontWeight: 600, flex: 1, lineHeight: 1.3 }}>
-                      {winnerText}
+                      {pickedText}
                     </span>
                     <span style={{
                       fontSize: '0.55rem', fontWeight: 700, flexShrink: 0,
@@ -371,7 +386,7 @@ export function GameRecap() {
                     </div>
                   )}
                   <p style={{ fontSize: '0.5rem', color: '#555', margin: '0.1rem 0 0', marginLeft: 16, lineHeight: 1.25 }}>
-                    vs {loserText}
+                    devant {rivalText}
                   </p>
                 </div>
               );

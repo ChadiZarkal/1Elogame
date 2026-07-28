@@ -20,10 +20,13 @@ export interface GameSession {
   elementAppearances?: Record<string, number>;
 }
 
-// Duel for game display
+/**
+ * Un tour de jeu : les propositions parmi lesquelles le joueur doit désigner la
+ * pire. Deux à quatre éléments — le jeu en sert quatre, l'API en accepte deux
+ * pour les appelants historiques.
+ */
 export interface Duel {
-  elementA: ElementDTO;
-  elementB: ElementDTO;
+  elements: ElementDTO[];
 }
 
 // Element DTO for client display (minimal data)
@@ -53,6 +56,14 @@ export interface VoteResult {
     matched: boolean;
     current: number;
   };
+  /**
+   * Les éléments du tour classés par la communauté, du plus red flag au moins
+   * red flag. Vide quand les rangs ne sont pas calculables : c'est le signal
+   * qu'il ne faut pas afficher de dépouillement.
+   */
+  ranking?: Array<{ id: string; rank?: number; totalElements?: number; percentage?: number }>;
+  /** Accord moyen avec la communauté sur l'ensemble des duels du tour, en %. */
+  agreement?: number;
   isOptimistic?: boolean; // true = données provisoires, en attente de l'API
 }
 

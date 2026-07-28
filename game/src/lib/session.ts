@@ -11,6 +11,14 @@ const STORAGE_KEYS = {
 const MAX_SEEN_DUELS = 200;
 /** Max tracked elements in appearance map (prevents oversized API params). */
 const MAX_ELEMENT_APPEARANCES = 150;
+/** Recent-element buffer feeding the cooldown scoring. Six rounds of four. */
+const MAX_RECENT_ELEMENTS = 24;
+/**
+ * Plafond de la chaîne `seenDuels` envoyée à l'API. Doit rester sous
+ * `MAX_SEEN_DUELS_STRING_LENGTH` côté serveur (10 000), qui rejette la requête
+ * au-delà.
+ */
+const MAX_SEEN_DUELS_PARAM_LENGTH = 9_000;
 
 export function isLocalStorageAvailable(): boolean {
   if (typeof window === 'undefined') return false;
@@ -103,12 +111,73 @@ export function markDuelAsSeen(idA: string, idB: string): void {
   saveSession(session);
 }
 
+/**
+ * Marque un tour à choix multiple comme joué.
+ *
+ * Seules les paires réellement départagées sont retenues — le choix du joueur
+ * face à chacune des autres propositions. Les propositions écartées n'ont pas
+ * été comparées entre elles : les marquer viderait le catalogue bien plus vite
+ * que le joueur ne l'explore.
+ */
+export function markRoundAsSeen(pickedId: string, otherIds: string[]): void {
+  const session = getSession();
+  if (!session) return;
+
+  for (const otherId of otherIds) {
+    const key = getPairKey(pickedId, otherId);
+    if (!session.seenDuels.includes(key)) session.seenDuels.push(key);
+  }
+  session.duelCount++;
+
+  if (session.seenDuels.length > MAX_SEEN_DUELS) {
+    session.seenDuels = session.seenDuels.slice(-MAX_SEEN_DUELS);
+  }
+
+  const roundIds = [pickedId, ...otherIds];
+
+  if (!session.elementAppearances) session.elementAppearances = {};
+  for (const id of roundIds) {
+    session.elementAppearances[id] = (session.elementAppearances[id] || 0) + 1;
+  }
+  if (Object.keys(session.elementAppearances).length > MAX_ELEMENT_APPEARANCES) {
+    const sorted = Object.entries(session.elementAppearances).sort((a, b) => a[1] - b[1]);
+    const trimmed: Record<string, number> = {};
+    for (const [id, count] of sorted.slice(sorted.length - MAX_ELEMENT_APPEARANCES)) {
+      trimmed[id] = count;
+    }
+    session.elementAppearances = trimmed;
+  }
+
+  if (!session.recentElementIds) session.recentElementIds = [];
+  session.recentElementIds.push(...roundIds);
+  if (session.recentElementIds.length > MAX_RECENT_ELEMENTS) {
+    session.recentElementIds = session.recentElementIds.slice(-MAX_RECENT_ELEMENTS);
+  }
+
+  saveSession(session);
+}
+
 export function getSeenDuels(): string[] {
   return getSession()?.seenDuels ?? [];
 }
 
+/**
+ * Chaîne des duels déjà vus, tronquée pour rester sous la limite acceptée par
+ * l'API. Un tour à quatre propositions produit trois paires : sans plafond sur
+ * la longueur, une longue session ferait rejeter la requête pour paramètre trop
+ * long, et le joueur ne recevrait plus aucun tour.
+ */
 export function getSeenDuelsString(): string {
-  return getSeenDuels().join(',');
+  const seen = getSeenDuels();
+  let out = '';
+  // Les plus récents d'abord : ce sont ceux qu'il importe le plus de ne pas
+  // reproposer.
+  for (let i = seen.length - 1; i >= 0; i--) {
+    const next = out ? `${seen[i]},${out}` : seen[i];
+    if (next.length > MAX_SEEN_DUELS_PARAM_LENGTH) break;
+    out = next;
+  }
+  return out;
 }
 
 export function getRecentElementIds(): string[] {

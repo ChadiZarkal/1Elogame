@@ -36,7 +36,7 @@ export { RATE_LIMITS, checkRateLimit, resetRateLimitStore } from './rateLimit';
 export { sanitizeText } from './sanitize';
 
 // Session
-export { isLocalStorageAvailable, getSession, initSession, saveSession, clearSession, hasProfile, getProfile, markDuelAsSeen, getSeenDuels, getSeenDuelsString, getRecentElementIds, getElementAppearances, getRecentElementIdsString, getElementAppearancesString, getStreak, updateStreak, getDuelCount, getStreakEmoji, getAdminToken, setAdminToken, clearAdminToken } from './session';
+export { isLocalStorageAvailable, getSession, initSession, saveSession, clearSession, hasProfile, getProfile, markDuelAsSeen, markRoundAsSeen, getSeenDuels, getSeenDuelsString, getRecentElementIds, getElementAppearances, getRecentElementIdsString, getElementAppearancesString, getStreak, updateStreak, getDuelCount, getStreakEmoji, getAdminToken, setAdminToken, clearAdminToken } from './session';
 
 // Supabase
 export { getSupabaseClient, createServerClient, typedInsert, typedUpdate, typedUpsert } from './supabase';

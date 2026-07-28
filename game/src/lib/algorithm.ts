@@ -323,6 +323,58 @@ export function selectDuelPair(
   return pairs[Math.floor(Math.random() * pairs.length)];
 }
 
+/**
+ * Select a group of `size` distinct elements for a multiple-choice round.
+ *
+ * The core pair still comes from `selectDuelPair`, so the tuned strategies
+ * (close ELO, cross-category, starred) and the anti-repeat rules keep driving
+ * what the round is *about*. The extra slots are fillers: they widen the choice
+ * without diluting that intent.
+ *
+ * Returns `null` only when no core pair exists — i.e. the pool is exhausted.
+ */
+export function selectDuelGroup(
+  elements: Element[],
+  seenDuels: Set<string>,
+  size: number,
+  antiRepeatContext?: AntiRepeatContext,
+  starredPairs?: Array<{ element_a_id: string; element_b_id: string; stars_count: number }>,
+  config?: AlgorithmConfig,
+): Element[] | null {
+  const core = selectDuelPair(elements, seenDuels, antiRepeatContext, starredPairs, config);
+  if (!core) return null;
+  if (size <= 2) return core;
+
+  const cfg = config ?? getAlgorithmConfig();
+  const context = antiRepeatContext ?? { recentElementIds: [], elementAppearances: {} };
+
+  const chosen = [...core];
+  const used = new Set(chosen.map(e => e.id));
+
+  // Freshest first: a behaviour just seen brings nothing to the round.
+  for (const element of sortByFreshness(filterByAntiRepeat(elements, context, cfg), context, cfg)) {
+    if (chosen.length >= size) break;
+    if (used.has(element.id)) continue;
+    chosen.push(element);
+    used.add(element.id);
+  }
+
+  // Anti-repeat left too few candidates: complete from the full pool rather
+  // than serve a short round.
+  if (chosen.length < size) {
+    for (const element of shuffleArray(elements)) {
+      if (chosen.length >= size) break;
+      if (used.has(element.id)) continue;
+      chosen.push(element);
+      used.add(element.id);
+    }
+  }
+
+  // Shuffle so the core pair does not always land in the same slots — position
+  // bias would otherwise leak straight into the ELO scores.
+  return shuffleArray(chosen);
+}
+
 /** Total possible duel combinations: n*(n-1)/2 */
 export function getTotalPossibleDuels(elementCount: number): number {
   if (elementCount < 2) return 0;
