@@ -152,8 +152,11 @@ function FlagCard({ flag, index }: { flag: FlagDef; index: number }) {
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
+      // Glissement seul, sans fondu : ces cartes sont le contenu principal de
+      // la page et un `opacity: 0` initial les rendrait invisibles jusqu'à
+      // l'hydratation, retardant d'autant le LCP.
+      initial={{ y: 14 }}
+      animate={{ y: 0 }}
       transition={{ delay: index * 0.08, duration: 0.3 }}
       style={{
         background: flag.colorBg,

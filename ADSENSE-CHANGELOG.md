@@ -123,6 +123,26 @@ Quatre pages créées, toutes adossées à des faits vérifiables :
   jusqu'ici en commentaire dans le code.
 - **`/a-propos`** — nature du site, partis pris, limites assumées, contact.
 
+## 10. Premier affichage débloqué (WS-7)
+
+Le LCP mesuré à ~12,9 s n'était pas dû aux images — l'ensemble de `public/`
+pèse 114 Ko et `next/image` est correctement utilisé. La cause était que les
+éléments porteurs du contenu étaient rendus à `opacity: 0` par framer-motion et
+n'apparaissaient qu'après téléchargement du bundle, hydratation, puis animation.
+
+- **Accueil** : la carte héro, élément LCP de la page, portait
+  `initial={{ opacity: 0 }}`. `AnimatePresence` passe à `initial={false}` : la
+  carte est peinte au premier rendu, et le morph entre jeux reste animé.
+- **`/classement`** : le titre (40-56 px, élément LCP probable), le podium et
+  les lignes du classement étaient tous voilés — ce qui annulait le bénéfice du
+  rendu serveur ajouté au point 2. L'entrée n'est désormais animée que pour les
+  jeux de données récupérés après un changement de filtre.
+- **`/guide`** : les cartes de flags conservent leur glissement mais perdent le
+  fondu, de sorte que le texte est peint immédiatement.
+
+Les animations de `/dixmais` n'ont pas été touchées : ce sont des transitions
+de phase de jeu, non un premier affichage.
+
 ---
 
 ## Reste à faire
@@ -133,5 +153,5 @@ Quatre pages créées, toutes adossées à des faits vérifiables :
 | **Annonces automatiques** | À désactiver dans le compte AdSense tant que les pages ne dépassent pas le seuil de contenu. |
 | **Authentification admin** | `adminAuth.ts` neutralise toute vérification : les API `/api/admin/*` restent accessibles en écriture. Écarté du périmètre par décision explicite. |
 | **Contenus piliers (WS-3)** | Rédaction humaine, non entamée. |
-| **Core Web Vitals (WS-7)** | LCP mesuré à ~12,86 s, cible < 2,5 s. Non traité. |
+| **Core Web Vitals — mesure** | Les causes de paint identifiées sont corrigées (point 10), mais le gain reste à mesurer sur PageSpeed Insights après déploiement. |
 | **Build et déploiement** | `npm --prefix game run build` non exécuté (Node absent de la machine de développement). |

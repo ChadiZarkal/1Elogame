@@ -163,6 +163,12 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
   // n'a rien pu charger, on refait la requête côté navigateur.
   const skipInitialFetchRef = useRef(initialData.rankings.length > 0);
 
+  // Le classement rendu par le serveur doit être peint immédiatement : animer
+  // son entrée le laisserait invisible jusqu'à l'hydratation. On n'anime que
+  // les jeux de données récupérés ensuite, en réponse à un changement de
+  // filtre.
+  const [animateEntrance, setAnimateEntrance] = useState(false);
+
   useEffect(() => {
     const isDefaultQuery =
       mode === 'redflag' &&
@@ -176,6 +182,8 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
       skipInitialFetchRef.current = false;
       if (isDefaultQuery) return;
     }
+
+    setAnimateEntrance(true);
 
     let isActive = true;
     const controller = new AbortController();
@@ -407,7 +415,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
 
           <motion.h1
             key={`h1-${mode}`}
-            initial={{ opacity: 0, y: 10 }}
+            initial={animateEntrance ? { opacity: 0, y: 10 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
             className="text-[40px] sm:text-[56px] font-black tracking-tight text-white leading-[1.03] whitespace-pre-line"
@@ -417,7 +425,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
 
           <motion.p
             key={`sub-${mode}`}
-            initial={{ opacity: 0 }}
+            initial={animateEntrance ? { opacity: 0 } : false}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.3 }}
             className="mt-4 text-[#6B7280] text-[15px] sm:text-[16px] leading-relaxed max-w-xl"
@@ -795,7 +803,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                         return (
                           <motion.div
                             key={`p${rn}-${mode}-${view}`}
-                            initial={{ opacity: 0, y: 12 }}
+                            initial={animateEntrance ? { opacity: 0, y: 12 } : false}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 + i * 0.08, duration: 0.3 }}
                             className="relative overflow-hidden rounded-2xl p-4 flex flex-col gap-2"
@@ -848,7 +856,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                       return (
                         <motion.li
                           key={`${entry.rank}-${entry.texte}`}
-                          initial={{ opacity: 0, y: 5 }}
+                          initial={animateEntrance ? { opacity: 0, y: 5 } : false}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: Math.min(idx * 0.01, 0.18) }}
                         >

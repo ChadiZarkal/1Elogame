@@ -254,7 +254,11 @@ export default function HubPage() {
 
         {/* 3. Hero Holographic Game Card (The Focal Point with ultra-smooth morphs) */}
         <div className="w-full my-6 flex-1 flex flex-col justify-center">
-          <AnimatePresence mode="wait">
+          {/* `initial={false}` : la carte est l'élément LCP de la page. Sans
+              cela elle est rendue à opacity 0 et n'apparaît qu'après
+              l'hydratation, ce qui repousse le LCP de plusieurs secondes sur
+              connexion lente. Le morph entre jeux, lui, reste animé. */}
+          <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={selectedVibe}
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
