@@ -34,7 +34,7 @@ const CARDS_DATA: Record<PersonaKey, {
     themeColor: '#FFB4AA',
     glowColor: 'rgba(255, 180, 170, 0.4)',
     tag: '🧪 TEST PERSONNEL',
-    title: 'RED FLAG TEST',
+    title: 'REDFLAG TEST',
     tagline: 'Faire le point sur tes comportements.',
     desc: 'Tu réponds au quiz en solo, puis tu obtiens un score simple pour voir ce que les autres peuvent percevoir comme red flag chez toi.',
     bullets: ['🧠 En solo, en quelques minutes', '📊 Score clair à la fin', '🙈 Anonyme'],
@@ -49,7 +49,7 @@ const CARDS_DATA: Record<PersonaKey, {
     themeColor: '#2ECC71',
     glowColor: 'rgba(46, 204, 113, 0.4)',
     tag: '👥 JEU DE GROUPE',
-    title: 'RED OR GREEN DUEL',
+    title: 'LE PIRE DES DEUX',
     tagline: 'Voter pour le plus red flag.',
     desc: 'Entre deux choix, votez pour celui qui est le plus red flag. Découvrez ensuite quel pourcentage de la communauté est d accord avec vous.',
     bullets: ['👥 Solo ou groupe', '🚩 Vote pour le pire des deux', '📊 Comparaison avec la communauté'],
@@ -63,7 +63,7 @@ const CARDS_DATA: Record<PersonaKey, {
     themeColor: '#88CEFF',
     glowColor: 'rgba(136, 206, 255, 0.4)',
     tag: '🔮 AVIS RAPIDE IA',
-    title: 'ORACLE IA',
+    title: 'SOUMETS TON CAS',
     tagline: 'Obtenir un premier avis sur un doute.',
     desc: 'Tu décris une situation en texte libre et l Oracle renvoie un verdict red ou green avec justification. Utile pour prendre du recul vite.',
     bullets: ['✍️ Saisie libre', '🧠 Verdict + explication', '🗂 Historique communautaire (optionnel)'],
@@ -77,7 +77,7 @@ const CARDS_DATA: Record<PersonaKey, {
     themeColor: '#F59E0B',
     glowColor: 'rgba(245, 158, 11, 0.4)',
     tag: '⭐ JEU DE NOTATION',
-    title: "Un 10 mais...",
+    title: "C'est un 10 mais...",
     tagline: 'Combien vaut-il vraiment ?',
     desc: 'Il commence à 10. Puis les révélations s\'enchaînent. À chaque info, tu réévalues sa note. Jusqu\'où va-t-il chuter ?',
     bullets: ['⭐ 5 profils à noter de 0 à 10', '📉 Note qui évolue à chaque révélation', '🚫 Le 0 est éliminatoire — fin du profil'],
@@ -295,7 +295,15 @@ export default function HubPage() {
 
                 {/* Big aggressive headline */}
                 <div className="space-y-1">
-                  <h2 className="text-[26px] font-black leading-none tracking-[-0.04em] text-white">
+                  {/* clamp() plutôt qu'une taille fixe : les nouveaux titres
+                      ("LE PIRE DES DEUX", "SOUMETS TON CAS") sont plus longs
+                      que l'ancien plus court ("ORACLE IA") et débordaient sur
+                      petit écran à 26px fixe. leading-[1.05] laisse la place
+                      à un retour à la ligne sans rogner les lettres. */}
+                  <h2
+                    className="font-black leading-[1.05] tracking-[-0.03em] text-white"
+                    style={{ fontSize: 'clamp(1.35rem, 6.8vw, 1.625rem)' }}
+                  >
                     {activeCard.title}
                   </h2>
                   <p className="text-xs font-semibold tracking-wide" style={{ color: activeCard.themeColor }}>
