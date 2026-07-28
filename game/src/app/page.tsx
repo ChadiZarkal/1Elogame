@@ -26,7 +26,6 @@ const CARDS_DATA: Record<PersonaKey, {
   cta: string;
   href: string;
   emoji: string;
-  shortcut: string;
   external?: boolean;
 }> = {
   redflag: {
@@ -41,7 +40,6 @@ const CARDS_DATA: Record<PersonaKey, {
     cta: 'FAIRE LE TEST',
     href: 'https://redflagtest.redorgreen.fr/',
     emoji: '🧪',
-    shortcut: 'Test',
     external: true
   },
   group: {
@@ -55,8 +53,7 @@ const CARDS_DATA: Record<PersonaKey, {
     bullets: ['👥 Solo ou groupe', '🚩 Vote pour le pire des deux', '📊 Comparaison avec la communauté'],
     cta: 'LANCER LE DUEL',
     href: '/jeu',
-    emoji: '🔥',
-    shortcut: 'Duel'
+    emoji: '🔥'
   },
   doubt: {
     id: 'oracle',
@@ -69,8 +66,7 @@ const CARDS_DATA: Record<PersonaKey, {
     bullets: ['✍️ Saisie libre', '🧠 Verdict + explication', '🗂 Historique communautaire (optionnel)'],
     cta: 'LANCER UNE ANALYSE',
     href: '/flagornot',
-    emoji: '🔮',
-    shortcut: 'Oracle'
+    emoji: '🔮'
   },
   dixmais: {
     id: 'dixmais',
@@ -83,8 +79,7 @@ const CARDS_DATA: Record<PersonaKey, {
     bullets: ['⭐ 5 profils à noter de 0 à 10', '📉 Note qui évolue à chaque révélation', '🚫 Le 0 est éliminatoire — fin du profil'],
     cta: 'JOUER MAINTENANT',
     href: '/dixmais',
-    emoji: '⭐',
-    shortcut: 'Chute'
+    emoji: '⭐'
   }
 };
 
@@ -231,7 +226,7 @@ export default function HubPage() {
                   setSelectedVibe(key);
                   handleTap();
                 }}
-                className={`relative z-10 grow py-3 px-1 text-xs font-black tracking-wide rounded-xl flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-all select-none cursor-pointer ${
+                className={`relative z-10 grow py-2.5 px-1 rounded-xl flex flex-col items-center justify-center gap-1 transition-all select-none cursor-pointer ${
                   isSelected ? 'text-black font-black' : 'text-[#8E8E93] hover:text-white'
                 }`}
               >
@@ -244,7 +239,12 @@ export default function HubPage() {
                   />
                 )}
                 <span className="text-base leading-none">{data.emoji}</span>
-                <span className="font-black uppercase text-[9px] tracking-wide leading-none">{data.shortcut}</span>
+                {/* Titre complet (pas le raccourci) : 4 titres désormais plus
+                    longs partagent une rangée étroite, d'où une taille réduite,
+                    un retour à la ligne autorisé et un tracking resserré. */}
+                <span className="font-black uppercase text-[7.5px] tracking-tight leading-[1.1] text-center">
+                  {data.title}
+                </span>
               </button>
             );
           })}
