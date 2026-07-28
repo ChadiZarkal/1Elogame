@@ -3,7 +3,9 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Mentions Légales',
-  robots: { index: false, follow: true },
+  description:
+    "Éditeur, hébergeur et informations légales du site Red or Green.",
+  alternates: { canonical: '/mentions-legales' },
 };
 
 export default function MentionsLegalesPage() {

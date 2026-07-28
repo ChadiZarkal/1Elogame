@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, ArrowLeft, ArrowRight } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { GUIDE_FAQ } from './faq';
 
 interface FlagDef {
   id: string;
@@ -229,76 +230,71 @@ function FlagCard({ flag, index }: { flag: FlagDef; index: number }) {
         </motion.span>
       </button>
 
-      {/* Accordion content */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            id={`examples-${flag.id}`}
-            key="content"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22, ease: 'easeInOut' }}
-            style={{ overflow: 'hidden' }}
-          >
-            <div style={{ paddingTop: 14 }}>
-              <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                {flag.examples.map((ex, i) => (
-                  <li
-                    key={i}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 10,
-                      padding: '7px 0',
-                      borderBottom: i < flag.examples.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-                    }}
-                  >
-                    <span style={{ color: flag.colorText, flexShrink: 0, marginTop: 1, fontSize: 12 }}>›</span>
-                    <span style={{ color: '#E5E7EB', fontSize: 13, lineHeight: 1.5 }}>{ex}</span>
-                  </li>
-                ))}
-              </ul>
+      {/* Accordion content — toujours rendu dans le HTML (le crawler doit le
+          voir), simplement replié en CSS tant que l'utilisateur ne l'ouvre pas. */}
+      <motion.div
+        id={`examples-${flag.id}`}
+        initial={false}
+        animate={{ height: open ? 'auto' : 0, opacity: open ? 1 : 0 }}
+        transition={{ duration: 0.22, ease: 'easeInOut' }}
+        style={{ overflow: 'hidden' }}
+      >
+        <div style={{ paddingTop: 14 }}>
+          <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+            {flag.examples.map((ex, i) => (
+              <li
+                key={i}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 10,
+                  padding: '7px 0',
+                  borderBottom: i < flag.examples.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                }}
+              >
+                <span style={{ color: flag.colorText, flexShrink: 0, marginTop: 1, fontSize: 12 }}>›</span>
+                <span style={{ color: '#E5E7EB', fontSize: 13, lineHeight: 1.5 }}>{ex}</span>
+              </li>
+            ))}
+          </ul>
 
-              {/* Context note */}
-              <div style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.07)',
-                borderRadius: 10,
-                padding: '11px 14px',
-                marginTop: 14,
-              }}>
-                <p style={{ color: '#9CA3AF', fontSize: 12, margin: 0, lineHeight: 1.6 }}>
-                  ℹ️ {flag.context}
-                </p>
-              </div>
+          {/* Context note */}
+          <div style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: 10,
+            padding: '11px 14px',
+            marginTop: 14,
+          }}>
+            <p style={{ color: '#9CA3AF', fontSize: 12, margin: 0, lineHeight: 1.6 }}>
+              ℹ️ {flag.context}
+            </p>
+          </div>
 
-              {/* Tip */}
-              <div style={{
-                display: 'flex',
-                gap: 8,
-                alignItems: 'flex-start',
-                marginTop: 12,
-                padding: flag.tipIsAlert ? '10px 12px' : '8px 0',
-                background: flag.tipIsAlert ? 'rgba(239,68,68,0.08)' : 'transparent',
-                border: flag.tipIsAlert ? '1px solid rgba(239,68,68,0.2)' : 'none',
-                borderRadius: flag.tipIsAlert ? 8 : 0,
-              }}>
-                <span style={{ fontSize: 13, flexShrink: 0 }}>{flag.tipIsAlert ? '🆘' : '💡'}</span>
-                <p style={{
-                  color: flag.tipIsAlert ? '#F87171' : '#9CA3AF',
-                  fontSize: 12,
-                  margin: 0,
-                  lineHeight: 1.5,
-                  fontWeight: flag.tipIsAlert ? 600 : 400,
-                }}>
-                  {flag.tip}
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          {/* Tip */}
+          <div style={{
+            display: 'flex',
+            gap: 8,
+            alignItems: 'flex-start',
+            marginTop: 12,
+            padding: flag.tipIsAlert ? '10px 12px' : '8px 0',
+            background: flag.tipIsAlert ? 'rgba(239,68,68,0.08)' : 'transparent',
+            border: flag.tipIsAlert ? '1px solid rgba(239,68,68,0.2)' : 'none',
+            borderRadius: flag.tipIsAlert ? 8 : 0,
+          }}>
+            <span style={{ fontSize: 13, flexShrink: 0 }}>{flag.tipIsAlert ? '🆘' : '💡'}</span>
+            <p style={{
+              color: flag.tipIsAlert ? '#F87171' : '#9CA3AF',
+              fontSize: 12,
+              margin: 0,
+              lineHeight: 1.5,
+              fontWeight: flag.tipIsAlert ? 600 : 400,
+            }}>
+              {flag.tip}
+            </p>
+          </div>
+        </div>
+      </motion.div>
     </motion.article>
   );
 }
@@ -434,18 +430,35 @@ export default function GuidePage() {
           </div>
         </section>
 
-        {/* Hidden SEO content for search engines */}
-        <section className="sr-only" aria-label="Informations complémentaires">
-          <h2>Red Flag définition</h2>
-          <p>Un red flag est un comportement problématique dans une relation. Pris isolément, il peut parfois se travailler avec une vraie remise en question. Ce qui devient réellement nocif, c&apos;est l&apos;accumulation de red flags.</p>
-          <h2>Green Flag définition</h2>
-          <p>Un green flag est un signal positif dans une relation. Il indique un comportement sain, mature et respectueux. Parmi les green flags courants : communication ouverte, respect des limites, cohérence entre paroles et actes.</p>
-          <h2>Black Flag signification</h2>
-          <p>Un black flag est un comportement totalement rédhibitoire et potentiellement dangereux dans une relation. Il s&apos;agit d&apos;une limite absolue comme la violence physique, le contrôle total ou la manipulation grave.</p>
-          <h2>Orange Flag relation</h2>
-          <p>Un orange flag est un signal d&apos;attention qui mérite une conversation. Moins grave qu&apos;un red flag, il indique quelque chose à surveiller et à éclaircir dans la relation.</p>
-          <h2>White Flag couple</h2>
-          <p>Un white flag désigne un comportement neutre, explicable et sans gravité. Ce n&apos;est pas un mauvais indicateur : dans une relation, ce n&apos;est généralement pas un sujet en soi.</p>
+        {/* FAQ visible — remplace un bloc `sr-only` (texte caché) et adosse le
+            balisage FAQPage du layout à un contenu réellement affiché. */}
+        <section aria-label="Questions fréquentes" style={{ marginTop: 34 }}>
+          <p style={{
+            color: '#4B5563', fontSize: 11, letterSpacing: '0.15em',
+            textTransform: 'uppercase', fontWeight: 700, margin: '0 0 12px',
+          }}>
+            Questions fréquentes
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {GUIDE_FAQ.map(({ question, answer }) => (
+              <div
+                key={question}
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  borderRadius: 12,
+                  padding: '14px 18px',
+                }}
+              >
+                <h2 style={{ color: '#E5E7EB', fontSize: 14, fontWeight: 800, margin: '0 0 6px' }}>
+                  {question}
+                </h2>
+                <p style={{ color: '#9CA3AF', fontSize: 13, margin: 0, lineHeight: 1.65 }}>
+                  {answer}
+                </p>
+              </div>
+            ))}
+          </div>
         </section>
 
       </div>

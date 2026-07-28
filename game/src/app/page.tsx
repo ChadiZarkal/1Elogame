@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { ArrowRight, ExternalLink, Shield, Trophy, Flame, HelpCircle, Activity, Sparkles, MessageSquare, Info, X, Zap, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHaptics } from '@/lib/hooks';
-import { AdBanner } from '@/components/ads/AdBanner';
 
 type PersonaKey = 'redflag' | 'group' | 'doubt' | 'dixmais';
 
@@ -146,7 +145,7 @@ export default function HubPage() {
   const activeCard = CARDS_DATA[selectedVibe];
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-[#000000] text-[#E2E2E2] selection:bg-[#FF3B30]/30 selection:text-white pb-32">
+    <div className="relative min-h-dvh overflow-hidden bg-[#000000] text-[#E2E2E2] selection:bg-[#FF3B30]/30 selection:text-white pb-8">
       {/* Dynamic Background Shader & Grid */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         {/* Sleek matrix grid */}
@@ -397,18 +396,6 @@ export default function HubPage() {
           </button>
         </section>
 
-        {/* Quiet Legal Footer */}
-        <footer className="w-full mt-6 text-center space-y-1.5 select-none">
-          <div className="flex justify-center items-center gap-3 text-[10px] font-black text-[#5C5C5F] uppercase tracking-wider">
-            <Link href="/mentions-legales" onClick={handleTap} className="hover:text-white transition-colors">Mentions</Link>
-            <span>•</span>
-            <Link href="/confidentialite" onClick={handleTap} className="hover:text-white transition-colors">Secret</Link>
-            <span>•</span>
-            <Link href="/cgu" onClick={handleTap} className="hover:text-white transition-colors">CGU</Link>
-          </div>
-          <p className="text-[9px] text-[#5C5C5F]/60">RED OR GREEN © 2026 • POUR REPÉRER LES TOXICITÉS ORDINAIRES</p>
-        </footer>
-
       </main>
 
       {/* ================= MODALS & DRAWERS (Keeping main UI incredibly pristine) ================= */}
@@ -577,15 +564,6 @@ export default function HubPage() {
           </>
         )}
       </AnimatePresence>
-
-      {/* Google AdSense Banner - Bottom of page */}
-      <div className="relative z-20 w-full mt-8 mb-4 px-4">
-        <AdBanner 
-          slot="3749254789" 
-          format="responsive"
-          className="w-full"
-        />
-      </div>
 
     </div>
   );

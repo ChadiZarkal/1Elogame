@@ -15,7 +15,13 @@ export default function robots(): MetadataRoute.Robots {
           '/guide',
           '/classement',
           '/redflag',
+          '/dixmais',
+          '/dixmais/leaderboard',
           '/ressources',
+          '/observatoire',
+          '/a-propos',
+          '/methodologie',
+          '/sources',
           '/ressources/violentometre',
           '/ressources/consentometre',
           '/ressources/incestometre',
@@ -25,7 +31,10 @@ export default function robots(): MetadataRoute.Robots {
           '/mentions-legales',
           '/confidentialite',
         ],
-        disallow: ['/admin/', '/api/'],
+        // Les pages d'état éphémère (/jeu/recap, /flashflag/session/*) ne sont
+        // pas listées ici : elles portent un `noindex` en métadonnées, que
+        // Google doit pouvoir explorer pour le prendre en compte.
+        disallow: ['/admin', '/admin/', '/dixmais/admin', '/api/'],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

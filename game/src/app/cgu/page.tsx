@@ -3,7 +3,9 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: "Conditions Générales d'Utilisation",
-  robots: { index: false, follow: true },
+  description:
+    "Les conditions d'utilisation de Red or Green : accès au service, règles de conduite, publicité, propriété intellectuelle et responsabilité.",
+  alternates: { canonical: '/cgu' },
 };
 
 export default function CGUPage() {
@@ -119,13 +121,17 @@ export default function CGUPage() {
           <h2>9. Publicité et consentement</h2>
           <p>
             Le Service peut inclure des annonces publicitaires fournies par Google AdSense.
-            Selon votre zone géographique, le Service peut vous demander de choisir vos préférences
-            publicitaires (accepter, refuser, personnaliser) avant l&apos;affichage d&apos;annonces
-            personnalisées.
+            Lorsque des annonces sont diffusées et que la réglementation locale l&apos;exige
+            (notamment EEE, Royaume-Uni et Suisse), un message de consentement fourni par Google
+            vous permet d&apos;accepter, de refuser ou de personnaliser vos préférences avant tout
+            affichage d&apos;annonces personnalisées.
           </p>
           <p>
-            Vous pouvez modifier ces préférences à tout moment depuis les paramètres de
-            confidentialité disponibles sur le site.
+            Vous pouvez modifier ces préférences à tout moment depuis les{' '}
+            <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer">
+              paramètres des annonces Google
+            </a>. Les modalités sont détaillées dans notre{' '}
+            <Link href="/confidentialite">Politique de Confidentialité</Link>.
           </p>
         </section>
 

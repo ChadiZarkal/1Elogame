@@ -4,6 +4,7 @@ import { withApiHandler, apiSuccess, apiError } from '@/lib/apiHelpers';
 import { getActiveElements, getStarredPairs } from '@/lib/repositories';
 import { loadAlgorithmConfig } from '@/lib/algorithmConfig';
 import { MAX_SEEN_DUELS_STRING_LENGTH } from '@/config/constants';
+import { filterAdultContent, isAdultOnlyCategory, isMinorBracket } from '@/lib/contentRating';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,14 +34,22 @@ export const GET = withApiHandler(async (request: NextRequest) => {
     }
   }
 
+  // Le contenu « Amour & Sexe » n'est pas servi aux mineurs.
+  const restrictAdultContent = isMinorBracket(searchParams.get('age'));
+  if (restrictAdultContent && isAdultOnlyCategory(categoryParam)) {
+    return apiError('FORBIDDEN_CATEGORY', 'Cette catégorie est réservée aux majeurs', 403);
+  }
+
   // Load persisted algorithm config (Supabase in prod, cached in memory)
   const algorithmConfig = await loadAlgorithmConfig();
 
   // Fetch data via repository (mock/prod abstracted away)
-  const [elements, starredPairs] = await Promise.all([
+  const [allElements, starredPairs] = await Promise.all([
     getActiveElements(categoryParam),
     getStarredPairs(),
   ]);
+
+  const elements = filterAdultContent(allElements, restrictAdultContent);
 
   if (elements.length < 2) {
     return apiError('INSUFFICIENT_ELEMENTS', 'Pas assez d\'éléments actifs pour créer un duel', 400);

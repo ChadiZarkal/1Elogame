@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { GUIDE_FAQ } from './faq';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
 
@@ -48,56 +49,12 @@ function GuideJsonLd() {
       },
       {
         '@type': 'FAQPage',
-        mainEntity: [
-          {
-            '@type': 'Question',
-            name: "Qu'est-ce qu'un Red Flag ?",
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: "Un Red Flag est un comportement réellement problématique : contrôle, manque de respect, manipulation ou schéma toxique. Pris isolément, il peut parfois se travailler avec une vraie remise en question, mais l'accumulation de Red Flags est nocive.",
-            },
-          },
-          {
-            '@type': 'Question',
-            name: "Qu'est-ce qu'un Green Flag ?",
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: "Un Green Flag est un comportement sain et mature, signe d'une personne respectueuse, communicative et cohérente. Il indique que la relation repose sur des bases équilibrées.",
-            },
-          },
-          {
-            '@type': 'Question',
-            name: "Qu'est-ce qu'un Black Flag ?",
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: "Un Black Flag est un comportement totalement rédhibitoire et potentiellement dangereux. C'est une limite absolue : violence, manipulation grave, contrôle total. La sécurité passe avant tout.",
-            },
-          },
-          {
-            '@type': 'Question',
-            name: "Qu'est-ce qu'un Orange Flag ?",
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: "Un Orange Flag est un comportement à surveiller qui mérite une conversation. Pas forcément rédhibitoire, il peut s'expliquer par le contexte, mais il ne doit pas être ignoré.",
-            },
-          },
-          {
-            '@type': 'Question',
-            name: "Qu'est-ce qu'un White Flag ?",
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: "Un White Flag est un comportement neutre, explicable et sans charge négative. Ce n'est pas un mauvais indicateur : dans une relation, ce n'est généralement pas un sujet en soi.",
-            },
-          },
-          {
-            '@type': 'Question',
-            name: "Quelle est la différence entre Red Flag et Black Flag ?",
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: "Le Red Flag signale un problème sérieux qui nécessite une réponse et une conversation. Le Black Flag est une limite absolue et rédhibitoire — un comportement immédiatement inacceptable comme la violence ou la manipulation grave.",
-            },
-          },
-        ],
+        // Ces questions sont rendues visiblement en bas de /guide (GUIDE_FAQ).
+        mainEntity: GUIDE_FAQ.map(({ question, answer }) => ({
+          '@type': 'Question',
+          name: question,
+          acceptedAnswer: { '@type': 'Answer', text: answer },
+        })),
       },
       {
         '@type': 'BreadcrumbList',

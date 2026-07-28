@@ -225,7 +225,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   
   // Fetch the next duel from API
   fetchNextDuel: async () => {
-    const { isLoadingDuel, allDuelsExhausted, gameMode } = get();
+    const { isLoadingDuel, allDuelsExhausted, gameMode, profile } = get();
     
     if (isLoadingDuel || allDuelsExhausted) return;
     
@@ -251,6 +251,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
       if (appearances) {
         params.set('appearances', appearances);
+      }
+      // Transmis pour que le serveur écarte le contenu réservé aux majeurs.
+      if (profile?.age) {
+        params.set('age', profile.age);
       }
       if (gameMode.mode === 'thematique' && gameMode.categories && gameMode.categories.length > 0) {
         // Pick a random category from selected ones for variety

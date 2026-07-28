@@ -3,7 +3,9 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Politique de Confidentialité',
-  robots: { index: false, follow: true },
+  description:
+    "Comment Red or Green traite vos données : cookies, publicité, analytique, sous-traitants et exercice de vos droits.",
+  alternates: { canonical: '/confidentialite' },
 };
 
 export default function ConfidentialitePage() {
@@ -133,17 +135,24 @@ export default function ConfidentialitePage() {
             <li><strong>Publicité</strong> — Google AdSense peut utiliser des cookies/identifiants pour afficher des annonces et limiter la répétition publicitaire.</li>
           </ul>
           <p>
-            Lorsque la réglementation locale l&apos;exige (notamment EEE, Royaume-Uni et Suisse),
-            l&apos;affichage d&apos;annonces personnalisées est conditionné à votre consentement via
-            une interface de gestion conforme au cadre de transparence et de consentement (TCF).
+            Des fournisseurs tiers, dont Google, utilisent des cookies pour diffuser des annonces
+            en fonction de vos visites antérieures sur ce site ou sur d&apos;autres sites.
           </p>
           <p>
-            Vous pouvez retirer ou modifier vos choix de consentement à tout moment depuis les
-            paramètres de confidentialité affichés sur le site. Vous pouvez aussi configurer votre
-            navigateur pour limiter les cookies.
+            Vous pouvez désactiver la publicité personnalisée depuis les{' '}
+            <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer">
+              paramètres des annonces Google
+            </a>, vous opposer à l&apos;utilisation de cookies par d&apos;autres fournisseurs via{' '}
+            <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer">
+              aboutads.info/choices
+            </a>, ou configurer votre navigateur pour limiter les cookies.
           </p>
           <p>
-            Plus d&apos;informations sur la gestion des données publicitaires par Google :{' '}
+            Pour comprendre comment Google traite ces données :{' '}
+            <a href="https://www.google.com/policies/technologies/partner-sites/" target="_blank" rel="noopener noreferrer">
+              Comment Google utilise les données lorsque vous utilisez les sites ou applications de ses partenaires
+            </a>{' '}
+            et{' '}
             <a href="https://policies.google.com/technologies/ads?hl=fr" target="_blank" rel="noopener noreferrer">
               policies.google.com/technologies/ads
             </a>.

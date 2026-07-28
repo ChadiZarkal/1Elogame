@@ -3,6 +3,8 @@ import Script from "next/script";
 import { Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { AdSenseScript } from "@/components/ads/AdSenseScript";
+import { SiteFooter } from "@/components/ui/SiteFooter";
 
 import "./globals.css";
 
@@ -196,14 +198,10 @@ export default function RootLayout({
         )}
         {adSenseClientId && (
           <>
-            {/* Google AdSense - Property verification */}
+            {/* Google AdSense — chargé via next/script, hors routes admin */}
             <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
             <link rel="preconnect" href="https://googleads.g.doubleclick.net" />
-            <script
-              async
-              src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adSenseClientId}`}
-              crossOrigin="anonymous"
-            />
+            <AdSenseScript clientId={adSenseClientId} />
           </>
         )}
         <link rel="manifest" href="/manifest.json" />
@@ -217,6 +215,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <AnalyticsProvider>
             {children}
+            <SiteFooter />
           </AnalyticsProvider>
         </ErrorBoundary>
         <Toaster

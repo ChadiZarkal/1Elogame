@@ -160,7 +160,7 @@ function MeterJsonLd({ slug }: { slug: string }) {
   );
 }
 
-function MeterSeoContent({ slug }: { slug: string }) {
+function MeterFaqAndLinks({ slug }: { slug: string }) {
   const meter = METERS.find((m) => m.slug === slug);
   if (!meter) return null;
 
@@ -185,30 +185,88 @@ function MeterSeoContent({ slug }: { slug: string }) {
 
   const faqs = faqMap[slug] || [];
 
+  const otherMeters = METERS.filter((m) => m.slug !== slug);
+
   return (
-    <section className="sr-only" aria-label={`Informations sur le ${meter.name}`}>
-      <h2>{meter.name} en ligne — Test gratuit et anonyme</h2>
-      <p>{meter.description}</p>
-      <p>{meter.intro}</p>
-      <p>Ce test comprend {meter.questions.length} questions. Résultats immédiats, 100% anonyme, aucune donnée collectée.</p>
+    <section
+      aria-label={`Informations sur le ${meter.name}`}
+      style={{
+        maxWidth: 640,
+        margin: '0 auto',
+        padding: '8px 16px 56px',
+      }}
+    >
       {faqs.length > 0 && (
-        <div>
-          <h3>Questions fréquentes</h3>
-          {faqs.map((faq, i) => (
-            <div key={i}>
-              <h4>{faq.question}</h4>
-              <p>{faq.answer}</p>
-            </div>
-          ))}
-        </div>
+        <>
+          <h2 style={{
+            color: '#4B5563', fontSize: 11, letterSpacing: '0.15em',
+            textTransform: 'uppercase', fontWeight: 700, margin: '0 0 12px',
+          }}>
+            Questions fréquentes
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
+            {faqs.map((faq) => (
+              <div
+                key={faq.question}
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  borderRadius: 12,
+                  padding: '14px 18px',
+                }}
+              >
+                <h3 style={{ color: '#E5E7EB', fontSize: 14, fontWeight: 800, margin: '0 0 6px' }}>
+                  {faq.question}
+                </h3>
+                <p style={{ color: '#9CA3AF', fontSize: 13, margin: 0, lineHeight: 1.65 }}>
+                  {faq.answer}
+                </p>
+              </div>
+            ))}
+          </div>
+        </>
       )}
-      <nav aria-label="Autres outils">
-        <Link href="/ressources">Tous les outils d&apos;auto-évaluation</Link>
-        {METERS.filter(m => m.slug !== slug).map(m => (
-          <Link key={m.slug} href={`/ressources/${m.slug}`}>{m.name}</Link>
+
+      <h2 style={{
+        color: '#4B5563', fontSize: 11, letterSpacing: '0.15em',
+        textTransform: 'uppercase', fontWeight: 700, margin: '0 0 12px',
+      }}>
+        Autres outils d&apos;auto-évaluation
+      </h2>
+      <nav aria-label="Autres outils" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {otherMeters.map((m) => (
+          <Link
+            key={m.slug}
+            href={`/ressources/${m.slug}`}
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.09)',
+              borderRadius: 10,
+              padding: '9px 14px',
+              color: '#D1D5DB',
+              textDecoration: 'none',
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
+            {m.emoji} {m.name}
+          </Link>
         ))}
-        <Link href="/">Red or Green — Accueil</Link>
-        <Link href="/jeu">Jouer à Red or Green</Link>
+        <Link
+          href="/ressources"
+          style={{
+            background: 'rgba(16,185,129,0.06)',
+            border: '1px solid rgba(16,185,129,0.2)',
+            borderRadius: 10,
+            padding: '9px 14px',
+            color: '#10B981',
+            textDecoration: 'none',
+            fontSize: 13,
+            fontWeight: 700,
+          }}
+        >
+          Tous les outils
+        </Link>
       </nav>
     </section>
   );
@@ -219,8 +277,10 @@ export default async function MeterLayout({ params, children }: Props) {
   return (
     <>
       <MeterJsonLd slug={slug} />
-      <MeterSeoContent slug={slug} />
       {children}
+      {/* Placé sous l'outil : le contenu éditorial ne doit pas s'intercaler
+          avant l'usage, mais il doit être présent et visible dans le HTML. */}
+      <MeterFaqAndLinks slug={slug} />
     </>
   );
 }

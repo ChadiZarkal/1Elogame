@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 declare global {
   interface Window {
@@ -8,32 +8,40 @@ declare global {
   }
 }
 
+/**
+ * Valeurs acceptées par AdSense pour `data-ad-format`.
+ * `auto` est la seule qui active réellement le responsive — et la seule pour
+ * laquelle `data-full-width-responsive` a un effet.
+ */
+type AdFormat = 'auto' | 'horizontal' | 'vertical' | 'rectangle' | 'fluid';
+
 interface AdBannerProps {
   slot: string;
-  format?: 'responsive' | 'horizontal' | 'vertical' | 'rectangle';
+  format?: AdFormat;
   className?: string;
 }
 
-export function AdBanner({ 
-  slot, 
-  format = 'responsive',
-  className = ''
+export function AdBanner({
+  slot,
+  format = 'auto',
+  className = '',
 }: AdBannerProps) {
+  const pushedRef = useRef(false);
+
   const rawAdSenseId = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ID?.trim() || '';
   const adSenseId = rawAdSenseId
     ? (rawAdSenseId.startsWith('ca-pub-') ? rawAdSenseId : `ca-pub-${rawAdSenseId}`)
     : '';
 
   useEffect(() => {
-    if (!adSenseId) {
-      return;
-    }
+    if (!adSenseId || pushedRef.current) return;
 
     try {
-      if (window.adsbygoogle === undefined) {
-        window.adsbygoogle = [];
-      }
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
+      window.adsbygoogle = window.adsbygoogle || [];
+      window.adsbygoogle.push({});
+      // Un slot ne doit être poussé qu'une fois : un second push sur le même
+      // <ins> déclenche une erreur AdSense (remontage, StrictMode).
+      pushedRef.current = true;
     } catch (e) {
       console.error('AdSense error:', e);
     }
@@ -44,10 +52,10 @@ export function AdBanner({
   }
 
   return (
-    <div className={`ad-container ${className}`} aria-label="Publicite Google AdSense">
+    <div className={`ad-container ${className}`} aria-label="Publicité Google AdSense">
       <ins
         className="adsbygoogle"
-        style={{ display: 'block', minHeight: 90 }}
+        style={{ display: 'block' }}
         data-ad-client={adSenseId}
         data-ad-slot={slot}
         data-ad-format={format}

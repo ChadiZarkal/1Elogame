@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { CATEGORIES_CONFIG, CategoryConfig } from '@/config/categories';
 import { useHaptics } from '@/lib/hooks';
-import { type PartySize } from '@/stores/gameStore';
+import { isAdultOnlyCategory, isMinorBracket } from '@/lib/contentRating';
+import { type PartySize, useGameStore } from '@/stores/gameStore';
 
 const PARTY_SIZES: { value: PartySize; label: string; tag: string }[] = [
   { value: 10, label: '10', tag: '⚡ Rapide' },
@@ -69,7 +70,22 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
     if (typeof window === 'undefined') return true;
     return !localStorage.getItem('rog_has_played');
   });
-  const categories: CategoryConfig[] = Object.values(CATEGORIES_CONFIG);
+  // Les mineurs ne se voient pas proposer les catégories réservées aux majeurs.
+  const profile = useGameStore((state) => state.profile);
+  const isMinor = isMinorBracket(profile?.age);
+  const categories: CategoryConfig[] = Object.values(CATEGORIES_CONFIG).filter(
+    (category) => !(isMinor && isAdultOnlyCategory(category.id)),
+  );
+
+  // Une sélection restaurée depuis localStorage peut contenir une catégorie
+  // désormais interdite : on la purge.
+  useEffect(() => {
+    if (!isMinor) return;
+    setSelected((prev) => {
+      const cleaned = new Set([...prev].filter((id) => !isAdultOnlyCategory(id)));
+      return cleaned.size === prev.size ? prev : cleaned;
+    });
+  }, [isMinor]);
 
   const toggleCategory = (id: string) => {
     select();
