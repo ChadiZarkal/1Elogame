@@ -3,7 +3,10 @@
 Support de la demande de réexamen. Chaque entrée renvoie au problème identifié
 dans [ADSENSE-PLAN-CONFORMITE.md](ADSENSE-PLAN-CONFORMITE.md).
 
-**Statut : implémenté, non déployé.** Le build n'a pas encore été exécuté.
+**Statut : implémenté, build validé, en attente de fusion.** Les commits sont
+sur la branche `nvxjeu_itatenbut` et le déploiement Vercel se termine avec
+succès — `next build` couvre le typage TypeScript et ESLint. La production
+(`redorgreen.fr`) n'est pas encore à jour : elle suit une autre branche.
 
 ---
 
@@ -111,9 +114,16 @@ confidentialité affichés sur le site ». **Aucune de ces interfaces n'existait
 Quatre pages créées, toutes adossées à des faits vérifiables :
 
 - **`/observatoire`** — analyse des votes de la communauté : les comportements
-  sur lesquels hommes et femmes divergent le plus, et ceux qui séparent les
-  générations. Calculé côté serveur à partir des données réelles, avec un seuil
-  de participation minimum et les limites explicitées.
+  sur lesquels hommes et femmes divergent le plus, ceux qui séparent les
+  générations, puis une mesure d'amplitude sur les six groupes qui distingue les
+  comportements les plus clivants de ceux qui font consensus. Calculé côté
+  serveur à partir des données réelles, avec un seuil de participation minimum
+  et les limites explicitées.
+
+  *Choix assumé :* aucun article de conseil relationnel générique n'a été
+  rédigé. Ce type de contenu est précisément ce que Google qualifie de faible
+  valeur. La profondeur vient de l'analyse des données propres au site, que
+  personne d'autre ne peut produire.
 - **`/methodologie`** — fonctionnement du score Elo, facteur K variable selon la
   participation, comparaisons par groupe, et ce que le classement **n'est pas**
   (échantillon auto-sélectionné, absence de valeur diagnostique).
@@ -152,6 +162,6 @@ de phase de jeu, non un premier affichage.
 | **Message de consentement (CMP)** | À activer dans AdSense → Confidentialité et messages. Aucun code supplémentaire n'est requis, mais **la conformité UE n'est pas atteinte tant que ce n'est pas fait**. |
 | **Annonces automatiques** | À désactiver dans le compte AdSense tant que les pages ne dépassent pas le seuil de contenu. |
 | **Authentification admin** | `adminAuth.ts` neutralise toute vérification : les API `/api/admin/*` restent accessibles en écriture. Écarté du périmètre par décision explicite. |
-| **Contenus piliers (WS-3)** | Rédaction humaine, non entamée. |
+| **Fusion vers la production** | Les changements sont sur `nvxjeu_itatenbut`. La production suit une autre branche et reste inchangée. |
 | **Core Web Vitals — mesure** | Les causes de paint identifiées sont corrigées (point 10), mais le gain reste à mesurer sur PageSpeed Insights après déploiement. |
 | **Build et déploiement** | `npm --prefix game run build` non exécuté (Node absent de la machine de développement). |

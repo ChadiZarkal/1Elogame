@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getObservatoryData, type GapEntry, type ObservatoryData } from '@/lib/leaderboard';
+import {
+  getObservatoryData,
+  type GapEntry,
+  type ObservatoryData,
+  type SpreadEntry,
+} from '@/lib/leaderboard';
 
 export const metadata: Metadata = {
   title: "L'Observatoire des red flags — ce sur quoi on n'est pas d'accord",
@@ -16,6 +21,8 @@ const EMPTY: ObservatoryData = {
   totalVotes: 0,
   genderGaps: [],
   ageGaps: [],
+  mostContested: [],
+  mostConsensual: [],
 };
 
 function formatNumber(value: number): string {
@@ -58,6 +65,36 @@ function GapTable({
         );
       })}
     </div>
+  );
+}
+
+function SpreadList({ entries, kind }: { entries: SpreadEntry[]; kind: 'contested' | 'consensual' }) {
+  const accent = kind === 'contested' ? '#F59E0B' : '#10B981';
+
+  return (
+    <ol style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16, padding: 0, listStyle: 'none' }}>
+      {entries.map((entry) => (
+        <li
+          key={entry.texte}
+          style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderLeft: `3px solid ${accent}`,
+            borderRadius: 12,
+            padding: '14px 18px',
+          }}
+        >
+          <p style={{ color: '#E5E7EB', fontSize: 14, fontWeight: 700, margin: '0 0 6px' }}>
+            {entry.texte}
+          </p>
+          <p style={{ color: '#9CA3AF', fontSize: 12, margin: 0, lineHeight: 1.6 }}>
+            Amplitude entre groupes :{' '}
+            <strong style={{ color: accent }}>{entry.spread} points</strong> · score général{' '}
+            {entry.eloGlobal}
+          </p>
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -119,6 +156,29 @@ export default async function ObservatoirePage() {
                 Même lecture, cette fois entre la tranche la plus jeune et la plus âgée.
               </p>
               <GapTable entries={data.ageGaps} labelA="16-18 ans" labelB="27 ans et plus" />
+            </section>
+
+            <section className="legal-page__section">
+              <h2>Les comportements les plus clivants</h2>
+              <p>
+                Ici, on ne compare plus deux groupes mais les six : sexe et tranches d&apos;âge.
+                L&apos;amplitude est l&apos;écart entre le groupe le plus sévère et le plus
+                indulgent. Plus elle est large, moins il existe de norme partagée sur ce
+                comportement — ce sont, littéralement, les sujets sur lesquels une conversation
+                risque de mal tourner faute d&apos;accord implicite.
+              </p>
+              <SpreadList entries={data.mostContested} kind="contested" />
+            </section>
+
+            <section className="legal-page__section">
+              <h2>Ceux qui font consensus</h2>
+              <p>
+                À l&apos;inverse, ces comportements sont jugés de la même façon par tous les
+                groupes. Un consensus large ne veut pas dire « grave » : il veut dire que le
+                jugement ne dépend ni de l&apos;âge ni du sexe. Le score général, indiqué à côté,
+                dit si ce consensus porte sur quelque chose d&apos;anodin ou de sérieux.
+              </p>
+              <SpreadList entries={data.mostConsensual} kind="consensual" />
             </section>
           </>
         ) : (

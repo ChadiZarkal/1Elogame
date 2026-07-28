@@ -72,6 +72,15 @@ export interface GapEntry {
   nb_participations: number;
 }
 
+export interface SpreadEntry {
+  texte: string;
+  categorie: string;
+  /** Écart entre le groupe le plus sévère et le plus indulgent. */
+  spread: number;
+  eloGlobal: number;
+  nb_participations: number;
+}
+
 export interface ObservatoryData {
   totalElements: number;
   totalVotes: number;
@@ -79,6 +88,10 @@ export interface ObservatoryData {
   genderGaps: GapEntry[];
   /** Écarts 16-18 ans / 27 ans et plus. */
   ageGaps: GapEntry[];
+  /** Comportements où les six groupes divergent le plus. */
+  mostContested: SpreadEntry[];
+  /** Comportements sur lesquels tous les groupes s'accordent. */
+  mostConsensual: SpreadEntry[];
 }
 
 /**
@@ -113,6 +126,30 @@ export async function getObservatoryData(topN = 12): Promise<ObservatoryData> {
       .sort((x, y) => Math.abs(y.gap) - Math.abs(x.gap))
       .slice(0, topN);
 
+  // Amplitude entre le groupe le plus sévère et le plus indulgent : une mesure
+  // directe du caractère clivant d'un comportement.
+  const spreads: SpreadEntry[] = reliable
+    .map((e) => {
+      const scores = [
+        e.elo_homme,
+        e.elo_femme,
+        e.elo_16_18,
+        e.elo_19_22,
+        e.elo_23_26,
+        e.elo_27plus,
+      ];
+      return {
+        texte: e.texte,
+        categorie: e.categorie,
+        spread: Math.round(Math.max(...scores) - Math.min(...scores)),
+        eloGlobal: Math.round(e.elo_global),
+        nb_participations: e.nb_participations,
+      };
+    })
+    .sort((a, b) => b.spread - a.spread);
+
+  const half = Math.min(topN, Math.floor(spreads.length / 2));
+
   return {
     totalElements: total,
     totalVotes,
@@ -124,6 +161,10 @@ export async function getObservatoryData(topN = 12): Promise<ObservatoryData> {
       a: e.elo_16_18 ?? e.elo_global,
       b: e.elo_27plus ?? e.elo_global,
     })),
+    // Les deux extrémités sont prises sur la même liste triée : on borne à la
+    // moitié pour qu'un même comportement ne figure jamais dans les deux.
+    mostContested: spreads.slice(0, half),
+    mostConsensual: half > 0 ? spreads.slice(-half).reverse() : [],
   };
 }
 
