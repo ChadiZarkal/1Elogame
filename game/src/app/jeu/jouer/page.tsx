@@ -189,7 +189,12 @@ export default function JouerPage() {
       </header>
 
       {/* ── Consigne ou verdict ──────────────────────────────────────────── */}
-      <div className="relative z-10 shrink-0 px-4 pb-2.5" style={{ minHeight: 78 }}>
+      {/* Borné en vh : sur un écran court, le bandeau cède la place aux tuiles
+          plutôt que de les comprimer sous leur hauteur utile. */}
+      <div
+        className="relative z-10 flex shrink-0 items-center justify-center px-4 pb-2"
+        style={{ minHeight: 'min(92px, 16vh)' }}
+      >
         <AnimatePresence mode="wait">
           {showingResult ? (
             <motion.div
@@ -202,18 +207,18 @@ export default function JouerPage() {
               {verdict ? (
                 <>
                   <p
-                    className="font-black uppercase leading-none tracking-tight"
-                    style={{ fontSize: 'clamp(1.4rem, 6.5vw, 1.9rem)', color: tint }}
+                    className="font-black uppercase leading-[0.92] tracking-[-0.03em]"
+                    style={{ fontSize: 'min(2.4rem, 10vw, 5.6vh)', color: tint }}
                   >
                     {verdict.title}
                   </p>
-                  <p className="mt-1.5 text-[12px] font-semibold leading-snug text-white/60">
+                  <p className="mx-auto mt-2 max-w-[19rem] text-[12px] font-semibold leading-snug text-white/60">
                     {verdict.subtitle}
                   </p>
                 </>
               ) : (
-                <p className="pt-4 text-sm font-bold text-white/45">
-                  Dépouillement en cours…
+                <p className="text-sm font-black uppercase tracking-[0.2em] text-white/35">
+                  Dépouillement…
                 </p>
               )}
             </motion.div>
@@ -225,15 +230,26 @@ export default function JouerPage() {
               exit={{ opacity: 0 }}
               className="text-center"
             >
-              <h1
-                className="font-black uppercase leading-none tracking-tight text-white"
-                style={{ fontSize: 'clamp(1.5rem, 7vw, 2rem)' }}
-              >
-                Lequel est le <span style={{ color: ACCENT }}>pire</span> ?
+              {/* Composition en deux temps : la question reste explicite, mais
+                  le mot qui porte l'enjeu occupe la place qu'il mérite. */}
+              <h1>
+                <span className="block text-[11px] font-black uppercase tracking-[0.34em] text-white/40">
+                  Lequel est le
+                </span>
+                <span
+                  className="block font-black uppercase leading-[0.85] tracking-[-0.045em]"
+                  style={{
+                    fontSize: 'min(3.1rem, 13vw, 7vh)',
+                    color: ACCENT,
+                    textShadow: `0 0 44px ${withAlpha(ACCENT, 0.4)}`,
+                  }}
+                >
+                  Pire&nbsp;?
+                </span>
               </h1>
               {/* La phrase qui débloque le jeu : sans elle, quatre comportements
                   anodins donnent l'impression d'une question absurde. */}
-              <p className="mt-1.5 text-[12px] font-semibold leading-snug text-white/50">
+              <p className="mx-auto mt-1.5 max-w-[20rem] text-[11.5px] font-semibold leading-snug text-white/45">
                 Même si aucun ne te choque vraiment : lequel tu supporterais le moins ?
               </p>
             </motion.div>
@@ -252,28 +268,35 @@ export default function JouerPage() {
           disabled={!isOnline || isLoadingDuel}
         />
 
-        <div className="mt-2.5 shrink-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 4px)' }}>
-          {!isOnline && !showingResult && (
-            <p className="pb-2 text-center text-[11px] font-bold text-red-400">
-              📡 Hors ligne — reconnecte-toi pour voter
-            </p>
-          )}
-
+        {/* Hauteur réservée : le bouton du dépouillement prend exactement la
+            place de l'indication de consigne, les tuiles ne sautent donc pas au
+            moment où elles se réordonnent. */}
+        <div
+          className="mt-2.5 flex shrink-0 items-center justify-center"
+          style={{ minHeight: 54, paddingBottom: 'max(env(safe-area-inset-bottom), 4px)' }}
+        >
           {showingResult ? (
             <motion.button
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => { haptics.tap(); showNextDuel(); }}
-              className="w-full cursor-pointer rounded-2xl py-3.5 text-base font-black uppercase tracking-widest"
-              style={{ background: tint, color: '#08080C', boxShadow: `0 6px 26px ${withAlpha(tint, 0.35)}` }}
+              className="w-full cursor-pointer rounded-2xl py-3.5 text-[15px] font-black uppercase tracking-[0.14em]"
+              style={{ background: tint, color: '#08080C', boxShadow: `0 8px 30px -6px ${withAlpha(tint, 0.6)}` }}
             >
               {partyConfig && duelCount >= partyConfig.size ? 'Voir le bilan →' : 'Tour suivant →'}
             </motion.button>
-          ) : (
-            <p className="text-center text-[10px] font-black uppercase tracking-[0.28em] text-white/25">
-              Touche une proposition
+          ) : !isOnline ? (
+            <p className="text-center text-[11px] font-bold text-red-400">
+              📡 Hors ligne — reconnecte-toi pour voter
             </p>
+          ) : (
+            <span
+              className="rounded-full px-3.5 py-1.5 text-[9.5px] font-black uppercase tracking-[0.22em] text-white/40"
+              style={{ background: 'rgba(255,255,255,0.045)', border: '1px solid rgba(255,255,255,0.07)' }}
+            >
+              4 comportements · 1 seul à éliminer
+            </span>
           )}
         </div>
       </div>
