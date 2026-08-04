@@ -74,6 +74,37 @@ function pickRandom<T>(arr: T[], count: number): T[] {
   return shuffle(arr).slice(0, Math.max(0, Math.min(count, arr.length)));
 }
 
+/** Comparaison d'énoncés à la casse, aux espaces doubles et aux blancs de bord près. */
+function textKey(text: string): string {
+  return text.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+/**
+ * Un seul énoncé par texte.
+ *
+ * La table compte aujourd'hui ~204 lignes actives et approuvées pour seulement
+ * ~76 textes distincts : la plupart des énoncés y figurent en trois exemplaires,
+ * sous trois id différents. Comme la liste d'exclusion du client raisonne sur
+ * des id, un doublon revenait indéfiniment sous un autre id sans jamais être
+ * filtré — c'est ce qui donnait au joueur l'impression de tourner sur une
+ * poignée de phrases alors que le catalogue paraissait fourni.
+ *
+ * Le représentant retenu est le **plus petit id**, et non un tirage au sort : il
+ * faut qu'un texte donné renvoie toujours le même id, sinon l'exclusion cesse
+ * d'opérer dès le tour suivant. Pour la même raison, la déduplication doit
+ * précéder le filtrage par exclusion — dans l'autre ordre, écarter le
+ * représentant ferait simplement remonter son doublon.
+ */
+function dedupeByText(list: DixMaisStatement[]): DixMaisStatement[] {
+  const kept = new Map<string, DixMaisStatement>();
+  for (const statement of list) {
+    const key = textKey(statement.text);
+    const current = kept.get(key);
+    if (!current || statement.id < current.id) kept.set(key, statement);
+  }
+  return [...kept.values()];
+}
+
 /** The opening statement of a profile must always be a red flag — swap it with
  * the first negative statement in the list if the shuffle put a positive first.
  * No-op if there is no negative to swap with (fully-positive round). */
@@ -119,7 +150,7 @@ export async function getRandomStatements(count = 7, excludeIds: string[] = []):
   const exclude = new Set(excludeIds);
 
   if (isMockMode()) {
-    const all = buildMockStatements().filter(s => !exclude.has(s.id));
+    const all = dedupeByText(buildMockStatements()).filter(s => !exclude.has(s.id));
     return selectFromPools(
       all.filter(s => s.type === 'negative'),
       all.filter(s => s.type === 'positive'),
@@ -147,13 +178,17 @@ export async function getRandomStatements(count = 7, excludeIds: string[] = []):
       .order('id'),
   ]);
 
-  const negPool = ((negData as DixMaisStatement[]) || []).filter(s => !exclude.has(s.id));
-  const posPool = ((posData as DixMaisStatement[]) || []).filter(s => !exclude.has(s.id));
-  const combined = selectFromPools(negPool, posPool, count);
+  // Dédupliquer d'abord, exclure ensuite : cet ordre est ce qui rend
+  // l'exclusion par id fiable face aux doublons de la table.
+  const negAll = dedupeByText((negData as DixMaisStatement[]) || []);
+  const posAll = dedupeByText((posData as DixMaisStatement[]) || []);
 
-  // Fallback if DB is empty or the unseen pool ran dry
-  if (combined.length < 3) {
-    const seed = buildMockStatements().filter(s => !exclude.has(s.id));
+  // Repli sur le jeu de départ **uniquement** si la table est vide ou
+  // inaccessible — jamais parce que la réserve non vue s'est tarie. Les énoncés
+  // codés en dur portent des id absents de la base : servis en cours de partie,
+  // ils feraient rejeter tous les votes suivants.
+  if (negAll.length + posAll.length === 0) {
+    const seed = dedupeByText(buildMockStatements());
     return selectFromPools(
       seed.filter(s => s.type === 'negative'),
       seed.filter(s => s.type === 'positive'),
@@ -161,7 +196,16 @@ export async function getRandomStatements(count = 7, excludeIds: string[] = []):
     );
   }
 
-  return combined;
+  const combined = selectFromPools(
+    negAll.filter(s => !exclude.has(s.id)),
+    posAll.filter(s => !exclude.has(s.id)),
+    count,
+  );
+
+  // Moins de trois énoncés ne fait pas un profil jouable. Liste vide plutôt
+  // qu'une manche tronquée : le client y lit un tour de catalogue terminé,
+  // vide sa liste d'exclusion et repart proprement du début.
+  return combined.length >= 3 ? combined : [];
 }
 
 // ---------------------------------------------------------------------------
@@ -220,9 +264,45 @@ export interface LeaderboardEntry extends DixMaisStatement {
   elimination_rate: number;
 }
 
+/**
+ * Réunit les exemplaires d'un même énoncé.
+ *
+ * La table contient le même texte sur plusieurs lignes, et chacune n'a récolté
+ * qu'une part des votes. Sans regroupement, le classement affichait trois fois
+ * la même phrase, chacune avec une moyenne calculée sur un tiers des votes.
+ *
+ * Les compteurs bruts s'additionnent et les taux sont recalculés sur le total :
+ * moyenner les moyennes donnerait un résultat faux dès que les exemplaires
+ * n'ont pas reçu le même nombre de votes, ce qui est le cas général.
+ */
+function aggregateByText(rows: LeaderboardEntry[]): LeaderboardEntry[] {
+  const merged = new Map<string, LeaderboardEntry>();
+
+  for (const row of rows) {
+    const key = textKey(row.text);
+    const current = merged.get(key);
+    if (!current) {
+      merged.set(key, { ...row });
+      continue;
+    }
+    current.votes_count += row.votes_count;
+    current.total_delta += row.total_delta;
+    current.elimination_count += row.elimination_count;
+    // Même représentant que la sélection en jeu, pour que les deux écrans
+    // désignent la même ligne.
+    if (row.id < current.id) current.id = row.id;
+  }
+
+  return [...merged.values()].map(row => ({
+    ...row,
+    avg_delta: row.votes_count > 0 ? row.total_delta / row.votes_count : 0,
+    elimination_rate: row.votes_count > 0 ? (row.elimination_count / row.votes_count) * 100 : 0,
+  }));
+}
+
 export async function getDixMaisLeaderboard(limit = 50): Promise<LeaderboardEntry[]> {
   if (isMockMode()) {
-    return buildMockStatements().map(s => ({
+    return dedupeByText(buildMockStatements()).map(s => ({
       ...s,
       avg_delta: 0,
       elimination_rate: 0,
@@ -232,14 +312,19 @@ export async function getDixMaisLeaderboard(limit = 50): Promise<LeaderboardEntr
   const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
   const supabase = createDixmaisServerClient();
 
+  // Toutes les lignes, et non les `limit` premières : les exemplaires d'un même
+  // énoncé doivent être réunis **avant** le classement. Trancher d'abord
+  // reviendrait à n'additionner que les votes des copies ayant passé la coupe,
+  // et le tri porterait sur des totaux arbitrairement amputés.
   const { data, error } = await (supabase
     .from('dixmais_statement_rankings') as any)
-    .select('*')
-    .order('avg_delta', { ascending: true }) // most negative = most red flag
-    .limit(limit);
+    .select('*');
 
   if (error) throw new Error(`Leaderboard error: ${error.message}`);
-  return (data as LeaderboardEntry[]) || [];
+
+  return aggregateByText((data as LeaderboardEntry[]) || [])
+    .sort((a, b) => a.avg_delta - b.avg_delta) // most negative = most red flag
+    .slice(0, limit);
 }
 
 // ---------------------------------------------------------------------------

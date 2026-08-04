@@ -21,9 +21,17 @@ export const REVEALS_PER_PROFILE = 5;
 
 const COMMIT_MS = 620;
 const COACH_KEY = 'dixmais.coached';
-/** Borne la liste d'exclusion : au-delà, l'URL enfle pour rien et le catalogue
- * a de toute façon été largement parcouru. */
-const MAX_SEEN = 80;
+/**
+ * Borne la liste d'exclusion. La contrainte réelle est la longueur de l'URL :
+ * la liste part en paramètre de requête, à 37 caractères par UUID, et au-delà
+ * d'environ 8 000 caractères la requête est rejetée — le joueur ne recevrait
+ * plus aucun profil.
+ *
+ * Fixé au-dessus du nombre d'énoncés distincts du catalogue pour qu'une session
+ * entière tienne dans la fenêtre : tant que le catalogue n'est pas réellement
+ * parcouru, aucun énoncé déjà vu ne peut ressortir par éviction.
+ */
+const MAX_SEEN = 150;
 
 export type Phase = 'intro' | 'loading' | 'error' | 'reveal' | 'verdict';
 
@@ -156,7 +164,6 @@ export function useDixMais() {
     setFlash(null);
 
     const begin = (statements: DixMaisStatement[]) => {
-      seenIds.current = [...seenIds.current, ...statements.map((s) => s.id)].slice(-MAX_SEEN);
       setRound({
         statements,
         identity: generateIdentity(statements.map((s) => s.text)),
@@ -199,6 +206,14 @@ export function useDixMais() {
     const from = previousScore;
     const delta = value - from;
     const statement = round.statements[round.index];
+
+    // Consigné ici, à la validation, et non au chargement du profil : une note
+    // de 0 met fin à la manche sur le champ, et les énoncés suivants n'ont
+    // jamais été montrés. Les marquer d'avance revenait à en condamner deux ou
+    // trois par profil sans que le joueur les ait lus — le catalogue s'épuisait
+    // deux fois plus vite qu'il n'était réellement parcouru, et le
+    // redémarrage qui suit ramenait tout depuis le début.
+    seenIds.current = [...seenIds.current, statement.id].slice(-MAX_SEEN);
 
     sendVote(statement.id, sessionId.current, from, value);
 
