@@ -253,7 +253,7 @@ export function IdlePhase({
               aria-pressed={privateMode}
             >
               <span
-                className={`w-3.75 h-3.75 rounded shrink-0 flex items-center justify-center border transition-all ${`
+                className={`w-3.75 h-3.75 rounded shrink-0 flex items-center justify-center border transition-all ${
                   privateMode
                     ? 'bg-violet-600 border-violet-500'
                     : 'bg-transparent border-[#333] group-hover:border-[#555]'
