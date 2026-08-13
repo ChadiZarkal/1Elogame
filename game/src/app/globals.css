@@ -1072,3 +1072,112 @@ button:focus-visible {
   color: #999;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   ORACLE (FlagOrNot) — Refonte visuelle
+   ═══════════════════════════════════════════════════════════ */
+
+@keyframes oracle-ring-pulse {
+  0% { transform: scale(0.85); opacity: 0.9; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes oracle-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes oracle-spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes oracle-glow-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes oracle-verdict-in {
+  0% { opacity: 0; transform: scale(0.6) translateY(20px); filter: blur(10px); }
+  60% { opacity: 1; transform: scale(1.06) translateY(-4px); filter: blur(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+}
+
+@keyframes oracle-badge-pop {
+  0% { opacity: 0; transform: scale(0.4) rotate(-15deg); }
+  60% { transform: scale(1.1) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes oracle-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes oracle-dot-trail {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.6); opacity: 1; }
+}
+
+@keyframes oracle-particle-burst {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--px), var(--py)) scale(0.1); }
+}
+
+.animate-oracle-ring { animation: oracle-ring-pulse 2s ease-out infinite; }
+.animate-oracle-ring-2 { animation: oracle-ring-pulse 2s ease-out 0.55s infinite; }
+.animate-oracle-ring-3 { animation: oracle-ring-pulse 2s ease-out 1.1s infinite; }
+.animate-oracle-float { animation: oracle-float 3.5s ease-in-out infinite; }
+.animate-oracle-spin { animation: oracle-spin-slow 10s linear infinite; }
+.animate-oracle-glow { animation: oracle-glow-pulse 2s ease-in-out infinite; }
+.animate-oracle-verdict { animation: oracle-verdict-in 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.animate-oracle-badge { animation: oracle-badge-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.animate-oracle-shimmer {
+  background: linear-gradient(90deg, #C4B5FD 0%, #67E8F9 40%, #C4B5FD 60%, #A78BFA 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: oracle-shimmer 3s linear infinite;
+}
+
+/* Oracle dot loader */
+.oracle-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: oracle-dot-trail 1.2s ease-in-out infinite;
+}
+.oracle-dot:nth-child(1) { animation-delay: 0s; }
+.oracle-dot:nth-child(2) { animation-delay: 0.2s; }
+.oracle-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* Cosmic dot grid for Oracle bg */
+.oracle-bg-dots {
+  background-image: radial-gradient(circle, rgba(139,92,246,0.25) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+/* Glass morphism card */
+.oracle-glass {
+  background: rgba(16, 12, 30, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* Gradient text utility */
+.oracle-gradient-text {
+  background: linear-gradient(135deg, #C4B5FD 0%, #67E8F9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Voice button pulse */
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(139,92,246,0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(139,92,246,0); }
+}
+.animate-mic-pulse { animation: mic-pulse 2s ease-in-out infinite; }
+
