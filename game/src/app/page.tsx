@@ -86,12 +86,8 @@ const CARDS_DATA: Record<PersonaKey, {
 export default function HubPage() {
   const { tap } = useHaptics();
   const [stats, setStats] = useState<StatsData | null>(null);
-  const [selectedVibe, setSelectedVibe] = useState<PersonaKey>('redflag');
   const [safeZoneOpen, setSafeZoneOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
-  const touchStartXRef = useRef<number | null>(null);
-
-  const vibeOrder = useMemo(() => Object.keys(CARDS_DATA) as PersonaKey[], []);
 
   useEffect(() => {
     fetch('/api/stats/public')
@@ -106,85 +102,20 @@ export default function HubPage() {
     tap();
   }, [tap]);
 
-  const switchVibeByStep = useCallback((step: number) => {
-    setSelectedVibe((prev) => {
-      const currentIndex = vibeOrder.indexOf(prev);
-      const nextIndex = (currentIndex + step + vibeOrder.length) % vibeOrder.length;
-      return vibeOrder[nextIndex];
-    });
-    tap();
-  }, [tap, vibeOrder]);
-
-  const onTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    touchStartXRef.current = e.changedTouches[0]?.clientX ?? null;
-  }, []);
-
-  const onTouchEnd = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    if (touchStartXRef.current === null) return;
-    const endX = e.changedTouches[0]?.clientX ?? touchStartXRef.current;
-    const deltaX = endX - touchStartXRef.current;
-    touchStartXRef.current = null;
-
-    // Swipe threshold to avoid accidental tab switches on scroll.
-    if (Math.abs(deltaX) < 42) return;
-
-    if (deltaX < 0) {
-      switchVibeByStep(1);
-    } else {
-      switchVibeByStep(-1);
-    }
-  }, [switchVibeByStep]);
-
-  const activeCard = CARDS_DATA[selectedVibe];
+  const gameCards = Object.values(CARDS_DATA);
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-[#000000] text-[#E2E2E2] selection:bg-[#FF3B30]/30 selection:text-white pb-8">
-      {/* Dynamic Background Shader & Grid */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        {/* Sleek matrix grid */}
-        <div className="absolute inset-0 bg-[#000000] bg-[linear-gradient(to_right,#111_1px,transparent_1px),linear-gradient(to_bottom,#111_1px,transparent_1px)] bg-size-[32px_32px] opacity-60" />
-        
-        {/* Fluid morphing vaporwave orbs with dynamic color changes */}
-        <div 
-          className="absolute -top-40 left-1/2 -translate-x-1/2 h-125 w-125 rounded-full blur-[160px] opacity-25 transition-all duration-1000 ease-in-out"
-          style={{ 
-            backgroundColor: activeCard.themeColor,
-            boxShadow: `0 0 120px ${activeCard.themeColor}` 
-          }} 
-        />
-        
-        <div className="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-[#111] blur-[100px] opacity-40" />
-        <div className="absolute bottom-40 -right-20 h-80 w-80 rounded-full bg-[#111] blur-[100px] opacity-40" />
+    <div className="relative min-h-dvh overflow-hidden bg-[#050505] text-[#F5F5F5] selection:bg-[#FF3B30]/30 selection:text-white">
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute inset-0 bg-[#050505] bg-[linear-gradient(to_right,#111111_1px,transparent_1px),linear-gradient(to_bottom,#111111_1px,transparent_1px)] bg-[size:32px_32px] opacity-40" />
+        <div className="absolute left-1/2 top-[-7rem] h-72 w-72 -translate-x-1/2 rounded-full bg-[#FF3B30]/18 blur-[120px]" />
+        <div className="absolute bottom-0 left-[-4rem] h-64 w-64 rounded-full bg-[#10B981]/12 blur-[110px]" />
+        <div className="absolute bottom-20 right-[-2rem] h-72 w-72 rounded-full bg-[#88CEFF]/12 blur-[110px]" />
       </div>
 
-      {/* CSS-Only Marquee Ribbon for extreme organic Gen Z vibe */}
-      <style jsx global>{`
-        @keyframes marquee {
-          0% { transform: translateX(0%); }
-          100% { transform: translateX(-50%); }
-        }
-        .animate-marquee-custom {
-          display: flex;
-          width: max-content;
-          animation: marquee 28s linear infinite;
-        }
-      `}</style>
-      
-      {/* Infinite scrolling ticker behind the main card */}
-      <div className="absolute top-[32%] w-full py-2 bg-white/2 border-y border-white/4 overflow-hidden pointer-events-none z-0 transform -rotate-2 select-none">
-        <div className="animate-marquee-custom text-[10px] font-black tracking-[0.15em] uppercase text-white/15 gap-8">
-          <span>🚩 Il ne sait pas séparer l&apos;œuvre de l&apos;artiste • 🟢 Elle donne toujours les bons conseils • 🚩 Il met du lait avant les céréales • 🟢 Elle parle à son psy • 🚩 Il couvre ses potes charos • 🟢 Elle s&apos;amuse en boîte sans lui  • </span>
-          <span>🚩 Il ne sait pas séparer l&apos;œuvre de l&apos;artiste • 🟢 Elle donne toujours les bons conseils • 🚩 Il met du lait avant les céréales • 🟢 Elle parle à son psy • 🚩 Il couvre ses potes charos • 🟢 Elle s&apos;amuse en boîte sans lui  • </span>
-        </div>
-      </div>
-
-      {/* Main Container constrained to ergonomic vertical phone viewport */}
-      <main id="main-content" className="relative z-10 mx-auto w-full max-w-110 px-5 py-6 flex flex-col items-center justify-between min-h-dvh">
-        
-        {/* 1. Header (Minimalist & Branding Focus) */}
-        <header className="w-full space-y-4 flex flex-col items-center pt-2">
-          {/* Centered Brand Logo - enlarged and dominant */}
-          <div className="py-2 scale-100 hover:scale-[1.01] active:scale-95 transition-transform duration-200">
+      <main id="main-content" className="relative z-10 mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-8 pt-6 sm:px-6">
+        <header className="flex flex-col items-center text-center">
+          <div className="mb-3 w-full max-w-3xl">
             <Image
               src="/logo-rog-new.svg"
               alt="Red or Green Logo"
@@ -192,229 +123,182 @@ export default function HubPage() {
               height={118}
               priority
               draggable={false}
-              className="h-auto w-[88vw] max-w-115 object-contain drop-shadow-[0_0_28px_rgba(255,59,48,0.3)]"
+              className="mx-auto h-auto w-full max-w-[420px] object-contain drop-shadow-[0_0_28px_rgba(255,59,48,0.3)]"
             />
           </div>
 
-          <p className="text-[10px] font-black tracking-[0.22em] uppercase text-[#CFCFD4]/70">
-            Swipe pour changer de jeu
+          <h1 className="text-2xl font-black tracking-[-0.06em] text-white sm:text-4xl">Red or Green</h1>
+          <p className="mt-2 text-[11px] font-black uppercase tracking-[0.22em] text-[#CFCFD4]/70">
+            Le jeu qui divise
           </p>
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/4 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-[#F5F5F5]/80 backdrop-blur-sm">
+            <span className="text-[#FF3B30]">●</span>
+            4 jeux disponibles • explore sans pression
+          </div>
         </header>
 
-        {/* Floating help button moved out of header for cleaner logo stage */}
         <button
           onClick={() => {
             handleTap();
             setHowToPlayOpen(true);
           }}
-          className="fixed top-4 right-4 z-40 h-10 w-10 rounded-full border border-white/10 bg-black/55 text-white/70 backdrop-blur-md hover:text-white active:scale-90 transition-all cursor-pointer"
+          className="fixed right-4 top-4 z-40 h-10 w-10 cursor-pointer rounded-full border border-white/10 bg-black/55 text-white/70 backdrop-blur-md transition-all hover:text-white active:scale-90"
           aria-label="Comment jouer ?"
         >
           <span className="sr-only">Comment jouer ?</span>
           <HelpCircle size={17} className="mx-auto" />
         </button>
 
-        {/* 2. Vibe Selector Capsule (Sliding layout indicator for 4 Games) */}
-        <div className="w-full bg-[#111112] border border-white/5 rounded-2xl p-1 mt-4 flex justify-between gap-1 relative shadow-2xl">
-          {(Object.keys(CARDS_DATA) as PersonaKey[]).map((key) => {
-            const isSelected = selectedVibe === key;
-            const data = CARDS_DATA[key];
-            return (
-              <button
-                key={key}
-                onClick={() => {
-                  setSelectedVibe(key);
-                  handleTap();
-                }}
-                className={`relative z-10 grow py-2.5 px-1 rounded-xl flex flex-col items-center justify-center gap-1 transition-all select-none cursor-pointer ${
-                  isSelected ? 'text-black font-black' : 'text-[#8E8E93] hover:text-white'
-                }`}
-              >
-                {isSelected && (
-                  <motion.div
-                    layoutId="activeVibeBg"
-                    className="absolute inset-0 rounded-xl z-[-1]"
-                    style={{ backgroundColor: activeCard.themeColor }}
-                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                  />
-                )}
-                <span className="text-base leading-none">{data.emoji}</span>
-                {/* Titre complet (pas le raccourci) : 4 titres désormais plus
-                    longs partagent une rangée étroite, d'où une taille réduite,
-                    un retour à la ligne autorisé et un tracking resserré. */}
-                <span className="font-black uppercase text-[7.5px] tracking-tight leading-[1.1] text-center">
-                  {data.title}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <section className="mt-6 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-white/8 bg-[#0D0D0F]/80 p-4 backdrop-blur-md">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50">Votes</p>
+            <p className="mt-2 text-2xl font-black text-white">
+              {stats ? Intl.NumberFormat('fr-FR').format(stats.totalVotes) : '—'}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/8 bg-[#0D0D0F]/80 p-4 backdrop-blur-md">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50">Joueurs</p>
+            <p className="mt-2 text-2xl font-black text-white">
+              {stats ? Intl.NumberFormat('fr-FR').format(stats.estimatedPlayers) : '—'}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/8 bg-[#0D0D0F]/80 p-4 backdrop-blur-md">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50">Découverte</p>
+            <p className="mt-2 text-2xl font-black text-white">4 jeux</p>
+          </div>
+        </section>
 
-        {/* 3. Hero Holographic Game Card (The Focal Point with ultra-smooth morphs) */}
-        <div className="w-full my-6 flex-1 flex flex-col justify-center">
-          {/* `initial={false}` : la carte est l'élément LCP de la page. Sans
-              cela elle est rendue à opacity 0 et n'apparaît qu'après
-              l'hydratation, ce qui repousse le LCP de plusieurs secondes sur
-              connexion lente. Le morph entre jeux, lui, reste animé. */}
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={selectedVibe}
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -15 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
-              whileHover={{ y: -4 }}
-              className="relative w-full rounded-4xl border bg-linear-to-b from-[#0F1012] to-[#040405] p-6.5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.85)] flex flex-col justify-between overflow-hidden"
-              style={{
-                borderColor: `${activeCard.themeColor}22`,
-                boxShadow: `0 25px 50px -12px ${activeCard.themeColor}0C`
-              }}
-              onTouchStart={onTouchStart}
-              onTouchEnd={onTouchEnd}
-            >
-              {/* Backglow element on card */}
-              <div 
-                className="absolute -top-24 -right-24 h-48 w-48 rounded-full blur-3xl opacity-20 pointer-events-none transition-all duration-500" 
-                style={{ backgroundColor: activeCard.themeColor }}
-              />
-
-              <div className="space-y-4">
-                {/* Mode Tag */}
+        <section className="mt-8 grid gap-4 md:grid-cols-2">
+          {gameCards.map((game, index) => {
+            const isExternal = Boolean(game.external);
+            const cardContent = (
+              <>
                 <div className="flex items-center justify-between">
-                  <span 
-                    className="text-[9px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full bg-white/4"
-                    style={{ color: activeCard.themeColor }}
+                  <span
+                    className="rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em]"
+                    style={{
+                      color: game.themeColor,
+                      borderColor: `${game.themeColor}55`,
+                      backgroundColor: `${game.themeColor}12`
+                    }}
                   >
-                    {activeCard.tag}
+                    {game.tag}
                   </span>
-                  
-                  <span className="text-xl font-bold opacity-30 select-none">
-                    {activeCard.emoji}
-                  </span>
+                  <span className="text-xl drop-shadow-[0_0_18px_rgba(255,255,255,0.2)]">{game.emoji}</span>
                 </div>
 
-                {/* Big aggressive headline */}
-                <div className="space-y-1">
-                  {/* clamp() plutôt qu'une taille fixe : les nouveaux titres
-                      ("LE PIRE DES DEUX", "SOUMETS TON CAS") sont plus longs
-                      que l'ancien plus court ("ORACLE IA") et débordaient sur
-                      petit écran à 26px fixe. leading-[1.05] laisse la place
-                      à un retour à la ligne sans rogner les lettres. */}
-                  <h2
-                    className="font-black leading-[1.05] tracking-[-0.03em] text-white"
-                    style={{ fontSize: 'clamp(1.35rem, 6.8vw, 1.625rem)' }}
-                  >
-                    {activeCard.title}
-                  </h2>
-                  <p className="text-xs font-semibold tracking-wide" style={{ color: activeCard.themeColor }}>
-                    {activeCard.tagline}
-                  </p>
+                <div className="mt-5 flex items-center justify-between gap-3">
+                  <span className="text-[10px] font-black uppercase tracking-[0.18em] text-white/40">0{index + 1}</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.18em] text-white/30">{game.id}</span>
                 </div>
 
-                {/* Game specific description */}
-                <p className="text-[13px] leading-relaxed text-[#D0D0D6] font-semibold pt-1">
-                  {activeCard.desc}
-                </p>
+                <h2 className="mt-3 text-2xl font-black tracking-[-0.05em] text-white sm:text-[2rem]">
+                  {game.title}
+                </h2>
+                <p className="mt-2 text-sm font-semibold text-white/75">{game.tagline}</p>
+                <p className="mt-3 text-sm leading-relaxed text-[#D1D1D6]">{game.desc}</p>
 
-                {/* Specs / Bullet points */}
-                <ul className="space-y-2 pt-2">
-                  {activeCard.bullets.map((bullet, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-[12px] font-black text-[#F0F0F4]">
-                      <span className="text-sm select-none" style={{ color: activeCard.themeColor }}>✔</span>
+                <ul className="mt-4 space-y-2 text-sm text-[#F3F3F5]">
+                  {game.bullets.map((bullet) => (
+                    <li key={bullet} className="flex items-start gap-2">
+                      <span className="mt-0.5 text-base" style={{ color: game.themeColor }}>•</span>
                       <span>{bullet}</span>
                     </li>
                   ))}
                 </ul>
-              </div>
+              </>
+            );
 
-              {/* Massive Tactile Pulse Action Button */}
-              <div className="pt-6">
-                {activeCard.external ? (
-                  <a
-                    href={activeCard.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={handleTap}
-                    className="relative group w-full py-4 px-6 rounded-2xl flex items-center justify-between font-black text-xs uppercase tracking-widest text-black transition-all active:scale-[0.97] shadow-xl hover:brightness-110"
-                    style={{
-                      backgroundColor: activeCard.themeColor,
-                      boxShadow: `0 8px 30px ${activeCard.themeColor}3F`
-                    }}
-                  >
-                    <span>{activeCard.cta}</span>
-                    <div className="flex items-center gap-1 bg-black/10 px-3 py-1 rounded-lg">
-                      <span className="font-extrabold text-[10px]">GO</span>
-                      <ArrowRight size={12} strokeWidth={2.5} />
-                    </div>
-                  </a>
-                ) : (
-                  <Link
-                    href={activeCard.href}
-                    onClick={handleTap}
-                    className="relative group w-full py-4 px-6 rounded-2xl flex items-center justify-between font-black text-xs uppercase tracking-widest text-black transition-all active:scale-[0.97] shadow-xl hover:brightness-110"
-                    style={{
-                      backgroundColor: activeCard.themeColor,
-                      boxShadow: `0 8px 30px ${activeCard.themeColor}3F`
-                    }}
-                  >
-                    <span>{activeCard.cta}</span>
-                    <div className="flex items-center gap-1 bg-black/10 px-3 py-1 rounded-lg">
-                      <span className="font-extrabold text-[10px]">GO</span>
-                      <ArrowRight size={12} strokeWidth={2.5} />
-                    </div>
-                  </Link>
-                )}
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
+            const cardClassName = "group relative flex h-full flex-col overflow-hidden rounded-[28px] border p-5 shadow-[0_25px_50px_-15px_rgba(0,0,0,0.85)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_30px_70px_-20px_rgba(0,0,0,0.9)]";
+            const actionLink = isExternal ? (
+              <a
+                href={game.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={handleTap}
+                aria-label={`${game.cta} : ${game.title}`}
+                className="mt-6 inline-flex items-center justify-between rounded-xl border border-white/10 bg-white/3 px-3 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-white transition hover:border-white/20 hover:bg-white/6"
+              >
+                <span>{game.cta}</span>
+                <ArrowRight size={12} strokeWidth={2.5} />
+              </a>
+            ) : (
+              <Link
+                href={game.href}
+                onClick={handleTap}
+                aria-label={`${game.cta} : ${game.title}`}
+                className="mt-6 inline-flex items-center justify-between rounded-xl border border-white/10 bg-white/3 px-3 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-white transition hover:border-white/20 hover:bg-white/6"
+              >
+                <span>{game.cta}</span>
+                <ArrowRight size={12} strokeWidth={2.5} />
+              </Link>
+            );
 
-        {/* 4. Secondary Tactile Row (Highly ergonomic 2-column layout) */}
-        <section className="w-full flex items-center gap-3 mt-2">
-          {/* Results / Leaderboard */}
+            return (
+              <motion.div
+                key={game.id}
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className={cardClassName}
+                style={{
+                  borderColor: `${game.themeColor}33`,
+                  background: `linear-gradient(145deg, rgba(17,17,17,0.96), rgba(8,8,10,0.96))`,
+                  boxShadow: `0 25px 50px -15px ${game.glowColor}`
+                }}
+              >
+                <div className="absolute inset-0 opacity-70" style={{ background: `radial-gradient(circle at top right, ${game.glowColor}, transparent 50%)` }} />
+                <div className="relative z-10 flex h-full flex-col">
+                  {cardContent}
+                  <div className="mt-6 flex items-center justify-between gap-3 pt-3">
+                    <span className="text-[10px] font-black uppercase tracking-[0.22em] text-white/50">Découvrir</span>
+                    {actionLink}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </section>
+
+        <section className="mt-8 grid gap-3 sm:grid-cols-2">
           <Link
             href="/classement"
             onClick={handleTap}
-            className="flex-1 py-4 px-4 rounded-2xl bg-[#0F1012] border border-white/5 flex flex-col items-center justify-center text-center group active:scale-95 transition-transform"
+            className="flex items-center justify-between rounded-2xl border border-white/8 bg-[#0D0D0F]/80 px-4 py-4 text-left transition hover:border-[#2ECC71]/40 hover:bg-[#0f140f]"
           >
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">Leaderboard</p>
+              <p className="mt-1 text-sm font-black text-white">Le palmarès général</p>
+            </div>
             <span className="text-xl">🏆</span>
-            <span className="font-black text-[9px] uppercase tracking-wider text-[#A6A6A6] group-hover:text-[#2ECC71] mt-1 transition-colors">
-              LE PALMARÈS GÉNÉRAL
-            </span>
           </Link>
 
-          {/* Safe Zone Trigger */}
           <button
             onClick={() => {
               handleTap();
               setSafeZoneOpen(true);
             }}
-            className="flex-1 py-4 px-4 rounded-2xl bg-[#0F1012] border border-white/5 flex flex-col items-center justify-center text-center group active:scale-95 transition-transform cursor-pointer"
+            className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/8 bg-[#0D0D0F]/80 px-4 py-4 text-left transition hover:border-[#10B981]/40 hover:bg-[#0d1714]"
           >
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">Sécurité</p>
+              <p className="mt-1 text-sm font-black text-white">Espace safe zone</p>
+            </div>
             <span className="text-xl">🛡</span>
-            <span className="font-black text-[9px] uppercase tracking-wider text-[#A6A6A6] group-hover:text-[#10B981] mt-1 transition-colors">
-              ESPACE SAFE ZONE
-            </span>
           </button>
         </section>
-
       </main>
 
-      {/* ================= MODALS & DRAWERS (Keeping main UI incredibly pristine) ================= */}
-      
-      {/* Drawer 1: Safe Zone (Emerald green glow bottom sheet) */}
       <AnimatePresence>
         {safeZoneOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.65 }}
               exit={{ opacity: 0 }}
               onClick={() => setSafeZoneOpen(false)}
-              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md cursor-pointer"
+              className="fixed inset-0 z-50 cursor-pointer bg-black/80 backdrop-blur-md"
             />
-            {/* Slide-Up Sheet */}
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
@@ -422,22 +306,22 @@ export default function HubPage() {
               transition={{ type: 'spring', damping: 26, stiffness: 220 }}
               className="fixed bottom-0 left-0 right-0 z-50 mx-auto w-full max-w-110 rounded-t-4xl border-t border-[#10B981]/20 bg-linear-to-b from-[#080d0a] to-[#040504] px-6 pt-5 pb-8 shadow-[0_-15px_50px_rgba(16,185,129,0.15)] max-h-[85vh] overflow-y-auto"
             >
-              <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mb-4" />
-              
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-1.5 text-xs font-black text-[#10B981] uppercase tracking-[0.2em]">
+              <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-white/10" />
+
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.2em] text-[#10B981]">
                   <Shield size={14} /> ESPACE DE SÉCURITÉ
                 </div>
-                <button 
-                  onClick={() => setSafeZoneOpen(false)} 
-                  className="p-1 text-white/40 hover:text-white active:scale-90 transition-transform cursor-pointer"
+                <button
+                  onClick={() => setSafeZoneOpen(false)}
+                  className="cursor-pointer p-1 text-white/40 transition hover:text-white active:scale-90"
                 >
                   <X size={18} />
                 </button>
               </div>
 
               <h3 className="text-lg font-black text-white">Besoin d&apos;aide ou d&apos;éclaircissement ?</h3>
-              <p className="text-xs text-[#A7C5B8] leading-relaxed font-semibold mt-1">
+              <p className="mt-1 text-xs font-semibold leading-relaxed text-[#A7C5B8]">
                 Le respect n&apos;est pas négociable. Retrouve un espace centralisé avec des outils interactifs, des repères utiles et des ressources d&apos;accompagnement.
               </p>
 
@@ -445,25 +329,25 @@ export default function HubPage() {
                 <Link
                   href="/ressources"
                   onClick={() => { handleTap(); setSafeZoneOpen(false); }}
-                  className="group flex items-center justify-between rounded-xl bg-[#12241C]/40 border border-[#10B981]/15 px-4 py-3.5 text-xs font-semibold text-[#D1FAE5] transition hover:bg-[#153427] hover:border-[#10B981]/30"
+                  className="group flex items-center justify-between rounded-xl border border-[#10B981]/15 bg-[#12241C]/40 px-4 py-3.5 text-xs font-semibold text-[#D1FAE5] transition hover:border-[#10B981]/30 hover:bg-[#153427]"
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-base select-none">🧭</span>
                     <span className="font-bold">Violentomètre, interactif et autres tests</span>
                   </div>
-                  <ArrowRight size={14} className="text-[#10B981] opacity-70 group-hover:translate-x-0.5 transition-transform" />
+                  <ArrowRight size={14} className="text-[#10B981] opacity-70 transition group-hover:translate-x-0.5" />
                 </Link>
 
                 <Link
                   href="/guide"
                   onClick={() => { handleTap(); setSafeZoneOpen(false); }}
-                  className="group flex items-center justify-between rounded-xl bg-[#12241C]/40 border border-[#10B981]/15 px-4 py-3.5 text-xs font-semibold text-[#D1FAE5] transition hover:bg-[#153427] hover:border-[#10B981]/30"
+                  className="group flex items-center justify-between rounded-xl border border-[#10B981]/15 bg-[#12241C]/40 px-4 py-3.5 text-xs font-semibold text-[#D1FAE5] transition hover:border-[#10B981]/30 hover:bg-[#153427]"
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-base select-none">🏳️</span>
                     <span className="font-bold">Guide des flags : Green, Red, Black...</span>
                   </div>
-                  <ArrowRight size={14} className="text-[#10B981] opacity-70 group-hover:translate-x-0.5 transition-transform" />
+                  <ArrowRight size={14} className="text-[#10B981] opacity-70 transition group-hover:translate-x-0.5" />
                 </Link>
               </div>
 
@@ -475,19 +359,16 @@ export default function HubPage() {
         )}
       </AnimatePresence>
 
-      {/* Drawer 2: Comment jouer / Rules of the game (Violet glow bottom sheet) */}
       <AnimatePresence>
         {howToPlayOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.65 }}
               exit={{ opacity: 0 }}
               onClick={() => setHowToPlayOpen(false)}
-              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md cursor-pointer"
+              className="fixed inset-0 z-50 cursor-pointer bg-black/80 backdrop-blur-md"
             />
-            {/* Slide-Up Sheet */}
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
@@ -495,62 +376,62 @@ export default function HubPage() {
               transition={{ type: 'spring', damping: 26, stiffness: 220 }}
               className="fixed bottom-0 left-0 right-0 z-50 mx-auto w-full max-w-110 rounded-t-4xl border-t border-[#88CEFF]/20 bg-linear-to-b from-[#080b0f] to-[#040405] px-6 pt-5 pb-8 shadow-[0_-15px_50px_rgba(136,206,255,0.15)] max-h-[85vh] overflow-y-auto"
             >
-              <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mb-4" />
-              
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-1.5 text-xs font-black text-[#88CEFF] uppercase tracking-[0.2em]">
+              <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-white/10" />
+
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.2em] text-[#88CEFF]">
                   <HelpCircle size={14} /> FONCTIONNEMENT DES JEUX
                 </div>
-                <button 
-                  onClick={() => setHowToPlayOpen(false)} 
-                  className="p-1 text-white/40 hover:text-white active:scale-90 transition-transform cursor-pointer"
+                <button
+                  onClick={() => setHowToPlayOpen(false)}
+                  className="cursor-pointer p-1 text-white/40 transition hover:text-white active:scale-90"
                 >
                   <X size={18} />
                 </button>
               </div>
 
               <h3 className="text-lg font-black text-white">Prêt à révéler les vérités ?</h3>
-              <p className="text-xs text-[#88CEFF]/70 leading-relaxed font-semibold mt-1">
+              <p className="mt-1 text-xs font-semibold leading-relaxed text-[#88CEFF]/70">
                 La plateforme se joue 100% sans compte et sans pub. En un clin d’œil, choisis le jeu adapté à ton humeur :
               </p>
 
               <div className="mt-5 space-y-4">
                 <div className="flex gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-[#FFB4AA]/10 flex items-center justify-center text-[#FFB4AA] shrink-0 text-sm">🧪</div>
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#FFB4AA]/10 text-sm text-[#FFB4AA]">🧪</div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-black text-white uppercase tracking-wide">Faire le point sur toi (Red Flag Test)</p>
+                    <p className="text-xs font-black uppercase tracking-wide text-white">Faire le point sur toi (Red Flag Test)</p>
                     <p className="text-[11px] text-[#A6A6A6]">Un quiz solo pour identifier tes habitudes relationnelles. Tu repars avec un score clair et facile à lire.</p>
                   </div>
                 </div>
 
                 <div className="flex gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-[#FF3B30]/10 flex items-center justify-center text-[#FF3B30] shrink-0 text-sm">🚩</div>
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#FF3B30]/10 text-sm text-[#FF3B30]">🚩</div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-black text-white uppercase tracking-wide">Tester les réactions à chaud (Flash Flag)</p>
+                    <p className="text-xs font-black uppercase tracking-wide text-white">Tester les réactions à chaud (Flash Flag)</p>
                     <p className="text-[11px] text-[#A6A6A6]">Un test chronométré de 10 questions. Utile pour voir des réponses spontanées, sans trop réfléchir.</p>
                   </div>
                 </div>
 
                 <div className="flex gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-[#2ECC71]/10 flex items-center justify-center text-[#2ECC71] shrink-0 text-sm">🎮</div>
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#2ECC71]/10 text-sm text-[#2ECC71]">🎮</div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-black text-white uppercase tracking-wide">Voter pour le plus red flag (Red or Green Duel)</p>
+                    <p className="text-xs font-black uppercase tracking-wide text-white">Voter pour le plus red flag (Red or Green Duel)</p>
                     <p className="text-[11px] text-[#A6A6A6]">Entre deux choix, votez pour le plus red flag. Comparez votre avis au pourcentage de la communauté.</p>
                   </div>
                 </div>
 
                 <div className="flex gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-[#88CEFF]/10 flex items-center justify-center text-[#88CEFF] shrink-0 text-sm">🔮</div>
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#88CEFF]/10 text-sm text-[#88CEFF]">🔮</div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-black text-white uppercase tracking-wide">Obtenir un premier avis (Oracle IA)</p>
+                    <p className="text-xs font-black uppercase tracking-wide text-white">Obtenir un premier avis (Oracle IA)</p>
                     <p className="text-[11px] text-[#A6A6A6]">Tu écris ton doute et l IA donne un verdict red ou green avec explication. Pratique pour prendre du recul.</p>
                   </div>
                 </div>
 
                 <div className="flex gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-[#F59E0B]/10 flex items-center justify-center text-[#F59E0B] shrink-0 text-sm">⭐</div>
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#F59E0B]/10 text-sm text-[#F59E0B]">⭐</div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-black text-white uppercase tracking-wide">Combien vaut-il vraiment ? (C&apos;est un 10 mais...)</p>
+                    <p className="text-xs font-black uppercase tracking-wide text-white">Combien vaut-il vraiment ? (C&apos;est un 10 mais...)</p>
                     <p className="text-[11px] text-[#A6A6A6]">Chaque profil commence à 10. Les révélations s&apos;enchaînent. Note après chaque info. Le 0 est éliminatoire.</p>
                   </div>
                 </div>
@@ -558,7 +439,7 @@ export default function HubPage() {
 
               <button
                 onClick={() => setHowToPlayOpen(false)}
-                className="mt-6 w-full py-3 rounded-xl bg-white text-black font-black text-xs uppercase tracking-wider active:scale-95 transition-transform cursor-pointer"
+                className="mt-6 w-full rounded-xl bg-white px-3 py-3 text-xs font-black uppercase tracking-wider text-black transition active:scale-95"
               >
                 C&apos;est parti !
               </button>
@@ -566,7 +447,6 @@ export default function HubPage() {
           </>
         )}
       </AnimatePresence>
-
     </div>
   );
 }
