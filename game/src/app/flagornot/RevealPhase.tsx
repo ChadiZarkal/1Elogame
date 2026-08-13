@@ -45,7 +45,7 @@ export function RevealPhase({
   return (
     <motion.div
       key="reveal"
-      className="flex-1 flex flex-col items-center px-5 relative overflow-hidden"
+      className="flex-1 flex flex-col min-h-0 relative overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -81,12 +81,12 @@ export function RevealPhase({
         })}
       </div>
 
-      {/* Main verdict content */}
-      <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full max-w-sm py-6">
+      {/* Main verdict content — scrolls internally on small screens */}
+      <div className="flex-1 overflow-y-auto min-h-0 flex flex-col items-center relative z-10 w-full max-w-sm mx-auto px-5 pt-4 pb-2 scrollbar-hide">
 
         {/* Big verdict icon */}
         <motion.span
-          className="text-7xl mb-4 block"
+          className="text-6xl mb-2 block"
           initial={{ opacity: 0, scale: 0.4, rotate: -18 }}
           animate={{ opacity: 1, scale: 1, rotate: 0 }}
           transition={{ delay: 0.14, type: 'spring', stiffness: 300, damping: 18 }}
@@ -96,13 +96,13 @@ export function RevealPhase({
 
         {/* VERDICT text — massive & glowing */}
         <motion.div
-          className="text-center mb-4"
+          className="text-center mb-3"
           initial={{ opacity: 0, y: 22, scale: 0.82 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ delay: 0.24, type: 'spring', stiffness: 200, damping: 20 }}
         >
           <p
-            className="text-[52px] font-black tracking-tighter leading-none"
+            className="text-[44px] font-black tracking-tighter leading-none"
             style={{
               color: primaryColor,
               textShadow: `0 0 50px ${primaryColor}99, 0 0 100px ${primaryColor}33`,
@@ -111,7 +111,7 @@ export function RevealPhase({
             {isRed ? 'RED' : 'GREEN'}
           </p>
           <p
-            className="text-[52px] font-black tracking-tighter leading-none"
+            className="text-[44px] font-black tracking-tighter leading-none"
             style={{
               color: accentColor,
               textShadow: `0 0 35px ${primaryColor}66`,
@@ -123,7 +123,7 @@ export function RevealPhase({
 
         {/* Submitted text */}
         <motion.p
-          className="text-[#6B7280] text-[13px] italic text-center mb-5 px-3 leading-relaxed"
+          className="text-[#6B7280] text-[13px] italic text-center mb-3 px-3 leading-relaxed"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.34 }}
@@ -134,7 +134,7 @@ export function RevealPhase({
         {/* Justification card */}
         {isMounted && showJustification && (
           <motion.div
-            className="w-full rounded-3xl p-5 mb-4 oracle-glass"
+            className="w-full rounded-3xl p-4 mb-3 oracle-glass"
             style={{ border: `1px solid ${primaryColor}33` }}
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
@@ -194,9 +194,9 @@ export function RevealPhase({
         </motion.button>
       </div>
 
-      {/* Encore CTA */}
+      {/* Encore CTA — pinned at bottom */}
       <motion.div
-        className="w-full max-w-sm pb-[max(20px,env(safe-area-inset-bottom))] pt-2"
+        className="shrink-0 w-full max-w-sm mx-auto px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-2 relative z-10"
         initial={{ opacity: 0, y: 28 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.58, type: 'spring', stiffness: 180, damping: 20 }}

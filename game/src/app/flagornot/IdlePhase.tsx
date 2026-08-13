@@ -65,8 +65,8 @@ export function IdlePhase({
       />
       <div className="absolute inset-0 oracle-bg-dots opacity-8 pointer-events-none" />
 
-      {/* Central content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-5 min-h-0 relative z-10 pb-2">
+      {/* Central content — scrolls internally if needed */}
+      <div className="flex-1 overflow-y-auto min-h-0 flex flex-col items-center justify-center px-5 relative z-10 py-3 scrollbar-hide">
 
         {/* Oracle icon */}
         <motion.div
@@ -210,8 +210,8 @@ export function IdlePhase({
         )}
       </div>
 
-      {/* Bottom input dock */}
-      <div className="relative z-10 px-4 pb-[max(16px,env(safe-area-inset-bottom))]">
+      {/* Bottom input dock — always visible */}
+      <div className="shrink-0 relative z-10 px-4 pb-[max(16px,env(safe-area-inset-bottom))]">
         <motion.div
           className="rounded-3xl overflow-hidden oracle-glass"
           initial={{ opacity: 0, y: 18 }}
