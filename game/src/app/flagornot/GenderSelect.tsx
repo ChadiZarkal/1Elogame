@@ -193,21 +193,3 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
     </div>
   );
 }
-
-
-interface ProfileSelectProps {
-  onSelect: (gender: FlagOrNotGender, age: FlagOrNotAge) => void;
-}
-
-const genderOptions = [
-  { value: 'homme' as const, label: 'Homme', emoji: '♂️' },
-  { value: 'femme' as const, label: 'Femme', emoji: '♀️' },
-  { value: 'autre' as const, label: 'Autre', emoji: '🤷' },
-];
-
-const ageOptions = [
-  { value: '16-18' as const, label: '16-18', emoji: '🎒' },
-  { value: '19-22' as const, label: '19-22', emoji: '🎓' },
-  { value: '23-26' as const, label: '23-26', emoji: '💼' },
-  { value: '27+' as const,  label: '27+',   emoji: '🧠' },
-];

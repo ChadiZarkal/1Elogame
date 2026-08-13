@@ -201,7 +201,7 @@ export function IdlePhase({
                     <span className="text-[12px] text-[#9CA3AF] group-hover:text-[#D1D5DB] truncate flex-1 transition-colors">
                       {sub.text}
                     </span>
-                    <span className="text-[9px] text-[#3D3D3D] flex-shrink-0">{sub.timeAgo}</span>
+                    <span className="text-[9px] text-[#3D3D3D] shrink-0">{sub.timeAgo}</span>
                   </motion.button>
                 ))}
               </div>

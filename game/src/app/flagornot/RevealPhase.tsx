@@ -249,12 +249,3 @@ export function RevealPhase({
     </motion.div>
   );
 }
-
-
-const RED_EMOJIS = ['🚩', '💀', '😱', '⛔', '🔥', '💔', '😬'];
-const GREEN_EMOJIS = ['🟢', '✨', '💚', '🌟', '🎉', '💫', '🥳'];
-
-function particleJitter(seed: number): number {
-  const value = Math.sin(seed * 12.9898) * 43758.5453;
-  return value - Math.floor(value);
-}
