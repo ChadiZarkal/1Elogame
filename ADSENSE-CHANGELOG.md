@@ -3,12 +3,119 @@
 Support de la demande de réexamen. Chaque entrée renvoie au problème identifié
 dans [ADSENSE-PLAN-CONFORMITE.md](ADSENSE-PLAN-CONFORMITE.md).
 
-**Statut : implémenté, build validé, en attente de fusion.** Les commits sont
-sur la branche `nvxjeu_itatenbut` et le déploiement Vercel se termine avec
-succès — `next build` couvre le typage TypeScript et ESLint. La production
-(`redorgreen.fr`) n'est pas encore à jour : elle suit une autre branche.
+**Statut : deux passes.** La première (juillet, § 1 à 10) est en production.
+Un second refus pour « contenu à faible valeur informative » est arrivé
+malgré elle — la seconde passe (§ 11 à 15) y répond.
 
 ---
+
+# Seconde passe — août 2026
+
+## Pourquoi la première n'a pas suffi
+
+La première passe a produit cinq pages solides : `/guide` (~1 000 mots),
+`/observatoire` (~400 mots plus les tableaux), `/methodologie` (~480),
+`/a-propos` (~410), `/classement` (rendu serveur). Aucune n'est une page
+d'entrée. Un examinateur arrive sur l'accueil, clique sur un jeu, et ne
+rencontre jamais ces pages.
+
+Mesuré sur le HTML réellement servi :
+
+| Route | Prose dans le HTML | Statut |
+|---|---|---|
+| `/` | **~35 mots** | priorité 1.0 au sitemap |
+| `/jeu` | ~45 | indexable |
+| `/dixmais` | ~60 | indexable |
+| `/flagornot` | ~55 | indexable |
+| `/ressources` | ~110 | indexable |
+| `/jeu/jouer` | **~2** | indexable, hors sitemap |
+| `/flagornot/stats` | **~3** | indexable, hors sitemap |
+| `/dixmais/leaderboard` | **~15** | indexable, **au sitemap** |
+| `/redflag` | ~35 | page de porte vers `/jeu` |
+
+La cause est la même partout : les écrans de jeu sont des composants client
+dont le texte est conditionné par un état. Le carrousel de l'accueil ne rend
+qu'une carte sur quatre au premier passage, et ses deux tiroirs — qui
+contiennent la description des jeux — restent démontés tant qu'on ne clique
+pas. Ce n'est pas un manque de contenu, c'est un contenu qui n'arrive pas.
+
+## 11. Contenu éditorial sur les pages d'entrée
+
+Nouveau module `src/content/page-notes.ts` : la prose est une donnée typée,
+pas du JSX. Rendue par les `layout.tsx`, qui sont des composants serveur, et
+placée **sous** le jeu — l'écran de jeu reste le premier élément vu.
+
+Environ 4 500 mots ajoutés sur l'accueil, `/jeu`, `/dixmais`, `/flagornot`,
+`/flashflag`, `/ressources` et `/classement`. Pour chaque jeu : ce qu'il
+mesure, pourquoi ce format, comment lire un résultat, et ce qu'il ne dit pas.
+
+*Choix assumé, à nouveau :* aucun article de conseil relationnel générique.
+Le fond vient de la mécanique réelle de chaque jeu et des données du site —
+pourquoi la comparaison par paires vaut mieux qu'une note sur 10, pourquoi
+« est-ce un red flag ? » est une question mal posée, ce que le score Elo
+signifie. Les chiffres cités sur `/classement` sont ceux du rendu en cours,
+pas des valeurs écrites en dur.
+
+L'accueil passe en composant serveur (`page.tsx` → `HubClient.tsx`) et reçoit
+un `h1` : la page n'en avait aucun, le logo n'étant qu'une image.
+
+## 12. Routes indexables sans contenu
+
+- `/dixmais/leaderboard` est rendue côté serveur, comme `/classement` l'avait
+  été. Elle figurait au sitemap en ne servant qu'un indicateur de chargement.
+- `/jeu/jouer` et `/flagornot/stats` passent en `noindex` : écrans d'état
+  éphémère, sans contenu propre à indexer.
+- `/redflag` est supprimée et redirigée en permanent vers `/jeu`. Elle ne
+  portait qu'un titre et un bouton — une page de porte, que les consignes
+  qualité de Google désignent explicitement.
+
+## 13. Balisage aligné sur ce qui est affiché
+
+- **`/ressources/[slug]`** : le balisage `FAQPage` et la FAQ affichée étaient
+  deux objets écrits à la main, avec des libellés et un nombre de questions
+  différents — trois questions déclarées pour le violentomètre, deux à
+  l'écran. Source unique (`src/content/meter-faq.ts`). C'est le défaut que la
+  première passe avait corrigé sur `/guide` sans le voir ici.
+- **`/classement`** : `ItemList` annonçait `numberOfItems: 50` pour 30 lignes
+  rendues, sans aucun `itemListElement`. Le balisage est désormais émis par
+  la page, qui seule connaît ses lignes.
+- **`BreadcrumbList` site-wide** retiré : le site n'affiche aucun fil
+  d'Ariane, et le balisage était émis jusque sur les pages légales.
+
+## 14. Traces de texte écrit pour les moteurs
+
+- CSS mort `.hub__seo*`, sous un commentaire `/* ── SEO content section ── */`,
+  en `font-size: 0.7rem; color: #555` sur fond `#0D0D0D`.
+- Bloc de liens de `/ressources` rendu en `#3D3D3D` sur fond sombre, précédé
+  du commentaire `SEO-rich footer section with internal links`. Les mêmes
+  liens figurent maintenant dans la section éditoriale, à contraste normal.
+- `keywords` ramenée de 26 à 6 termes ; `google-site-verification` n'est plus
+  émise vide sur chaque page.
+
+## 15. Qualité rédactionnelle et confiance
+
+- `/flashflag` était rédigée en français sans accents ni apostrophes — « la
+  personne repond », « Aucun test standard actif n est disponible »,
+  « Selectionne d abord ». Environ 90 corrections.
+- Lien de contact ajouté au pied de page : l'adresse n'était joignable que
+  depuis le corps de quatre pages.
+- **CGU et confidentialité** décrivaient un recueil de consentement
+  publicitaire inexistant et listaient AdSense en sous-traitant, alors
+  qu'aucune annonce n'est diffusée. Ces pages disent désormais ce qui est
+  vrai aujourd'hui et annoncent leur mise à jour préalable à toute diffusion.
+
+## Ce qui reste, et qui ne peut pas être fait en code
+
+| Point | Où |
+|---|---|
+| **Message de consentement (CMP)** | Compte AdSense → Confidentialité et messages. Aucun code ne peut le remplacer. **À activer avant la première annonce**, sans quoi les textes légaux redeviennent faux et la conformité UE n'est pas atteinte. |
+| **Annonces automatiques** | À laisser désactivées tant que les pages concernées ne portent pas de contenu. Aucun emplacement publicitaire n'est rendu par le site : toute annonce viendrait des annonces automatiques. |
+| **Authentification admin** | `adminAuth.ts` neutralise toute vérification — `/admin/dashboard` et `/dixmais/admin` restent accessibles en écriture. `noindex` empêche l'indexation, pas l'accès. Écarté du périmètre par décision explicite. |
+| **Build** | Non exécuté localement : Node est absent de la machine de développement. La vérification passe par la CI GitHub et le déploiement Vercel. |
+
+---
+
+# Première passe — juillet 2026
 
 ## 1. Publicités retirées des pages sans contenu (A1, A2)
 
@@ -155,13 +262,6 @@ de phase de jeu, non un premier affichage.
 
 ---
 
-## Reste à faire
-
-| Point | Nature |
-|---|---|
-| **Message de consentement (CMP)** | À activer dans AdSense → Confidentialité et messages. Aucun code supplémentaire n'est requis, mais **la conformité UE n'est pas atteinte tant que ce n'est pas fait**. |
-| **Annonces automatiques** | À désactiver dans le compte AdSense tant que les pages ne dépassent pas le seuil de contenu. |
-| **Authentification admin** | `adminAuth.ts` neutralise toute vérification : les API `/api/admin/*` restent accessibles en écriture. Écarté du périmètre par décision explicite. |
-| **Fusion vers la production** | Les changements sont sur `nvxjeu_itatenbut`. La production suit une autre branche et reste inchangée. |
-| **Core Web Vitals — mesure** | Les causes de paint identifiées sont corrigées (point 10), mais le gain reste à mesurer sur PageSpeed Insights après déploiement. |
-| **Build et déploiement** | `npm --prefix game run build` non exécuté (Node absent de la machine de développement). |
+*Les réserves de cette première passe sont reprises et actualisées dans « Ce
+qui reste » de la seconde, plus haut. La fusion vers la production, qui y
+figurait, est faite : `main` est déployée.*
