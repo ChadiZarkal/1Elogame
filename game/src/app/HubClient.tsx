@@ -273,7 +273,7 @@ export function HubClient() {
               exit={{ opacity: 0, scale: 0.95, y: -15 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
               whileHover={{ y: -4 }}
-              className="relative w-full rounded-4xl border bg-linear-to-b from-[#0F1012] to-[#040405] p-6.5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.85)] flex flex-col justify-between overflow-hidden"
+              className="relative w-full rounded-4xl border bg-linear-to-b from-[#0F1012] to-[#040405] p-6.5 [@media(max-height:720px)]:p-4 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.85)] flex flex-col justify-between overflow-hidden"
               style={{
                 borderColor: `${activeCard.themeColor}22`,
                 boxShadow: `0 25px 50px -12px ${activeCard.themeColor}0C`
@@ -287,7 +287,7 @@ export function HubClient() {
                 style={{ backgroundColor: activeCard.themeColor }}
               />
 
-              <div className="space-y-4">
+              <div className="space-y-4 [@media(max-height:720px)]:space-y-2.5">
                 {/* Mode Tag */}
                 <div className="flex items-center justify-between">
                   <span 
@@ -337,7 +337,7 @@ export function HubClient() {
               </div>
 
               {/* Massive Tactile Pulse Action Button */}
-              <div className="pt-6">
+              <div className="pt-6 [@media(max-height:720px)]:pt-3">
                 {activeCard.external ? (
                   <a
                     href={activeCard.href}

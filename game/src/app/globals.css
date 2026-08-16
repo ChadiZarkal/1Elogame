@@ -963,6 +963,12 @@ button:focus-visible {
 :root {
   --header-h: 3rem;
 }
+/* Sur un ecran court, chaque pixel de barre est un pixel de moins pour le jeu. */
+@media (max-height: 720px) {
+  :root {
+    --header-h: 2.5rem;
+  }
+}
 .site-header {
   position: relative;
   z-index: 60;
