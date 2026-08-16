@@ -367,10 +367,10 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
     );
   }
 
+  /* `pb-24` réservait la place du bandeau d'appel quand il était en `fixe` et
+     hors du flux. En `sticky` il occupe sa propre hauteur en fin de conteneur :
+     ce rembourrage n'ajouterait plus qu'un vide. */
   return (
-    {/* `pb-24` réservait la place du bandeau d'appel quand il était en `fixe`
-        et hors du flux. En `sticky` il occupe sa propre hauteur en fin de
-        conteneur : ce rembourrage n'ajouterait plus qu'un vide. */}
     <div className="relative min-h-screen pb-2" style={{ background: '#070809' }}>
       {/* Ambient glow — `absolute` : c'est la lueur du haut de page, pas un
           voile de fenêtre. En `fixed` elle suivait le défilement et teintait
