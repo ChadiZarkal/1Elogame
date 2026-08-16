@@ -117,6 +117,17 @@ export function Intro({ onStart, failed }: { onStart: () => void; failed: boolea
         >
           {failed ? 'Réessayer' : 'Jouer'}
         </motion.button>
+
+        {/* L'écran de jeu occupe exactement la hauteur de la fenêtre : rien
+            n'indiquait que des explications suivaient, et personne ne fait
+            défiler une page qui semble finie. Ce rappel ne coûte qu'une ligne
+            et ne s'affiche que sur l'accueil du jeu. */}
+        <a
+          href="#page-notes-title"
+          className="mt-3 block text-center text-[10px] font-bold uppercase tracking-[0.18em] text-white/30 transition-colors hover:text-white/60"
+        >
+          Comment ça marche ↓
+        </a>
       </div>
     </motion.div>
   );

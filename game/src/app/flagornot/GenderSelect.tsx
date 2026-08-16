@@ -189,6 +189,15 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
         <p className="text-[#3A3A48] text-[10px] mt-4">
           Données anonymes — uniquement pour les stats
         </p>
+
+        {/* L'écran occupe exactement la fenêtre : sans ce rappel, rien
+            n'indique que les explications suivent en dessous. */}
+        <a
+          href="#page-notes-title"
+          className="mt-3 inline-block text-[10px] font-bold uppercase tracking-[0.18em] text-white/25 transition-colors hover:text-white/55"
+        >
+          Comment ça marche ↓
+        </a>
       </motion.div>
     </div>
   );
