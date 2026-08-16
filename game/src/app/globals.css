@@ -1086,8 +1086,11 @@ button:focus-visible {
   gap: 0.35rem;
 }
 .site-header__panel a {
-  display: block;
-  padding: 0.42rem 0.6rem;
+  display: flex;
+  align-items: center;
+  /* 44 px : les entrées se manipulent au pouce, pas à la souris. */
+  min-height: 2.75rem;
+  padding: 0 0.7rem;
   border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.04);
   font-size: 0.78rem;
