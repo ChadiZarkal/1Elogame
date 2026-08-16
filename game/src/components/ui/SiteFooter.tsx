@@ -56,12 +56,16 @@ export function SiteFooter() {
   return (
     <footer className="relative z-20 w-full border-t border-white/6 bg-black/60 px-5 py-10">
       <div className="mx-auto w-full max-w-3xl">
+        {/* Intitulés en `p` et non en `h2` : le pied de page est rendu sur
+            toutes les routes, et ses trois titres de groupe s'ajoutaient à la
+            hiérarchie de chaque page — devant son `h1` dans le flux HTML
+            diffusé. Le `nav` et son `aria-label` suffisent au repérage. */}
         <nav aria-label="Navigation du site" className="grid grid-cols-2 gap-8 sm:grid-cols-3">
           {NAV_GROUPS.map((group) => (
             <div key={group.title}>
-              <h2 className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#5C5C5F]">
+              <p className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#5C5C5F]">
                 {group.title}
-              </h2>
+              </p>
               <ul className="space-y-2">
                 {group.links.map((link) => (
                   <li key={link.href}>
@@ -78,9 +82,9 @@ export function SiteFooter() {
           ))}
 
           <div>
-            <h2 className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#5C5C5F]">
+            <p className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#5C5C5F]">
               Le site
-            </h2>
+            </p>
             <ul className="space-y-2">
               {LEGAL_LINKS.map((link) => (
                 <li key={link.href}>
