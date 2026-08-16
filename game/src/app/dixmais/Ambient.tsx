@@ -23,7 +23,10 @@ export function Ambient({ score, shock }: { score: number; shock: number }) {
   const tint = scoreColor(score);
 
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+    /* `absolute` et non `fixed` : le contenu éditorial suit l'écran de jeu
+       dans le flux, et un fond fixe le recouvrait sur toute la page. Le parent
+       porte la hauteur d'écran, l'ambiance s'y borne. */
+    <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
       <div className="absolute inset-0" style={{ background: '#07070A' }} />
 
       {/* Halo haut : suit la note en direct. */}

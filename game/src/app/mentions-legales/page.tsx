@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { CONTACT_EMAIL, INSTAGRAM_HANDLE, INSTAGRAM_URL } from '@/config/contact';
 
 export const metadata: Metadata = {
   title: 'Mentions Légales',
@@ -21,7 +22,11 @@ export default function MentionsLegalesPage() {
             Le site <strong>redorgreen.fr</strong> est édité par :<br />
             <strong>Red or Green</strong><br />
             Projet éditorial et applicatif accessible en ligne<br />
-            Email : <a href="mailto:contact@redorgreen.fr">contact@redorgreen.fr</a><br />
+            Email : <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a><br />
+            Instagram :{' '}
+            <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
+              @{INSTAGRAM_HANDLE}
+            </a><br />
             Directeur de la publication : <strong>Équipe Red or Green</strong>
           </p>
         </section>

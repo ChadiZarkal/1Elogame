@@ -128,14 +128,29 @@ button:focus-visible {
 /* ========== Animations ========== */
 
 /* Page transition (replaces Framer Motion in template.tsx) */
+/* Fondu seul, sans `transform`.
+ *
+ * Cette animation porte sur le conteneur de *toutes* les pages (template.tsx),
+ * et son `animation-fill-mode: both` fige la dernière image indéfiniment. Avec
+ * un `translateY` dans cette dernière image, le conteneur gardait un
+ * `transform` non nul en permanence — ce qui en fait un bloc conteneur pour
+ * ses descendants `position: fixed`.
+ *
+ * Conséquence : tout élément fixe du site (feuilles glissantes, en-têtes
+ * flottants, dégradés d'ambiance en `inset-0`) se positionnait par rapport au
+ * document entier et non par rapport à la fenêtre. Le défaut restait invisible
+ * tant que les pages tenaient en un écran ; il est devenu manifeste dès que
+ * l'accueil a dépassé la hauteur de la fenêtre — la feuille « Safe Zone »
+ * s'ouvrait 4 000 px plus bas.
+ *
+ * Le glissement de 8 px ne vaut pas ce risque : il revenait à casser le
+ * positionnement fixe partout, pour un effet que personne ne remarque. */
 @keyframes page-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -956,44 +971,86 @@ button:focus-visible {
   color: #b8b8b8;
   margin-bottom: 2rem;
 }
-.page-notes__block {
-  margin-bottom: 1.85rem;
+/* Volets. Cible tactile pleine largeur, chevron à droite. */
+.page-notes__item {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
-.page-notes__block h3 {
-  font-size: 1.02rem;
+.page-notes__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  /* 44 px de haut au minimum : c'est une cible tactile. */
+  padding: 0.85rem 0;
+  cursor: pointer;
+  list-style: none;
+  -webkit-tap-highlight-color: transparent;
+}
+/* Le marqueur natif est remplacé par le chevron ci-dessous. */
+.page-notes__summary::-webkit-details-marker {
+  display: none;
+}
+.page-notes__summary h3,
+.page-notes__summary h4 {
+  font-size: 0.97rem;
   font-weight: 700;
-  color: #f0f0f0;
-  margin-bottom: 0.55rem;
+  color: #ededed;
+  margin: 0;
+  /* Un titre est un élément de bloc : sans cela il pousse le chevron. */
+  display: inline;
 }
-.page-notes__block p {
+.page-notes__summary h4 {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #d8d8d8;
+}
+.page-notes__summary::after {
+  content: '';
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: 0.25rem;
+  border-right: 2px solid #6b7280;
+  border-bottom: 2px solid #6b7280;
+  transform: rotate(45deg);
+  transform-origin: center;
+  transition: transform 0.18s ease;
+}
+.page-notes__item[open] > .page-notes__summary::after {
+  transform: rotate(-135deg);
+}
+.page-notes__summary:hover::after {
+  border-color: #f97316;
+}
+.page-notes__body {
+  padding-bottom: 1rem;
+}
+.page-notes__body p {
   font-size: 0.92rem;
   line-height: 1.7;
   color: #a8a8a8;
   margin-bottom: 0.7rem;
 }
-.page-notes__block ul {
-  margin: 0.4rem 0 0.7rem 1.15rem;
+.page-notes__body p:last-child {
+  margin-bottom: 0;
+}
+.page-notes__body ul {
+  margin: 0.4rem 0 0 1.15rem;
   list-style: disc;
 }
-.page-notes__block ul li {
+.page-notes__body ul li {
   font-size: 0.92rem;
   line-height: 1.65;
   color: #a8a8a8;
   margin-bottom: 0.4rem;
 }
-.page-notes__faq {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding-top: 0.85rem;
-  margin-top: 0.85rem;
-}
-.page-notes__faq h4 {
-  font-size: 0.93rem;
+.page-notes__faq-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
   font-weight: 700;
-  color: #e5e5e5;
-  margin-bottom: 0.3rem;
-}
-.page-notes__faq p {
-  margin-bottom: 0;
+  color: #6b7280;
+  margin: 1.75rem 0 0.25rem;
 }
 .page-notes__related {
   display: flex;

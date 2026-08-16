@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { CONTACT_EMAIL } from '@/config/contact';
 
 export const metadata: Metadata = {
   title: "Conditions Générales d'Utilisation",
@@ -187,7 +188,7 @@ export default function CGUPage() {
           <h2>14. Contact</h2>
           <p>
             Pour toute question concernant les présentes CGU, vous pouvez nous contacter à :{' '}
-            <a href="mailto:contact@redorgreen.fr">contact@redorgreen.fr</a>
+            <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
           </p>
         </section>
 

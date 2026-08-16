@@ -10,9 +10,13 @@
  *
  * Les écrans de jeu sont des composants client dont l'essentiel du contenu est
  * conditionné par un état : le crawler ne reçoit qu'un châssis. Ces notes sont
- * rendues par les `layout.tsx`, qui sont des composants serveur, et placées
- * *sous* le jeu — l'expérience de jeu est inchangée, le HTML cesse d'être vide.
+ * rendues par un composant serveur mince — le `page.tsx` de chaque route, et
+ * non son `layout.tsx`, qui vaut aussi pour les sous-routes et y dupliquerait
+ * le texte — et placées *sous* le jeu : l'expérience de jeu est inchangée, le
+ * HTML cesse d'être vide.
  */
+
+import { CONTACT_EMAIL, INSTAGRAM_HANDLE } from '@/config/contact';
 
 export interface FaqItem {
   question: string;
@@ -124,7 +128,7 @@ export const HOME_NOTES: PageNotes = {
     {
       question: 'Comment vous contacter ?',
       answer:
-        "Par courriel à contact@redorgreen.fr, pour toute question, correction, suggestion de comportement ou demande de retrait.",
+        `Par courriel à ${CONTACT_EMAIL}, pour toute question, correction, suggestion de comportement ou demande de retrait. Le site est aussi sur Instagram, à @${INSTAGRAM_HANDLE}.`,
     },
   ],
   related: [
@@ -203,7 +207,7 @@ export const JEU_NOTES: PageNotes = {
     {
       question: 'Puis-je proposer un comportement ?',
       answer:
-        "Les propositions sont rédigées et validées avant d'entrer au jeu : elles ne sont pas générées automatiquement. Les suggestions peuvent être envoyées à contact@redorgreen.fr.",
+        `Les propositions sont rédigées et validées avant d'entrer au jeu : elles ne sont pas générées automatiquement. Les suggestions peuvent être envoyées à ${CONTACT_EMAIL}.`,
     },
     {
       question: 'Le jeu convient-il aux mineurs ?',

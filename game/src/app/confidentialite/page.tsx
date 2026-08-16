@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { CONTACT_EMAIL } from '@/config/contact';
 
 export const metadata: Metadata = {
   title: 'Politique de Confidentialité',
@@ -29,7 +30,7 @@ export default function ConfidentialitePage() {
           <h2>2. Responsable du traitement</h2>
           <p>
             <strong>Red or Green</strong> (éditeur du site redorgreen.fr)<br />
-            Email : <a href="mailto:contact@redorgreen.fr">contact@redorgreen.fr</a>
+            Email : <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
           </p>
           <p>
             Pour toute demande relative au traitement des données personnelles, vous pouvez nous
@@ -113,7 +114,7 @@ export default function ConfidentialitePage() {
           </ul>
           <p>
             Pour exercer ces droits, contactez-nous à{' '}
-            <a href="mailto:contact@redorgreen.fr">contact@redorgreen.fr</a>.
+            <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
           </p>
           <p>
             Vous pouvez également introduire une réclamation auprès de la{' '}

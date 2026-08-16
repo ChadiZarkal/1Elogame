@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AdSenseScript } from "@/components/ads/AdSenseScript";
 import { SiteFooter } from "@/components/ui/SiteFooter";
+import { CONTACT_EMAIL, INSTAGRAM_URL } from "@/config/contact";
 
 import "./globals.css";
 
@@ -141,7 +142,8 @@ function JsonLd() {
         alternateName: 'Red or Green',
         url: SITE_URL,
         logo: `${SITE_URL}/logo-rog-new.svg`,
-        email: 'contact@redorgreen.fr',
+        email: CONTACT_EMAIL,
+        sameAs: [INSTAGRAM_URL],
       },
       // Pas de BreadcrumbList ici : ce graphe est émis sur toutes les routes, y
       // compris les pages légales, et le site n'affiche aucun fil d'Ariane. Un

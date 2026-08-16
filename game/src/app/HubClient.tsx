@@ -210,7 +210,9 @@ export function HubClient() {
             handleTap();
             setHowToPlayOpen(true);
           }}
-          className="fixed top-4 right-4 z-40 h-10 w-10 rounded-full border border-white/10 bg-black/55 text-white/70 backdrop-blur-md hover:text-white active:scale-90 transition-all cursor-pointer"
+          /* `absolute` : ce bouton appartient au hub, pas à la fenêtre. En
+             `fixed` il suivait le lecteur jusque dans le contenu éditorial. */
+          className="absolute top-4 right-4 z-40 h-10 w-10 rounded-full border border-white/10 bg-black/55 text-white/70 backdrop-blur-md hover:text-white active:scale-90 transition-all cursor-pointer"
           aria-label="Comment jouer ?"
         >
           <span className="sr-only">Comment jouer ?</span>
@@ -372,17 +374,43 @@ export function HubClient() {
           </AnimatePresence>
         </div>
 
-        {/* 4. Secondary Tactile Row (Highly ergonomic 2-column layout) */}
-        <section className="w-full flex items-center gap-3 mt-2">
-          {/* Results / Leaderboard */}
+        {/* 4. Rangée secondaire — grille 2×2.
+            Le guide des flags et les outils d'auto-évaluation n'étaient
+            joignables que par le pied de page, sous une page qui tient en un
+            écran : personne n'y descendait. Ce sont pourtant les deux contenus
+            les plus utiles du site. Une grille plutôt que deux cartes
+            empilées : la hauteur du hub doit rester celle d'un écran. */}
+        <section className="w-full grid grid-cols-2 gap-2.5 mt-2">
           <Link
             href="/classement"
             onClick={handleTap}
-            className="flex-1 py-4 px-4 rounded-2xl bg-[#0F1012] border border-white/5 flex flex-col items-center justify-center text-center group active:scale-95 transition-transform"
+            className="py-3 px-3 rounded-2xl bg-[#0F1012] border border-white/5 flex flex-col items-center justify-center text-center group active:scale-95 transition-transform"
           >
-            <span className="text-xl">🏆</span>
-            <span className="font-black text-[9px] uppercase tracking-wider text-[#A6A6A6] group-hover:text-[#2ECC71] mt-1 transition-colors">
-              LE PALMARÈS GÉNÉRAL
+            <span className="text-lg leading-none">🏆</span>
+            <span className="font-black text-[9px] uppercase tracking-wider text-[#A6A6A6] group-hover:text-[#2ECC71] mt-1.5 transition-colors">
+              LE PALMARÈS
+            </span>
+          </Link>
+
+          <Link
+            href="/guide"
+            onClick={handleTap}
+            className="py-3 px-3 rounded-2xl bg-[#2ECC71]/8 border border-[#2ECC71]/25 flex flex-col items-center justify-center text-center group active:scale-95 transition-transform"
+          >
+            <span className="text-lg leading-none">🚩</span>
+            <span className="font-black text-[9px] uppercase tracking-wider text-[#2ECC71] mt-1.5">
+              GUIDE DES FLAGS
+            </span>
+          </Link>
+
+          <Link
+            href="/ressources"
+            onClick={handleTap}
+            className="py-3 px-3 rounded-2xl bg-[#0F1012] border border-white/5 flex flex-col items-center justify-center text-center group active:scale-95 transition-transform"
+          >
+            <span className="text-lg leading-none">🧭</span>
+            <span className="font-black text-[9px] uppercase tracking-wider text-[#A6A6A6] group-hover:text-[#8B5CF6] mt-1.5 transition-colors">
+              TESTS SÉRIEUX
             </span>
           </Link>
 
@@ -392,11 +420,11 @@ export function HubClient() {
               handleTap();
               setSafeZoneOpen(true);
             }}
-            className="flex-1 py-4 px-4 rounded-2xl bg-[#0F1012] border border-white/5 flex flex-col items-center justify-center text-center group active:scale-95 transition-transform cursor-pointer"
+            className="py-3 px-3 rounded-2xl bg-[#0F1012] border border-white/5 flex flex-col items-center justify-center text-center group active:scale-95 transition-transform cursor-pointer"
           >
-            <span className="text-xl">🛡</span>
-            <span className="font-black text-[9px] uppercase tracking-wider text-[#A6A6A6] group-hover:text-[#10B981] mt-1 transition-colors">
-              ESPACE SAFE ZONE
+            <span className="text-lg leading-none">🛡</span>
+            <span className="font-black text-[9px] uppercase tracking-wider text-[#A6A6A6] group-hover:text-[#10B981] mt-1.5 transition-colors">
+              SAFE ZONE
             </span>
           </button>
         </section>

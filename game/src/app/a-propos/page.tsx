@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { CONTACT_EMAIL, INSTAGRAM_HANDLE, INSTAGRAM_URL } from '@/config/contact';
 
 export const metadata: Metadata = {
   title: 'À propos — qui édite Red or Green et pourquoi',
@@ -102,7 +103,13 @@ export default function AProposPage() {
           <p>
             Une erreur à signaler, une source à corriger, une proposition à retirer du corpus, une
             demande liée à vos données : écrivez à{' '}
-            <a href="mailto:contact@redorgreen.fr">contact@redorgreen.fr</a>.
+            <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. Toutes les demandes sont lues.
+          </p>
+          <p>
+            Le site est aussi présent sur Instagram, à{' '}
+            <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
+              @{INSTAGRAM_HANDLE}
+            </a>.
           </p>
           <p>
             Les informations relatives à l&apos;éditeur et à l&apos;hébergeur figurent dans les{' '}

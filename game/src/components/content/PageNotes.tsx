@@ -7,6 +7,16 @@
  * après hydratation reviendrait à ne rien servir du tout — c'est le défaut qui
  * avait vidé `/classement` de son contenu.
  *
+ * Replié par `<details>` plutôt que déroulé. Le site se consulte au téléphone :
+ * déroulé, ce bloc ajoutait près de 3 700 px sous un écran de jeu de 900 px,
+ * soit quatre écrans de texte que personne ne fait défiler. `<details>` garde
+ * tout dans le DOM — le contenu reste servi et indexable, il n'est pas monté à
+ * la demande — et ne demande aucun JavaScript pour s'ouvrir.
+ *
+ * Le titre de chaque volet est un vrai `h3` à l'intérieur du `summary` : la
+ * hiérarchie des titres reste lisible pour les lecteurs d'écran comme pour un
+ * robot d'indexation.
+ *
  * Le balisage `FAQPage` est émis ici, à partir du même tableau que l'affichage :
  * les questions déclarées à Google sont exactement celles qui sont à l'écran.
  */
@@ -50,32 +60,46 @@ export function PageNotes({ notes, withFaqJsonLd = true }: Props) {
 
           {notes.lede && <p className="page-notes__lede">{notes.lede}</p>}
 
-          {notes.blocks.map((block) => (
-            <div className="page-notes__block" key={block.heading}>
-              <h3>{block.heading}</h3>
-              {block.body?.map((paragraph) => (
-                <p key={paragraph.slice(0, 40)}>{paragraph}</p>
-              ))}
-              {block.bullets && (
-                <ul>
-                  {block.bullets.map((bullet) => (
-                    <li key={bullet.slice(0, 40)}>{bullet}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
+          {notes.blocks.map((block, index) => (
+            <details
+              className="page-notes__item"
+              key={block.heading}
+              /* Le premier volet est ouvert : sans cela le bloc n'est qu'une
+                 pile de titres, et rien n'indique qu'il y a du texte dessous. */
+              open={index === 0}
+            >
+              <summary className="page-notes__summary">
+                <h3>{block.heading}</h3>
+              </summary>
+              <div className="page-notes__body">
+                {block.body?.map((paragraph) => (
+                  <p key={paragraph.slice(0, 40)}>{paragraph}</p>
+                ))}
+                {block.bullets && (
+                  <ul>
+                    {block.bullets.map((bullet) => (
+                      <li key={bullet.slice(0, 40)}>{bullet}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </details>
           ))}
 
           {notes.faq.length > 0 && (
-            <div className="page-notes__block">
-              <h3>Questions fréquentes</h3>
+            <>
+              <h3 className="page-notes__faq-title">Questions fréquentes</h3>
               {notes.faq.map((item) => (
-                <div className="page-notes__faq" key={item.question}>
-                  <h4>{item.question}</h4>
-                  <p>{item.answer}</p>
-                </div>
+                <details className="page-notes__item" key={item.question}>
+                  <summary className="page-notes__summary">
+                    <h4>{item.question}</h4>
+                  </summary>
+                  <div className="page-notes__body">
+                    <p>{item.answer}</p>
+                  </div>
+                </details>
               ))}
-            </div>
+            </>
           )}
 
           {notes.related.length > 0 && (

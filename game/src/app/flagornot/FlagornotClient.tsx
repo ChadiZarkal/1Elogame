@@ -44,19 +44,24 @@ export default function FlagOrNotPage() {
       className="relative flex flex-col overflow-hidden"
       style={{ height: 'var(--app-height, 100dvh)', background: '#06040F' }}
     >
-      {/* Ambient background shift on verdict */}
+      {/* Ambiance : `absolute` et non `fixed`.
+          Ce conteneur a une hauteur d'écran et le contenu éditorial le suit
+          dans le flux. En `fixed`, ces deux dégradés couvraient toute la page
+          — le texte se lisait à travers un voile violet et une trame de points,
+          illisible au téléphone. Bornés au conteneur, ils restent l'ambiance du
+          jeu et s'arrêtent où le jeu s'arrête. */}
       <motion.div
-        className="fixed inset-0 pointer-events-none z-0"
+        className="absolute inset-0 pointer-events-none z-0"
         animate={{ background: bgGradient }}
         transition={{ duration: 0.7 }}
       />
 
       {/* Cosmic dot grid */}
-      <div className="fixed inset-0 pointer-events-none z-0 oracle-bg-dots opacity-[0.07]" />
+      <div className="absolute inset-0 pointer-events-none z-0 oracle-bg-dots opacity-[0.07]" />
 
       {/* Subtle top ambient line */}
       <div
-        className="fixed top-0 left-0 right-0 h-px pointer-events-none z-10"
+        className="absolute top-0 left-0 right-0 h-px pointer-events-none z-10"
         style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(139,92,246,0.5) 50%, transparent 100%)' }}
       />
 

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { CONTACT_EMAIL, INSTAGRAM_HANDLE, INSTAGRAM_URL } from '@/config/contact';
 
 /**
  * Pied de page présent sur toutes les routes publiques.
@@ -96,19 +97,47 @@ export function SiteFooter() {
                   trouver depuis n'importe quelle route. */}
               <li>
                 <a
-                  href="mailto:contact@redorgreen.fr"
+                  href={`mailto:${CONTACT_EMAIL}`}
                   className="text-[12px] font-semibold text-[#A6A6A6] transition-colors hover:text-white"
                 >
                   Contact
+                </a>
+              </li>
+              <li>
+                <a
+                  href={INSTAGRAM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[12px] font-semibold text-[#A6A6A6] transition-colors hover:text-white"
+                >
+                  Instagram
                 </a>
               </li>
             </ul>
           </div>
         </nav>
 
-        <p className="mt-8 text-[10px] text-[#5C5C5F]">
-          RED OR GREEN © 2026 • POUR REPÉRER LES TOXICITÉS ORDINAIRES
-        </p>
+        <div className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <p className="text-[10px] text-[#5C5C5F]">
+            RED OR GREEN © 2026 • POUR REPÉRER LES TOXICITÉS ORDINAIRES
+          </p>
+          <span aria-hidden className="text-[10px] text-[#3A3A3D]">•</span>
+          <a
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] font-semibold text-[#7C7C80] transition-colors hover:text-white"
+          >
+            @{INSTAGRAM_HANDLE}
+          </a>
+          <span aria-hidden className="text-[10px] text-[#3A3A3D]">•</span>
+          <a
+            href={`mailto:${CONTACT_EMAIL}`}
+            className="text-[10px] font-semibold text-[#7C7C80] transition-colors hover:text-white"
+          >
+            {CONTACT_EMAIL}
+          </a>
+        </div>
       </div>
     </footer>
   );
