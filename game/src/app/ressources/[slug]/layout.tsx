@@ -158,6 +158,32 @@ function MeterFaqAndLinks({ slug }: { slug: string }) {
         padding: '8px 16px 56px',
       }}
     >
+      {/* Les questions sont chargées à la demande par l'outil : elles
+          n'existaient dans aucun HTML, alors même que le balisage `Quiz`
+          annonce leur nombre. Les publier ici rend ce balisage exact, et
+          permet de lire la grille sans dérouler le questionnaire. */}
+      <h2 style={{
+        color: '#4B5563', fontSize: 11, letterSpacing: '0.15em',
+        textTransform: 'uppercase', fontWeight: 700, margin: '0 0 12px',
+      }}>
+        Les {meter.questions.length} situations passées en revue
+      </h2>
+      <p style={{ color: '#9CA3AF', fontSize: 13, lineHeight: 1.65, margin: '0 0 12px' }}>
+        {meter.questionPrefix
+          ? `Chaque situation est introduite par « ${meter.questionPrefix} ». Le test les présente une par une ; les voici dans leur ordre de passage.`
+          : 'Le test présente ces situations une par une ; les voici dans leur ordre de passage.'}
+      </p>
+      <ol style={{
+        color: '#9CA3AF', fontSize: 13, lineHeight: 1.7,
+        margin: '0 0 28px 1.1rem', padding: 0, listStyle: 'decimal',
+      }}>
+        {meter.questions.map((question) => (
+          <li key={question.id} style={{ marginBottom: 4 }}>
+            {question.text}
+          </li>
+        ))}
+      </ol>
+
       {faqs.length > 0 && (
         <>
           <h2 style={{
