@@ -75,9 +75,11 @@ export function ProfileForm() {
           background: 'radial-gradient(circle, rgba(239,68,68,0.08) 0%, transparent 70%)',
         }}
       />
-      <div className={`relative z-10 flex flex-col items-center justify-center w-full p-6${mounted ? ' animate-fade-in' : ''}`}>
-      {/* Back button */}
-      <div className="fixed top-4 left-4 z-50">
+      {/* Back button — `absolute`, et enfant du conteneur pleine hauteur.
+          En `fixe` il suivait le lecteur jusque dans le contenu éditorial
+          rendu sous le formulaire, et se superposait au texte. Placé ici et
+          non dans le bloc centré, il retrouve le coin de l'écran. */}
+      <div className="absolute top-4 left-4 z-50">
         <button
           onClick={() => router.push('/')}
           className="flex items-center gap-1.5 text-[#52525B] hover:text-[#A1A1AA] text-sm transition-colors px-3 py-2 rounded-lg hover:bg-white/5"
@@ -86,6 +88,7 @@ export function ProfileForm() {
         </button>
       </div>
 
+      <div className={`relative z-10 flex flex-col items-center justify-center w-full p-6${mounted ? ' animate-fade-in' : ''}`}>
       {/* Logo */}
       <div className={`mb-6 text-center pt-10${mounted ? ' animate-pf-logo' : ''}`}>
         <div className={`flex items-center justify-center mb-3${mounted ? ' animate-pf-logo-img' : ''}`}>

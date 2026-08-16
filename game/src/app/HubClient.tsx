@@ -179,15 +179,19 @@ export function HubClient() {
       </div>
 
       {/* Main Container constrained to ergonomic vertical phone viewport */}
-      <main id="main-content" className="relative z-10 mx-auto w-full max-w-110 px-5 py-6 flex flex-col items-center justify-between min-h-dvh">
+      {/* `[@media(max-height:720px)]` — sur un 360x640, très répandu, le bouton
+          qui lance le jeu tombait entièrement sous la ligne de flottaison : il
+          fallait faire défiler pour jouer. Les écrans hauts gardent l'aération
+          d'origine, les écrans courts se resserrent. */}
+      <main id="main-content" className="relative z-10 mx-auto w-full max-w-110 px-5 py-6 [@media(max-height:720px)]:py-3 flex flex-col items-center justify-between min-h-dvh">
         
         {/* 1. Header (Minimalist & Branding Focus) */}
-        <header className="w-full space-y-4 flex flex-col items-center pt-2">
+        <header className="w-full space-y-4 [@media(max-height:720px)]:space-y-1.5 flex flex-col items-center pt-2 [@media(max-height:720px)]:pt-0">
           {/* Centered Brand Logo - enlarged and dominant.
               Porté par le h1 : la page n'avait aucun titre de niveau 1, le
               logo n'étant qu'une image. Le nom accessible du titre vient de
               l'attribut alt — rien n'est ajouté de masqué. */}
-          <h1 className="py-2 scale-100 hover:scale-[1.01] active:scale-95 transition-transform duration-200">
+          <h1 className="py-2 [@media(max-height:720px)]:py-0 scale-100 hover:scale-[1.01] active:scale-95 transition-transform duration-200">
             <Image
               src="/logo-rog-new.svg"
               alt="Red or Green — repérer les toxicités ordinaires"
@@ -195,7 +199,7 @@ export function HubClient() {
               height={118}
               priority
               draggable={false}
-              className="h-auto w-[88vw] max-w-115 object-contain drop-shadow-[0_0_28px_rgba(255,59,48,0.3)]"
+              className="h-auto w-[88vw] [@media(max-height:720px)]:w-[62vw] max-w-115 object-contain drop-shadow-[0_0_28px_rgba(255,59,48,0.3)]"
             />
           </h1>
 
@@ -256,7 +260,7 @@ export function HubClient() {
         </div>
 
         {/* 3. Hero Holographic Game Card (The Focal Point with ultra-smooth morphs) */}
-        <div className="w-full my-6 flex-1 flex flex-col justify-center">
+        <div className="w-full my-6 [@media(max-height:720px)]:my-3 flex-1 flex flex-col justify-center">
           {/* `initial={false}` : la carte est l'élément LCP de la page. Sans
               cela elle est rendue à opacity 0 et n'apparaît qu'après
               l'hydratation, ce qui repousse le LCP de plusieurs secondes sur

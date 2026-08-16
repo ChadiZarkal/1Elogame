@@ -368,11 +368,13 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
   }
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: '#070809' }}>
-      {/* Ambient glow */}
+    <div className="relative min-h-screen pb-24" style={{ background: '#070809' }}>
+      {/* Ambient glow — `absolute` : c'est la lueur du haut de page, pas un
+          voile de fenêtre. En `fixed` elle suivait le défilement et teintait
+          aussi le contenu éditorial rendu sous le classement. */}
       <div
         aria-hidden
-        className="fixed inset-x-0 top-0 h-[55vh] pointer-events-none"
+        className="absolute inset-x-0 top-0 h-[55vh] pointer-events-none"
         style={{
           background: `radial-gradient(ellipse 90% 60% at 50% -5%, ${cfg.glow}, transparent 70%)`,
         }}
@@ -947,9 +949,14 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
         </div>
       </main>
 
-      {/* STICKY CTA */}
+      {/* STICKY CTA — `sticky` et non `fixe`.
+          En `fixe`, ce bandeau flotterait devant tout ce qui suit le
+          classement : le contenu éditorial et le pied de page. En `sticky`, il
+          reste collé au bas de la fenêtre tant qu'on parcourt le classement,
+          puis s'efface quand celui-ci se termine. C'est le comportement que le
+          `pb-24` du conteneur laissait attendre. */}
       <div
-        className="fixed bottom-0 left-0 right-0 px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-6"
+        className="sticky bottom-0 left-0 right-0 z-30 px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-6"
         style={{ background: 'linear-gradient(to top, rgba(7,8,9,0.99) 55%, transparent)', pointerEvents: 'none' }}
       >
         <div className="mx-auto max-w-sm" style={{ pointerEvents: 'all' }}>
