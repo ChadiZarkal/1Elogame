@@ -24,7 +24,17 @@
   html,
   body {
     max-width: 100vw;
-    overflow-x: hidden;
+    /* `clip` et non `hidden`.
+     *
+     * Quand un seul axe vaut `hidden`, la spécification force l'autre à
+     * `auto` : `body` calculait donc `overflow: hidden auto` et devenait une
+     * boîte de défilement qui, elle, ne défile jamais — le document défile à
+     * sa place. Tout `position: sticky` du site se résolvait par rapport à
+     * cette boîte figée et ne collait donc jamais, sans erreur ni avertissement.
+     *
+     * `clip` bloque le débordement horizontal sans créer de boîte de
+     * défilement, et laisse `overflow-y` à `visible`. */
+    overflow-x: clip;
     min-height: 100dvh;
   }
 
