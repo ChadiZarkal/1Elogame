@@ -71,14 +71,19 @@ export function PageNotes({ notes, withFaqJsonLd = true }: Props) {
               <summary className="page-notes__summary">
                 <h3>{block.heading}</h3>
               </summary>
+              {/* Clés par indice : ces listes sont statiques et ne sont jamais
+                  réordonnées. Une clé tirée du texte se dupliquerait
+                  silencieusement dès que deux paragraphes commenceraient
+                  pareil — cas d'autant plus atteignable que certains sont
+                  assemblés par concaténation conditionnelle. */}
               <div className="page-notes__body">
-                {block.body?.map((paragraph) => (
-                  <p key={paragraph.slice(0, 40)}>{paragraph}</p>
+                {block.body?.map((paragraph, i) => (
+                  <p key={i}>{paragraph}</p>
                 ))}
                 {block.bullets && (
                   <ul>
-                    {block.bullets.map((bullet) => (
-                      <li key={bullet.slice(0, 40)}>{bullet}</li>
+                    {block.bullets.map((bullet, i) => (
+                      <li key={i}>{bullet}</li>
                     ))}
                   </ul>
                 )}

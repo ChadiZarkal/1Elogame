@@ -11,15 +11,15 @@
  * public et rend l'adresse illisible.
  */
 
-/** Adresse de contact directe, mise en avant partout. */
-export const CONTACT_EMAIL = 'chadizarkal25@gmail.com';
-
 /**
- * Adresse historique du domaine. Conservée dans les mentions légales tant
- * qu'elle est relevée ; à retirer si la boîte n'existe pas, un contact
- * injoignable étant pire que pas de second contact.
+ * Adresse de contact, unique et relevée.
+ *
+ * Elle remplace `contact@redorgreen.fr`, qui figurait en dur dans six fichiers
+ * sans qu'on sache si la boîte existait. Un contact injoignable dans des
+ * mentions légales est pire que pas de second contact : mieux vaut une seule
+ * adresse dont on est sûr.
  */
-export const CONTACT_EMAIL_DOMAIN = 'contact@redorgreen.fr';
+export const CONTACT_EMAIL = 'chadizarkal25@gmail.com';
 
 export const INSTAGRAM_HANDLE = 'redorgreen.fr';
 export const INSTAGRAM_URL = `https://www.instagram.com/${INSTAGRAM_HANDLE}`;

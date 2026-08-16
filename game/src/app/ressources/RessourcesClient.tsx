@@ -101,8 +101,9 @@ export default function RessourcesPage() {
         {/* Le bloc de liens internes qui figurait ici était rendu en #3D3D3D
             sur fond sombre, sous un commentaire « SEO-rich footer section » :
             un texte écrit pour les moteurs, illisible pour les visiteurs. Les
-            mêmes liens sont désormais dans la section éditoriale rendue par le
-            layout, à un contraste normal. */}
+            mêmes liens sont désormais dans la section éditoriale rendue par la
+            page — et non par le layout, qui vaut aussi pour les cinq pages
+            d'outil — à un contraste normal. */}
       </main>
     </div>
   );

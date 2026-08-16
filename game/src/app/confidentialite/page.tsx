@@ -133,12 +133,16 @@ export default function ConfidentialitePage() {
             <li><strong>Analytics</strong> — Vercel Analytics et Speed Insights pour mesurer la performance du site.</li>
           </ul>
           <p>
-            <strong>Aucune annonce publicitaire n&apos;est diffusée sur le site à ce jour</strong>, et
-            aucun cookie publicitaire n&apos;est déposé de notre fait. Si des annonces devaient être
-            diffusées à l&apos;avenir via Google AdSense, des fournisseurs tiers, dont Google,
+            Le site intègre le code de la régie <strong>Google AdSense</strong>.{' '}
+            <strong>Aucun emplacement publicitaire n&apos;est affiché et aucune annonce n&apos;est
+            diffusée à ce jour.</strong>
+          </p>
+          <p>
+            Si des annonces venaient à être diffusées, des fournisseurs tiers, dont Google,
             pourraient utiliser des cookies pour diffuser des annonces en fonction de vos visites
-            antérieures sur ce site ou sur d&apos;autres sites, et un message de consentement serait
-            présenté au préalable là où la réglementation l&apos;exige.
+            antérieures sur ce site ou sur d&apos;autres sites. Un message de consentement serait
+            alors présenté au préalable là où la réglementation l&apos;exige, et la présente page
+            serait mise à jour avant toute diffusion.
           </p>
           <p>
             Vous pouvez désactiver la publicité personnalisée depuis les{' '}
@@ -172,11 +176,11 @@ export default function ConfidentialitePage() {
             <li><strong>Vercel</strong> — hébergement, logs techniques et mesures de performance.</li>
             <li><strong>Supabase</strong> — stockage des données applicatives.</li>
             <li><strong>Google (Gemini)</strong> — analyse des textes soumis à l&apos;Oracle.</li>
+            <li>
+              <strong>Google AdSense</strong> — code de régie présent sur le site, sans emplacement
+              publicitaire ni annonce diffusée à ce jour.
+            </li>
           </ul>
-          <p>
-            Google AdSense ne figure pas dans cette liste : aucune annonce n&apos;est diffusée sur le
-            site à ce jour. Cette page sera mise à jour avant toute diffusion publicitaire.
-          </p>
         </section>
 
         <section className="legal-page__section">

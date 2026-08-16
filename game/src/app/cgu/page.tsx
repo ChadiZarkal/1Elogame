@@ -121,15 +121,17 @@ export default function CGUPage() {
         <section className="legal-page__section">
           <h2>9. Publicité et consentement</h2>
           <p>
-            <strong>Aucune annonce publicitaire n&apos;est diffusée sur le Service à ce jour.</strong>{' '}
-            Aucun emplacement publicitaire n&apos;est affiché sur les pages du site.
+            Le Service intègre le code de la régie <strong>Google AdSense</strong>.{' '}
+            <strong>Aucun emplacement publicitaire n&apos;est affiché sur les pages du site</strong>{' '}
+            et aucune annonce n&apos;y est diffusée à ce jour.
           </p>
           <p>
-            Si des annonces devaient être diffusées à l&apos;avenir, elles le seraient par
-            l&apos;intermédiaire de Google AdSense, et un message de consentement conforme serait
+            Si des annonces venaient à être diffusées, un message de consentement conforme serait
             présenté avant tout affichage d&apos;annonces personnalisées aux personnes situées dans
             l&apos;Espace économique européen, au Royaume-Uni et en Suisse, comme la réglementation
-            l&apos;exige.
+            l&apos;exige. La présente page et la{' '}
+            <Link href="/confidentialite">politique de confidentialité</Link> seraient mises à jour
+            au préalable.
           </p>
           <p>
             Vous pouvez modifier ces préférences à tout moment depuis les{' '}

@@ -169,9 +169,7 @@ function MeterFaqAndLinks({ slug }: { slug: string }) {
         Les {meter.questions.length} situations passées en revue
       </h2>
       <p style={{ color: '#9CA3AF', fontSize: 13, lineHeight: 1.65, margin: '0 0 12px' }}>
-        {meter.questionPrefix
-          ? `Chaque situation est introduite par « ${meter.questionPrefix} ». Le test les présente une par une ; les voici dans leur ordre de passage.`
-          : 'Le test présente ces situations une par une ; les voici dans leur ordre de passage.'}
+        {`Chaque situation est introduite par « ${meter.questionPrefix} ». Le test les présente une par une ; les voici dans leur ordre de passage.`}
       </p>
       <ol style={{
         color: '#9CA3AF', fontSize: 13, lineHeight: 1.7,

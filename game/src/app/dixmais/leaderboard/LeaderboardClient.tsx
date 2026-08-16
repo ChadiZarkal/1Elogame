@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowLeft, RotateCcw, Play } from 'lucide-react';
@@ -34,7 +34,7 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
   const [sort, setSort] = useState<SortKey>('avg_delta');
   const [filter, setFilter] = useState<FilterKey>('all');
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -43,13 +43,13 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
       setData(json.data ?? []);
     } catch { setError('Erreur de chargement'); }
     finally { setLoading(false); }
-  }
+  }, []);
 
   // Le serveur a déjà fourni une liste : on ne refait la requête au montage que
   // si elle est vide (base indisponible à la régénération).
   useEffect(() => {
     if (initialData.length === 0) load();
-  }, [initialData.length]);
+  }, [initialData.length, load]);
 
   const filtered = data
     .filter(s => filter === 'all' || s.type === filter)
