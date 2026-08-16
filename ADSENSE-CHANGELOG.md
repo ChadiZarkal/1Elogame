@@ -115,6 +115,71 @@ un `h1` : la page n'en avait aucun, le logo n'étant qu'une image.
 
 ---
 
+# Troisième passe — août 2026, audit critère par critère
+
+Vérification du site **en ligne** contre les critères cités par le refus, et
+non plus contre notre propre lecture du problème. Trois manques restaient.
+
+## 16. Barre de navigation
+
+Les consignes la qualifient d'« essentielle ». Le site n'en avait aucune :
+**zéro lien dans le `<header>` de chaque page**. La seule navigation en liens
+texte était le pied de page, et sur les écrans de jeu — qui occupent toute la
+fenêtre — il n'existait aucun chemin visible vers le reste du site.
+
+Barre ajoutée sur les 21 routes publiques : marque, raccourcis à plat dès
+640 px, et un menu de 18 entrées groupées par thème — Jouer, Comprendre,
+S'évaluer, Le site — comme le demande le point « classez les articles et les
+contenus par thème ». C'est un `<details>` : il s'ouvre sans JavaScript et son
+contenu est dans le HTML même fermé.
+
+Les quatre points de contrôle cités par Google : alignement vérifié de 360 à
+1280 px sans débordement horizontal ; contraste et taille conformes ; cibles
+tactiles à 44 px ; les 18 liens résolvent en 200.
+
+Les écrans pleine hauteur passent en `calc(100dvh - var(--header-h, 3rem))`
+pour lui laisser sa place, et l'accueil se resserre sous 720 px de haut : sur
+un 360×640, le bouton qui lance le jeu était repassé sous la ligne de
+flottaison.
+
+## 17. Hiérarchie des titres
+
+`/jeu` n'avait **aucun `h1`** — le logo est une image, l'accroche un
+paragraphe. Et le pied de page, rendu partout, ajoutait trois `h2` qui, le
+contenu étant diffusé en flux, **précédaient le `h1`** dans le HTML servi sur
+17 pages sur 21. Les intitulés de groupe du pied de page et du menu sont
+désormais des `p` ; le `nav` et son `aria-label` portent le repérage.
+
+## 18. Cinq pages d'outil trop semblables
+
+12 à 20 % de texte commun entre elles : le châssis de l'écran d'accueil
+— durée, mention d'anonymat, avertissement, échelle — est identique et pesait
+lourd sur des pages de 430 à 640 mots. Les consignes demandent, dans ce cas,
+de *développer* chaque page.
+
+Chaque outil a reçu sa notice : origine du barème, périmètre couvert, ce qui
+le distingue des autres, et vers qui se tourner. Pour le harcèlomètre et le
+discriminomètre, il est écrit noir sur blanc qu'il s'agit d'adaptations sans
+valeur officielle. Duplication maximale ramenée à 13,1 %.
+
+## Grille de contrôle finale, mesurée en production
+
+| Contrôle | Résultat |
+|---|---|
+| Toute page indexable au-dessus de 250 mots | 275 à 1 119 mots |
+| Exactement un `h1` par page | 21/21 |
+| Aucun titre ne précède le `h1` | 21/21 |
+| Barre de navigation | 21/21 |
+| Données structurées conformes à l'affichage | 44 questions, 0 écart |
+| Duplication entre pages | 13,1 % au maximum |
+| Liens internes cassés | 0 sur 29 |
+| Images sans `alt` | 0 |
+| Titres et descriptions uniques | oui |
+| Bourrage de mots-clés | aucune page au-dessus de 10 termes |
+| Pages satellites | `/redflag` supprimée, 308 vers `/jeu` |
+
+---
+
 # Première passe — juillet 2026
 
 ## 1. Publicités retirées des pages sans contenu (A1, A2)
