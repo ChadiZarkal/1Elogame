@@ -855,7 +855,7 @@ export default function FlashFlagSessionPage() {
             </div>
 
             <div className="rounded-xl border border-[#7F1D1D] bg-[#1A1212]/85 p-3 text-sm text-[#FECACA]">
-              Challenge chrono: pas de retour arriere. Si le temps tombe a zero, c est automatiquement 0 point.
+              Challenge chrono : pas de retour en arrière. Si le temps tombe à zéro, c&apos;est automatiquement 0 point.
             </div>
 
             <button

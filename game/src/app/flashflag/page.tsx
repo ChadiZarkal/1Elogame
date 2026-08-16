@@ -109,10 +109,10 @@ const CUSTOM_PRESETS: CustomPreset[] = [
     suggestedDescription: 'Version rapide pour verifier valeurs et respect de base.',
     questions: [
       {
-        text: 'Si la personne que tu dates dit "je suis feministe", ta reaction instinctive ?',
+        text: 'Si la personne que tu dates dit "je suis feministe", ta réaction instinctive ?',
         timeLimitSec: 7,
         options: [
-          { text: 'Parfait, c est essentiel pour moi aussi', score: 0 },
+          { text: 'Parfait, c\'est essentiel pour moi aussi', score: 0 },
           { text: 'Ca depend de ce que ca veut dire', score: 1 },
           { text: 'Je trouve ca excessif', score: 2 },
         ],
@@ -121,13 +121,13 @@ const CUSTOM_PRESETS: CustomPreset[] = [
         text: 'Quand ton/ta partenaire pose une limite claire, tu fais quoi ?',
         timeLimitSec: 7,
         options: [
-          { text: 'Je respecte, meme si je suis frustre', score: 0 },
+          { text: 'Je respecte, même si je suis frustré', score: 0 },
           { text: 'Je negocie encore un peu', score: 1 },
           { text: 'Je force, sinon ca ne bouge pas', score: 2 },
         ],
       },
       {
-        text: 'Politique et valeurs dans le couple, pour toi c est...',
+        text: 'Politique et valeurs dans le couple, pour toi c\'est...',
         timeLimitSec: 8,
         options: [
           { text: 'Important, ca compte dans la compatibilite', score: 0 },
@@ -136,7 +136,7 @@ const CUSTOM_PRESETS: CustomPreset[] = [
         ],
       },
       {
-        text: 'Un desaccord monte: ton reflexe principal ?',
+        text: 'Un désaccord monte: ton reflexe principal ?',
         timeLimitSec: 7,
         options: [
           { text: 'Parler calmement et comprendre', score: 0 },
@@ -145,7 +145,7 @@ const CUSTOM_PRESETS: CustomPreset[] = [
         ],
       },
       {
-        text: 'Tu apprends que ton/ta partenaire a deja menti sur un detail important. Tu...',
+        text: 'Tu apprends que ton/ta partenaire a déjà menti sur un détail important. Tu...',
         timeLimitSec: 8,
         options: [
           { text: 'Discutes franchement de la confiance', score: 0 },
@@ -158,24 +158,24 @@ const CUSTOM_PRESETS: CustomPreset[] = [
   {
     id: 'safe-night',
     label: 'Safe night check',
-    audience: 'Avant de rentrer chez quelqu un',
-    suggestedName: 'Respect et securite',
+    audience: 'Avant de rentrer chez quelqu\'un',
+    suggestedName: 'Respect et sécurité',
     suggestedDescription: 'Check express pour voir le niveau de respect dans les situations sensibles.',
     questions: [
       {
-        text: 'Quand quelqu un dit "non", ta reaction immediate ?',
+        text: 'Quand quelqu\'un dit "non", ta réaction immédiate ?',
         timeLimitSec: 6,
         options: [
           { text: 'Je stoppe tout de suite', score: 0 },
-          { text: 'Je tente une derniere fois', score: 1 },
+          { text: 'Je tente une dernière fois', score: 1 },
           { text: 'Je continue si je sens que la personne veut', score: 2 },
         ],
       },
       {
-        text: 'Boire beaucoup avant un date, pour toi c est...',
+        text: 'Boire beaucoup avant un date, pour toi c\'est...',
         timeLimitSec: 7,
         options: [
-          { text: 'A eviter, je veux rester clair', score: 0 },
+          { text: 'A éviter, je veux rester clair', score: 0 },
           { text: 'Pourquoi pas un peu', score: 1 },
           { text: 'Parfait pour faire sauter les blocages', score: 2 },
         ],
@@ -184,13 +184,13 @@ const CUSTOM_PRESETS: CustomPreset[] = [
         text: 'Partager la localisation avec des amis pendant un date ?',
         timeLimitSec: 7,
         options: [
-          { text: 'Bonne pratique de securite', score: 0 },
+          { text: 'Bonne pratique de sécurité', score: 0 },
           { text: 'Parfois utile', score: 1 },
-          { text: 'Inutile, c est parano', score: 2 },
+          { text: 'Inutile, c\'est parano', score: 2 },
         ],
       },
       {
-        text: 'Une personne ne repond pas vite a tes messages. Tu...',
+        text: 'Une personne ne répond pas vite à tes messages. Tu...',
         timeLimitSec: 8,
         options: [
           { text: 'Respectes son rythme', score: 0 },
@@ -199,25 +199,25 @@ const CUSTOM_PRESETS: CustomPreset[] = [
         ],
       },
       {
-        text: 'Sur un sujet intime, le consentement c est...',
+        text: 'Sur un sujet intime, le consentement c\'est...',
         timeLimitSec: 7,
         options: [
           { text: 'Clair, explicite, revocable a tout moment', score: 0 },
           { text: 'Sous-entendu si l ambiance est bonne', score: 1 },
-          { text: 'Pas necessaire si on est deja en couple', score: 2 },
+          { text: 'Pas nécessaire si on est déjà en couple', score: 2 },
         ],
       },
     ],
   },
   {
     id: 'debate-party',
-    label: 'Debat entre potes',
+    label: 'Débat entre potes',
     audience: 'Soiree ou groupe d amis',
-    suggestedName: 'Debat flash entre amis',
-    suggestedDescription: 'Version fun pour lancer un debat en groupe sans que ca s eternise.',
+    suggestedName: 'Débat flash entre amis',
+    suggestedDescription: 'Version fun pour lancer un débat en groupe sans que ça s\'éternise.',
     questions: [
       {
-        text: 'En desaccord en groupe, ton style ?',
+        text: 'En désaccord en groupe, ton style ?',
         timeLimitSec: 6,
         options: [
           { text: 'Ecoute puis argumente', score: 0 },
@@ -253,7 +253,7 @@ const CUSTOM_PRESETS: CustomPreset[] = [
         ],
       },
       {
-        text: 'Le but d un debat flash entre amis, pour toi ?',
+        text: 'Le but d\'un débat flash entre amis, pour toi ?',
         timeLimitSec: 7,
         options: [
           { text: 'Comprendre les limites et valeurs de chacun', score: 0 },
@@ -373,7 +373,7 @@ function formatRelativeMinutes(updatedAt: number): string {
 }
 
 function getResumeStatusLabel(status: LastSessionResume['status']): string {
-  if (status === 'completed') return 'Resultat disponible';
+  if (status === 'completed') return 'Résultat disponible';
   if (status === 'in_progress') return 'Sprint en cours';
   return 'Session prete';
 }
@@ -405,8 +405,8 @@ function parseSenderShareResume(value: unknown): SenderShareResume | null {
 }
 
 function getWatchStatusLabel(status?: SessionWatchData['status']): string {
-  if (status === 'completed') return 'Resultats recus';
-  if (status === 'in_progress') return 'La personne est en train de repondre';
+  if (status === 'completed') return 'Résultats reçus';
+  if (status === 'in_progress') return 'La personne est en train de répondre';
   return 'Invitation envoyee, en attente de demarrage';
 }
 
@@ -692,7 +692,7 @@ export default function FlashFlagPage() {
       });
 
       const json = await response.json();
-      if (!response.ok) throw new Error(json.error?.message || 'Creation impossible');
+      if (!response.ok) throw new Error(json.error?.message || 'Création impossible');
 
       const playUrl: string = json.data.playUrl;
       const code = playUrl.split('/').pop() || '';
@@ -955,7 +955,7 @@ export default function FlashFlagPage() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#FCA5A5]">Flash Flag Sprint</p>
               <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Match sympa ou mega red flag ?</h1>
               <p className="mt-3 text-sm text-[#E4E4E7] sm:text-base">
-                Tu envoies le test, la personne repond vite, et tu vois direct si vos valeurs matchent.
+                Tu envoies le test, la personne répond vite, et tu vois direct si vos valeurs matchent.
               </p>
             </div>
             <Image
@@ -970,8 +970,8 @@ export default function FlashFlagPage() {
           <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#FCD34D]">Exemple reel</p>
             <p className="mt-1 text-sm text-[#E5E7EB]">
-              Tu discutes avec quelqu un sur Tinder et vous parlez d un rendez-vous. Tu envoies Flash Flag: en 2 minutes,
-              tu sais si c est alignement de valeurs ou gros warning.
+              Tu discutes avec quelqu&apos;un sur Tinder et vous parlez d&apos;un rendez-vous. Tu envoies Flash Flag: en 2 minutes,
+              tu sais si c&apos;est alignement de valeurs ou gros warning.
             </p>
           </div>
 
@@ -982,7 +982,7 @@ export default function FlashFlagPage() {
             </div>
             <div className="rounded-2xl border border-white/10 bg-black/25 p-3">
               <p className="text-xs font-semibold text-[#FCD34D]">⏱ Instinctif</p>
-              <p className="mt-1 text-xs text-[#D4D4D8]">Temps court par question pour eviter le baratin.</p>
+              <p className="mt-1 text-xs text-[#D4D4D8]">Temps court par question pour éviter le baratin.</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-black/25 p-3">
               <p className="text-xs font-semibold text-[#86EFAC]">🔗 Partageable</p>
@@ -1033,7 +1033,7 @@ export default function FlashFlagPage() {
                   className="inline-flex items-center rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm text-[#DBEAFE] transition-colors hover:bg-black/35"
                   onClick={() => setIsSenderFocusMode((value) => !value)}
                 >
-                  {isSenderFocusMode ? 'Afficher reglages' : 'Masquer reglages'}
+                  {isSenderFocusMode ? 'Afficher réglages' : 'Masquer réglages'}
                 </button>
                 <button
                   className="inline-flex items-center rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm text-[#DBEAFE] transition-colors hover:bg-black/35"
@@ -1051,7 +1051,7 @@ export default function FlashFlagPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#86EFAC]">Reprise rapide</p>
-                <h2 className="mt-1 text-lg font-bold">Tu peux reprendre ta derniere session</h2>
+                <h2 className="mt-1 text-lg font-bold">Tu peux reprendre ta dernière session</h2>
                 <p className="mt-1 text-xs text-[#D1FAE5]">
                   {lastSessionResume.testName} • {getResumeStatusLabel(lastSessionResume.status)} • {formatRelativeMinutes(lastSessionResume.updatedAt)}
                 </p>
@@ -1077,7 +1077,7 @@ export default function FlashFlagPage() {
 
         {createdSessionCode && isSenderFocusMode && (
           <div className="rounded-xl border border-white/10 bg-[#111318]/85 px-4 py-3 text-xs text-[#A3A3A3]">
-            Mode suivi actif: les reglages longs sont masques pour aller droit au partage et au statut de reponse.
+            Mode suivi actif: les réglages longs sont masqués pour aller droit au partage et au statut de réponse.
           </div>
         )}
 
@@ -1086,7 +1086,7 @@ export default function FlashFlagPage() {
             <section className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-[#2B2B2D] bg-[#111113] p-5 shadow-[0_8px_36px_rgba(0,0,0,0.3)]">
             <h2 className="text-lg font-bold">1. Qui est evalue ?</h2>
-            <p className="mt-1 text-xs text-[#A3A3A3]">Profil de la personne qui va repondre au test.</p>
+            <p className="mt-1 text-xs text-[#A3A3A3]">Profil de la personne qui va répondre au test.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <label className="space-y-2">
                 <span className="text-sm text-[#D4D4D8]">Sexe</span>
@@ -1116,7 +1116,7 @@ export default function FlashFlagPage() {
 
           <div className="rounded-2xl border border-[#2B2B2D] bg-[#111113] p-5 shadow-[0_8px_36px_rgba(0,0,0,0.3)]">
             <h2 className="text-lg font-bold">2. Quel type de test envoyer ?</h2>
-            <p className="mt-1 text-xs text-[#A3A3A3]">Selectionne d abord le format du questionnaire.</p>
+            <p className="mt-1 text-xs text-[#A3A3A3]">Sélectionne d&apos;abord le format du questionnaire.</p>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <button
@@ -1124,7 +1124,7 @@ export default function FlashFlagPage() {
                 onClick={() => setSourceType('standard')}
               >
                 <p className="text-sm font-bold">⚙ Test standard</p>
-                <p className="mt-1 text-xs text-current/80">Liste prete, creee dans l admin.</p>
+                <p className="mt-1 text-xs text-current/80">Liste prete, créée dans l admin.</p>
               </button>
 
               <button
@@ -1144,7 +1144,7 @@ export default function FlashFlagPage() {
           {sourceType === 'standard' ? (
             <div className="mt-4 space-y-3">
               {tests.length === 0 ? (
-                <p className="text-sm text-[#FCA5A5]">Aucun test standard actif n est disponible pour le moment.</p>
+                <p className="text-sm text-[#FCA5A5]">Aucun test standard actif n&apos;est disponible pour le moment.</p>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
                   {tests.map((test) => {
@@ -1197,7 +1197,7 @@ export default function FlashFlagPage() {
 
               <div className="rounded-2xl border border-white/10 bg-[#15161A] p-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FCD34D]">Templates express</p>
-                <p className="mt-1 text-xs text-[#A3A3A3]">Choisis un pack selon ton contexte puis personnalise.</p>
+                <p className="mt-1 text-xs text-[#A3A3A3]">Choisis un pack selon ton contexte puis personnalisé.</p>
                 <div className="mt-3 grid gap-2 sm:grid-cols-3">
                   {CUSTOM_PRESETS.map((preset) => (
                     <button
@@ -1305,7 +1305,7 @@ export default function FlashFlagPage() {
 
               <div className="rounded-2xl border border-dashed border-white/20 bg-[#111216] p-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-xs text-[#A3A3A3]">Besoin d une question en plus ? Ajoute-la directement en bas.</p>
+                  <p className="text-xs text-[#A3A3A3]">Besoin d&apos;une question en plus ? Ajoute-la directement en bas.</p>
                   <button
                     className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-[#E4E4E7] hover:border-white/35 disabled:opacity-40"
                     onClick={addQuestion}
@@ -1324,8 +1324,8 @@ export default function FlashFlagPage() {
             </section>
 
             <section className="rounded-2xl border border-[#2B2B2D] bg-[#111113] p-5 space-y-4 shadow-[0_8px_36px_rgba(0,0,0,0.3)]">
-          <h2 className="text-lg font-bold">4. Choisir l envoi puis lancer</h2>
-          <p className="text-xs text-[#A3A3A3]">Derniere etape: choisis le mode d envoi juste avant de generer la session.</p>
+          <h2 className="text-lg font-bold">4. Choisir l&apos;envoi puis lancer</h2>
+          <p className="text-xs text-[#A3A3A3]">Derniere étape: choisis le mode d envoi juste avant de generer la session.</p>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <button
@@ -1333,7 +1333,7 @@ export default function FlashFlagPage() {
               onClick={() => setMode('local')}
             >
               <p className="text-sm font-bold">📱 Jouer en local</p>
-              <p className="mt-1 text-xs text-current/80">Tu gardes le telephone et la personne repond tout de suite.</p>
+              <p className="mt-1 text-xs text-current/80">Tu gardes le téléphone et la personne répond tout de suite.</p>
             </button>
 
             <button
@@ -1341,12 +1341,12 @@ export default function FlashFlagPage() {
               onClick={() => setMode('link')}
             >
               <p className="text-sm font-bold">🔗 Envoyer un lien</p>
-              <p className="mt-1 text-xs text-current/80">Tu partages l URL, la personne repond depuis son appareil.</p>
+              <p className="mt-1 text-xs text-current/80">Tu partages l&apos;URL, la personne répond depuis son appareil.</p>
             </button>
           </div>
 
           <div className="rounded-xl border border-white/10 bg-[#15161A] p-3 text-xs text-[#D4D4D8]">
-            En local: usage immediat sur cet ecran. En lien: ideal pour un envoi en message avant un rendez-vous.
+            En local: usage immédiat sur cet ecran. En lien: ideal pour un envoi en message avant un rendez-vous.
           </div>
 
           <button
@@ -1416,16 +1416,16 @@ export default function FlashFlagPage() {
               <p className="text-xs text-[#A3A3A3]">Code session: {createdSessionCode}</p>
 
               {watchData && watchData.status === 'pending' && (
-                <p className="text-xs text-[#D4D4D8]">Le test n a pas encore ete lance par le destinataire.</p>
+                <p className="text-xs text-[#D4D4D8]">Le test n&apos;a pas encore été lancé par le destinataire.</p>
               )}
 
               {watchData && watchData.status === 'in_progress' && (
-                <p className="text-xs text-[#FCA5A5]">Le destinataire est en train de repondre au test.</p>
+                <p className="text-xs text-[#FCA5A5]">Le destinataire est en train de répondre au test.</p>
               )}
 
               {watchData && watchData.status === 'completed' && (
                 <div className="rounded-lg border border-[#7F1D1D] bg-[#1A1212] p-3 space-y-2">
-                  <p className="text-sm text-[#FECACA]">Resultat recu</p>
+                  <p className="text-sm text-[#FECACA]">Résultat recu</p>
                   <p className="text-xs text-[#E4E4E7]">Score: {watchData.score.total}/{watchData.score.max} ({watchPercent}%)</p>
                   <p className="text-xs text-[#E4E4E7]">Niveau: {getRiskLabelFromPercent(watchPercent)}</p>
                   <p className="text-xs text-[#D4D4D8]">Reponses: {watchData.score.answered} | Timeout: {watchData.score.timedOut}</p>
@@ -1436,7 +1436,7 @@ export default function FlashFlagPage() {
 
                   {watchAnswers.length > 0 && (
                     <details className="mt-2 rounded-lg border border-white/10 bg-[#111316] p-2.5">
-                      <summary className="cursor-pointer text-xs text-[#D4D4D8]">Voir le detail des reponses ({watchAnswers.length})</summary>
+                      <summary className="cursor-pointer text-xs text-[#D4D4D8]">Voir le détail des réponses ({watchAnswers.length})</summary>
                       <div className="mt-2 max-h-72 space-y-2 overflow-y-auto pr-1">
                         {watchAnswers.map((answer, idx) => (
                           <div key={`${answer.question_index}-${idx}`} className="rounded-lg border border-white/10 bg-[#0D0E11] p-2.5">

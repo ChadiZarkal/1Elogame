@@ -31,13 +31,8 @@ export const metadata: Metadata = {
   },
   description: SITE_DESCRIPTION,
   keywords: [
-    'red or green', 'red or green.fr', 'redorgreen', 'red flag games',
-    'red flag', 'green flag', 'party game', 'jeu entre amis', 'jeu mobile',
-    'red flag test', 'flag or not', 'jeu gratuit', 'jeu en ligne', 'débat',
-    'jeu de société', 'icebreaker', 'jeu soirée', 'quiz couple',
-    'red flag definition', 'green flag definition', 'oracle jeu',
-    'classement red flag', 'comportement red flag',
-    'violentomètre', 'consentomètre', 'violentometre en ligne',
+    'red or green', 'red flag', 'green flag',
+    'classement red flag', 'violentomètre', 'consentomètre',
   ],
   authors: [{ name: SITE_NAME, url: SITE_URL }],
   creator: SITE_NAME,
@@ -81,7 +76,11 @@ export const metadata: Metadata = {
   category: 'games',
   classification: 'Entertainment',
   other: {
-    'google-site-verification': process.env.GOOGLE_SITE_VERIFICATION || '',
+    // Une balise vide serait servie sur toutes les pages : ne l'émettre qu'une
+    // fois la valeur réellement fournie.
+    ...(process.env.GOOGLE_SITE_VERIFICATION
+      ? { 'google-site-verification': process.env.GOOGLE_SITE_VERIFICATION }
+      : {}),
     ...(adSenseClientId ? { 'google-adsense-account': adSenseClientId } : {}),
   },
 };
@@ -142,17 +141,12 @@ function JsonLd() {
         alternateName: 'Red or Green',
         url: SITE_URL,
         logo: `${SITE_URL}/logo-rog-new.svg`,
+        email: 'contact@redorgreen.fr',
       },
-      {
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Accueil', item: SITE_URL },
-          { '@type': 'ListItem', position: 2, name: 'Red or Green', item: `${SITE_URL}/jeu` },
-          { '@type': 'ListItem', position: 3, name: 'Oracle', item: `${SITE_URL}/flagornot` },
-          { '@type': 'ListItem', position: 4, name: 'Classement', item: `${SITE_URL}/classement` },
-          { '@type': 'ListItem', position: 5, name: 'Ressources', item: `${SITE_URL}/ressources` },
-        ],
-      },
+      // Pas de BreadcrumbList ici : ce graphe est émis sur toutes les routes, y
+      // compris les pages légales, et le site n'affiche aucun fil d'Ariane. Un
+      // balisage décrivant une navigation absente de l'écran est un motif de
+      // signalement. Les fils d'Ariane réels restent déclarés route par route.
     ],
   };
 

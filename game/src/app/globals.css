@@ -774,39 +774,6 @@ button:focus-visible {
   border-width: 0;
 }
 
-/* ── SEO content section ─────────────── */
-.hub__seo {
-  max-width: 400px;
-  margin: 1.5rem auto 0;
-  padding: 0 0.5rem 1.5rem;
-  text-align: center;
-}
-
-.hub__seo-title {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #888;
-  margin-bottom: 0.5rem;
-}
-
-.hub__seo-text {
-  font-size: 0.7rem;
-  color: #555;
-  line-height: 1.6;
-}
-
-.hub__seo-link {
-  color: #888;
-  text-decoration: underline;
-  text-decoration-color: rgba(255, 255, 255, 0.15);
-  text-underline-offset: 2px;
-  transition: color 0.15s ease;
-}
-
-.hub__seo-link:hover {
-  color: #EF4444;
-}
-
 /* ═══════════════════════════════════════════════════════════
    RESSOURCES — Floating button, cards, quiz
    ═══════════════════════════════════════════════════════════ */
@@ -962,6 +929,92 @@ button:focus-visible {
   top: 0;
   outline: 2px solid #fff;
   outline-offset: 2px;
+}
+
+/* ═══════════════ PAGE NOTES ═══════════════
+   Contenu éditorial servi sous les écrans de jeu. Aucune animation d'entrée :
+   ce texte doit être peint au premier rendu, pas révélé après hydratation. */
+.page-notes {
+  background: #0a0a0a;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 2.5rem 1rem 3rem;
+}
+.page-notes__inner {
+  max-width: 680px;
+  margin: 0 auto;
+}
+.page-notes__title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #f5f5f5;
+  margin-bottom: 0.6rem;
+  letter-spacing: -0.01em;
+}
+.page-notes__lede {
+  font-size: 0.98rem;
+  line-height: 1.65;
+  color: #b8b8b8;
+  margin-bottom: 2rem;
+}
+.page-notes__block {
+  margin-bottom: 1.85rem;
+}
+.page-notes__block h3 {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #f0f0f0;
+  margin-bottom: 0.55rem;
+}
+.page-notes__block p {
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: #a8a8a8;
+  margin-bottom: 0.7rem;
+}
+.page-notes__block ul {
+  margin: 0.4rem 0 0.7rem 1.15rem;
+  list-style: disc;
+}
+.page-notes__block ul li {
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: #a8a8a8;
+  margin-bottom: 0.4rem;
+}
+.page-notes__faq {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 0.85rem;
+  margin-top: 0.85rem;
+}
+.page-notes__faq h4 {
+  font-size: 0.93rem;
+  font-weight: 700;
+  color: #e5e5e5;
+  margin-bottom: 0.3rem;
+}
+.page-notes__faq p {
+  margin-bottom: 0;
+}
+.page-notes__related {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+.page-notes__related a {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 0.55rem 0.85rem;
+  color: #d1d1d1;
+  text-decoration: none;
+  font-size: 0.83rem;
+  font-weight: 600;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.page-notes__related a:hover {
+  border-color: rgba(249, 115, 22, 0.45);
+  color: #fb923c;
 }
 
 /* ═══════════════ LEGAL PAGES STYLES ═══════════════ */

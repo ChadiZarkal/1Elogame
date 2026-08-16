@@ -146,7 +146,7 @@ export async function updateElement(id: string, updates: Partial<Element>): Prom
 }
 
 /** Create a new element. */
-export async function createElement(data: { texte: string; categorie: string; niveau_provocation: number }): Promise<Element> {
+export async function createElement(data: { texte: string; categorie: string; niveau_provocation: number; tags?: string[] }): Promise<Element> {
   if (isMockMode()) {
     const newElement = {
       id: `mock-${Date.now()}`,
@@ -158,6 +158,7 @@ export async function createElement(data: { texte: string; categorie: string; ni
       elo_16_18: 1000, elo_19_22: 1000, elo_23_26: 1000, elo_27plus: 1000,
       nb_participations: 0, nb_participations_homme: 0, nb_participations_femme: 0, nb_participations_autre: 0,
       nb_participations_16_18: 0, nb_participations_19_22: 0, nb_participations_23_26: 0, nb_participations_27plus: 0,
+      tags: data.tags || [],
       created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
     };
     const { getMockElements } = await import('@/lib/mockData');
@@ -171,6 +172,7 @@ export async function createElement(data: { texte: string; categorie: string; ni
     texte: data.texte,
     categorie: data.categorie,
     niveau_provocation: data.niveau_provocation,
+    tags: data.tags || [],
     actif: true,
   });
   if (error) throw new Error(`DB error creating element: ${error.message}`);

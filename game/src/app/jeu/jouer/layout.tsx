@@ -9,6 +9,10 @@ export const metadata: Metadata = {
     url: '/jeu/jouer',
   },
   alternates: { canonical: '/jeu/jouer' },
+  // Écran de partie : son contenu est tiré à chaque tour et le HTML initial se
+  // réduit à un indicateur de chargement. Une telle page n'a rien à faire dans
+  // l'index. `follow` reste actif pour que les liens sortants soient suivis.
+  robots: { index: false, follow: true },
 };
 
 export default function JeuJouerLayout({ children }: { children: React.ReactNode }) {

@@ -120,11 +120,15 @@ export default function CGUPage() {
         <section className="legal-page__section">
           <h2>9. Publicité et consentement</h2>
           <p>
-            Le Service peut inclure des annonces publicitaires fournies par Google AdSense.
-            Lorsque des annonces sont diffusées et que la réglementation locale l&apos;exige
-            (notamment EEE, Royaume-Uni et Suisse), un message de consentement fourni par Google
-            vous permet d&apos;accepter, de refuser ou de personnaliser vos préférences avant tout
-            affichage d&apos;annonces personnalisées.
+            <strong>Aucune annonce publicitaire n&apos;est diffusée sur le Service à ce jour.</strong>{' '}
+            Aucun emplacement publicitaire n&apos;est affiché sur les pages du site.
+          </p>
+          <p>
+            Si des annonces devaient être diffusées à l&apos;avenir, elles le seraient par
+            l&apos;intermédiaire de Google AdSense, et un message de consentement conforme serait
+            présenté avant tout affichage d&apos;annonces personnalisées aux personnes situées dans
+            l&apos;Espace économique européen, au Royaume-Uni et en Suisse, comme la réglementation
+            l&apos;exige.
           </p>
           <p>
             Vous pouvez modifier ces préférences à tout moment depuis les{' '}

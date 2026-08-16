@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { PageNotes } from '@/components/content/PageNotes';
+import { DIXMAIS_NOTES } from '@/content/page-notes';
 
 export const metadata: Metadata = {
   title: "C'est un 10 mais... — Le jeu de notation des red flags",
@@ -52,6 +54,7 @@ export default function DixMaisLayout({ children }: { children: React.ReactNode 
     <>
       <DixMaisJsonLd />
       {children}
+      <PageNotes notes={DIXMAIS_NOTES} />
     </>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { METERS } from '@/config/meters-data';
+import { meterFaq } from '@/content/meter-faq';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
 
@@ -90,29 +91,9 @@ function MeterJsonLd({ slug }: { slug: string }) {
   const meter = METERS.find((m) => m.slug === slug);
   if (!meter) return null;
 
-  const faqMap: Record<string, Array<{ question: string; answer: string }>> = {
-    violentometre: [
-      { question: 'Qu\'est-ce que le violentomètre ?', answer: 'Le violentomètre est un outil d\'auto-évaluation qui permet d\'identifier les signes de violence dans une relation. Il aide à repérer les comportements qui se situent sur un spectre allant de la relation saine à la violence grave.' },
-      { question: 'Le violentomètre en ligne est-il gratuit ?', answer: `Oui, notre violentomètre en ligne est 100% gratuit, anonyme, et ne collecte aucune donnée. Il comporte ${meter.questions.length} questions et les résultats sont immédiats.` },
-      { question: 'Comment fonctionne le test du violentomètre ?', answer: 'Tu réponds par Oui ou Non à chaque situation. À la fin, tu obtiens un résultat coloré (vert, jaune, orange, rouge) qui indique le niveau de gravité de ta situation, avec des conseils et des ressources d\'aide.' },
-    ],
-    consentometre: [
-      { question: 'Qu\'est-ce que le consentomètre ?', answer: 'Le consentomètre est un outil qui aide à évaluer si ton consentement est respecté dans tes relations amicales, amoureuses, universitaires ou professionnelles.' },
-      { question: 'Le test du consentomètre est-il anonyme ?', answer: `Oui, le consentomètre est 100% anonyme et gratuit. Aucune donnée n'est collectée. Les ${meter.questions.length} questions sont traitées directement sur ton appareil.` },
-    ],
-    harcelometre: [
-      { question: 'Qu\'est-ce que le harcèlomètre ?', answer: 'Le harcèlomètre est un outil permettant d\'identifier les situations de harcèlement moral, physique ou en ligne dans tes relations personnelles ou professionnelles.' },
-      { question: 'Comment savoir si je suis victime de harcèlement ?', answer: `Notre harcèlomètre te pose ${meter.questions.length} questions simples pour t'aider à identifier les signes de harcèlement. L'outil est gratuit et anonyme.` },
-    ],
-    incestometre: [
-      { question: 'Qu\'est-ce que l\'incestomètre ?', answer: 'L\'incestomètre est un outil d\'évaluation qui aide à identifier les comportements incestueux ou les transgressions de limites dans le cadre familial.' },
-    ],
-    discriminometre: [
-      { question: 'Qu\'est-ce que le discriminomètre ?', answer: 'Le discriminomètre est un outil pour identifier les situations de discrimination que tu pourrais vivre au quotidien, que ce soit dans le milieu scolaire, professionnel ou social.' },
-    ],
-  };
-
-  const faqs = faqMap[slug] || [];
+  // Même source que la FAQ affichée plus bas : les questions déclarées ici sont
+  // exactement celles que le visiteur voit.
+  const faqs = meterFaq(slug, meter.questions.length);
 
   const jsonLdItems: Record<string, unknown>[] = [
     {
@@ -164,26 +145,7 @@ function MeterFaqAndLinks({ slug }: { slug: string }) {
   const meter = METERS.find((m) => m.slug === slug);
   if (!meter) return null;
 
-  const faqMap: Record<string, Array<{ question: string; answer: string }>> = {
-    violentometre: [
-      { question: 'Qu\'est-ce que le violentomètre ?', answer: `Le violentomètre est un outil d'auto-évaluation qui permet d'identifier les signes de violence dans une relation. Notre test comprend ${meter.questions.length} questions pour repérer les comportements entre relation saine et violence grave.` },
-      { question: 'Le violentomètre en ligne est-il gratuit ?', answer: 'Oui, notre violentomètre en ligne est 100% gratuit, anonyme, et ne collecte aucune donnée. Les résultats sont immédiats.' },
-    ],
-    consentometre: [
-      { question: 'Qu\'est-ce que le consentomètre ?', answer: `Le consentomètre aide à évaluer si ton consentement est respecté dans tes relations. ${meter.questions.length} questions, 100% anonyme.` },
-    ],
-    harcelometre: [
-      { question: 'Qu\'est-ce que le harcèlomètre ?', answer: `Le harcèlomètre permet d'identifier les situations de harcèlement. ${meter.questions.length} questions pour t'aider à y voir clair.` },
-    ],
-    incestometre: [
-      { question: 'Qu\'est-ce que l\'incestomètre ?', answer: `L'incestomètre aide à identifier les comportements incestueux. ${meter.questions.length} questions, gratuit et anonyme.` },
-    ],
-    discriminometre: [
-      { question: 'Qu\'est-ce que le discriminomètre ?', answer: `Le discriminomètre identifie les situations de discrimination. ${meter.questions.length} questions, 100% confidentiel.` },
-    ],
-  };
-
-  const faqs = faqMap[slug] || [];
+  const faqs = meterFaq(slug, meter.questions.length);
 
   const otherMeters = METERS.filter((m) => m.slug !== slug);
 

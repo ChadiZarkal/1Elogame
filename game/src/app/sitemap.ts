@@ -49,12 +49,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'daily',
       priority: 0.8,
     },
-    {
-      url: `${baseUrl}/redflag`,
-      lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
+    // `/redflag` a été retirée : page de porte sans contenu propre, désormais
+    // redirigée en permanent vers `/jeu` (voir next.config.ts).
     {
       url: `${baseUrl}/dixmais`,
       lastModified: now,

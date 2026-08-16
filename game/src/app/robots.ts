@@ -14,7 +14,6 @@ export default function robots(): MetadataRoute.Robots {
           '/flashflag',
           '/guide',
           '/classement',
-          '/redflag',
           '/dixmais',
           '/dixmais/leaderboard',
           '/ressources',

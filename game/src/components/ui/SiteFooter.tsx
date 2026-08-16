@@ -91,6 +91,17 @@ export function SiteFooter() {
                   </Link>
                 </li>
               ))}
+              {/* Le contact n'était joignable que depuis le corps de quatre
+                  pages : un examinateur qui cherche comment nous écrire doit le
+                  trouver depuis n'importe quelle route. */}
+              <li>
+                <a
+                  href="mailto:contact@redorgreen.fr"
+                  className="text-[12px] font-semibold text-[#A6A6A6] transition-colors hover:text-white"
+                >
+                  Contact
+                </a>
+              </li>
             </ul>
           </div>
         </nav>

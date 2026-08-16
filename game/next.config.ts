@@ -43,6 +43,16 @@ const nextConfig: NextConfig = {
     ];
   },
 
+  async redirects() {
+    return [
+      // `/redflag` ne portait qu'un titre et un bouton menant à `/jeu` : une
+      // page de porte, sans contenu propre, que les consignes qualité de Google
+      // désignent explicitement. Redirigée en permanent plutôt que supprimée,
+      // pour conserver les liens entrants existants.
+      { source: '/redflag', destination: '/jeu', permanent: true },
+    ];
+  },
+
   // Redirect trailing slashes
   trailingSlash: false,
 };

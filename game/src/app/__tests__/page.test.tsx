@@ -1,22 +1,21 @@
 /**
  * @file page.test.tsx
- * @description Tests for HomePage (HubPage) — game cards, stats, navigation, share.
+ * @description Accueil — sélecteur de jeu et contenu éditorial servi sous lui.
+ *
+ * Ces tests portent volontairement sur ce qui doit rester vrai : la page
+ * possède un titre de niveau 1, elle expose les quatre jeux, et la présentation
+ * du site est rendue sans interaction ni hydratation. C'est ce dernier point
+ * qui compte pour l'indexation : le sélecteur ne rend qu'une carte à la fois,
+ * donc l'essentiel du texte doit venir d'ailleurs.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import HubPage from '@/app/page';
+import HomePage from '@/app/page';
+import { HOME_NOTES } from '@/content/page-notes';
 
 vi.mock('sonner', () => ({
   toast: vi.fn(),
-}));
-
-vi.mock('lucide-react', () => ({
-  Trophy: () => <span>Trophy</span>,
-  Share2: () => <span>Share2</span>,
-  ArrowRight: () => <span>→</span>,
-  ExternalLink: () => <span>↗</span>,
-  Shield: () => <span>Shield</span>,
 }));
 
 vi.mock('next/navigation', () => ({
@@ -25,7 +24,7 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-describe('HubPage', () => {
+describe('Accueil', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = vi.fn().mockResolvedValue({
@@ -33,61 +32,47 @@ describe('HubPage', () => {
     }) as unknown as typeof fetch;
   });
 
-  it('affiche le titre Red Flag Games', () => {
-    const { container } = render(<HubPage />);
+  it('expose un titre de niveau 1', () => {
+    const { container } = render(<HomePage />);
     const h1 = container.querySelector('h1');
-    expect(h1).toBeDefined();
-    expect(h1!.textContent).toContain('Red or Green');
-    // "Le jeu qui divise" is in the subtitle <p>, not in h1
-    expect(screen.getByText('Le jeu qui divise')).toBeDefined();
+    expect(h1).not.toBeNull();
+    expect(h1!.textContent || h1!.querySelector('img')?.getAttribute('alt') || '')
+      .toMatch(/Red or Green/i);
   });
 
-  it('affiche les cartes de jeu', () => {
-    render(<HubPage />);
-    expect(screen.getByRole('heading', { level: 2, name: 'Red Flag Test' })).toBeDefined();
-    expect(screen.getByRole('heading', { level: 3, name: 'Red or Green' })).toBeDefined();
-    expect(screen.getByRole('heading', { level: 3, name: 'Oracle' })).toBeDefined();
-    expect(screen.getByRole('heading', { level: 3, name: 'Flash Flag' })).toBeDefined();
+  // getAllByText : le jeu sélectionné apparaît deux fois — dans l'onglet du
+  // sélecteur et dans le titre de la carte héro.
+  it('propose les quatre jeux dans le sélecteur', () => {
+    render(<HomePage />);
+    for (const titre of ['REDFLAG TEST', 'LE PIRE DES DEUX', 'SOUMETS TON CAS', "C'est un 10 mais..."]) {
+      expect(screen.getAllByText(titre).length).toBeGreaterThan(0);
+    }
   });
 
-  it('affiche les descriptions des jeux', () => {
-    render(<HubPage />);
-    expect(screen.getByText(/lequel le pire/)).toBeDefined();
-    expect(screen.getByText(/Soumets ta situation/)).toBeDefined();
-    expect(screen.getByText(/Es-tu un red flag/)).toBeDefined();
+  it('expose les liens vers le classement et les ressources', () => {
+    render(<HomePage />);
+    const links = Array.from(document.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    expect(links).toContain('/classement');
+    expect(links).toContain('/ressources');
   });
 
-  it('affiche les boutons Classement et Violentomètre', () => {
-    render(<HubPage />);
-    expect(screen.getByText('Classement')).toBeDefined();
-    expect(screen.getByText('Violentomètre')).toBeDefined();
+  it('rend la présentation du site sans interaction', () => {
+    render(<HomePage />);
+    expect(screen.getByRole('heading', { level: 2, name: HOME_NOTES.title })).toBeDefined();
+    for (const block of HOME_NOTES.blocks) {
+      expect(screen.getByRole('heading', { level: 3, name: block.heading })).toBeDefined();
+    }
   });
 
-  it('expose un lien vers /classement', () => {
-    render(<HubPage />);
-    const classementLink = screen.getByRole('link', { name: /Voir le classement des red flags/i });
-    expect(classementLink).toHaveAttribute('href', '/classement');
+  it('rend chaque question de la FAQ, celles-là mêmes qui sont balisées', () => {
+    render(<HomePage />);
+    for (const item of HOME_NOTES.faq) {
+      expect(screen.getByRole('heading', { level: 4, name: item.question })).toBeDefined();
+    }
   });
 
-  it('expose un lien vers /jeu pour Red or Green', () => {
-    render(<HubPage />);
-    const duelLink = screen.getByRole('link', { name: /Jouer à Red or Green/i });
-    expect(duelLink).toHaveAttribute('href', '/jeu');
-  });
-
-  it('expose un lien vers /flagornot pour Oracle', () => {
-    render(<HubPage />);
-    const oracleLink = screen.getByRole('link', { name: /Jouer à Oracle/i });
-    expect(oracleLink).toHaveAttribute('href', '/flagornot');
-  });
-
-  it('affiche le footer avec la version', () => {
-    render(<HubPage />);
-    expect(screen.getByText(/Red or Green — v3\.8/)).toBeDefined();
-  });
-
-  it('récupère les stats au montage', async () => {
-    render(<HubPage />);
+  it('récupère les statistiques publiques au montage', async () => {
+    render(<HomePage />);
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith('/api/stats/public');
     });

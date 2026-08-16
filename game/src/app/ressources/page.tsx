@@ -98,17 +98,11 @@ export default function RessourcesPage() {
           Aucune donnée n&apos;est collectée — tout reste sur ton appareil.
         </p>
 
-        {/* SEO-rich footer section with internal links */}
-        <section className="mt-6 max-w-md mx-auto w-full px-1">
-          <p className="text-[11px] text-[#3D3D3D] leading-relaxed text-center">
-            Ces outils d&apos;auto-évaluation sont proposés par <Link href="/" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">Red or Green</Link>.
-            Utilise-les pour évaluer ta situation et identifier d&apos;éventuels{' '}
-            <Link href="/redflag" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">red flags</Link> dans tes relations.
-            Tu peux aussi jouer au{' '}
-            <Link href="/jeu" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">jeu Red or Green</Link> ou tester l&apos;
-            <Link href="/flagornot" className="text-[#555] underline underline-offset-2 hover:text-[#EF4444] transition-colors">Oracle</Link> pour évaluer n&apos;importe quelle situation.
-          </p>
-        </section>
+        {/* Le bloc de liens internes qui figurait ici était rendu en #3D3D3D
+            sur fond sombre, sous un commentaire « SEO-rich footer section » :
+            un texte écrit pour les moteurs, illisible pour les visiteurs. Les
+            mêmes liens sont désormais dans la section éditoriale rendue par le
+            layout, à un contraste normal. */}
       </main>
     </div>
   );

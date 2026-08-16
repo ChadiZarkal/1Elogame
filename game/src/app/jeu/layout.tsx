@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { PageNotes } from '@/components/content/PageNotes';
+import { JEU_NOTES } from '@/content/page-notes';
 
 export const metadata: Metadata = {
   title: 'Red or Green — Quel est le plus gros Red Flag ?',
@@ -53,6 +55,9 @@ export default function JeuLayout({ children }: { children: React.ReactNode }) {
     <>
       <JeuJsonLd />
       {children}
+      {/* Sous le jeu : l'écran de jeu reste le premier élément vu, et le HTML
+          cesse de se réduire à un formulaire. */}
+      <PageNotes notes={JEU_NOTES} />
     </>
   );
 }

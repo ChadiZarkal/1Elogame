@@ -51,7 +51,6 @@ export default function ConfidentialitePage() {
             <li><strong>Données de session</strong> — durée de visite, pages consultées, événements d&apos;interaction (analytics internes).</li>
             <li><strong>Adresse IP</strong> — utilisée uniquement pour la limitation de débit (rate limiting) afin de protéger le service contre les abus. Non stockée en base de données.</li>
             <li><strong>Données techniques</strong> — type de navigateur, système d&apos;exploitation, taille d&apos;écran (via Vercel Analytics et Speed Insights).</li>
-            <li><strong>Données de consentement publicitaire</strong> — choix de consentement (accepter, refuser, personnaliser) nécessaires pour appliquer vos préférences de publicité.</li>
           </ul>
 
           <h3>3.3 Stockage local (localStorage)</h3>
@@ -75,7 +74,6 @@ export default function ConfidentialitePage() {
               <tr><td>Analyse de l&apos;Oracle par IA</td><td>Consentement (soumission volontaire)</td></tr>
               <tr><td>Analytics et amélioration du service</td><td>Intérêt légitime</td></tr>
               <tr><td>Protection contre les abus (rate limiting)</td><td>Intérêt légitime</td></tr>
-              <tr><td>Diffusion de publicités (Google AdSense)</td><td>Consentement (lorsqu&apos;exigé) / Intérêt légitime selon zone géographique et paramétrage</td></tr>
             </tbody>
           </table>
         </section>
@@ -132,11 +130,14 @@ export default function ConfidentialitePage() {
           <ul>
             <li><strong>Cookies essentiels</strong> — nécessaires au fonctionnement du site (session, préférences).</li>
             <li><strong>Analytics</strong> — Vercel Analytics et Speed Insights pour mesurer la performance du site.</li>
-            <li><strong>Publicité</strong> — Google AdSense peut utiliser des cookies/identifiants pour afficher des annonces et limiter la répétition publicitaire.</li>
           </ul>
           <p>
-            Des fournisseurs tiers, dont Google, utilisent des cookies pour diffuser des annonces
-            en fonction de vos visites antérieures sur ce site ou sur d&apos;autres sites.
+            <strong>Aucune annonce publicitaire n&apos;est diffusée sur le site à ce jour</strong>, et
+            aucun cookie publicitaire n&apos;est déposé de notre fait. Si des annonces devaient être
+            diffusées à l&apos;avenir via Google AdSense, des fournisseurs tiers, dont Google,
+            pourraient utiliser des cookies pour diffuser des annonces en fonction de vos visites
+            antérieures sur ce site ou sur d&apos;autres sites, et un message de consentement serait
+            présenté au préalable là où la réglementation l&apos;exige.
           </p>
           <p>
             Vous pouvez désactiver la publicité personnalisée depuis les{' '}
@@ -163,14 +164,18 @@ export default function ConfidentialitePage() {
           <h2>9. Partage avec des partenaires et sous-traitants</h2>
           <p>
             Nous partageons certaines données uniquement avec des prestataires techniques nécessaires
-            au fonctionnement du service (hébergement, analytique, diffusion publicitaire, base de
-            données), dans la limite de leurs besoins opérationnels.
+            au fonctionnement du service (hébergement, analytique, base de données), dans la limite
+            de leurs besoins opérationnels.
           </p>
           <ul>
-            <li><strong>Google AdSense</strong> — diffusion et mesure publicitaire.</li>
             <li><strong>Vercel</strong> — hébergement, logs techniques et mesures de performance.</li>
             <li><strong>Supabase</strong> — stockage des données applicatives.</li>
+            <li><strong>Google (Gemini)</strong> — analyse des textes soumis à l&apos;Oracle.</li>
           </ul>
+          <p>
+            Google AdSense ne figure pas dans cette liste : aucune annonce n&apos;est diffusée sur le
+            site à ce jour. Cette page sera mise à jour avant toute diffusion publicitaire.
+          </p>
         </section>
 
         <section className="legal-page__section">

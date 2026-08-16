@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { PageNotes } from '@/components/content/PageNotes';
+import { ORACLE_NOTES } from '@/content/page-notes';
 
 export const metadata: Metadata = {
   title: 'Oracle — Red Flag ou Green Flag ?',
@@ -56,6 +58,7 @@ export default function FlagOrNotLayout({ children }: { children: React.ReactNod
         }}
       />
       {children}
+      <PageNotes notes={ORACLE_NOTES} />
     </>
   );
 }

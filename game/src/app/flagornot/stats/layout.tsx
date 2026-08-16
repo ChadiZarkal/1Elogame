@@ -9,6 +9,10 @@ export const metadata: Metadata = {
     url: '/flagornot/stats',
   },
   alternates: { canonical: '/flagornot/stats' },
+  // Les chiffres sont chargés côté navigateur : le HTML servi ne contient que
+  // « Chargement des stats... ». Tant que la page n'est pas rendue côté
+  // serveur, elle ne doit pas être indexée.
+  robots: { index: false, follow: true },
 };
 
 export default function FlagOrNotStatsLayout({ children }: { children: React.ReactNode }) {
