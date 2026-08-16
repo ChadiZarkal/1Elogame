@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import { METERS } from '@/config/meters-data';
-import { PageNotes } from '@/components/content/PageNotes';
-import { RESSOURCES_NOTES } from '@/content/page-notes';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
 
@@ -66,7 +64,6 @@ export default function RessourcesLayout({ children }: { children: React.ReactNo
     <>
       <RessourcesJsonLd />
       {children}
-      <PageNotes notes={RESSOURCES_NOTES} />
     </>
   );
 }

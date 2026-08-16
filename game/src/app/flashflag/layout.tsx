@@ -1,6 +1,4 @@
 import type { Metadata } from 'next';
-import { PageNotes } from '@/components/content/PageNotes';
-import { FLASHFLAG_NOTES } from '@/content/page-notes';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
 
@@ -81,7 +79,6 @@ export default function FlashFlagLayout({ children }: { children: React.ReactNod
     <>
       <FlashFlagJsonLd />
       {children}
-      <PageNotes notes={FLASHFLAG_NOTES} />
     </>
   );
 }
