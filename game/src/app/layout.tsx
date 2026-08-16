@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AdSenseScript } from "@/components/ads/AdSenseScript";
 import { SiteFooter } from "@/components/ui/SiteFooter";
+import { SiteHeader } from "@/components/ui/SiteHeader";
 import { CONTACT_EMAIL, INSTAGRAM_URL } from "@/config/contact";
 
 import "./globals.css";
@@ -210,6 +211,7 @@ export default function RootLayout({
         </a>
         <ErrorBoundary>
           <AnalyticsProvider>
+            <SiteHeader />
             {children}
             <SiteFooter />
           </AnalyticsProvider>

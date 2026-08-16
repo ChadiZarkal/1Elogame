@@ -7,11 +7,7 @@ export const metadata: Metadata = {
   title: 'Violentomètre, Consentomètre & Auto-évaluation — Outils gratuits',
   description:
     'Évalue ta situation avec nos outils gratuits et anonymes : violentomètre, consentomètre, incestomètre, harcèlomètre, discriminomètre. 100% confidentiel, aucune donnée collectée.',
-  keywords: [
-    'violentomètre', 'consentomètre', 'incestomètre', 'harcèlomètre', 'discriminomètre',
-    'violentometre en ligne', 'test violence couple', 'test harcèlement',
-    'outil auto-évaluation violence', 'quiz consentement', 'red flag test',
-  ],
+  keywords: ['violentomètre', 'consentomètre', 'auto-évaluation', 'violences conjugales'],
   openGraph: {
     title: 'Violentomètre & Consentomètre — Outils d\'auto-évaluation gratuits',
     description:

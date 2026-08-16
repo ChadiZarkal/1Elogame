@@ -42,7 +42,7 @@ export default function FlagOrNotPage() {
     <div
       ref={mainRef}
       className="relative flex flex-col overflow-hidden"
-      style={{ height: 'var(--app-height, 100dvh)', background: '#06040F' }}
+      style={{ height: 'calc(var(--app-height, 100dvh) - var(--header-h))', background: '#06040F' }}
     >
       {/* Ambiance : `absolute` et non `fixed`.
           Ce conteneur a une hauteur d'écran et le contenu éditorial le suit

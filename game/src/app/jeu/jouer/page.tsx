@@ -268,7 +268,7 @@ export default function JouerPage() {
     <div
       ref={scrollRef}
       className="relative w-full overflow-y-auto overscroll-y-contain bg-[#0D0D0D]"
-      style={{ height: 'var(--app-height, 100dvh)' }}
+      style={{ height: 'calc(var(--app-height, 100dvh) - var(--header-h))' }}
     >
       {/* History: past duel results */}
       {duelHistory.length > 0 && (
@@ -294,8 +294,8 @@ export default function JouerPage() {
       <div
         className="w-full relative flex flex-col"
         style={{
-          minHeight: 'var(--app-height, 100dvh)',
-          height: 'var(--app-height, 100dvh)',
+          minHeight: 'calc(var(--app-height, 100dvh) - var(--header-h))',
+          height: 'calc(var(--app-height, 100dvh) - var(--header-h))',
         }}
       >
         {/* Top bar: home + streak + party progress */}

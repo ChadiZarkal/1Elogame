@@ -7,13 +7,7 @@ export const metadata: Metadata = {
   title: 'Guide des Flags — Définitions Red Flag, Green Flag, Black Flag...',
   description:
     'Comprends la différence entre Green Flag, Orange Flag, Red Flag, Black Flag et White Flag. Définitions claires avec exemples concrets pour reconnaître les signaux relationnels.',
-  keywords: [
-    'red flag définition', 'green flag définition', 'black flag signification',
-    'orange flag relation', 'white flag couple', 'guide flags relation',
-    'signaux relation toxique', 'reconnaître red flag couple',
-    'green flag comportement', 'différence red flag green flag',
-    'flags relationnels', 'signaux comportements', 'red flag examples',
-  ],
+  keywords: ['red flag', 'green flag', 'black flag', 'orange flag', 'white flag'],
   openGraph: {
     title: 'Guide des Flags — Red, Green, Black, Orange & White Flag',
     description: 'Comprends les 5 types de signaux relationnels avec définitions et exemples concrets.',

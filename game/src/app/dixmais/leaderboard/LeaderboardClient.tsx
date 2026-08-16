@@ -63,7 +63,7 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
   const worstDelta = data.length ? Math.min(...data.map(d => d.avg_delta)) : null;
 
   return (
-    <div className="relative min-h-dvh text-white pb-10" style={{ background: '#080808' }}>
+    <div className="relative min-h-[calc(100dvh-var(--header-h))] text-white pb-10" style={{ background: '#080808' }}>
       {/* `absolute` : décor de cette page, pas de la fenêtre. */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[500px] h-[400px] rounded-full opacity-15"

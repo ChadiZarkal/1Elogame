@@ -138,7 +138,7 @@ export function HubClient() {
   const activeCard = CARDS_DATA[selectedVibe];
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-[#000000] text-[#E2E2E2] selection:bg-[#FF3B30]/30 selection:text-white pb-8">
+    <div className="relative min-h-[calc(100dvh-var(--header-h))] overflow-hidden bg-[#000000] text-[#E2E2E2] selection:bg-[#FF3B30]/30 selection:text-white pb-8">
       {/* Dynamic Background Shader & Grid */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         {/* Sleek matrix grid */}
@@ -183,7 +183,7 @@ export function HubClient() {
           qui lance le jeu tombait entièrement sous la ligne de flottaison : il
           fallait faire défiler pour jouer. Les écrans hauts gardent l'aération
           d'origine, les écrans courts se resserrent. */}
-      <main id="main-content" className="relative z-10 mx-auto w-full max-w-110 px-5 py-6 [@media(max-height:720px)]:py-3 flex flex-col items-center justify-between min-h-dvh">
+      <main id="main-content" className="relative z-10 mx-auto w-full max-w-110 px-5 py-6 [@media(max-height:720px)]:py-3 flex flex-col items-center justify-between min-h-[calc(100dvh-var(--header-h))]">
         
         {/* 1. Header (Minimalist & Branding Focus) */}
         <header className="w-full space-y-4 [@media(max-height:720px)]:space-y-1.5 flex flex-col items-center pt-2 [@media(max-height:720px)]:pt-0">

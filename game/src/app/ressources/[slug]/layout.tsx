@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { METERS } from '@/config/meters-data';
 import { meterFaq } from '@/content/meter-faq';
+import { meterNotes } from '@/content/meter-notes';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
 
@@ -146,6 +147,7 @@ function MeterFaqAndLinks({ slug }: { slug: string }) {
   if (!meter) return null;
 
   const faqs = meterFaq(slug, meter.questions.length);
+  const notes = meterNotes(slug);
 
   const otherMeters = METERS.filter((m) => m.slug !== slug);
 
@@ -158,6 +160,25 @@ function MeterFaqAndLinks({ slug }: { slug: string }) {
         padding: '8px 16px 56px',
       }}
     >
+      {/* Notice propre à l'outil. Les cinq pages partageaient sinon le même
+          châssis d'écran d'accueil, pour un texte utile trop court : à contenu
+          comparable, les consignes de qualité demandent de développer chaque
+          page plutôt que de laisser cinq quasi-doublons. */}
+      {notes.map((note) => (
+        <div key={note.heading} style={{ marginBottom: 22 }}>
+          <h2 style={{
+            color: '#E5E7EB', fontSize: 15, fontWeight: 800, margin: '0 0 7px',
+          }}>
+            {note.heading}
+          </h2>
+          {note.body.map((paragraph, i) => (
+            <p key={i} style={{ color: '#9CA3AF', fontSize: 13, lineHeight: 1.7, margin: '0 0 8px' }}>
+              {paragraph}
+            </p>
+          ))}
+        </div>
+      ))}
+
       {/* Les questions sont chargées à la demande par l'outil : elles
           n'existaient dans aucun HTML, alors même que le balisage `Quiz`
           annonce leur nombre. Les publier ici rend ce balisage exact, et

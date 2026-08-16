@@ -64,7 +64,7 @@ export function ProfileForm() {
   return (
     <div
       className="relative flex flex-col items-center justify-center overflow-hidden px-3"
-      style={{ minHeight: '100dvh', background: '#0A0A0B' }}
+      style={{ minHeight: 'calc(100dvh - var(--header-h))', background: '#0A0A0B' }}
     >
       {showBg && <AnimatedBackgroundCSS variant="default" />}
       <div
@@ -101,9 +101,11 @@ export function ProfileForm() {
             draggable={false}
           />
         </div>
-        <p className="text-sm font-bold" style={{ color: '#EF4444' }}>
-          🚩 Votez pour le plus red flag
-        </p>
+        {/* La page n'avait aucun titre de niveau 1 : le logo est une image, et
+            cette accroche était un simple paragraphe. */}
+        <h1 className="text-sm font-bold" style={{ color: '#EF4444' }}>
+          🚩 Le pire des deux — votez pour le plus red flag
+        </h1>
         <p className="text-xs font-medium mt-1" style={{ color: '#52525B' }}>
           2 infos rapides avant de commencer
         </p>

@@ -84,7 +84,7 @@ export default function MeterQuizPage() {
     : 0;
 
   return (
-    <div className="min-h-[100dvh] bg-[#0A0A0B] text-[#FAFAFA] flex flex-col relative overflow-hidden">
+    <div className="min-h-[calc(100dvh-var(--header-h))] bg-[#0A0A0B] text-[#FAFAFA] flex flex-col relative overflow-hidden">
       {/* Subtle ambient gradient */}
       {phase === 'intro' && (
         <div className="absolute inset-0 pointer-events-none">

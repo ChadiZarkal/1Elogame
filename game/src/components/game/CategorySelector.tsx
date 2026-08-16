@@ -122,7 +122,7 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
   return (
     <div
       className="flex flex-col items-center justify-center px-4 pt-[max(12px,env(safe-area-inset-top))] pb-[max(20px,env(safe-area-inset-bottom))]"
-      style={{ minHeight: '100dvh', background: '#0A0A0B' }}
+      style={{ minHeight: 'calc(100dvh - var(--header-h))', background: '#0A0A0B' }}
     >
       <div className="w-full max-w-sm flex items-center justify-between mb-4">
         <Link

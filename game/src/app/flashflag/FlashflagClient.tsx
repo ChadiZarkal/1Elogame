@@ -935,7 +935,7 @@ export default function FlashFlagPage() {
   };
 
   return (
-    <main className="relative min-h-dvh overflow-hidden bg-[#09090A] text-[#FAFAFA] px-4 py-6 sm:py-8">
+    <main className="relative min-h-[calc(100dvh-var(--header-h))] overflow-hidden bg-[#09090A] text-[#FAFAFA] px-4 py-6 sm:py-8">
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="absolute inset-0 bg-[repeating-linear-gradient(-45deg,transparent,transparent_14px,rgba(255,255,255,0.5)_14px,rgba(255,255,255,0.5)_15px)] opacity-[0.05]" />
         <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/14 blur-3xl" />
