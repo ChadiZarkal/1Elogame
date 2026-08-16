@@ -43,7 +43,7 @@ export default function MeterQuizPage() {
 
   if (!meter) {
     return (
-      <div className="min-h-[100dvh] bg-[#0A0A0B] flex items-center justify-center">
+      <div className="min-h-[calc(100dvh-var(--header-h,3rem))] bg-[#0A0A0B] flex items-center justify-center">
         <p className="text-[#6B7280]">Chargement…</p>
       </div>
     );
@@ -84,7 +84,7 @@ export default function MeterQuizPage() {
     : 0;
 
   return (
-    <div className="min-h-[calc(100dvh-var(--header-h))] bg-[#0A0A0B] text-[#FAFAFA] flex flex-col relative overflow-hidden">
+    <div className="min-h-[calc(100dvh-var(--header-h,3rem))] bg-[#0A0A0B] text-[#FAFAFA] flex flex-col relative overflow-hidden">
       {/* Subtle ambient gradient */}
       {phase === 'intro' && (
         <div className="absolute inset-0 pointer-events-none">

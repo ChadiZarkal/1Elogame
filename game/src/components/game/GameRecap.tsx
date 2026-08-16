@@ -185,7 +185,7 @@ export function GameRecap() {
   };
 
   return (
-    <div className="min-h-dvh bg-[#0A0A0B]">
+    <div className="min-h-[calc(100dvh-var(--header-h,3rem))] bg-[#0A0A0B]">
       <main
         className={`max-w-md mx-auto px-5 py-6 transition-opacity duration-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}
       >

@@ -236,7 +236,7 @@ export default function JouerPage() {
   
   if (error && !currentDuel) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-dvh bg-[#0D0D0D] p-6">
+      <div className="flex flex-col items-center justify-center min-h-[calc(100dvh-var(--header-h,3rem))] bg-[#0D0D0D] p-6">
         <div className="text-center space-y-4">
           <span className="text-6xl">😕</span>
           <h1 className="text-2xl font-bold text-[#F5F5F5]">Oups !</h1>
@@ -268,7 +268,7 @@ export default function JouerPage() {
     <div
       ref={scrollRef}
       className="relative w-full overflow-y-auto overscroll-y-contain bg-[#0D0D0D]"
-      style={{ height: 'calc(var(--app-height, 100dvh) - var(--header-h))' }}
+      style={{ height: 'calc(var(--app-height, 100dvh) - var(--header-h,3rem))' }}
     >
       {/* History: past duel results */}
       {duelHistory.length > 0 && (
@@ -294,8 +294,8 @@ export default function JouerPage() {
       <div
         className="w-full relative flex flex-col"
         style={{
-          minHeight: 'calc(var(--app-height, 100dvh) - var(--header-h))',
-          height: 'calc(var(--app-height, 100dvh) - var(--header-h))',
+          minHeight: 'calc(var(--app-height, 100dvh) - var(--header-h,3rem))',
+          height: 'calc(var(--app-height, 100dvh) - var(--header-h,3rem))',
         }}
       >
         {/* Top bar: home + streak + party progress */}

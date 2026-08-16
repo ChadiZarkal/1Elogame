@@ -14,7 +14,7 @@ const METER_COLORS: Record<string, string> = {
 
 export default function RessourcesPage() {
   return (
-    <div className="min-h-[calc(100dvh-var(--header-h))] bg-[#0A0A0B] text-[#FAFAFA] flex flex-col relative overflow-hidden">
+    <div className="min-h-[calc(100dvh-var(--header-h,3rem))] bg-[#0A0A0B] text-[#FAFAFA] flex flex-col relative overflow-hidden">
       {/* Subtle background gradient */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#EF4444]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-[#F97316]/5 to-transparent rounded-full blur-3xl pointer-events-none" />

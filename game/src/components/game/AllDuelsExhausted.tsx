@@ -23,7 +23,7 @@ export function AllDuelsExhausted({ duelCount, onReset }: AllDuelsExhaustedProps
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-dvh px-6 pt-[max(20px,env(safe-area-inset-top))] pb-[max(20px,env(safe-area-inset-bottom))] bg-[#0D0D0D]">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100dvh-var(--header-h,3rem))] px-6 pt-[max(20px,env(safe-area-inset-top))] pb-[max(20px,env(safe-area-inset-bottom))] bg-[#0D0D0D]">
       <motion.div
         className="text-center space-y-6 max-w-md"
         initial={{ opacity: 0, scale: 0.9 }}

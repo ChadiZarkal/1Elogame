@@ -625,7 +625,7 @@ export default function FlashFlagSessionPage() {
 
   if (loading) {
     return (
-      <main className="relative min-h-dvh overflow-hidden bg-[#0A0A0B] text-[#FAFAFA] p-6">
+      <main className="relative min-h-[calc(100dvh-var(--header-h,3rem))] overflow-hidden bg-[#0A0A0B] text-[#FAFAFA] p-6">
         <div aria-hidden className="pointer-events-none absolute inset-0">
           <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/12 blur-3xl" />
         </div>
@@ -638,7 +638,7 @@ export default function FlashFlagSessionPage() {
 
   if (error && !session) {
     return (
-      <main className="relative min-h-dvh overflow-hidden bg-[#0A0A0B] text-[#FAFAFA] p-6">
+      <main className="relative min-h-[calc(100dvh-var(--header-h,3rem))] overflow-hidden bg-[#0A0A0B] text-[#FAFAFA] p-6">
         <div aria-hidden className="pointer-events-none absolute inset-0">
           <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/12 blur-3xl" />
         </div>
@@ -657,7 +657,7 @@ export default function FlashFlagSessionPage() {
 
   if (!session) {
     return (
-      <main className="relative min-h-dvh overflow-hidden bg-[#0A0A0B] text-[#FAFAFA] p-6">
+      <main className="relative min-h-[calc(100dvh-var(--header-h,3rem))] overflow-hidden bg-[#0A0A0B] text-[#FAFAFA] p-6">
         <div aria-hidden className="pointer-events-none absolute inset-0">
           <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/12 blur-3xl" />
         </div>
@@ -672,7 +672,7 @@ export default function FlashFlagSessionPage() {
     const percent = session.score.max > 0 ? Math.round((session.score.total / session.score.max) * 100) : 0;
 
     return (
-      <main className="relative min-h-dvh overflow-hidden bg-[#0A0A0B] text-[#FAFAFA] p-6">
+      <main className="relative min-h-[calc(100dvh-var(--header-h,3rem))] overflow-hidden bg-[#0A0A0B] text-[#FAFAFA] p-6">
         <div aria-hidden className="pointer-events-none absolute inset-0">
           <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/12 blur-3xl" />
         </div>
@@ -743,7 +743,7 @@ export default function FlashFlagSessionPage() {
 
   if (doneSummary) {
     return (
-      <main className="relative min-h-dvh overflow-hidden bg-[#0A0A0B] text-[#FAFAFA] p-6">
+      <main className="relative min-h-[calc(100dvh-var(--header-h,3rem))] overflow-hidden bg-[#0A0A0B] text-[#FAFAFA] p-6">
         <div aria-hidden className="pointer-events-none absolute inset-0">
           <div className="absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#DC2626]/12 blur-3xl" />
           <div className="absolute bottom-0 right-0 h-72 w-72 translate-x-1/4 rounded-full bg-[#F59E0B]/10 blur-3xl" />
@@ -809,7 +809,7 @@ export default function FlashFlagSessionPage() {
   }
 
   return (
-    <main className="relative min-h-dvh overflow-hidden bg-[#080809] text-[#FAFAFA] p-4 sm:p-6">
+    <main className="relative min-h-[calc(100dvh-var(--header-h,3rem))] overflow-hidden bg-[#080809] text-[#FAFAFA] p-4 sm:p-6">
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(239,68,68,0.16),transparent_40%),radial-gradient(circle_at_80%_0%,rgba(251,191,36,0.12),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.03),transparent_32%)]" />
         <div className="absolute inset-0 bg-[repeating-linear-gradient(-45deg,transparent,transparent_15px,rgba(255,255,255,0.35)_15px,rgba(255,255,255,0.35)_16px)] opacity-[0.03]" />

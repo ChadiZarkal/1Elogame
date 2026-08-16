@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen min-h-[100dvh] bg-[#0D0D0D] p-6">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100dvh-var(--header-h,3rem))] bg-[#0D0D0D] p-6">
       <motion.div
         className="text-center space-y-6 max-w-md"
         initial={{ opacity: 0, y: 20 }}

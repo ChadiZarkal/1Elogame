@@ -17,6 +17,7 @@
  * est présent dans le HTML même fermé — la navigation reste donc explorable.
  */
 
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
@@ -24,7 +25,7 @@ import { Menu } from 'lucide-react';
 const HIDDEN_PATHS = [/^\/admin(\/|$)/, /^\/dixmais\/admin(\/|$)/];
 
 /** Groupée par thème, comme le demandent les consignes de qualité. */
-export const NAV_SECTIONS: {
+const NAV_SECTIONS: {
   title: string;
   links: { href: string; label: string }[];
 }[] = [
@@ -78,6 +79,14 @@ const INLINE = [
 
 export function SiteHeader() {
   const pathname = usePathname() ?? '';
+  const panelRef = useRef<HTMLDetailsElement>(null);
+
+  // Le composant vit dans la mise en page racine : il n'est jamais remonté au
+  // changement de route, et le panneau restait donc ouvert après un clic.
+  useEffect(() => {
+    if (panelRef.current) panelRef.current.open = false;
+  }, [pathname]);
+
   if (HIDDEN_PATHS.some((re) => re.test(pathname))) return null;
 
   const isCurrent = (href: string) =>
@@ -102,7 +111,7 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <details className="site-header__menu">
+        <details className="site-header__menu" ref={panelRef}>
           <summary aria-label="Ouvrir le menu de navigation">
             <Menu size={16} aria-hidden />
             <span>Menu</span>
@@ -110,7 +119,11 @@ export function SiteHeader() {
           <div className="site-header__panel">
             {NAV_SECTIONS.map((section) => (
               <div key={section.title}>
-                <h2>{section.title}</h2>
+                {/* `p` et non `h2` : ce panneau est present dans le DOM sur
+                    toutes les pages, avant leur titre de niveau 1. Quatre `h2`
+                    en tete de document inverseraient la hierarchie partout. Le
+                    `nav` et son `aria-label` portent deja le reperage. */}
+                <p>{section.title}</p>
                 <ul>
                   {section.links.map((l) => (
                     <li key={l.href}>

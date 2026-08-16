@@ -39,7 +39,7 @@ export default function DixMaisPage() {
   }, [phase]);
 
   return (
-    <div className="relative flex h-[calc(100dvh-var(--header-h))] flex-col overflow-hidden text-white select-none">
+    <div className="relative flex h-[calc(100dvh-var(--header-h,3rem))] flex-col overflow-hidden text-white select-none">
       <Ambient score={game.ambientScore} shock={game.shock} />
 
       <header className="relative z-10 flex shrink-0 items-center justify-between gap-3 px-5 pt-4 pb-2">

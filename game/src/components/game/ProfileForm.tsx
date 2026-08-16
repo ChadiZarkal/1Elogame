@@ -64,7 +64,7 @@ export function ProfileForm() {
   return (
     <div
       className="relative flex flex-col items-center justify-center overflow-hidden px-3"
-      style={{ minHeight: 'calc(100dvh - var(--header-h))', background: '#0A0A0B' }}
+      style={{ minHeight: 'calc(100dvh - var(--header-h,3rem))', background: '#0A0A0B' }}
     >
       {showBg && <AnimatedBackgroundCSS variant="default" />}
       <div
