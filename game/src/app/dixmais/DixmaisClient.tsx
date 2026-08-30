@@ -19,7 +19,7 @@ import { ProfileCard } from './ProfileCard';
 import { ScoreDial } from './ScoreDial';
 import { Verdict } from './Verdict';
 import { useDixMais } from './useDixMais';
-import { scoreColor, withAlpha } from './scale';
+import { scoreColor, withAlpha, START_SCORE } from './scale';
 
 export default function DixMaisPage() {
   const game = useDixMais();
@@ -31,24 +31,48 @@ export default function DixMaisPage() {
   // apparaître les mentions légales en pleine partie. On neutralise le
   // défilement du document pendant la notation seulement — l'accueil et le
   // verdict gardent l'accès au pied de page.
+  // Ce verrou visait `body`, où il n'avait aucun effet : `globals.css` pose
+  // `overflow-x: clip` sur `html` ET `body`, ce qui empêche `body` de propager
+  // son débordement au viewport. Le conteneur de défilement est donc
+  // `documentElement`, et c'est lui qu'il faut verrouiller.
+  // Le verrou est levé sur un écran trop court pour le châssis — en paysage,
+  // typiquement — sans quoi le bas du jeu deviendrait inatteignable.
   useEffect(() => {
     if (phase !== 'reveal') return;
-    const previous = document.body.style.overflow;
+    if (!window.matchMedia('(min-height: 500px)').matches) return;
+
+    const root = document.documentElement;
+    const previousRoot = root.style.overflow;
+    const previousBody = document.body.style.overflow;
+    root.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = previous; };
+    return () => {
+      root.style.overflow = previousRoot;
+      document.body.style.overflow = previousBody;
+    };
+  }, [phase]);
+
+  // Le châssis ne fait qu'un écran, mais les notes éditoriales et le pied de
+  // page sont rendus dessous : le document est défilable. Sans cette remise à
+  // zéro, on passait à l'écran de verdict en gardant la position acquise
+  // pendant la manche — le verdict était peint au-dessus de la ligne de
+  // flottaison, et il fallait remonter pour le lire.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }, [phase]);
 
   return (
-    <div className="relative flex h-[calc(100dvh-var(--header-h,3rem))] flex-col overflow-hidden text-white select-none">
+    <div className="relative flex h-[calc(100dvh-var(--header-h,3rem))] min-h-[500px] flex-col overflow-hidden text-white select-none">
       <Ambient score={game.ambientScore} shock={game.shock} />
 
       <header className="relative z-10 flex shrink-0 items-center justify-between gap-3 px-5 pt-4 pb-2">
+        {/* Marges négatives : la cible passe à 44 px sans écarter la barre. */}
         <Link
           href="/"
-          className="flex items-center gap-1.5 text-white/30 transition-colors hover:text-white/60"
+          className="-m-2.5 flex h-11 items-center gap-1.5 px-2.5 text-white/30 transition-colors hover:text-white/60"
         >
-          <ArrowLeft size={15} />
-          <span className="text-[10px] font-black uppercase tracking-[0.22em]">Menu</span>
+          <ArrowLeft size={17} />
+          <span className="text-[11px] font-black uppercase tracking-[0.22em]">Menu</span>
         </Link>
 
         {phase === 'reveal' && round && (
@@ -61,7 +85,7 @@ export default function DixMaisPage() {
                   width: i === round.index ? 18 : 6,
                   background:
                     i < round.index
-                      ? withAlpha(scoreColor(round.ratings[i] ?? 10), 0.85)
+                      ? withAlpha(scoreColor(round.ratings[i] ?? START_SCORE), 0.85)
                       : i === round.index
                         ? '#FFD700'
                         : 'rgba(255,255,255,0.14)',
@@ -75,12 +99,12 @@ export default function DixMaisPage() {
           <button
             onClick={game.restart}
             aria-label="Recommencer"
-            className="cursor-pointer text-white/25 transition-colors hover:text-white/50 active:scale-90"
+            className="-m-2.5 flex h-11 w-11 cursor-pointer items-center justify-center text-white/25 transition-colors hover:text-white/50 active:scale-90"
           >
-            <RotateCcw size={15} />
+            <RotateCcw size={17} />
           </button>
         ) : (
-          <span className="w-[15px]" />
+          <span className="w-[17px]" />
         )}
       </header>
 
@@ -111,7 +135,10 @@ export default function DixMaisPage() {
 
               <div
                 className="shrink-0"
-                style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 4px)' }}
+                /* Le plancher passe de 4 à 12 px : la jauge est le contrôle le
+                   plus bas de l'écran, et 4 px la collaient à la barre
+                   gestuelle sur les téléphones sans encoche. */
+                style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}
               >
                 {/* L'instruction porte tout le sens du jeu : elle est écrite en
                     clair, pas en légende grise de 10 px comme auparavant.

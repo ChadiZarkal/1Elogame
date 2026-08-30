@@ -22,6 +22,16 @@ interface ResultCardProps {
   stats: ElementStats;
   flexValue: number;
   isOptimistic?: boolean;
+  /**
+   * Hauteur à réserver en haut de la carte, en pixels.
+   *
+   * La barre de commandes du jeu — retour, rafraîchir, progression — flotte
+   * au-dessus de cette carte. Quand la carte du haut se réduit (résultat très
+   * tranché), son libellé se centrait dans une boîte de 170 px et venait se
+   * superposer aux boutons. Le rembourrage recentre le contenu dans l'espace
+   * réellement libre.
+   */
+  topInset?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -32,7 +42,7 @@ interface ResultCardProps {
  * One half of the duel result view — shows an element with its vote stats.
  * Renders differently when `isOptimistic` (pending real data from server).
  */
-export function ResultCard({ element, stats, flexValue, isOptimistic }: ResultCardProps) {
+export function ResultCard({ element, stats, flexValue, isOptimistic, topInset = 0 }: ResultCardProps) {
   const { isMoreRedFlag } = stats;
 
   const bgClass = isMoreRedFlag
@@ -42,6 +52,7 @@ export function ResultCard({ element, stats, flexValue, isOptimistic }: ResultCa
   return (
     <motion.div
       className={`relative min-h-0 flex items-center justify-center overflow-hidden p-5 ${bgClass}`}
+      style={topInset ? { paddingTop: topInset + 20 } : undefined}
       initial={{ flex: 1 }}
       animate={{ flex: flexValue }}
       transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}

@@ -25,7 +25,13 @@ export function Loading({ size = 'md', className, text }: LoadingProps) {
 
 export function FullPageLoading({ text = 'Chargement...' }: { text?: string }) {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-[#0D0D0D]">
+    /* Le voile partait du haut de la fenêtre et recouvrait donc la barre de
+       navigation du site : à chaque chargement de duel, le seul chemin de
+       sortie disparaissait et la hauteur perçue de la page clignotait. */
+    <div
+      className="fixed inset-x-0 bottom-0 flex items-center justify-center bg-[#0D0D0D]"
+      style={{ top: 'var(--header-h, 3rem)' }}
+    >
       <Loading size="lg" text={text} />
     </div>
   );

@@ -304,7 +304,7 @@ function FlagCard({ flag, index }: { flag: FlagDef; index: number }) {
 
 export default function GuidePage() {
   return (
-    <main id="main-content" style={{ minHeight: '100vh', background: '#0D0D0D', padding: '20px 16px 64px' }}>
+    <main id="main-content" style={{ minHeight: '100dvh', background: '#0D0D0D', padding: '20px 16px 64px' }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
 
         {/* Back nav */}

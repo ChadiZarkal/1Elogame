@@ -120,8 +120,11 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled }: Pro
         )}
       </div>
 
+      {/* 12 px, pas 9 : ce libellé est le seul retour en mots pendant le geste
+          de notation, et 9 px avec un interlettrage de 0,28em sur fond sombre
+          n'était plus lisible à bout de bras. */}
       <p
-        className="mt-0.5 mb-2 text-center text-[9px] font-black uppercase tracking-[0.28em]"
+        className="mt-0.5 mb-2 text-center text-[12px] font-black uppercase tracking-[0.18em]"
         style={{ color: withAlpha(tint, 0.75) }}
       >
         {scoreLabel(value)}
@@ -171,7 +174,7 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled }: Pro
               }}
             >
               <span
-                className="absolute inset-x-0 bottom-0.5 text-center text-[9px] font-black tabular-nums"
+                className="absolute inset-x-0 bottom-0.5 text-center text-[11px] font-black tabular-nums"
                 style={{
                   color: filled
                     ? 'rgba(0,0,0,0.55)'

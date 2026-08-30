@@ -10,7 +10,6 @@ interface RevealPhaseProps {
   isMounted: boolean;
   redCount: number;
   greenCount: number;
-  historyLength: number;
   onShare: () => void;
   onNext: () => void;
 }
@@ -27,13 +26,14 @@ export function RevealPhase({
   isMounted,
   redCount,
   greenCount,
-  historyLength,
   onShare,
   onNext,
 }: RevealPhaseProps) {
   const isRed = result.verdict === 'red';
-  const primaryColor = isRed ? '#EF4444' : '#10B981';
-  const accentColor = isRed ? '#FCA5A5' : '#6EE7B7';
+  // Ambre quand rien n'a été analysé : ni rouge ni vert, l'écran ne doit pas
+  // porter la couleur d'un verdict qui n'a pas été rendu.
+  const primaryColor = result.degraded ? '#F59E0B' : isRed ? '#EF4444' : '#10B981';
+  const accentColor = result.degraded ? '#FCD34D' : isRed ? '#FCA5A5' : '#6EE7B7';
   const bgGlow = isRed
     ? 'radial-gradient(ellipse at 50% 18%, rgba(239,68,68,0.22) 0%, rgba(127,29,29,0.08) 48%, transparent 72%)'
     : 'radial-gradient(ellipse at 50% 18%, rgba(16,185,129,0.22) 0%, rgba(6,78,59,0.08) 48%, transparent 72%)';
@@ -108,7 +108,7 @@ export function RevealPhase({
               textShadow: `0 0 50px ${primaryColor}99, 0 0 100px ${primaryColor}33`,
             }}
           >
-            {isRed ? 'RED' : 'GREEN'}
+            {result.degraded ? 'AUCUN' : isRed ? 'RED' : 'GREEN'}
           </p>
           <p
             className="text-[44px] font-black tracking-tighter leading-none"
@@ -117,13 +117,28 @@ export function RevealPhase({
               textShadow: `0 0 35px ${primaryColor}66`,
             }}
           >
-            FLAG
+            {result.degraded ? 'VERDICT' : 'FLAG'}
           </p>
         </motion.div>
 
+        {/* Rien n'a été analysé : l'appel a échoué ou expiré. Le repli tirait
+            auparavant un verdict au hasard et le présentait comme un vrai. */}
+        {result.degraded && (
+          <div
+            role="status"
+            className="mb-3 w-full rounded-xl border border-amber-500/30 bg-amber-500/8 px-3 py-2 text-center text-[12px] font-semibold text-amber-200"
+          >
+            L&apos;Oracle est injoignable — aucun verdict n&apos;a pu être rendu.
+          </div>
+        )}
+
         {/* Submitted text */}
+        {/* `overflow-wrap: anywhere` : les 280 caractères autorisés peuvent
+            n'être qu'un seul mot — une URL, une suite de lettres. Sans coupure
+            forcée, le texte débordait et le parent, en `overflow-hidden`, le
+            tronquait en silence. */}
         <motion.p
-          className="text-[#6B7280] text-[13px] italic text-center mb-3 px-3 leading-relaxed"
+          className="w-full text-[#6B7280] text-[13px] italic text-center mb-3 px-3 leading-relaxed break-words [overflow-wrap:anywhere]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.34 }}
@@ -147,13 +162,15 @@ export function RevealPhase({
                 style={{ background: primaryColor, boxShadow: `0 0 10px ${primaryColor}` }}
               />
               <span
-                className="text-[10px] font-black uppercase tracking-[0.2em]"
+                className="text-[12px] font-black uppercase tracking-[0.14em]"
                 style={{ color: primaryColor }}
               >
                 Analyse de l&apos;Oracle
               </span>
             </div>
-            <p className="text-[#D1D5DB] text-[13px] leading-relaxed">{result.justification}</p>
+            <p className="text-[#D1D5DB] text-[13px] leading-relaxed break-words [overflow-wrap:anywhere]">
+              {result.justification}
+            </p>
           </motion.div>
         )}
 
@@ -170,10 +187,11 @@ export function RevealPhase({
           </motion.div>
         )}
 
-        {/* Share button */}
+        {/* Share button — rien à partager quand aucun verdict n'a été rendu. */}
         <motion.button
           onClick={onShare}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all active:scale-95"
+          hidden={result.degraded}
+          className="flex min-h-11 items-center gap-2 px-4 py-3 rounded-2xl text-[13px] font-bold transition-all active:scale-95"
           style={{
             background: 'rgba(255,255,255,0.05)',
             border: '1px solid rgba(255,255,255,0.09)',
@@ -206,40 +224,44 @@ export function RevealPhase({
           whileTap={{ scale: 0.96 }}
           className="w-full py-4.5 rounded-2xl font-black text-[17px] text-white tracking-wide"
           style={{
-            background: isRed
-              ? 'linear-gradient(135deg, #EF4444 0%, #991B1B 100%)'
-              : 'linear-gradient(135deg, #10B981 0%, #065F46 100%)',
-            boxShadow: isRed
-              ? '0 0 42px rgba(239,68,68,0.38), 0 8px 32px rgba(0,0,0,0.32)'
-              : '0 0 42px rgba(16,185,129,0.38), 0 8px 32px rgba(0,0,0,0.32)',
+            background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}55 100%)`,
+            boxShadow: `0 0 42px ${primaryColor}61, 0 8px 32px rgba(0,0,0,0.32)`,
           }}
         >
-          Encore 🔮
+          {result.degraded ? 'Réessayer 🔮' : 'Encore 🔮'}
         </motion.button>
 
-        {/* Stats bar */}
-        {historyLength > 1 && (
+        {/* Stats bar
+            Le dénominateur était `historyLength`, le nombre de consultations
+            de CET appareil, alors que `redCount` et `greenCount` sont les
+            totaux du site entier. Après deux parties avec quelques milliers de
+            verdicts en base, la barre rouge recevait une largeur de plusieurs
+            dizaines de milliers de pour cent : rognée par le conteneur, elle
+            occupait 100 % en permanence et la verte n'apparaissait jamais.
+            Les libellés laissaient en outre croire à un score personnel. */}
+        {redCount + greenCount > 0 && (
           <motion.div
             className="mt-3 w-full"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.78 }}
           >
-            <div className="flex justify-between text-[10px] text-[#4B5563] mb-1.5 font-semibold">
-              <span>🚩 {redCount} red flag{redCount > 1 ? 's' : ''}</span>
-              <span>✅ {greenCount} green flag{greenCount > 1 ? 's' : ''}</span>
+            <div className="flex justify-between text-[12px] text-[#9CA3AF] mb-1.5 font-semibold">
+              <span>🚩 {redCount.toLocaleString('fr-FR')}</span>
+              <span className="text-[#6B7280]">sur tout le site</span>
+              <span>✅ {greenCount.toLocaleString('fr-FR')}</span>
             </div>
             <div className="h-1.5 rounded-full overflow-hidden flex" style={{ background: 'rgba(255,255,255,0.06)' }}>
               <motion.div
                 className="h-full"
                 style={{ background: 'linear-gradient(90deg, #EF4444, #DC2626)', borderRadius: '9999px 0 0 9999px' }}
-                animate={{ width: `${(redCount / historyLength) * 100}%` }}
+                animate={{ width: `${(redCount / (redCount + greenCount)) * 100}%` }}
                 transition={{ duration: 0.6, ease: 'easeOut' }}
               />
               <motion.div
                 className="h-full"
                 style={{ background: 'linear-gradient(90deg, #059669, #10B981)', borderRadius: '0 9999px 9999px 0' }}
-                animate={{ width: `${(greenCount / historyLength) * 100}%` }}
+                animate={{ width: `${(greenCount / (redCount + greenCount)) * 100}%` }}
                 transition={{ duration: 0.6, ease: 'easeOut' }}
               />
             </div>

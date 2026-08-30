@@ -29,7 +29,16 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
   const handleConfirm = () => { if (canConfirm) onSelect(selectedGender!, selectedAge!); };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-5 py-6 relative overflow-hidden">
+    /* `overflow-y-auto` plutôt que `overflow-hidden`, et `my-auto` sur le bloc
+       plutôt que `justify-center` sur le conteneur.
+       Sur un 360×640 ce contenu réclame 599 px pour 525 disponibles : centré
+       dans une boîte qui déborde, il partait de 37 px AU-DESSUS du conteneur —
+       la boule et le titre étaient rognés en haut, le bouton et le rappel
+       « Comment ça marche » sous le bas, et rien de tout cela n'était
+       atteignable, `justify-content: center` rendant le débordement de tête
+       non défilable. Des marges automatiques centrent de la même façon tout en
+       restant défilables. */
+    <div className="flex-1 min-h-0 flex flex-col relative">
       {/* Background aurora orbs */}
       <div className="absolute inset-0 pointer-events-none">
         <div
@@ -43,14 +52,21 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
         <div className="absolute inset-0 oracle-bg-dots opacity-10" />
       </div>
 
+      <div className="flex-1 min-h-0 flex flex-col items-center overflow-y-auto overscroll-contain px-5 pt-6 pb-2 relative z-10">
       <motion.div
         initial={{ opacity: 0, y: 28 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="text-center w-full max-w-sm relative z-10"
+        className="my-auto text-center w-full max-w-sm shrink-0"
       >
-        {/* Crystal ball + rings */}
-        <div className="relative inline-flex items-center justify-center mb-5" style={{ width: 96, height: 96 }}>
+        {/* Crystal ball + rings.
+            Dimensions réduites sur écran court : la boule, le titre et le
+            sous-titre totalisaient 200 px de décor sur un écran de 640 où
+            l'utilisateur n'a que deux choix à faire — le sélecteur d'âge en
+            était chassé sous la ligne de flottaison. */}
+        <div
+          className="relative inline-flex items-center justify-center mb-5 [@media(max-height:740px)]:mb-3 h-24 w-24 [@media(max-height:740px)]:h-16 [@media(max-height:740px)]:w-16"
+        >
           <div
             className="absolute rounded-full border border-violet-500/30 animate-oracle-ring"
             style={{ inset: 0 }}
@@ -64,7 +80,7 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
             style={{ inset: 0 }}
           />
           <motion.span
-            className="text-5xl animate-oracle-float relative z-10"
+            className="text-5xl [@media(max-height:740px)]:text-3xl animate-oracle-float relative z-10"
             style={{ display: 'block' }}
           >
             🔮
@@ -73,7 +89,7 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
 
         {/* Title */}
         <motion.h2
-          className="text-[38px] font-black tracking-tighter mb-1 oracle-gradient-text"
+          className="text-[38px] [@media(max-height:740px)]:text-[26px] font-black tracking-tighter mb-1 oracle-gradient-text"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.12 }}
@@ -81,7 +97,7 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
           L&apos;ORACLE
         </motion.h2>
         <motion.p
-          className="text-[13px] text-[#6B7280] mb-8 leading-relaxed"
+          className="text-[13px] text-[#6B7280] mb-8 [@media(max-height:740px)]:mb-4 leading-relaxed"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
@@ -96,7 +112,7 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
         >
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#4B5563] mb-3 text-left">
+          <p className="text-[12px] font-black uppercase tracking-[0.14em] text-[#9CA3AF] mb-3 text-left">
             Sexe
           </p>
           <div className="flex gap-2">
@@ -133,7 +149,7 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.33 }}
         >
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#4B5563] mb-3 text-left">
+          <p className="text-[12px] font-black uppercase tracking-[0.14em] text-[#9CA3AF] mb-3 text-left">
             Âge
           </p>
           <div className="flex gap-1.5">
@@ -163,7 +179,15 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
           </div>
         </motion.div>
 
-        {/* CTA */}
+      </motion.div>
+      </div>
+
+      {/* Socle d'action — toujours visible.
+          Le bouton était le dernier élément d'une colonne de 599 px dans un
+          écran de 525 : sur un 360×640, il fallait faire défiler pour valider
+          un choix qu'on venait de faire au-dessus. Il est désormais hors de la
+          zone défilante, comme le dock de saisie de l'écran suivant. */}
+      <div className="shrink-0 relative z-10 px-5 pt-2 pb-[max(16px,env(safe-area-inset-bottom))] text-center">
         <motion.button
           onClick={handleConfirm}
           disabled={!canConfirm}
@@ -186,7 +210,7 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
           {canConfirm ? '✨ Consulter l\'Oracle' : 'Sélectionne sexe + âge'}
         </motion.button>
 
-        <p className="text-[#3A3A48] text-[10px] mt-4">
+        <p className="text-[#6B7280] text-[12px] mt-4">
           Données anonymes — uniquement pour les stats
         </p>
 
@@ -194,11 +218,11 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
             n'indique que les explications suivent en dessous. */}
         <a
           href="#page-notes-title"
-          className="mt-3 inline-block text-[10px] font-bold uppercase tracking-[0.18em] text-white/25 transition-colors hover:text-white/55"
+          className="mt-2 inline-flex min-h-11 items-center text-[12px] font-bold uppercase tracking-[0.14em] text-white/45 transition-colors hover:text-white/75"
         >
           Comment ça marche ↓
         </a>
-      </motion.div>
+      </div>
     </div>
   );
 }

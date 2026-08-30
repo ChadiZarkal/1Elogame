@@ -120,8 +120,13 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
   };
 
   return (
+    <>
+    {/* Le rembourrage bas réserve la place du socle d'action, désormais fixé
+        à la fenêtre : sans lui, il recouvrirait le dernier bloc de la page.
+        Plus de `env(safe-area-inset-top)` non plus — l'en-tête du site est
+        rendu au-dessus et dégage déjà l'encoche. */}
     <div
-      className="flex flex-col items-center justify-center px-4 pt-[max(12px,env(safe-area-inset-top))] pb-[max(20px,env(safe-area-inset-bottom))]"
+      className="flex flex-col items-center justify-center px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+96px)]"
       style={{ minHeight: 'calc(100dvh - var(--header-h,3rem))', background: '#0A0A0B' }}
     >
       <div className="w-full max-w-sm flex items-center justify-between mb-4">
@@ -285,11 +290,22 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
         </p>
       )}
 
-      {/* Start button */}
+      {/* Start button — épinglé au bas de la fenêtre.
+          Empilés au-dessus de lui sur un 360×640 : la barre de retour, le
+          titre, les deux cartes de catégorie, le sélecteur de nombre de duels
+          et — pour un nouveau joueur — le panneau de règles ouvert par défaut.
+          Soit près de 740 px pour 592 disponibles : le bouton qui lance la
+          partie n'était jamais visible au premier passage. */}
+      </div>
+
+      <div
+        className="fixed inset-x-0 bottom-0 z-40 flex justify-center border-t border-white/8 bg-[#0A0A0B]/95 px-4 pt-3 backdrop-blur-md"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
+      >
       <button
         onClick={handleStart}
         disabled={selected.size === 0}
-        className="w-full max-w-sm py-4 rounded-xl font-black text-base tracking-wide transition-all duration-200 active:scale-[0.97]"
+        className="w-full max-w-sm min-h-14 rounded-xl font-black text-base tracking-wide transition-all duration-200 active:scale-[0.97]"
         style={{
           background: selected.size > 0
             ? 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)'
@@ -306,6 +322,7 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
       >
         {selected.size > 0 ? `🚩 LANCER · ${partySize} duels` : 'Sélectionne au moins une catégorie'}
       </button>
-    </div>
+      </div>
+    </>
   );
 }

@@ -37,8 +37,16 @@ export function ProfileCard({ identity, statements, ratings, index, draft, flash
   const past = statements.slice(0, index);
   const current = statements[index];
 
+  // `scrollIntoView` remonte tous les ancêtres défilables, `documentElement`
+  // compris : à partir de la troisième révélation, chaque validation faisait
+  // glisser toute la page vers le bas, en pleine partie. On pilote donc
+  // directement la liste, qui est le seul conteneur concerné. Rien à faire au
+  // montage d'un profil, où la liste est déjà en haut.
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    if (index === 0) return;
+    const list = endRef.current?.parentElement;
+    if (!list) return;
+    list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
   }, [index]);
 
   return (
@@ -87,12 +95,16 @@ export function ProfileCard({ identity, statements, ratings, index, draft, flash
           <span className="text-lg font-black leading-none tabular-nums" style={{ color: tint }}>
             {draft}
           </span>
-          <span className="text-[10px] font-black text-white/30">/10</span>
+          <span className="text-[11px] font-black text-white/45">/10</span>
         </div>
       </div>
 
       {/* ── Révélations ──────────────────────────────────────────────────── */}
-      <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+      {/* `overscroll-contain` : arrivé en butée, le glissement partait au
+          document — donc vers les notes éditoriales et le pied de page, en
+          pleine partie. Le châssis parent est `overflow-hidden`, il n'absorbe
+          rien : c'est ici que la chaîne doit s'arrêter. */}
+      <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
         {past.map((stmt, i) => (
           <div key={stmt.id}>
             {i > 0 && <Connector word={connectorFor(past[i - 1].type, stmt.type)} muted />}
@@ -133,7 +145,7 @@ function Connector({ word, muted = false }: { word: 'ET' | 'MAIS'; muted?: boole
     <div className="flex items-center gap-2 py-1.5 pl-3">
       <span className="h-4 w-px" style={{ background: 'rgba(245,158,11,0.3)' }} />
       <span
-        className="text-[10px] font-black uppercase tracking-[0.2em]"
+        className="text-[11px] font-black uppercase tracking-[0.16em]"
         style={{ color: muted ? 'rgba(245,158,11,0.42)' : '#F59E0B' }}
       >
         {word}

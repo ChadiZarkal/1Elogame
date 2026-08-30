@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Shield, HelpCircle, X } from 'lucide-react';
@@ -8,11 +8,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useHaptics } from '@/lib/hooks';
 
 type PersonaKey = 'redflag' | 'group' | 'doubt' | 'dixmais';
-
-interface StatsData {
-  totalVotes: number;
-  estimatedPlayers: number;
-}
 
 const CARDS_DATA: Record<PersonaKey, {
   id: string;
@@ -83,24 +78,61 @@ const CARDS_DATA: Record<PersonaKey, {
   }
 };
 
+/**
+ * Rangée secondaire du hub. Le guide des flags et les outils d'auto-évaluation
+ * n'étaient joignables que par le pied de page, sous une page qui tient en un
+ * écran : personne n'y descendait, alors que ce sont les deux contenus les plus
+ * utiles du site. `href` absent = ouvre la feuille Safe Zone.
+ */
+const SHORTCUTS: {
+  emoji: string;
+  short: string;
+  label: string;
+  href?: string;
+  surface: string;
+  tone: string;
+}[] = [
+  {
+    emoji: '🏆',
+    short: 'Palmarès',
+    label: 'LE PALMARÈS',
+    href: '/classement',
+    surface: 'bg-[#0F1012] border-white/5',
+    tone: 'text-[#A6A6A6] group-hover:text-[#2ECC71]',
+  },
+  {
+    emoji: '🚩',
+    short: 'Guide',
+    label: 'GUIDE DES FLAGS',
+    href: '/guide',
+    surface: 'bg-[#2ECC71]/8 border-[#2ECC71]/25',
+    tone: 'text-[#2ECC71]',
+  },
+  {
+    emoji: '🧭',
+    short: 'Tests',
+    label: 'TESTS SÉRIEUX',
+    href: '/ressources',
+    surface: 'bg-[#0F1012] border-white/5',
+    tone: 'text-[#A6A6A6] group-hover:text-[#8B5CF6]',
+  },
+  {
+    emoji: '🛡',
+    short: 'Safe zone',
+    label: 'SAFE ZONE',
+    surface: 'bg-[#0F1012] border-white/5',
+    tone: 'text-[#A6A6A6] group-hover:text-[#10B981]',
+  },
+];
+
 export function HubClient() {
   const { tap } = useHaptics();
-  const [stats, setStats] = useState<StatsData | null>(null);
   const [selectedVibe, setSelectedVibe] = useState<PersonaKey>('redflag');
   const [safeZoneOpen, setSafeZoneOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const touchStartXRef = useRef<number | null>(null);
 
   const vibeOrder = useMemo(() => Object.keys(CARDS_DATA) as PersonaKey[], []);
-
-  useEffect(() => {
-    fetch('/api/stats/public')
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.success) setStats(d.data);
-      })
-      .catch(() => {});
-  }, []);
 
   const handleTap = useCallback(() => {
     tap();
@@ -138,7 +170,7 @@ export function HubClient() {
   const activeCard = CARDS_DATA[selectedVibe];
 
   return (
-    <div className="relative min-h-[calc(100dvh-var(--header-h,3rem))] overflow-hidden bg-[#000000] text-[#E2E2E2] selection:bg-[#FF3B30]/30 selection:text-white pb-8">
+    <div className="relative min-h-[calc(100dvh-var(--header-h,3rem))] overflow-hidden bg-[#000000] text-[#E2E2E2] selection:bg-[#FF3B30]/30 selection:text-white">
       {/* Dynamic Background Shader & Grid */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         {/* Sleek matrix grid */}
@@ -157,19 +189,13 @@ export function HubClient() {
         <div className="absolute bottom-40 -right-20 h-80 w-80 rounded-full bg-[#111] blur-[100px] opacity-40" />
       </div>
 
-      {/* CSS-Only Marquee Ribbon for extreme organic Gen Z vibe */}
-      <style jsx global>{`
-        @keyframes marquee {
-          0% { transform: translateX(0%); }
-          100% { transform: translateX(-50%); }
-        }
-        .animate-marquee-custom {
-          display: flex;
-          width: max-content;
-          animation: marquee 28s linear infinite;
-        }
-      `}</style>
-      
+      {/* Le bandeau défilant était habillé par un `<style jsx global>` inséré
+          après l'hydratation : entre la première peinture et ce moment, les
+          deux `<span>` n'avaient ni `display: flex` ni `width: max-content`,
+          se repliaient sur plusieurs lignes, triplaient la hauteur du bandeau
+          puis se rétractaient d'un coup — en pleine zone LCP. Les six règles
+          vivent désormais dans `globals.css`, servies avec la page. */}
+
       {/* Infinite scrolling ticker behind the main card */}
       <div className="absolute top-[32%] w-full py-2 bg-white/2 border-y border-white/4 overflow-hidden pointer-events-none z-0 transform -rotate-2 select-none">
         <div className="animate-marquee-custom text-[10px] font-black tracking-[0.15em] uppercase text-white/15 gap-8">
@@ -179,27 +205,40 @@ export function HubClient() {
       </div>
 
       {/* Main Container constrained to ergonomic vertical phone viewport */}
-      {/* `[@media(max-height:720px)]` — sur un 360x640, très répandu, le bouton
+      {/* `[@media(max-height:1000px)]` — sur un 360x640, très répandu, le bouton
           qui lance le jeu tombait entièrement sous la ligne de flottaison : il
           fallait faire défiler pour jouer. Les écrans hauts gardent l'aération
           d'origine, les écrans courts se resserrent. */}
-      <main id="main-content" className="relative z-10 mx-auto w-full max-w-110 px-5 py-6 [@media(max-height:720px)]:py-3 flex flex-col items-center justify-between min-h-[calc(100dvh-var(--header-h,3rem))]">
+      {/* Hauteur imposée, et non plancher : avec un simple `min-height`, la
+          carte n'avait aucune pression pour se comprimer et le hub débordait
+          de l'écran. Un plafond réel donne son sens au `flex-1` de la carte —
+          elle prend ce qui reste, ni plus, et fait défiler son texte au-dedans
+          si nécessaire. Le hub tient alors sur un écran par construction, pas
+          par ajustement de valeurs. */}
+      <main
+        id="main-content"
+        className="relative z-10 mx-auto flex h-[calc(100dvh-var(--header-h,3rem))] w-full max-w-110 flex-col items-center justify-between px-5 py-6 [@media(max-height:1000px)]:py-3"
+      >
         
         {/* 1. Header (Minimalist & Branding Focus) */}
-        <header className="w-full space-y-4 [@media(max-height:720px)]:space-y-1.5 flex flex-col items-center pt-2 [@media(max-height:720px)]:pt-0">
+        <header className="w-full space-y-4 [@media(max-height:1000px)]:space-y-1.5 flex flex-col items-center pt-2 [@media(max-height:1000px)]:pt-0">
           {/* Centered Brand Logo - enlarged and dominant.
               Porté par le h1 : la page n'avait aucun titre de niveau 1, le
               logo n'étant qu'une image. Le nom accessible du titre vient de
               l'attribut alt — rien n'est ajouté de masqué. */}
-          <h1 className="py-2 [@media(max-height:720px)]:py-0 scale-100 hover:scale-[1.01] active:scale-95 transition-transform duration-200">
+          <h1 className="py-2 [@media(max-height:1000px)]:py-0 scale-100 hover:scale-[1.01] active:scale-95 transition-transform duration-200">
             <Image
               src="/logo-rog-new.svg"
               alt="Red or Green — repérer les toxicités ordinaires"
-              width={540}
-              height={118}
+              /* Dimensions du fichier : 192 × 86. Les 540 × 118 déclarés
+                 auparavant ne correspondaient à rien et faisaient réserver à
+                 Next une boîte deux fois trop plate — l'image sautait à sa
+                 vraie proportion au chargement, sur l'élément LCP de la page. */
+              width={192}
+              height={86}
               priority
               draggable={false}
-              className="h-auto w-[88vw] [@media(max-height:720px)]:w-[62vw] max-w-115 object-contain drop-shadow-[0_0_28px_rgba(255,59,48,0.3)]"
+              className="h-auto w-[88vw] [@media(max-height:1000px)]:w-[62vw] max-w-115 object-contain drop-shadow-[0_0_28px_rgba(255,59,48,0.3)]"
             />
           </h1>
 
@@ -260,7 +299,11 @@ export function HubClient() {
         </div>
 
         {/* 3. Hero Holographic Game Card (The Focal Point with ultra-smooth morphs) */}
-        <div className="w-full my-6 [@media(max-height:720px)]:my-3 flex-1 flex flex-col justify-center">
+        {/* `min-h-0` : sans lui, la carte impose sa hauteur de contenu au flex
+            et le hub débordait de la fenêtre — 762 px réclamés pour 592 sur un
+            360×640, très répandu. Le bouton de lancement tombait alors pile sur
+            la ligne de flottaison, à moitié sous la barre de navigation. */}
+        <div className="w-full my-6 [@media(max-height:1000px)]:my-3 flex-1 min-h-0 flex flex-col justify-center">
           {/* `initial={false}` : la carte est l'élément LCP de la page. Sans
               cela elle est rendue à opacity 0 et n'apparaît qu'après
               l'hydratation, ce qui repousse le LCP de plusieurs secondes sur
@@ -273,7 +316,7 @@ export function HubClient() {
               exit={{ opacity: 0, scale: 0.95, y: -15 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
               whileHover={{ y: -4 }}
-              className="relative w-full rounded-4xl border bg-linear-to-b from-[#0F1012] to-[#040405] p-6.5 [@media(max-height:720px)]:p-4 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.85)] flex flex-col justify-between overflow-hidden"
+              className="relative w-full min-h-0 max-h-full rounded-4xl border bg-linear-to-b from-[#0F1012] to-[#040405] p-6.5 [@media(max-height:1000px)]:p-4 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.85)] flex flex-col justify-between overflow-hidden"
               style={{
                 borderColor: `${activeCard.themeColor}22`,
                 boxShadow: `0 25px 50px -12px ${activeCard.themeColor}0C`
@@ -287,7 +330,16 @@ export function HubClient() {
                 style={{ backgroundColor: activeCard.themeColor }}
               />
 
-              <div className="space-y-4 [@media(max-height:720px)]:space-y-2.5">
+              {/* Le descriptif défile dans la carte au lieu de la faire
+                  grandir : sur écran court, c'est lui qui poussait le bouton
+                  hors de vue. Le bouton, lui, reste hors de cette boîte —
+                  toujours au bas de la carte, toujours au même endroit. */}
+              {/* Pas de `flex-1` ici : `flex-basis: 0` ferait compter ce bloc
+                  pour zéro dans la hauteur intrinsèque de la carte, qui se
+                  réduirait alors au seul bouton. `min-h-0` seul suffit — le
+                  bloc prend sa hauteur naturelle, et ne se comprime que
+                  lorsque le `max-h-full` de la carte l'y oblige. */}
+              <div className="min-h-0 overflow-y-auto overscroll-contain scrollbar-hide space-y-4 [@media(max-height:1000px)]:space-y-2.5">
                 {/* Mode Tag */}
                 <div className="flex items-center justify-between">
                   <span 
@@ -320,8 +372,11 @@ export function HubClient() {
                   </p>
                 </div>
 
-                {/* Game specific description */}
-                <p className="text-[13px] leading-relaxed text-[#D0D0D6] font-semibold pt-1">
+                {/* Le descriptif redit en prose ce que disent les trois points
+                    ci-dessous. Sur écran court, où chaque ligne se dispute la
+                    place avec le bouton, ce sont les points qui restent : ils
+                    se lisent d'un coup d'œil. */}
+                <p className="hidden text-[13px] leading-relaxed text-[#D0D0D6] font-semibold pt-1 [@media(min-height:721px)]:block">
                   {activeCard.desc}
                 </p>
 
@@ -337,7 +392,7 @@ export function HubClient() {
               </div>
 
               {/* Massive Tactile Pulse Action Button */}
-              <div className="pt-6 [@media(max-height:720px)]:pt-3">
+              <div className="shrink-0 pt-6 [@media(max-height:1000px)]:pt-3">
                 {activeCard.external ? (
                   <a
                     href={activeCard.href}
@@ -378,59 +433,49 @@ export function HubClient() {
           </AnimatePresence>
         </div>
 
-        {/* 4. Rangée secondaire — grille 2×2.
-            Le guide des flags et les outils d'auto-évaluation n'étaient
-            joignables que par le pied de page, sous une page qui tient en un
-            écran : personne n'y descendait. Ce sont pourtant les deux contenus
-            les plus utiles du site. Une grille plutôt que deux cartes
-            empilées : la hauteur du hub doit rester celle d'un écran. */}
-        <section className="w-full grid grid-cols-2 gap-2.5 mt-2">
-          <Link
-            href="/classement"
-            onClick={handleTap}
-            className="py-3 px-3 rounded-2xl bg-[#0F1012] border border-white/5 flex flex-col items-center justify-center text-center group active:scale-95 transition-transform"
-          >
-            <span className="text-lg leading-none">🏆</span>
-            <span className="font-black text-[9px] uppercase tracking-wider text-[#A6A6A6] group-hover:text-[#2ECC71] mt-1.5 transition-colors">
-              LE PALMARÈS
-            </span>
-          </Link>
+        {/* 4. Rangée secondaire (voir `SHORTCUTS`).
+            Une rangée de quatre sur écran court, deux rangées de deux ailleurs :
+            la grille 2×2 coûtait 144 px sous la carte, soit l'essentiel du
+            débordement sur un 360×640. Les quatre entrées restent visibles
+            dans les deux cas — seule leur disposition change. */}
+        <section className="w-full shrink-0 grid grid-cols-4 [@media(min-height:1001px)]:grid-cols-2 gap-2.5 mt-2">
+          {SHORTCUTS.map((shortcut) => {
+            const content = (
+              <>
+                <span className="text-lg leading-none">{shortcut.emoji}</span>
+                {/* Deux intitulés : sur une rangée de quatre, chaque cellule ne
+                    fait que 78 px et « GUIDE DES FLAGS » y partait sur trois
+                    lignes rognées. La forme longue reste sur la grille 2×2. */}
+                <span
+                  className={`mt-1.5 min-w-0 text-center text-[9px] font-black uppercase leading-tight transition-colors ${shortcut.tone}`}
+                >
+                  <span className="[@media(min-height:1001px)]:hidden">{shortcut.short}</span>
+                  <span className="hidden tracking-wider [@media(min-height:1001px)]:inline">
+                    {shortcut.label}
+                  </span>
+                </span>
+              </>
+            );
 
-          <Link
-            href="/guide"
-            onClick={handleTap}
-            className="py-3 px-3 rounded-2xl bg-[#2ECC71]/8 border border-[#2ECC71]/25 flex flex-col items-center justify-center text-center group active:scale-95 transition-transform"
-          >
-            <span className="text-lg leading-none">🚩</span>
-            <span className="font-black text-[9px] uppercase tracking-wider text-[#2ECC71] mt-1.5">
-              GUIDE DES FLAGS
-            </span>
-          </Link>
+            const className = `flex min-h-16 flex-col items-center justify-center rounded-2xl border px-1.5 py-3 text-center group transition-transform active:scale-95 ${shortcut.surface}`;
 
-          <Link
-            href="/ressources"
-            onClick={handleTap}
-            className="py-3 px-3 rounded-2xl bg-[#0F1012] border border-white/5 flex flex-col items-center justify-center text-center group active:scale-95 transition-transform"
-          >
-            <span className="text-lg leading-none">🧭</span>
-            <span className="font-black text-[9px] uppercase tracking-wider text-[#A6A6A6] group-hover:text-[#8B5CF6] mt-1.5 transition-colors">
-              TESTS SÉRIEUX
-            </span>
-          </Link>
-
-          {/* Safe Zone Trigger */}
-          <button
-            onClick={() => {
-              handleTap();
-              setSafeZoneOpen(true);
-            }}
-            className="py-3 px-3 rounded-2xl bg-[#0F1012] border border-white/5 flex flex-col items-center justify-center text-center group active:scale-95 transition-transform cursor-pointer"
-          >
-            <span className="text-lg leading-none">🛡</span>
-            <span className="font-black text-[9px] uppercase tracking-wider text-[#A6A6A6] group-hover:text-[#10B981] mt-1.5 transition-colors">
-              SAFE ZONE
-            </span>
-          </button>
+            return shortcut.href ? (
+              <Link key={shortcut.short} href={shortcut.href} onClick={handleTap} className={className}>
+                {content}
+              </Link>
+            ) : (
+              <button
+                key={shortcut.short}
+                onClick={() => {
+                  handleTap();
+                  setSafeZoneOpen(true);
+                }}
+                className={`${className} cursor-pointer`}
+              >
+                {content}
+              </button>
+            );
+          })}
         </section>
 
       </main>
@@ -455,7 +500,7 @@ export function HubClient() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-              className="fixed bottom-0 left-0 right-0 z-50 mx-auto w-full max-w-110 rounded-t-4xl border-t border-[#10B981]/20 bg-linear-to-b from-[#080d0a] to-[#040504] px-6 pt-5 pb-8 shadow-[0_-15px_50px_rgba(16,185,129,0.15)] max-h-[85vh] overflow-y-auto"
+              className="fixed bottom-0 left-0 right-0 z-50 mx-auto w-full max-w-110 rounded-t-4xl border-t border-[#10B981]/20 bg-linear-to-b from-[#080d0a] to-[#040504] px-6 pt-5 pb-[max(2rem,env(safe-area-inset-bottom))] shadow-[0_-15px_50px_rgba(16,185,129,0.15)] max-h-[85dvh] overflow-y-auto overscroll-contain"
             >
               <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mb-4" />
               
@@ -528,7 +573,7 @@ export function HubClient() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-              className="fixed bottom-0 left-0 right-0 z-50 mx-auto w-full max-w-110 rounded-t-4xl border-t border-[#88CEFF]/20 bg-linear-to-b from-[#080b0f] to-[#040405] px-6 pt-5 pb-8 shadow-[0_-15px_50px_rgba(136,206,255,0.15)] max-h-[85vh] overflow-y-auto"
+              className="fixed bottom-0 left-0 right-0 z-50 mx-auto w-full max-w-110 rounded-t-4xl border-t border-[#88CEFF]/20 bg-linear-to-b from-[#080b0f] to-[#040405] px-6 pt-5 pb-[max(2rem,env(safe-area-inset-bottom))] shadow-[0_-15px_50px_rgba(136,206,255,0.15)] max-h-[85dvh] overflow-y-auto overscroll-contain"
             >
               <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mb-4" />
               

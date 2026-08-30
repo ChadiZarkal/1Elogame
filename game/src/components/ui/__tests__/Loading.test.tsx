@@ -48,8 +48,13 @@ describe('FullPageLoading', () => {
     expect(screen.getByText('Patience...')).toBeInTheDocument();
   });
 
-  it('should render full-screen container', () => {
+  it('couvre la fenêtre sans masquer la barre de navigation', () => {
+    // `inset-0` faisait disparaître l'en-tête du site à chaque chargement :
+    // le seul chemin de sortie s'effaçait, et la hauteur perçue clignotait.
     const { container } = render(<FullPageLoading />);
-    expect(container.firstChild).toHaveClass('fixed', 'inset-0');
+    const overlay = container.firstChild as HTMLElement;
+    expect(overlay).toHaveClass('fixed', 'inset-x-0', 'bottom-0');
+    expect(overlay).not.toHaveClass('inset-0');
+    expect(overlay.style.top).toBe('var(--header-h, 3rem)');
   });
 });

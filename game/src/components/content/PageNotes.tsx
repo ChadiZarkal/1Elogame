@@ -60,13 +60,15 @@ export function PageNotes({ notes, withFaqJsonLd = true }: Props) {
 
           {notes.lede && <p className="page-notes__lede">{notes.lede}</p>}
 
-          {notes.blocks.map((block, index) => (
+          {notes.blocks.map((block) => (
             <details
               className="page-notes__item"
               key={block.heading}
-              /* Le premier volet est ouvert : sans cela le bloc n'est qu'une
-                 pile de titres, et rien n'indique qu'il y a du texte dessous. */
-              open={index === 0}
+              /* Tous les volets sont repliés. Ce bloc est rendu sous des écrans
+                 de jeu dimensionnés à une fenêtre pile : chaque pixel déplié
+                 s'ajoute à la distance dont le document peut défiler, donc à la
+                 distance dont le jeu peut être chassé de l'écran. Le chevron
+                 indique déjà qu'il y a du texte dessous. */
             >
               <summary className="page-notes__summary">
                 <h3>{block.heading}</h3>

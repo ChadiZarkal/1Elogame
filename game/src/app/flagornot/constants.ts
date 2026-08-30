@@ -12,6 +12,10 @@ export interface JudgmentResult {
   justification: string;
   persisted?: boolean;
   persistenceWarning?: string;
+  /** Aucune analyse n'a eu lieu : l'appel a échoué ou expiré. L'écran de
+   *  révélation doit le dire plutôt que de laisser passer le repli pour un
+   *  verdict, et proposer de relancer. */
+  degraded?: boolean;
 }
 
 export interface HistoryItem extends JudgmentResult {

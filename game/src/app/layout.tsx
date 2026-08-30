@@ -13,6 +13,7 @@ import "./globals.css";
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   display: "swap",
+  variable: "--font-sans",
 });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
@@ -77,6 +78,16 @@ export const metadata: Metadata = {
   },
   category: 'games',
   classification: 'Entertainment',
+  manifest: '/manifest.json',
+  /* Sans ce bloc, iOS ouvre le raccourci installé dans un Safari complet, avec
+     sa barre d'adresse : l'utilisateur croit que « l'installation n'a rien
+     fait ». `statusBarStyle` en `black-translucent` laisse le fond du site
+     remonter derrière l'encoche, ce que `viewportFit: 'cover'` rend gérable. */
+  appleWebApp: {
+    capable: true,
+    title: SITE_NAME,
+    statusBarStyle: 'black-translucent',
+  },
   other: {
     // Une balise vide serait servie sur toutes les pages : ne l'émettre qu'une
     // fois la valeur réellement fournie.
@@ -92,15 +103,23 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: [
-    { media: '(prefers-color-scheme: dark)', color: '#0D0D0D' },
-    { media: '(prefers-color-scheme: light)', color: '#0D0D0D' },
-  ],
+  /* Sans `viewport-fit=cover`, `env(safe-area-inset-*)` résout à `0px` : tous
+     les calages écrits contre l'encoche et la barre gestuelle des trois jeux
+     retombaient sur leur plancher, et les boutons du bas passaient sous la
+     barre. C'est la clé de voûte de la tenue à l'écran sur iPhone. */
+  viewportFit: 'cover',
+  /* Une seule teinte, identique au fond réellement peint par `body`
+     (`--bg-primary`) et au `background_color` du manifeste : en mode installé,
+     la barre d'état, l'écran de démarrage et la première peinture forment un
+     aplat continu au lieu de trois noirs légèrement différents. */
+  themeColor: '#0A0A0B',
   colorScheme: 'dark',
 };
 
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { AnalyticsProvider } from '@/components/ui/AnalyticsProvider';
+import { MotionPreferences } from '@/components/ui/MotionPreferences';
+import { ServiceWorker } from '@/components/ui/ServiceWorker';
 import { Toaster } from 'sonner';
 
 // JSON-LD structured data for Google
@@ -201,28 +220,34 @@ export default function RootLayout({
             <AdSenseScript clientId={adSenseClientId} />
           </>
         )}
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        {/* Les balises de manifeste et d'icône ne sont plus écrites ici : elles
+            étaient en double avec celles que Next émet depuis `metadata.manifest`
+            et depuis `app/icon.svg`, `app/apple-icon.png`, `app/favicon.ico`. */}
       </head>
-      <body className={`${spaceGrotesk.className} antialiased min-h-full`}>
+      <body className={`${spaceGrotesk.variable} ${spaceGrotesk.className} antialiased min-h-full`}>
         <a href="#main-content" className="skip-to-content">
           Aller au contenu principal
         </a>
         <ErrorBoundary>
           <AnalyticsProvider>
-            <SiteHeader />
-            {children}
-            <SiteFooter />
+            <MotionPreferences>
+              <SiteHeader />
+              {children}
+              <SiteFooter />
+            </MotionPreferences>
           </AnalyticsProvider>
         </ErrorBoundary>
         <Toaster
           theme="dark"
           position="top-center"
+          /* Depuis `viewport-fit=cover`, un décalage fixe placerait les
+             notifications sous l'encoche. */
+          offset="max(1rem, calc(env(safe-area-inset-top) + 0.5rem))"
           toastOptions={{
             style: { background: '#1A1A1A', border: '1px solid #333', color: '#F5F5F5' },
           }}
         />
+        <ServiceWorker />
         <Analytics />
         <SpeedInsights />
         {/* Data layer for manual events (optional) */}

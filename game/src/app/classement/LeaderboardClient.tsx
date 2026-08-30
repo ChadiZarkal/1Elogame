@@ -385,7 +385,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
 
       <main
         id="main-content"
-        className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-[max(16px,env(safe-area-inset-top))]"
+        className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-4"
       >
         <Link
           href="/"

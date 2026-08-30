@@ -203,6 +203,16 @@ export default function JouerPage() {
 
     setIsRefreshing(true);
     clearError();
+    // `fetchNextDuel` range son résultat dans `nextDuel` tant qu'un duel est
+    // affiché : appelé tel quel, le bouton faisait tourner son indicateur puis
+    // ne changeait rien à l'écran. Le joueur bloqué sur un duel qu'il ne veut
+    // pas n'avait aucune sortie. On vide donc le duel courant d'abord.
+    useGameStore.setState({
+      currentDuel: null,
+      nextDuel: null,
+      lastResult: null,
+      showingResult: false,
+    });
     try {
       await fetchNextDuel();
     } finally {
@@ -268,7 +278,7 @@ export default function JouerPage() {
     <div
       ref={scrollRef}
       className="relative w-full overflow-y-auto overscroll-y-contain bg-[#0D0D0D]"
-      style={{ height: 'calc(var(--app-height, 100dvh) - var(--header-h,3rem))' }}
+      style={{ height: 'calc(100dvh - var(--header-h,3rem))' }}
     >
       {/* History: past duel results */}
       {duelHistory.length > 0 && (
@@ -294,17 +304,22 @@ export default function JouerPage() {
       <div
         className="w-full relative flex flex-col"
         style={{
-          minHeight: 'calc(var(--app-height, 100dvh) - var(--header-h,3rem))',
-          height: 'calc(var(--app-height, 100dvh) - var(--header-h,3rem))',
+          minHeight: 'calc(100dvh - var(--header-h,3rem))',
+          height: 'calc(100dvh - var(--header-h,3rem))',
         }}
       >
         {/* Top bar: home + streak + party progress */}
-        <div className="absolute left-4 right-4 z-30 flex items-center justify-between" style={{ top: 'max(12px, env(safe-area-inset-top))' }}>
-          <div className="flex items-center gap-2">
+        {/* Plus de `env(safe-area-inset-top)` ici : l'en-tête du site est rendu
+            au-dessus de cet écran et dégage déjà l'encoche. Le cumul repoussait
+            les commandes de 47 px vers le bas sur iPhone.
+            `w-11` et `gap-3` : « retour accueil » abandonne la partie en cours
+            et touchait « rafraîchir » à 8 px près, sur des cibles de 40 px. */}
+        <div className="absolute left-4 right-4 z-30 flex items-center justify-between" style={{ top: 12 }}>
+          <div className="flex min-w-0 items-center gap-3">
             {/* Home button */}
             <Link
               href="/"
-              className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-[#333] rounded-full w-10 h-10 flex items-center justify-center text-[#A3A3A3] hover:text-[#F5F5F5] transition-colors"
+              className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-[#333] rounded-full w-11 h-11 shrink-0 flex items-center justify-center text-[#A3A3A3] hover:text-[#F5F5F5] transition-colors"
               aria-label="Retour accueil"
             >
               ←
@@ -312,13 +327,16 @@ export default function JouerPage() {
             <button
               onClick={handleRefreshDuel}
               disabled={isLoadingDuel || isRefreshing}
-              className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-[#333] rounded-full w-10 h-10 flex items-center justify-center text-[#A3A3A3] hover:text-[#F5F5F5] disabled:opacity-50 transition-colors"
+              className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-[#333] rounded-full w-11 h-11 shrink-0 flex items-center justify-center text-[#A3A3A3] hover:text-[#F5F5F5] disabled:opacity-50 transition-colors"
               aria-label="Rafraichir le duel"
             >
               {isRefreshing ? '…' : '↻'}
             </button>
-            {/* Streak — hidden instead of unmounted to prevent CLS */}
-            <div style={{ visibility: showingResult ? 'hidden' : 'visible' }}>
+            {/* Streak — hidden instead of unmounted to prevent CLS.
+                `min-w-0` : sans lui, la pastille en `whitespace-nowrap` ne se
+                laisse pas comprimer, et sur 360 px de large la progression de
+                partie, à droite, sortait du cadre. */}
+            <div className="min-w-0" style={{ visibility: showingResult ? 'hidden' : 'visible' }}>
               <StreakDisplay 
                 streak={streak} 
                 streakEmoji={streakEmoji} 
@@ -345,7 +363,7 @@ export default function JouerPage() {
         {!isOnline && (
           <div
             className="absolute left-1/2 z-30 -translate-x-1/2 rounded-full border border-[#7F1D1D] bg-[#1A1212]/95 px-3 py-1 text-[11px] font-semibold text-[#FCA5A5]"
-            style={{ top: 'calc(max(12px, env(safe-area-inset-top)) + 52px)' }}
+            style={{ top: 64 }}
           >
             📡 Hors ligne: vote desactive
           </div>
@@ -358,7 +376,7 @@ export default function JouerPage() {
             animate={{ opacity: [0, 1, 1, 1, 0], y: [-8, 0, 0, 0, -8], scale: [0.92, 1, 1, 1, 0.92] }}
             transition={{ duration: 6, times: [0, 0.15, 0.4, 0.8, 1], ease: 'easeInOut' }}
             className="absolute left-1/2 -translate-x-1/2 z-40 bg-[#DC2626] text-white text-sm font-black px-5 py-2.5 rounded-full shadow-2xl pointer-events-none"
-            style={{ top: `calc(max(12px, env(safe-area-inset-top)) + ${isOnline ? 56 : 88}px)` }}
+            style={{ top: isOnline ? 68 : 100 }}
           >
             🚩 Votez pour le plus red flag
           </motion.div>

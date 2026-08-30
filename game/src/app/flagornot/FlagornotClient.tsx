@@ -29,7 +29,6 @@ export default function FlagOrNotPage() {
     communitySubmissions,
     showCommunityTab,
     setShowCommunityTab,
-    displaySuggestions,
     placeholderIdx,
     inputRef,
     handleSubmit,
@@ -41,8 +40,16 @@ export default function FlagOrNotPage() {
   return (
     <div
       ref={mainRef}
+      /* Cible du lien d'évitement du gabarit racine : `/flagornot` était l'une
+         des rares routes à ne pas la définir, et le lien n'y menait nulle part. */
+      id="main-content"
+      tabIndex={-1}
       className="relative flex flex-col overflow-hidden"
-      style={{ height: 'calc(var(--app-height, 100dvh) - var(--header-h,3rem))', background: '#06040F' }}
+      /* `svh` : la plus petite fenêtre possible, toutes barres déployées. Elle
+         ne bouge ni au repli de la barre d'URL ni à l'ouverture du clavier —
+         ce que la variable `--app-height`, pilotée en JavaScript, tentait
+         d'approximer en ne sachant que grandir. Voir `useFlagOrNot`. */
+      style={{ height: 'calc(100svh - var(--header-h,3rem))', background: '#06040F' }}
     >
       {/* Ambiance : `absolute` et non `fixed`.
           Ce conteneur a une hauteur d'écran et le contenu éditorial le suit
@@ -66,10 +73,10 @@ export default function FlagOrNotPage() {
       />
 
       {/* ── Top bar ── */}
-      <div
-        className="relative z-20 flex items-center justify-between px-4 pb-2"
-        style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}
-      >
+      {/* Plus de `env(safe-area-inset-top)` : l'en-tête du site est rendu
+          au-dessus de ce châssis et dégage déjà l'encoche. Le cumul ajoutait
+          47 px de vide en haut du jeu sur iPhone. */}
+      <div className="relative z-20 flex items-center justify-between px-4 pt-3.5 pb-2">
         {/* Back */}
         <Link
           href="/"
@@ -96,7 +103,10 @@ export default function FlagOrNotPage() {
           <div className="flex items-center gap-2 min-w-20 justify-end">
             <Link
               href="/flagornot/stats"
-              className="text-[#4B5563] hover:text-white transition-colors"
+              /* La surface cliquable se reduisait au SVG de 15 px, soit un
+                 tiers du minimum de 44. Les marges negatives elargissent la
+                 cible sans deplacer l'icone. */
+              className="-m-2 flex min-h-11 min-w-11 items-center justify-center text-[#4B5563] hover:text-white transition-colors"
               aria-label="Voir les statistiques"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -112,7 +122,10 @@ export default function FlagOrNotPage() {
           <div className="min-w-11 flex justify-end">
             <Link
               href="/flagornot/stats"
-              className="text-[#4B5563] hover:text-white transition-colors"
+              /* La surface cliquable se reduisait au SVG de 15 px, soit un
+                 tiers du minimum de 44. Les marges negatives elargissent la
+                 cible sans deplacer l'icone. */
+              className="-m-2 flex min-h-11 min-w-11 items-center justify-center text-[#4B5563] hover:text-white transition-colors"
               aria-label="Voir les statistiques"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -155,7 +168,6 @@ export default function FlagOrNotPage() {
               isMounted={isMounted}
               redCount={redCount}
               greenCount={greenCount}
-              historyLength={history.length}
               onShare={handleShare}
               onNext={handleNext}
             />
@@ -170,7 +182,6 @@ export default function FlagOrNotPage() {
               communitySubmissions={communitySubmissions}
               showCommunityTab={showCommunityTab}
               setShowCommunityTab={setShowCommunityTab}
-              displaySuggestions={displaySuggestions}
               placeholderIdx={placeholderIdx}
               inputRef={inputRef}
               onSubmit={handleSubmit}

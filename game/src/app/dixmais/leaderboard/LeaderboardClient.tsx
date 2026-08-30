@@ -66,8 +66,8 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
     <div className="relative min-h-[calc(100dvh-var(--header-h,3rem))] text-white pb-10" style={{ background: '#080808' }}>
       {/* `absolute` : décor de cette page, pas de la fenêtre. */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[500px] h-[400px] rounded-full opacity-15"
-          style={{ background: 'radial-gradient(ellipse,#F59E0B 0%,transparent 70%)', filter: 'blur(60px)' }} />
+        <div className="absolute inset-x-0 -top-32 h-[400px] opacity-15"
+          style={{ background: 'radial-gradient(60% 100% at 50% 0%, #F59E0B 0%, transparent 72%)' }} />
         <div className="absolute inset-0 opacity-[0.025]"
           style={{ backgroundImage: 'linear-gradient(to right,#fff 1px,transparent 1px),linear-gradient(to bottom,#fff 1px,transparent 1px)', backgroundSize: '28px 28px' }} />
       </div>
@@ -154,9 +154,9 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
           <div className="space-y-2">
             <AnimatePresence mode="popLayout">
               {filtered.map((stmt, i) => (
-                <motion.div key={`${stmt.id}-${sort}`}
+                <motion.div key={stmt.id} layout
                   initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-                  transition={{ delay: Math.min(i * 0.03, 0.3) }}
+                  transition={{ delay: Math.min(i * 0.02, 0.15) }}
                   className="flex items-center gap-3 px-4 py-3.5 rounded-xl"
                   style={{
                     background: i < 3 ? 'rgba(245,158,11,0.06)' : 'rgba(255,255,255,0.03)',
@@ -168,12 +168,12 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="text-[9px]">{stmt.type === 'positive' ? '🟢' : '🚩'}</span>
-                      <p className="text-sm font-bold text-white truncate">{stmt.text}</p>
+                      <span className="text-[12px]">{stmt.type === 'positive' ? '🟢' : '🚩'}</span>
+                      <p className="min-w-0 text-sm font-bold leading-snug text-white break-words">{stmt.text}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[9px] font-bold text-white/30">{stmt.votes_count} votes</span>
-                      <span className="text-[9px] font-bold" style={{ color: 'rgba(239,68,68,0.6)' }}>
+                      <span className="text-[11px] font-bold text-white/45">{stmt.votes_count} votes</span>
+                      <span className="text-[11px] font-bold" style={{ color: 'rgba(239,68,68,0.8)' }}>
                         🚫 {stmt.elimination_rate.toFixed(0)}% élim.
                       </span>
                       <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-white/30"
@@ -186,7 +186,7 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
                     <p className="text-lg font-black leading-none" style={{ color: deltaColor(stmt.avg_delta) }}>
                       {stmt.avg_delta > 0 ? '+' : ''}{stmt.avg_delta.toFixed(1)}
                     </p>
-                    <p className="text-[8px] font-bold uppercase tracking-wide text-white/25">impact</p>
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-white/25">impact</p>
                   </div>
                 </motion.div>
               ))}

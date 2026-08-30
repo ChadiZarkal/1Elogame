@@ -36,12 +36,29 @@
      * défilement, et laisse `overflow-y` à `visible`. */
     overflow-x: clip;
     min-height: 100dvh;
+
+    /* Safari iOS gonfle de lui-même le corps du texte au passage en paysage.
+       Les tailles fines du site (jusqu'à 10 px) sont alors réévaluées de façon
+       inégale d'un bloc à l'autre et les grilles se disloquent. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+
+    /* Coupe le « tirer pour rafraîchir » de Chrome Android : sur un écran de
+       jeu, un glissement vers le bas rechargeait la page et perdait la partie
+       en cours. Coupe aussi l'enchaînement du défilement des feuilles
+       glissantes vers le document en dessous. */
+    overscroll-behavior-y: none;
   }
 
   body {
     background: var(--bg-primary);
     color: var(--text-primary);
-    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+    /* La déclaration nommait « Inter », qu'aucune `@font-face` ne charge et que
+       la cascade écartait de toute façon : cette règle vit dans `@layer base`,
+       et la classe posée par `next/font` est hors couche — donc prioritaire,
+       quelle que soit la spécificité. La police réellement rendue a toujours
+       été Space Grotesk. La variable la nomme désormais explicitement. */
+    font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont,
       "Segoe UI", Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -54,6 +71,50 @@
   select {
     color: inherit;
     font: inherit;
+  }
+}
+
+/* ========== Bandeau défilant de l'accueil ==========
+   Ces règles vivaient dans un `<style jsx global>` de `HubClient`, donc
+   insérées après l'hydratation : le bandeau se repliait sur plusieurs lignes
+   au premier rendu puis se rétractait, en pleine zone LCP. */
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+.animate-marquee-custom {
+  display: flex;
+  width: max-content;
+  animation: marquee 28s linear infinite;
+}
+
+/* ========== Emplacements publicitaires ==========
+   `AdBanner` posait cette classe sans qu'elle soit définie nulle part : le
+   `<ins>` naissait donc à hauteur zéro et grandissait d'un coup à l'arrivée de
+   la créative, poussant vers le bas tout ce qui suivait — c'est-à-dire les
+   boutons, sous un pouce déjà en mouvement. La hauteur est réservée d'avance.
+   (Le composant n'a aujourd'hui aucun site d'appel ; les annonces servies
+   viennent des annonces automatiques, qui s'insèrent hors de ce cadre.) */
+
+.ad-container {
+  display: block;
+  width: 100%;
+  min-height: 100px;
+  margin: 1rem 0;
+  contain: layout;
+}
+.ad-container > ins {
+  display: block;
+  width: 100%;
+}
+@media (min-width: 768px) {
+  .ad-container {
+    min-height: 280px;
   }
 }
 
@@ -82,9 +143,6 @@
   }
 }
 
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 20px);
-}
 
 /* ========== Utilities ========== */
 
@@ -184,9 +242,17 @@ button:focus-visible {
   33% { transform: translate(40px, -30px) scale(1.1); }
   66% { transform: translate(-30px, 40px) scale(0.9); }
 }
-.animate-orb-1 { animation: orb-float-1 20s ease-in-out infinite; will-change: transform; }
-.animate-orb-2 { animation: orb-float-2 25s ease-in-out infinite; will-change: transform; }
-.animate-orb-3 { animation: orb-float-3 30s ease-in-out infinite; will-change: transform; }
+/* `will-change` sous condition de mouvement.
+   Ces trois classes habillent des calques de 60vw floutés à 100 px : la
+   promotion permanente en couche GPU y retenait plusieurs mégaoctets de
+   texture, y compris quand la règle `prefers-reduced-motion` avait déjà ramené
+   l'animation à 0,01 ms — soit le coût sans le mouvement, sur les téléphones
+   d'entrée de gamme. */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-orb-1 { animation: orb-float-1 20s ease-in-out infinite; will-change: transform; }
+  .animate-orb-2 { animation: orb-float-2 25s ease-in-out infinite; will-change: transform; }
+  .animate-orb-3 { animation: orb-float-3 30s ease-in-out infinite; will-change: transform; }
+}
 
 @keyframes shimmer {
   0% {
@@ -284,507 +350,61 @@ button:focus-visible {
 .animate-menu-pulse { animation: menu-attention-pulse 2s infinite; }
 .animate-dropdown-enter { animation: dropdown-enter 0.15s ease both; }
 
-/* ═══════════════════════════════════════ */
-/* ═══ HUB / HOMEPAGE - COMPLETE CSS ═══ */
-/* ═══════════════════════════════════════ */
 
-/* ── CSS entrance animation system ───── */
-/* Elements start visible, animate in via CSS */
 
-.hub__enter {
-  opacity: 0;
-  transform: translateY(18px);
-  animation: hub-fadeUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-}
-.hub__enter--1 { animation-delay: 0.05s; }
-.hub__enter--2 { animation-delay: 0.12s; }
-.hub__enter--3 { animation-delay: 0.2s; }
-.hub__enter--4 { animation-delay: 0.28s; }
-.hub__enter--5 { animation-delay: 0.32s; }
-.hub__enter--6 { animation-delay: 0.38s; }
 
-@keyframes hub-fadeUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-/* ── Full-page container ─────────────── */
 
-.hub {
-  position: relative;
-  min-height: 100dvh;
-  background: #050505;
-  overflow: hidden;
-}
 
-/* Diagonal-line texture (replaces gradient orbs) */
-.hub__texture {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.03;
-  background-image: repeating-linear-gradient(
-    -45deg,
-    transparent,
-    transparent 14px,
-    rgba(255, 255, 255, 0.5) 14px,
-    rgba(255, 255, 255, 0.5) 15px
-  );
-  z-index: 0;
-}
 
-/* Ambient red glow behind hero */
-.hub::before {
-  content: '';
-  position: absolute;
-  top: -60px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 300px;
-  height: 200px;
-  background: radial-gradient(ellipse, rgba(255, 45, 45, 0.12) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
 
-/* Main layout */
-.hub__main {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 100dvh;
-  max-width: 420px;
-  margin: 0 auto;
-  padding: clamp(2rem, 6vw, 3.5rem) 1.25rem 1.5rem;
-}
 
-/* ── HERO ────────────────────────────── */
 
-.hub__hero {
-  text-align: center;
-  flex-shrink: 0;
-  margin-bottom: 0.25rem;
-}
 
-.hub__logo {
-  width: clamp(220px, 60vw, 340px);
-  height: auto;
-  margin: 0 auto;
-  display: block;
-  user-select: none;
-  -webkit-user-drag: none;
-}
 
-.hub__title {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: clamp(0.3rem, 1.5vw, 0.6rem);
-  line-height: 1;
-  margin: 0;
-}
 
-.hub__title-red {
-  font-size: clamp(3.2rem, 16vw, 6.5rem);
-  font-weight: 900;
-  color: #FF2D2D;
-  letter-spacing: -0.04em;
-  text-transform: uppercase;
-  text-shadow:
-    0 0 50px rgba(255, 45, 45, 0.35),
-    0 0 100px rgba(255, 45, 45, 0.12);
-}
 
-.hub__title-flag {
-  font-size: clamp(3.2rem, 16vw, 6.5rem);
-  font-weight: 900;
-  color: transparent;
-  -webkit-text-stroke: 2.5px #FF2D2D;
-  letter-spacing: -0.04em;
-  text-transform: uppercase;
-}
 
-.hub__title-or {
-  font-size: clamp(3.2rem, 16vw, 6.5rem);
-  font-weight: 900;
-  color: transparent;
-  -webkit-text-stroke: 2px #555;
-  letter-spacing: -0.04em;
-  text-transform: uppercase;
-}
 
-.hub__title-green {
-  font-size: clamp(3.2rem, 16vw, 6.5rem);
-  font-weight: 900;
-  color: #22C55E;
-  letter-spacing: -0.04em;
-  text-transform: uppercase;
-  text-shadow:
-    0 0 50px rgba(34, 197, 94, 0.35),
-    0 0 100px rgba(34, 197, 94, 0.12);
-}
 
-.hub__subtitle {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.4em;
-  text-transform: uppercase;
-  color: #888;
-  margin-top: 0.6rem;
-}
 
-/* ── TICKER / MARQUEE ────────────────── */
 
-.hub__ticker {
-  overflow: hidden;
-  margin: clamp(1rem, 3vw, 1.5rem) -1.25rem;
-  padding: 0.55rem 0;
-  border-top: 1px solid rgba(255, 45, 45, 0.2);
-  border-bottom: 1px solid rgba(255, 45, 45, 0.2);
-  background: rgba(255, 45, 45, 0.02);
-  flex-shrink: 0;
-}
 
-.hub__ticker-track {
-  display: flex;
-  width: max-content;
-  animation: ticker-scroll 20s linear infinite;
-}
 
-.hub__ticker-text {
-  white-space: nowrap;
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(255, 45, 45, 0.65);
-}
 
-@keyframes ticker-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
 
-/* ── GAME CARDS ──────────────────────── */
 
-.hub__games {
-  display: flex;
-  flex-direction: column;
-  gap: 0.625rem;
-  margin-top: clamp(0.75rem, 3vw, 1.25rem);
-  flex: 1;
-  min-height: 0;
-}
 
-.hub__card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  padding: 1rem 1.125rem;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
-  background: #0C0C0E;
-  cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
-  overflow: hidden;
-}
 
-.hub__card:active {
-  transform: scale(0.97);
-}
 
-.hub__card:hover {
-  background: #111114;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-}
 
-/* Primary card — left-border accent + subtle gradient */
-.hub__card--main {
-  border-left: 3px solid #FF2D2D;
-  padding: 1.125rem 1.25rem;
-  background: linear-gradient(135deg, #0C0C0E 0%, #110808 100%);
-  box-shadow: 0 2px 20px rgba(255, 45, 45, 0.06);
-}
-.hub__card--main:hover {
-  border-color: rgba(255, 45, 45, 0.3);
-  border-left-color: #FF2D2D;
-  background: linear-gradient(135deg, #111114 0%, #150b0b 100%);
-  box-shadow: 0 4px 30px rgba(255, 45, 45, 0.1);
-}
 
-/* Secondary cards — left-border accent */
-.hub__card--green {
-  border-left: 3px solid #10B981;
-}
-.hub__card--green:hover {
-  border-color: rgba(16, 185, 129, 0.25);
-  border-left-color: #10B981;
-}
 
-.hub__card--purple {
-  border-left: 3px solid #A855F7;
-}
-.hub__card--purple:hover {
-  border-color: rgba(168, 85, 247, 0.25);
-  border-left-color: #A855F7;
-}
 
-.hub__card--amber {
-  border-left: 3px solid #F59E0B;
-}
-.hub__card--amber:hover {
-  border-color: rgba(245, 158, 11, 0.25);
-  border-left-color: #F59E0B;
-}
 
-.hub__card-header {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-bottom: 0.5rem;
-}
 
-.hub__card-emoji {
-  font-size: 1.4rem;
-  line-height: 1;
-}
 
-.hub__card-tag {
-  font-size: 0.55rem;
-  font-weight: 900;
-  letter-spacing: 0.14em;
-  padding: 2px 6px;
-  border-radius: 3px;
-}
 
-.hub__card-tag--red {
-  color: #FF2D2D;
-  background: rgba(255, 45, 45, 0.1);
-}
-.hub__card-tag--green {
-  color: #10B981;
-  background: rgba(16, 185, 129, 0.1);
-}
-.hub__card-tag--purple {
-  color: #A855F7;
-  background: rgba(168, 85, 247, 0.1);
-}
-.hub__card-tag--amber {
-  color: #F59E0B;
-  background: rgba(245, 158, 11, 0.12);
-}
 
-.hub__card-name {
-  font-size: 1.3rem;
-  font-weight: 900;
-  color: #F5F5F7;
-  margin: 0;
-  line-height: 1.2;
-}
 
-.hub__card-name--sm {
-  font-size: 1rem;
-}
 
-.hub__card-pitch {
-  font-size: 0.8rem;
-  color: #999;
-  margin: 0.25rem 0 0;
-  line-height: 1.4;
-}
 
-.hub__card-pitch--sm {
-  font-size: 0.72rem;
-  color: #888;
-}
 
-/* CTA buttons inside cards */
-.hub__card-go {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-top: 0.75rem;
-  padding: 0.35rem 0.85rem;
-  border-radius: 5px;
-  transition: gap 0.2s ease, background 0.2s ease;
-}
 
-.hub__card-go--red {
-  color: #FF2D2D;
-  background: rgba(255, 45, 45, 0.12);
-  border: 1px solid rgba(255, 45, 45, 0.25);
-  animation: cta-pulse 2.5s ease-in-out infinite;
-  padding: 0.4rem 1rem;
-  font-size: 0.75rem;
-}
-.hub__card:hover .hub__card-go--red {
-  background: rgba(255, 45, 45, 0.18);
-}
 
-@keyframes cta-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 45, 45, 0.2); }
-  50% { box-shadow: 0 0 0 4px rgba(255, 45, 45, 0); }
-}
 
-.hub__card-go--green {
-  color: #10B981;
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.18);
-}
-.hub__card:hover .hub__card-go--green {
-  background: rgba(16, 185, 129, 0.14);
-}
 
-.hub__card-go--purple {
-  color: #A855F7;
-  background: rgba(168, 85, 247, 0.08);
-  border: 1px solid rgba(168, 85, 247, 0.18);
-}
-.hub__card:hover .hub__card-go--purple {
-  background: rgba(168, 85, 247, 0.14);
-}
 
-.hub__card-go--amber {
-  color: #F59E0B;
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.25);
-}
-.hub__card:hover .hub__card-go--amber {
-  background: rgba(245, 158, 11, 0.16);
-}
 
-.hub__card:hover .hub__card-go {
-  gap: 0.55rem;
-}
 
-.hub__card-go--sm {
-  font-size: 0.6rem;
-  margin-top: 0.5rem;
-  padding: 0.25rem 0.6rem;
-}
 
-/* 2-column secondary row */
-.hub__row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.625rem;
-}
 
-.hub__card--half {
-  padding: 0.875rem 1rem;
-}
 
-/* ── FOOTER ──────────────────────────── */
 
-.hub__footer {
-  margin-top: auto;
-  padding-top: clamp(1rem, 3vw, 1.5rem);
-  text-align: center;
-  flex-shrink: 0;
-}
 
-.hub__stats {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #777;
-  min-height: 1.2rem;
-}
 
-.hub__live-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #FF2D2D;
-  animation: live-pulse 2s ease-in-out infinite;
-  flex-shrink: 0;
-}
 
-@keyframes live-pulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 45, 45, 0.4); }
-  50% { opacity: 0.4; box-shadow: 0 0 0 4px rgba(255, 45, 45, 0); }
-}
 
-.hub__stats-num {
-  color: #999;
-}
-
-.hub__stats-sep {
-  color: #444;
-}
-
-.hub__actions {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.hub__action {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #aaa;
-  padding: 0.6rem 0.85rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
-  min-height: 44px;
-}
-
-.hub__action:active {
-  transform: scale(0.96);
-}
-
-.hub__action:hover {
-  color: #ddd;
-  border-color: rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.hub__version {
-  font-size: 0.55rem;
-  color: #666;
-  margin-top: 0.75rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-}
-
-/* ── Reduced motion ──────────────────── */
-
-@media (prefers-reduced-motion: reduce) {
-  .hub__enter {
-    animation: none;
-    opacity: 1;
-    transform: none;
-  }
-  .hub__ticker-track {
-    animation: none;
-  }
-  .hub__live-dot {
-    animation: none;
-  }
-}
 
 /* ── Accessibility: screen reader only ── */
 .sr-only {
@@ -801,63 +421,6 @@ button:focus-visible {
 
 /* ═══════════════════════════════════════════════════════════
    RESSOURCES — Floating button, cards, quiz
-   ═══════════════════════════════════════════════════════════ */
-
-/* Floating access button (bottom-right) */
-.res-fab {
-  position: fixed;
-  bottom: calc(max(20px, env(safe-area-inset-bottom)) + 12px);
-  right: 14px;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  border-radius: 100px;
-  background: rgba(20, 20, 20, 0.92);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(239, 68, 68, 0.15);
-  color: #9CA3AF;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-@media (max-width: 480px) {
-  .res-fab {
-    bottom: calc(max(16px, env(safe-area-inset-bottom)) + 60px);
-    right: 12px;
-    padding: 8px 14px;
-    font-size: 11px;
-  }
-}
-.res-fab:hover {
-  border-color: rgba(239, 68, 68, 0.35);
-  color: #EF4444;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(239, 68, 68, 0.1);
-}
-.res-fab:focus-visible {
-  outline: 2px solid #EF4444;
-  outline-offset: 2px;
-}
-.res-fab:active {
-  transform: scale(0.95);
-}
-.res-fab::before {
-  content: '';
-  position: absolute;
-  inset: -3px;
-  border-radius: 100px;
-  border: 1.5px solid rgba(239, 68, 68, 0.2);
-  animation: res-fabPulse 3s ease-in-out infinite;
-  pointer-events: none;
-}
-.res-fab__label {
-  white-space: nowrap;
-}
 
 /* Hub card for meter selection */
 .res-card {
@@ -918,10 +481,6 @@ button:focus-visible {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes res-fabPulse {
-  0%, 100% { opacity: 0; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.08); }
-}
 
 @keyframes quiz-slideIn {
   from { opacity: 0; transform: translateX(30px); }
@@ -960,25 +519,38 @@ button:focus-visible {
    Barre de navigation. Statique et non collante : les écrans de jeu sont
    dimensionnés en `calc(100dvh - var(--header-h, 3rem))`, une barre suivant le
    défilement mangerait cette hauteur une seconde fois. */
+/* Deux mesures, et non une seule :
+   `--header-bar-h` est la barre visible, celle qui doit loger un bouton Menu
+   de 44 px ; `--header-h` est son encombrement total, encoche comprise. Ce
+   sont les ~25 `calc(100dvh - var(--header-h))` des écrans de jeu qui imposent
+   cette distinction : en `viewport-fit=cover`, `100dvh` couvre tout l'écran,
+   zone de sûreté incluse, et une barre qui ne déclarerait que sa partie
+   visible ferait déborder chaque jeu de la hauteur de l'encoche. */
 :root {
-  --header-h: 3rem;
+  --header-bar-h: 3.25rem;
+  --header-h: calc(var(--header-bar-h) + env(safe-area-inset-top, 0px));
 }
-/* Sur un ecran court, chaque pixel de barre est un pixel de moins pour le jeu. */
+/* Sur un ecran court, chaque pixel de barre est un pixel de moins pour le jeu.
+   Le plancher reste 3rem : en dessous, le bouton Menu — seul chemin de
+   navigation sous 640 px de large — ne tient plus ses 44 px. */
 @media (max-height: 720px) {
   :root {
-    --header-h: 2.5rem;
+    --header-bar-h: 3rem;
   }
 }
 .site-header {
   position: relative;
   z-index: 60;
   height: var(--header-h, 3rem);
+  /* Le contenu remonte sous la barre d'état depuis `viewport-fit=cover` :
+     sans ce rembourrage, la marque et le bouton Menu passaient sous l'encoche. */
+  padding-top: env(safe-area-inset-top, 0px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   background: rgba(8, 8, 10, 0.92);
   backdrop-filter: blur(10px);
 }
 .site-header__bar {
-  height: 100%;
+  height: var(--header-bar-h, 3.25rem);
   max-width: 72rem;
   margin: 0 auto;
   padding: 0 0.85rem;
@@ -1004,6 +576,13 @@ button:focus-visible {
   margin-left: auto;
 }
 .site-header__inline a {
+  /* Liens texte nus, ils ne faisaient que la hauteur d'une ligne — 19 px.
+     Ils sont visibles dès 640 px de large, donc sur tout téléphone en
+     paysage : ce sont bien des cibles tactiles. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 0.35rem;
   font-size: 0.8rem;
   font-weight: 600;
   color: #a8a8a8;
@@ -1035,9 +614,10 @@ button:focus-visible {
   align-items: center;
   gap: 0.35rem;
   /* Hauteur imposée : la barre étant en `align-items: center`, le `details`
-     n'est pas étiré et le bouton retombait à 32 px. */
-  min-height: 2.25rem;
-  padding: 0.35rem 0.7rem;
+     n'est pas étiré et le bouton retombait à 32 px. 2.75rem — soit 44 px —
+     parce que c'est le seul chemin de navigation sous 640 px de large. */
+  min-height: 2.75rem;
+  padding: 0.35rem 0.75rem;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 0.6rem;
   font-size: 0.72rem;
@@ -1299,10 +879,21 @@ button:focus-visible {
 .legal-page__section a:hover {
   color: #fb923c;
 }
+/* Enveloppe défilante : `overflow-x: clip` sur le `body` rend tout débordement
+   horizontal définitivement inatteignable. Ce tableau à deux colonnes dépasse
+   390 px de large — ses dernières colonnes étaient purement rognées sur
+   téléphone, sans barre de défilement pour aller les voir. */
+.legal-page__table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0.75rem -1rem;
+  padding: 0 1rem;
+}
 .legal-page__table {
   width: 100%;
+  min-width: 30rem;
   border-collapse: collapse;
-  margin: 0.75rem 0;
+  margin: 0;
   font-size: 0.85rem;
 }
 .legal-page__table th,
@@ -1331,23 +922,6 @@ button:focus-visible {
   color: #fb923c;
 }
 
-/* Footer legal links */
-.hub__legal-links {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-top: 0.5rem;
-}
-.hub__legal-link {
-  font-size: 0.7rem;
-  color: #666;
-  text-decoration: none;
-  transition: color 0.15s;
-}
-.hub__legal-link:hover {
-  color: #999;
-}
 
 /* ═══════════════════════════════════════════════════════════
    ORACLE (FlagOrNot) — Refonte visuelle

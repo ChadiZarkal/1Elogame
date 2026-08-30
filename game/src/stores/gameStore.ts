@@ -390,15 +390,22 @@ export const useGameStore = create<GameState>((set, get) => ({
       });
       
       const data = await response.json();
-      
+
       if (!response.ok) {
         console.warn('Vote API error:', data.error?.message);
         return; // Keep optimistic result visible
       }
-      
+
+      // L'écran de résultat laisse passer au duel suivant dès 280 ms. Sur un
+      // réseau lent, la réponse du duel N revient donc alors que le duel N+1
+      // est déjà voté et affiché : sans ce garde, elle écrasait `lastResult`
+      // avec les pourcentages du duel précédent, et l'écran désignait un
+      // vainqueur qui n'était plus à l'affiche.
+      if (get().duelCount !== newDuelCount) return;
+
       // Refine with real data (streak correctness, percentages, ranks)
       const realStreak = updateStreak(data.data.streak.matched);
-      
+
       set({
         lastResult: data.data,
         streak: realStreak,

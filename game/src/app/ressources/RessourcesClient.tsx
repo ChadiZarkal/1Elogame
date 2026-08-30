@@ -19,7 +19,7 @@ export default function RessourcesPage() {
       <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#EF4444]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-[#F97316]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top))] pb-2">
+      <div className="flex items-center justify-between px-4 pt-3 pb-2">
         <Link
           href="/"
           className="text-[#6B7280] hover:text-white transition-colors text-sm flex items-center gap-1 min-w-[48px] min-h-[48px] justify-start active:scale-95"

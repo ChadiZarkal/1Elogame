@@ -101,7 +101,7 @@ export function Verdict({
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="scrollbar-hide flex flex-1 flex-col overflow-y-auto px-5 pb-8"
+      className="scrollbar-hide flex flex-1 flex-col overflow-y-auto overscroll-contain px-5"
     >
       {/* ── Note finale ──────────────────────────────────────────────────── */}
       <motion.div
@@ -109,7 +109,7 @@ export function Verdict({
         animate={ending.tone === 'brutal' ? { x: [0, -7, 6, -4, 0] } : undefined}
         transition={{ duration: 0.4 }}
       >
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30">
+        <p className="text-[11px] font-black uppercase tracking-[0.22em] text-white/45">
           Profil #{profileNumber} · {identity.name}, {identity.age}
         </p>
         <motion.p
@@ -139,7 +139,7 @@ export function Verdict({
         className="mt-5 rounded-2xl px-4 py-4 text-center"
         style={{ background: withAlpha(tint, 0.09), border: `1px solid ${withAlpha(tint, 0.28)}` }}
       >
-        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">Ta fin</p>
+        <p className="text-[11px] font-black uppercase tracking-[0.22em] text-white/45">Ta fin</p>
         <p
           className="mt-1 font-black uppercase leading-none tracking-tight"
           style={{ fontSize: 'clamp(1.6rem, 8vw, 2.2rem)', color: tint }}
@@ -152,13 +152,13 @@ export function Verdict({
       </motion.div>
 
       {/* ── La chute ─────────────────────────────────────────────────────── */}
-      <p className="mt-6 mb-2 text-center text-[10px] font-black uppercase tracking-[0.25em] text-white/25">
+      <p className="mt-6 mb-2 text-center text-[11px] font-black uppercase tracking-[0.18em] text-white/45">
         Sa descente
       </p>
       <TrajectoryChart path={traj.path} tint={tint} />
 
       {/* ── Détail par révélation ────────────────────────────────────────── */}
-      <p className="mt-6 mb-2 text-center text-[10px] font-black uppercase tracking-[0.25em] text-white/25">
+      <p className="mt-6 mb-2 text-center text-[11px] font-black uppercase tracking-[0.18em] text-white/45">
         Ce que chaque info lui a coûté
       </p>
 
@@ -187,7 +187,7 @@ export function Verdict({
               </div>
 
               {avgDelta !== null && (
-                <p className="mt-1.5 pl-6 text-[10px] font-bold text-white/35">
+                <p className="mt-1.5 pl-6 text-[12px] font-bold text-white/55">
                   Les autres : {signed(avgDelta)}
                   {eliminationRate !== null && eliminationRate >= 5 && (
                     <>
@@ -211,7 +211,18 @@ export function Verdict({
       )}
 
       {/* ── Suite ────────────────────────────────────────────────────────── */}
-      <div className="mt-6 space-y-2">
+      {/* Épinglé au bas du conteneur défilant. Empilés avant lui : la note
+          géante, la carte de fin, la courbe, jusqu'à cinq lignes de détail et
+          la ligne de sévérité — sur un 360×640, « Profil suivant » naissait à
+          quelque 400 px sous la ligne de flottaison, sans rien qui signale son
+          existence. Le dégradé indique qu'il reste du contenu dessous. */}
+      <div
+        className="sticky bottom-0 z-10 mt-6 -mx-5 space-y-2 px-5 pt-4"
+        style={{
+          paddingBottom: 'max(env(safe-area-inset-bottom), 12px)',
+          background: 'linear-gradient(to top, #07070A 62%, rgba(7,7,10,0))',
+        }}
+      >
         {loadFailed && (
           <p className="text-center text-xs font-bold text-red-400">
             Impossible de charger le profil suivant. Réessaie.

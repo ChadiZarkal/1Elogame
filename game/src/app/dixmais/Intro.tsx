@@ -39,10 +39,10 @@ export function Intro({ onStart, failed }: { onStart: () => void; failed: boolea
       exit={{ opacity: 0 }}
       className="flex min-h-0 flex-1 flex-col"
     >
-      <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-6">
+      <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto overscroll-contain px-6">
         <div className="flex min-h-full flex-col items-center justify-center py-3 text-center">
           <p
-            className="mb-3 text-[10px] font-black uppercase tracking-[0.32em]"
+            className="mb-3 text-[11px] font-black uppercase tracking-[0.24em]"
             style={{ color: 'rgba(245,158,11,0.6)' }}
           >
             Jeu de soirée
@@ -89,7 +89,7 @@ export function Intro({ onStart, failed }: { onStart: () => void; failed: boolea
 
           <Link
             href="/dixmais/leaderboard"
-            className="mt-4 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] transition-colors hover:text-amber-300"
+            className="mt-4 flex min-h-11 items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.16em] transition-colors hover:text-amber-300"
             style={{ color: 'rgba(245,158,11,0.45)' }}
           >
             <Trophy size={10} /> Classement des red flags
@@ -124,7 +124,7 @@ export function Intro({ onStart, failed }: { onStart: () => void; failed: boolea
             et ne s'affiche que sur l'accueil du jeu. */}
         <a
           href="#page-notes-title"
-          className="mt-3 block text-center text-[10px] font-bold uppercase tracking-[0.18em] text-white/30 transition-colors hover:text-white/60"
+          className="mt-1 flex min-h-11 items-center justify-center text-center text-[11px] font-bold uppercase tracking-[0.18em] text-white/30 transition-colors hover:text-white/60"
         >
           Comment ça marche ↓
         </a>
@@ -138,11 +138,14 @@ function MechanicDemo() {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(() => setStep((s) => (s + 1) % (DEMO.length + 1)), 1500);
+    // Le compteur cyclait sur `DEMO.length + 1` valeurs alors que `shown` était
+    // plafonné à `DEMO.length - 1` : les deux derniers pas affichaient la même
+    // image, et le dernier temps de la démonstration durait 3 s au lieu de 1,5.
+    const id = setInterval(() => setStep((s) => (s + 1) % DEMO.length), 1500);
     return () => clearInterval(id);
   }, []);
 
-  const shown = Math.min(step, DEMO.length - 1);
+  const shown = step;
   const score = DEMO[shown].score;
   const tint = scoreColor(score);
 
@@ -162,7 +165,7 @@ function MechanicDemo() {
             >
               {item.connector && (
                 <span
-                  className="mr-1.5 text-[9px] font-black uppercase tracking-[0.18em]"
+                  className="mr-1.5 text-[11px] font-black uppercase tracking-[0.14em]"
                   style={{ color: '#F59E0B' }}
                 >
                   {item.connector}
@@ -185,14 +188,19 @@ function MechanicDemo() {
           >
             {score}
           </motion.p>
-          <p className="text-[9px] font-black uppercase tracking-widest text-white/25">sur 10</p>
+          <p className="text-[11px] font-black uppercase tracking-wider text-white/40">sur 10</p>
         </div>
       </div>
 
+      {/* `scaleX` et non `width` : cette barre s'anime toutes les 1,5 s, en
+          boucle, sur le premier écran que voit chaque joueur. Animer `width`
+          y déclenchait une passe de mise en page à chaque image — la propriété
+          la plus coûteuse à animer sur un téléphone d'entrée de gamme.
+          `transform` est composé par le GPU. */}
       <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
         <motion.div
-          className="h-full rounded-full"
-          animate={{ width: `${score * 10}%`, backgroundColor: tint }}
+          className="h-full w-full origin-left rounded-full"
+          animate={{ scaleX: score / 10, backgroundColor: tint }}
           transition={{ duration: 0.45, ease: 'easeOut' }}
         />
       </div>

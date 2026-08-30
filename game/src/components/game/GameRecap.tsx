@@ -135,12 +135,16 @@ export function GameRecap() {
   const [showAllDuels, setShowAllDuels] = useState(false);
 
   useEffect(() => {
+    // On arrive ici par `router.push` depuis l'ecran de partie, qui vient
+    // d'etre defile : sans cette remise a zero, le recapitulatif s'ouvrait au
+    // milieu, et les confettis partaient d'un point hors champ.
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
     requestAnimationFrame(() => setMounted(true));
     import('canvas-confetti').then(({ default: confetti }) => {
-      confetti({ particleCount: 120, spread: 90, origin: { x: 0.5, y: 0.35 }, colors: ['#FF2D2D', '#F97316', '#10B981', '#3B82F6'], scalar: 0.8, zIndex: 9999 });
+      confetti({ disableForReducedMotion: true, particleCount: 120, spread: 90, origin: { x: 0.5, y: 0.35 }, colors: ['#FF2D2D', '#F97316', '#10B981', '#3B82F6'], scalar: 0.8, zIndex: 9999 });
       setTimeout(() => {
-        confetti({ particleCount: 50, angle: 60, spread: 50, origin: { x: 0, y: 0.6 }, colors: ['#FF2D2D'], zIndex: 9999 });
-        confetti({ particleCount: 50, angle: 120, spread: 50, origin: { x: 1, y: 0.6 }, colors: ['#10B981'], zIndex: 9999 });
+        confetti({ disableForReducedMotion: true, particleCount: 50, angle: 60, spread: 50, origin: { x: 0, y: 0.6 }, colors: ['#FF2D2D'], zIndex: 9999 });
+        confetti({ disableForReducedMotion: true, particleCount: 50, angle: 120, spread: 50, origin: { x: 1, y: 0.6 }, colors: ['#10B981'], zIndex: 9999 });
       }, 350);
     }).catch(() => {});
   }, []);
@@ -186,8 +190,10 @@ export function GameRecap() {
 
   return (
     <div className="min-h-[calc(100dvh-var(--header-h,3rem))] bg-[#0A0A0B]">
+      {/* `id` : cible du lien d'evitement, absente de tout le parcours de jeu. */}
       <main
-        className={`max-w-md mx-auto px-5 py-6 transition-opacity duration-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}
+        id="main-content"
+        className={`max-w-md mx-auto px-5 pt-6 pb-[calc(env(safe-area-inset-bottom,0px)+24px)] transition-opacity duration-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}
       >
         {/* HERO CARD (screenshotable) */}
         <div
@@ -226,7 +232,7 @@ export function GameRecap() {
               {archetype.title}
             </h1>
             <p style={{
-              fontSize: '0.68rem', color: '#ccc', fontWeight: 700, fontStyle: 'italic',
+              fontSize: '0.8125rem', color: '#ccc', fontWeight: 700, fontStyle: 'italic',
               margin: 0, lineHeight: 1.35,
             }}>
               « {archetype.tagline} »
@@ -245,10 +251,10 @@ export function GameRecap() {
             padding: '0.25rem 0.75rem 0.45rem',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
-            <span style={{ fontSize: '0.5rem', color: '#555', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: '0.6875rem', color: '#8A8A8E', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
               {stats.totalDuels} duels · {categoryLabel}
             </span>
-            <span style={{ fontSize: '0.5rem', color: '#444', fontWeight: 800, letterSpacing: '0.12em' }}>
+            <span style={{ fontSize: '0.6875rem', color: '#7C7C80', fontWeight: 800, letterSpacing: '0.12em' }}>
               redorgreen.fr
             </span>
           </div>
@@ -258,7 +264,7 @@ export function GameRecap() {
         <button
           onClick={handleShare}
           style={{
-            width: '100%', marginTop: '0.5rem', padding: '0.65rem',
+            width: '100%', minHeight: 48, marginTop: '0.5rem', padding: '0.75rem',
             borderRadius: 10,
             background: copied
               ? 'linear-gradient(135deg, #059669, #10B981)'
@@ -292,23 +298,23 @@ export function GameRecap() {
                     background: '#0C0C0E', borderRadius: 10, padding: '0.5rem 0.6rem',
                     border: '1px solid rgba(255,255,255,0.05)',
                   }}>
-                    <p style={{ fontSize: '0.6rem', color: '#999', margin: '0 0 0.35rem', fontWeight: 600, lineHeight: 1.3 }}>
+                    <p style={{ fontSize: '0.75rem', color: '#999', margin: '0 0 0.35rem', fontWeight: 600, lineHeight: 1.3 }}>
                       {kd.label}
                     </p>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', marginBottom: '0.2rem' }}>
-                      <span style={{ fontSize: '0.63rem', color: '#eee', fontWeight: 700, flex: 1, lineHeight: 1.3 }}>
+                      <span style={{ fontSize: '0.8125rem', color: '#eee', fontWeight: 700, flex: 1, lineHeight: 1.3 }}>
                         {winnerText}
                       </span>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 900, flexShrink: 0, color: isCorrect ? '#10B981' : '#EF4444' }}>
+                      <span style={{ fontSize: '0.875rem', fontWeight: 900, flexShrink: 0, color: isCorrect ? '#10B981' : '#EF4444' }}>
                         {pct}%
                       </span>
                     </div>
                     <DuelBar percentage={pct} isCorrect={isCorrect} />
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', marginTop: '0.2rem' }}>
-                      <span style={{ fontSize: '0.55rem', color: '#666', flex: 1, lineHeight: 1.3 }}>
+                      <span style={{ fontSize: '0.75rem', color: '#9A9AA0', flex: 1, lineHeight: 1.3 }}>
                         vs {loserText}
                       </span>
-                      <span style={{ fontSize: '0.55rem', color: '#555', flexShrink: 0 }}>
+                      <span style={{ fontSize: '0.75rem', color: '#8A8A8E', flexShrink: 0 }}>
                         {100 - pct}%
                       </span>
                     </div>
@@ -323,11 +329,11 @@ export function GameRecap() {
         <button
           onClick={() => setShowAllDuels(!showAllDuels)}
           style={{
-            width: '100%', marginTop: '0.5rem', padding: '0.45rem',
+            width: '100%', minHeight: 44, marginTop: '0.5rem', padding: '0.65rem',
             background: '#0C0C0E', border: '1px solid rgba(255,255,255,0.06)',
             borderRadius: 8, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem',
-            color: '#777', fontSize: '0.62rem', fontWeight: 700,
+            color: '#777', fontSize: '0.75rem', fontWeight: 700,
           }}
         >
           <span>{showAllDuels ? '▲' : '▼'}</span>
@@ -352,14 +358,14 @@ export function GameRecap() {
                   borderBottom: i < partyStats.results.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
-                    <span style={{ fontSize: '0.45rem', color: '#444', fontWeight: 700, width: 16, flexShrink: 0 }}>
+                    <span style={{ fontSize: '0.6875rem', color: '#7C7C80', fontWeight: 700, width: 20, flexShrink: 0 }}>
                       {i + 1}
                     </span>
-                    <span style={{ fontSize: '0.58rem', color: '#bbb', fontWeight: 600, flex: 1, lineHeight: 1.3 }}>
+                    <span style={{ fontSize: '0.75rem', color: '#bbb', fontWeight: 600, flex: 1, lineHeight: 1.3 }}>
                       {winnerText}
                     </span>
                     <span style={{
-                      fontSize: '0.55rem', fontWeight: 700, flexShrink: 0,
+                      fontSize: '0.75rem', fontWeight: 700, flexShrink: 0,
                       color: isCorrect ? '#6EE7B7' : '#FCA5A5',
                     }}>
                       {pct !== null ? `${pct}%` : '…'}
@@ -370,7 +376,7 @@ export function GameRecap() {
                       <DuelBar percentage={pct} isCorrect={isCorrect} height={4} />
                     </div>
                   )}
-                  <p style={{ fontSize: '0.5rem', color: '#555', margin: '0.1rem 0 0', marginLeft: 16, lineHeight: 1.25 }}>
+                  <p style={{ fontSize: '0.6875rem', color: '#8A8A8E', margin: '0.1rem 0 0', marginLeft: 20, lineHeight: 1.25 }}>
                     vs {loserText}
                   </p>
                 </div>
@@ -414,12 +420,17 @@ function DuelBar({ percentage, isCorrect, height = 8 }: { percentage: number; is
       position: 'relative', width: '100%', height,
       background: '#1A1A1A', borderRadius: height / 2, overflow: 'hidden',
     }}>
+      {/* `scaleX` et non `width` : le récapitulatif affiche une de ces barres
+          par duel — jusqu'à vingt —, et animer `width` déclenchait autant de
+          passes de mise en page simultanées à l'ouverture de l'écran. */}
       <div style={{
         position: 'absolute', left: 0, top: 0, bottom: 0,
-        width: `${percentage}%`,
+        width: '100%',
+        transformOrigin: 'left',
+        transform: `scaleX(${percentage / 100})`,
         background: color,
         borderRadius: height / 2,
-        transition: 'width 0.5s ease',
+        transition: 'transform 0.5s ease',
       }} />
       <div style={{
         position: 'absolute', left: '50%', top: -1, bottom: -1,
@@ -439,7 +450,7 @@ function StatPill({ value, label, color }: { value: string; label: string; color
       flex: 1,
     }}>
       <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#F5F5F7', lineHeight: 1 }}>{value}</span>
-      <span style={{ fontSize: '0.45rem', fontWeight: 800, color: '#666', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.05rem' }}>{label}</span>
+      <span style={{ fontSize: '0.6875rem', fontWeight: 800, color: '#9A9AA0', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.05rem' }}>{label}</span>
     </div>
   );
 }
@@ -451,7 +462,7 @@ function SectionLabel({ text }: { text: string }) {
       margin: '0 0 0.35rem',
     }}>
       <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-      <span style={{ fontSize: '0.5rem', fontWeight: 800, color: '#444', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+      <span style={{ fontSize: '0.6875rem', fontWeight: 800, color: '#7C7C80', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
         {text}
       </span>
       <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
@@ -459,14 +470,18 @@ function SectionLabel({ text }: { text: string }) {
   );
 }
 
+// `minHeight` : les deux boutons de relance faisaient 29 px de haut, cote a
+// cote dans une grille a deux colonnes.
 const btnSecondary: React.CSSProperties = {
-  padding: '0.5rem', borderRadius: 8,
+  minHeight: 48, padding: '0.75rem', borderRadius: 8,
   background: '#0C0C0E',
   border: '1px solid rgba(255,255,255,0.08)',
-  color: '#bbb', fontSize: '0.65rem', fontWeight: 700,
+  color: '#bbb', fontSize: '0.875rem', fontWeight: 700,
   cursor: 'pointer',
 };
 
+// Liens texte nus : sans hauteur imposee, la cible se reduisait a la ligne.
 const linkStyle: React.CSSProperties = {
-  fontSize: '0.6rem', color: '#555', textDecoration: 'none', fontWeight: 600,
+  display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '0 0.75rem',
+  fontSize: '0.8125rem', color: '#8A8A8E', textDecoration: 'none', fontWeight: 600,
 };

@@ -33,7 +33,13 @@ export function DuelInterface({ elementA, elementB, onVote, disabled, disabledRe
     const isSelected = selected === side;
     const isOther = selected !== null && !isSelected;
     return [
-      'flex-1 min-h-[42vh] flex items-center justify-center px-5 py-8 relative z-10 bg-[#1A1A1A] border transition-all duration-[250ms] disabled:cursor-not-allowed disabled:opacity-75',
+      /* `svh` et non `vh` : `vh` mesure la fenêtre barres masquées, si bien
+         que deux cartes à 42vh réclamaient 84 % d'une hauteur plus grande que
+         celle du parent, lui borné à `100dvh - en-tête`. Barre d'URL visible,
+         la carte du bas débordait. `svh` est la plus petite fenêtre possible,
+         donc toujours tenable ; `basis-0` laisse le flex répartir le reste au
+         lieu de partir de la hauteur du contenu. */
+      'flex-1 basis-0 min-h-[38svh] flex items-center justify-center overflow-hidden px-5 py-6 relative z-10 bg-[#1A1A1A] border transition-all duration-[250ms] disabled:cursor-not-allowed disabled:opacity-75',
       !selected && !disabled && 'hover:bg-[#242424] hover:border-[#DC2626] hover:shadow-[0_0_30px_rgba(220,38,38,0.3)] active:bg-[#2A2A2A] active:scale-[0.98] cursor-pointer',
       disabled && !selected && 'saturate-[0.8]',
       selected && 'cursor-default',
@@ -58,16 +64,26 @@ export function DuelInterface({ elementA, elementB, onVote, disabled, disabledRe
         disabled={disabled || !!selected}
         className={cardClass('a')}
       >
-        <div className="text-center max-w-lg">
-          <p className="text-[clamp(1.15rem,4.3vw,2rem)] font-bold text-[#F5F5F5] leading-tight px-4 animate-fade-in-fast">
+        <div className="text-center max-w-lg overflow-hidden">
+          {/* Une proposition longue n'était ni tronquée ni coupable : elle
+              poussait la carte hors d'un conteneur à hauteur fixe, donc hors
+              d'atteinte. Un mot long — une URL, un pseudo — débordait
+              horizontalement et se faisait rogner en silence par le
+              `overflow-x: clip` du body. */}
+          <p className="text-[clamp(1rem,4.3vw,2rem)] font-bold text-[#F5F5F5] leading-tight px-4 break-words [overflow-wrap:anywhere] line-clamp-6 animate-fade-in-fast">
             {elementA.texte}
           </p>
           <CategoryBadge categorie={elementA.categorie} />
         </div>
       </button>
       
-      {/* Divider VS */}
-      <div className="relative h-0 z-20">
+      {/* Divider VS
+          `pointer-events-none` : la pastille est posée au centre exact de
+          l'écran, là où le pouce arrive par défaut, et elle passait devant les
+          deux cartes (z-20 contre z-10). Elle avalait donc les taps sur 56 ×
+          56 px — le vote ne partait pas et le joueur croyait à un blocage. Le
+          même séparateur côté résultat était déjà neutralisé. */}
+      <div className="relative h-0 z-20 pointer-events-none">
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           <div className="bg-[#DC2626] rounded-full w-14 h-14 flex items-center justify-center shadow-[0_0_30px_rgba(220,38,38,0.5)] animate-vs-pop">
             <span className="text-lg font-black text-white tracking-tight">VS</span>
@@ -81,8 +97,13 @@ export function DuelInterface({ elementA, elementB, onVote, disabled, disabledRe
         disabled={disabled || !!selected}
         className={cardClass('b')}
       >
-        <div className="text-center max-w-lg">
-          <p className="text-[clamp(1.15rem,4.3vw,2rem)] font-bold text-[#F5F5F5] leading-tight px-4 animate-fade-in-fast">
+        <div className="text-center max-w-lg overflow-hidden">
+          {/* Une proposition longue n'était ni tronquée ni coupable : elle
+              poussait la carte hors d'un conteneur à hauteur fixe, donc hors
+              d'atteinte. Un mot long — une URL, un pseudo — débordait
+              horizontalement et se faisait rogner en silence par le
+              `overflow-x: clip` du body. */}
+          <p className="text-[clamp(1rem,4.3vw,2rem)] font-bold text-[#F5F5F5] leading-tight px-4 break-words [overflow-wrap:anywhere] line-clamp-6 animate-fade-in-fast">
             {elementB.texte}
           </p>
           <CategoryBadge categorie={elementB.categorie} />

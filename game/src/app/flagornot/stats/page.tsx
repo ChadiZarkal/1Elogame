@@ -40,7 +40,7 @@ export default function OracleStatsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: '#0A0A0A' }}>
+      <div className="flex items-center justify-center min-h-[calc(100dvh-var(--header-h,3rem))]" style={{ background: '#0A0A0A' }}>
         <div className="text-[#6B7280] text-sm">Chargement des stats...</div>
       </div>
     );
@@ -48,7 +48,7 @@ export default function OracleStatsPage() {
 
   if (!stats || stats.total === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ background: '#0A0A0A' }}>
+      <div className="min-h-[calc(100dvh-var(--header-h,3rem))] flex flex-col items-center justify-center px-6" style={{ background: '#0A0A0A' }}>
         <span className="text-5xl mb-4">📊</span>
         <h1 className="text-xl font-bold text-[#FAFAFA] mb-2">Pas encore de stats</h1>
         <p className="text-[#6B7280] text-sm text-center mb-6">
@@ -62,9 +62,9 @@ export default function OracleStatsPage() {
   }
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: '#0A0A0A' }}>
+    <div className="min-h-[calc(100dvh-var(--header-h,3rem))] pb-20" style={{ background: '#0A0A0A' }}>
       {/* Header */}
-      <div className="px-5 pt-[max(20px,env(safe-area-inset-top))] pb-6">
+      <div className="px-5 pt-5 pb-6">
         <div className="max-w-md mx-auto">
           <Link href="/flagornot" className="text-[#6B7280] hover:text-[#FAFAFA] text-sm mb-5 flex items-center gap-1.5 transition-colors py-1">
             ← Oracle

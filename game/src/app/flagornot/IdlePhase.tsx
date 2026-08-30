@@ -14,7 +14,6 @@ interface IdlePhaseProps {
   communitySubmissions: CommunitySubmission[];
   showCommunityTab: boolean;
   setShowCommunityTab: (v: boolean) => void;
-  displaySuggestions: { emoji: string; text: string; isCommunity: boolean; timeAgo: string }[];
   placeholderIdx: number;
   inputRef: RefObject<HTMLInputElement | null>;
   onSubmit: () => void;
@@ -65,8 +64,14 @@ export function IdlePhase({
       />
       <div className="absolute inset-0 oracle-bg-dots opacity-8 pointer-events-none" />
 
-      {/* Central content — scrolls internally if needed */}
-      <div className="flex-1 overflow-y-auto min-h-0 flex flex-col items-center justify-center px-5 relative z-10 py-3 scrollbar-hide">
+      {/* Central content — scrolls internally if needed.
+          Le centrage passe par des marges automatiques sur les enfants de
+          bord, et non par `justify-center` : dans un conteneur défilant,
+          `justify-content: center` rend le débordement de TÊTE inatteignable —
+          dès que l'historique se remplit, le titre disparaissait vers le haut
+          sans qu'on puisse remonter. Une marge automatique, elle, se résout à
+          zéro quand il n'y a plus d'espace libre. */}
+      <div className="flex-1 overflow-y-auto overscroll-contain min-h-0 flex flex-col items-center px-5 relative z-10 py-3 scrollbar-hide [&>*:first-child]:mt-auto [&>*:last-child]:mb-auto">
 
         {/* Oracle icon */}
         <motion.div
@@ -116,7 +121,7 @@ export function IdlePhase({
               >
                 <button
                   onClick={() => setShowCommunityTab(false)}
-                  className={`flex-1 text-[11px] py-1.5 rounded-lg font-semibold transition-all ${
+                  className={`flex-1 min-h-11 text-[12px] py-2.5 rounded-lg font-semibold transition-all ${
                     !showCommunityTab
                       ? 'bg-white/10 text-white'
                       : 'text-[#6B7280] hover:text-[#9CA3AF]'
@@ -126,7 +131,7 @@ export function IdlePhase({
                 </button>
                 <button
                   onClick={() => setShowCommunityTab(true)}
-                  className={`flex-1 text-[11px] py-1.5 rounded-lg font-semibold transition-all ${
+                  className={`flex-1 min-h-11 text-[12px] py-2.5 rounded-lg font-semibold transition-all ${
                     showCommunityTab
                       ? 'bg-white/10 text-white'
                       : 'text-[#6B7280] hover:text-[#9CA3AF]'
@@ -139,10 +144,10 @@ export function IdlePhase({
 
             {/* Solo labels */}
             {hasHistory && !hasCommunity && (
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#4B5563] mb-2.5">📋 Mon historique</p>
+              <p className="text-[12px] font-black uppercase tracking-wider text-[#9CA3AF] mb-2.5">📋 Mon historique</p>
             )}
             {!hasHistory && hasCommunity && (
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#4B5563] mb-2.5">👥 D&apos;autres ont testé</p>
+              <p className="text-[12px] font-black uppercase tracking-wider text-[#9CA3AF] mb-2.5">👥 D&apos;autres ont testé</p>
             )}
 
             {/* History list */}
@@ -169,7 +174,7 @@ export function IdlePhase({
                     <span className="text-[12px] text-[#9CA3AF] group-hover:text-[#D1D5DB] truncate flex-1 transition-colors">
                       {h.text}
                     </span>
-                    <span className={`text-[9px] font-black shrink-0 ${h.verdict === 'red' ? 'text-red-600' : 'text-emerald-700'}`}>
+                    <span className={`text-[12px] font-black shrink-0 ${h.verdict === 'red' ? 'text-red-600' : 'text-emerald-700'}`}>
                       {h.verdict === 'red' ? 'RED' : 'GREEN'}
                     </span>
                   </motion.button>
@@ -201,7 +206,7 @@ export function IdlePhase({
                     <span className="text-[12px] text-[#9CA3AF] group-hover:text-[#D1D5DB] truncate flex-1 transition-colors">
                       {sub.text}
                     </span>
-                    <span className="text-[9px] text-[#3D3D3D] shrink-0">{sub.timeAgo}</span>
+                    <span className="text-[11px] text-[#6B7280] shrink-0">{sub.timeAgo}</span>
                   </motion.button>
                 ))}
               </div>
@@ -249,24 +254,24 @@ export function IdlePhase({
             <button
               type="button"
               onClick={() => setPrivateMode(!privateMode)}
-              className="flex items-center gap-1.5 group min-h-9"
+              className="flex items-center gap-2 group min-h-11 py-2 pr-2"
               aria-pressed={privateMode}
             >
               <span
-                className={`w-3.75 h-3.75 rounded shrink-0 flex items-center justify-center border transition-all ${
+                className={`w-5 h-5 rounded shrink-0 flex items-center justify-center border transition-all ${
                   privateMode
                     ? 'bg-violet-600 border-violet-500'
                     : 'bg-transparent border-[#333] group-hover:border-[#555]'
                 }`}
               >
                 {privateMode && (
-                  <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
+                  <svg width="12" height="12" viewBox="0 0 10 10" fill="none">
                     <path d="M1.5 5l2.5 2.5L8.5 2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
               </span>
-              <span className={`text-[10px] transition-colors ${
-                privateMode ? 'text-violet-400' : 'text-[#4B5563] group-hover:text-[#6B7280]'
+              <span className={`text-[12px] transition-colors ${
+                privateMode ? 'text-violet-400' : 'text-[#6B7280] group-hover:text-[#9CA3AF]'
               }`}>
                 🔒 Privé
               </span>

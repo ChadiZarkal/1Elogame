@@ -65,6 +65,7 @@ export default function ConfidentialitePage() {
 
         <section className="legal-page__section">
           <h2>4. Finalités du traitement</h2>
+          <div className="legal-page__table-wrap">
           <table className="legal-page__table">
             <thead>
               <tr><th>Finalité</th><th>Base légale</th></tr>
@@ -77,6 +78,7 @@ export default function ConfidentialitePage() {
               <tr><td>Protection contre les abus (rate limiting)</td><td>Intérêt légitime</td></tr>
             </tbody>
           </table>
+          </div>
         </section>
 
         <section className="legal-page__section">

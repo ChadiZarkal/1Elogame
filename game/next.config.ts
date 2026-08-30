@@ -29,9 +29,23 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        /* `immutable` a été retiré : le manifeste change (icônes, raccourcis,
+           couleurs), et un client qui le tenait pour immuable gardait pendant
+           24 h une définition d'application périmée — sans moyen de la purger.
+           `must-revalidate` laisse le cache servir vite mais revalider. */
         source: '/manifest.json',
         headers: [
-          { key: 'Cache-Control', value: 'public, max-age=86400, immutable' },
+          { key: 'Cache-Control', value: 'public, max-age=3600, must-revalidate' },
+        ],
+      },
+      {
+        /* Le service worker ne doit jamais être servi depuis le cache : une
+           version figée continuerait à distribuer l'ancienne coquille
+           applicative à tous les visiteurs déjà installés. */
+        source: '/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' },
+          { key: 'Service-Worker-Allowed', value: '/' },
         ],
       },
       {

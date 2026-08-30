@@ -22,6 +22,7 @@ export function StreakDisplay({ streak, streakEmoji, duelCount }: StreakDisplayP
     if (streak > prev && CONFETTI_MILESTONES.includes(streak)) {
       import('canvas-confetti').then(({ default: confetti }) => {
         confetti({
+          disableForReducedMotion: true,
           particleCount: streak >= 10 ? 180 : streak >= 5 ? 120 : 80,
           spread: streak >= 10 ? 100 : 70,
           origin: { x: 0.5, y: 0.4 },
@@ -32,6 +33,7 @@ export function StreakDisplay({ streak, streakEmoji, duelCount }: StreakDisplayP
         if (streak >= 5) {
           setTimeout(() => {
             confetti({
+              disableForReducedMotion: true,
               particleCount: 60,
               angle: 60,
               spread: 60,
@@ -40,6 +42,7 @@ export function StreakDisplay({ streak, streakEmoji, duelCount }: StreakDisplayP
               zIndex: 9999,
             });
             confetti({
+              disableForReducedMotion: true,
               particleCount: 60,
               angle: 120,
               spread: 60,
@@ -87,7 +90,11 @@ export function StreakDisplay({ streak, streakEmoji, duelCount }: StreakDisplayP
         </div>
       )}
 
-      <div className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-[#333] rounded-full px-2.5 py-1">
+      {/* Le numéro de duel est masqué sous 380 px : la barre y contient déjà
+          deux boutons de 44 px, la pastille de streak et la progression de
+          partie, et c'est cette dernière — la plus utile — qui sortait du
+          cadre. Le numéro reste lisible dans la progression. */}
+      <div className="hidden min-[380px]:block bg-[#1A1A1A]/80 backdrop-blur-sm border border-[#333] rounded-full px-2.5 py-1">
         <span className="text-[#A3A3A3] text-xs">
           #{duelCount + 1}
         </span>

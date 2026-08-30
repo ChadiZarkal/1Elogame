@@ -21,6 +21,7 @@ describe('useFlagOrNot', () => {
     vi.useFakeTimers();
     localStorage.clear();
     localStorage.setItem('flagornot_gender', 'homme');
+    localStorage.setItem('flagornot_age', '19-22');
     // Mock fetch for community endpoint
     global.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = String(input);
@@ -207,18 +208,16 @@ describe('useFlagOrNot', () => {
 
     expect(result.current.phase).toBe('reveal');
     expect(result.current.result).toBeDefined();
-    expect(result.current.result!.justification).toContain('bugué');
-  });
-
-  it('charge les suggestions de la communauté', () => {
-    const { result } = renderHook(() => useFlagOrNot());
-    // With no community submissions, should use fallback suggestions
-    expect(result.current.displaySuggestions.length).toBeGreaterThan(0);
-    expect(result.current.displaySuggestions[0].isCommunity).toBe(false);
+    // Le repli tirait `red` ou `green` au hasard et le présentait comme un
+    // vrai jugement — enregistré dans l'historique, partageable, indiscernable.
+    expect(result.current.result!.degraded).toBe(true);
+    expect(result.current.result!.justification).toContain('injoignable');
+    expect(result.current.history).toHaveLength(0);
   });
 
   it('gère un historique stocké sans erreur', async () => {
     localStorage.setItem('flagornot_gender', 'homme');
+    localStorage.setItem('flagornot_age', '19-22');
     const savedHistory = [
       { verdict: 'red', justification: 'Red flag!', text: 'Test saved' },
     ];

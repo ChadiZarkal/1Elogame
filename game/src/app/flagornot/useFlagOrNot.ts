@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { trackAIRequest } from '@/lib/analytics';
 import type { GamePhase, JudgmentResult, HistoryItem, CommunitySubmission, FlagOrNotGender, FlagOrNotAge } from './constants';
-import { LOADING_PHRASES, PLACEHOLDERS, MIN_LOADING_MS, FALLBACK_SUGGESTIONS } from './constants';
+import { LOADING_PHRASES, PLACEHOLDERS, MIN_LOADING_MS } from './constants';
 
 /**
  * Custom hook encapsulating all Flag or Not game logic.
@@ -29,21 +29,10 @@ export function useFlagOrNot() {
 
   const inputRef = useRef<HTMLInputElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
+  const submittingRef = useRef(false);
 
   const redCount = globalRedCount;
   const greenCount = globalGreenCount;
-
-  const displaySuggestions = useMemo(() => {
-    if (communitySubmissions.length >= 4) {
-      return communitySubmissions.slice(0, 12).map((s) => ({
-        emoji: s.emoji,
-        text: s.text,
-        isCommunity: true,
-        timeAgo: s.timeAgo,
-      }));
-    }
-    return FALLBACK_SUGGESTIONS.map((s) => ({ ...s, isCommunity: false, timeAgo: '' }));
-  }, [communitySubmissions]);
 
   // ── Fetch community ──
   const fetchCommunitySubmissions = useCallback(async () => {
@@ -76,17 +65,19 @@ export function useFlagOrNot() {
 
   // ── Init effects ──
   useEffect(() => {
-    let stableHeight = 0;
-
-    const updateHeight = () => {
-      // Use innerHeight which is stable across keyboard open/close on iOS.
-      // Only allow height to grow (never shrink when keyboard opens).
-      const vh = window.innerHeight;
-      if (vh > stableHeight || stableHeight === 0) {
-        stableHeight = vh;
-        document.documentElement.style.setProperty('--app-height', `${stableHeight}px`);
-      }
-    };
+    /* La hauteur du châssis était pilotée ici, en JavaScript, par une variable
+     * `--app-height` posée sur `documentElement` : un maximum qui ne
+     * redescendait jamais. Elle figeait donc la fenêtre barre d'URL repliée, si
+     * bien qu'au retour de la barre le jeu dépassait l'écran de 60 à 90 px — le
+     * dock de saisie et le bouton « Encore » passaient sous la ligne de
+     * flottaison. En rotation vers le paysage elle restait à la valeur portrait.
+     * Et n'étant jamais retirée au démontage, elle continuait à dimensionner
+     * `/jeu`, qui la lisait aussi.
+     *
+     * `100svh` — la plus petite fenêtre possible, toutes barres déployées —
+     * exprime nativement ce que ce code tentait d'approcher : elle ne bouge ni
+     * au repli de la barre d'URL ni à l'ouverture du clavier. Voir
+     * `FlagornotClient.tsx`. */
 
     const saved = localStorage.getItem('flagornot_show_justification');
     if (saved !== null) setShowJustification(saved === 'true');
@@ -114,8 +105,6 @@ export function useFlagOrNot() {
     }
 
     setIsMounted(true);
-    updateHeight();
-    window.addEventListener('resize', updateHeight);
     fetchCommunitySubmissions();
     fetchGlobalCounts();
 
@@ -127,10 +116,30 @@ export function useFlagOrNot() {
     window.addEventListener('storage', handleStorage);
 
     return () => {
-      window.removeEventListener('resize', updateHeight);
       window.removeEventListener('storage', handleStorage);
     };
   }, [fetchCommunitySubmissions, fetchGlobalCounts]);
+
+  /* Le verdict s'affichait hors champ, et il fallait remonter pour le lire.
+   *
+   * Le châssis de jeu ne fait qu'un écran, mais les notes éditoriales et le
+   * pied de page sont rendus dessous : le document, lui, est défilable. Pendant
+   * la saisie, le clavier virtuel pousse le navigateur à faire défiler la page
+   * pour dégager le champ, qui est ancré tout en bas du châssis. Au moment du
+   * verdict, `blur()` referme le clavier mais ne rend jamais ces 250 à 400 px :
+   * le haut du châssis — donc le verdict — reste au-dessus de la ligne de
+   * flottaison. */
+  useEffect(() => {
+    const frame = mainRef.current;
+    if (!frame) return;
+    const { top } = frame.getBoundingClientRect();
+    // Uniquement quand le châssis est sorti par le haut. Sans cette condition,
+    // l'effet se déclencherait aussi au montage et masquerait l'en-tête du
+    // site, qu'il faut au contraire laisser en place tant que rien ne l'a
+    // chassé.
+    if (top >= 0) return;
+    window.scrollTo({ top: Math.max(0, top + window.scrollY), behavior: 'auto' });
+  }, [phase]);
 
   useEffect(() => {
     if (history.length > 0) {
@@ -156,7 +165,14 @@ export function useFlagOrNot() {
   // ── Handlers ──
   const handleSubmit = useCallback(async () => {
     const text = input.trim();
-    if (!text || phase !== 'idle') return;
+    /* Le garde sur `phase` ne suffit pas : `AnimatePresence mode="wait"`
+     * maintient l'écran de saisie monté pendant ses 220 ms de sortie, avec les
+     * props figées du rendu précédent — donc avec un `phase` encore à `idle`.
+     * Un second appui dans cette fenêtre partait en double requête, double
+     * écriture en base et double jeton de limitation de débit. Une référence,
+     * elle, est lue à la valeur du moment. */
+    if (!text || phase !== 'idle' || submittingRef.current) return;
+    submittingRef.current = true;
 
     inputRef.current?.blur();
     setSubmittedText(text);
@@ -172,11 +188,18 @@ export function useFlagOrNot() {
       }
     };
 
+    /* La route enchaîne deux fournisseurs d'IA en série et se déclare à 30 s.
+     * Sans limite ici, l'écran de chargement pouvait tourner une demi-minute
+     * sans compteur ni sortie. Vingt secondes, puis on rend la main. */
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20_000);
+
     try {
       const res = await fetch('/api/flagornot/judge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, private: privateMode, gender, age }),
+        signal: controller.signal,
       });
       if (!res.ok) throw new Error('API error');
       const data: JudgmentResult = await res.json();
@@ -195,31 +218,40 @@ export function useFlagOrNot() {
       fetchCommunitySubmissions();
       fetchGlobalCounts();
     } catch {
+      /* Le repli tirait un verdict au hasard et le présentait comme un vrai
+       * jugement — enregistré dans l'historique, partageable, indiscernable.
+       * Il est désormais marqué comme dégradé pour que l'écran de révélation
+       * le dise et propose de réessayer, et il n'entre plus dans l'historique. */
       const fallback: JudgmentResult = {
-        verdict: Math.random() > 0.5 ? 'red' : 'green',
-        justification: "L'Oracle a bugué… mais on a deviné quand même 😅",
+        verdict: 'red',
+        justification: "L'Oracle est injoignable. Rien n'a été analysé — réessaie dans un instant.",
+        degraded: true,
       };
       await ensureMinDelay();
       setResult(fallback);
-      setHistory((prev) => [{ ...fallback, text }, ...prev].slice(0, 50));
       setPhase('reveal');
       if (navigator.vibrate) navigator.vibrate(40);
+    } finally {
+      clearTimeout(timeout);
+      submittingRef.current = false;
     }
   }, [input, phase, privateMode, gender, age, fetchCommunitySubmissions, fetchGlobalCounts]);
 
   const handleNext = useCallback(() => {
+    // Après un échec de l'Oracle, la saisie est conservée : le bouton devient
+    // « Réessayer », et retaper 280 caractères pour relancer serait absurde.
+    if (!result?.degraded) setInput('');
     setResult(null);
-    setInput('');
     setSubmittedText('');
     setPhase('idle');
-  }, []);
+  }, [result]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
     }
-  };
+  }, [handleSubmit]);
 
   const handleShare = useCallback(async () => {
     if (!result || !submittedText) return;
@@ -274,7 +306,6 @@ export function useFlagOrNot() {
     setShowCommunityTab,
     redCount,
     greenCount,
-    displaySuggestions,
     bgGradient,
     // Refs
     inputRef,

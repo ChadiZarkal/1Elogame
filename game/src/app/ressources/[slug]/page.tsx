@@ -92,7 +92,7 @@ export default function MeterQuizPage() {
         </div>
       )}
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top))] pb-2 relative z-20">
+      <div className="flex items-center justify-between px-4 pt-3 pb-2 relative z-20">
         <button
           onClick={() => {
             if (phase === 'quiz') {

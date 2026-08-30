@@ -77,12 +77,22 @@ export function ResultDisplay({
   const lowerPercent = Math.min(elementAStats.percentage, elementBStats.percentage);
   const percentDiff = higherPercent - lowerPercent;
   
-  const flexBig = 1 + (percentDiff / 50) * 0.8;
-  const flexSmall = 1 - (percentDiff / 50) * 0.4;
-  
+  const rawBig = 1 + (percentDiff / 50) * 0.8;
+  const rawSmall = 1 - (percentDiff / 50) * 0.4;
+
+  /* Plancher de 30 % sur la petite carte.
+     `percentDiff` peut atteindre 100 — un duel où tout le monde a voté du même
+     côté — et la formule donnait alors un partage de 93/7 : la carte perdante
+     tombait à une quarantaine de pixels, son libellé remontait sous la barre
+     de commandes et s'y superposait. Le rapport reste parlant à 70/30. */
+  const MIN_SHARE = 0.3;
+  const smallShare = Math.max(MIN_SHARE, rawSmall / (rawBig + rawSmall));
+  const flexSmall = smallShare;
+  const flexBig = 1 - smallShare;
+
   const flexA = result.isOptimistic ? 1 : (elementAIsMoreRedFlag ? flexBig : flexSmall);
   const flexB = result.isOptimistic ? 1 : (!elementAIsMoreRedFlag ? flexBig : flexSmall);
-  const splitRatio = Math.max(5, Math.min(95, (flexA / (flexA + flexB)) * 100));
+  const splitRatio = (flexA / (flexA + flexB)) * 100;
   const topColor = elementAIsMoreRedFlag ? '#991B1B' : '#047857';
   const bottomColor = !elementAIsMoreRedFlag ? '#991B1B' : '#047857';
   const splitBackground = `linear-gradient(180deg, ${topColor} 0%, ${topColor} ${splitRatio}%, ${bottomColor} ${splitRatio}%, ${bottomColor} 100%)`;
@@ -108,6 +118,7 @@ export function ResultDisplay({
     if (!result.isOptimistic && userGuessedCorrectly) {
       import('canvas-confetti').then(({ default: confetti }) => {
         confetti({
+          disableForReducedMotion: true,
           particleCount: 50,
           spread: 60,
           origin: { x: 0.5, y: 0.3 },
@@ -134,7 +145,10 @@ export function ResultDisplay({
   
   return (
     <div 
-      className="flex flex-1 min-h-0 h-full w-full flex-col overflow-hidden"
+      /* `relative` : les blocs ancrés en bas — le bouton « Suivant » et
+         l'invite « Touchez pour continuer » — doivent se caler sur cet écran,
+         pas sur un ancêtre lointain. */
+      className="relative flex flex-1 min-h-0 h-full w-full flex-col overflow-hidden"
       style={{ background: splitBackground }}
       onClick={handleScreenClick}
     >
@@ -142,7 +156,7 @@ export function ResultDisplay({
       {!result.isOptimistic && (
         <motion.div
           className="absolute left-1/2 -translate-x-1/2 z-30 pointer-events-none"
-          style={{ top: 'calc(max(12px, env(safe-area-inset-top)) + 56px)' }}
+          style={{ top: 68 }}
           initial={{ opacity: 0, y: -20, scale: 0.8 }}
           animate={{ opacity: [0, 1, 1, 0], y: [-20, 0, 0, -10], scale: [0.8, 1.05, 1, 0.95] }}
           transition={{ duration: 2, times: [0, 0.15, 0.7, 1] }}
@@ -165,43 +179,28 @@ export function ResultDisplay({
         </motion.div>
       )}
 
-      <ResultCard 
-        element={duel.elementA} 
+      {/* 56 px : la barre de commandes flottante — 12 px du haut, boutons de
+          44 px. Sans cette réserve, le libellé de la carte du haut se
+          superposait aux boutons dès que le résultat était tranché. */}
+      <ResultCard
+        element={duel.elementA}
         stats={elementAStats}
         flexValue={flexA}
         isOptimistic={result.isOptimistic}
+        topInset={56}
       />
       
+      {/* Le séparateur ne porte plus que la pastille VS. Le bouton « Suivant »
+          en a été sorti : ce point d'ancrage suit le partage proportionnel des
+          deux cartes, qui vaut 50 % pendant le vote mais jusqu'à 75 % sur un
+          duel tranché — et qui glisse encore pendant les 350 ms d'animation.
+          Le bouton naissait donc à quelque 150 px du doigt qui venait de
+          voter, et bougeait sous lui. Il est désormais ancré en bas, à une
+          place fixe d'un écran à l'autre. */}
       <div className="relative h-0 z-30 pointer-events-none">
-        <div className="absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2">
-          <AnimatePresence mode="wait" initial={false}>
-            {showNextCta ? (
-              <motion.button
-                key="next-cta"
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleNext();
-                }}
-                initial={{ opacity: 0, scale: 0.88, y: 4 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.88, y: -4 }}
-                transition={{ duration: 0.18 }}
-                whileHover={{ scale: 1.03, y: -1 }}
-                whileTap={{ scale: 0.96 }}
-                className="group pointer-events-auto relative isolate min-h-12 overflow-hidden rounded-full border border-white/65 bg-[#0B1220]/92 px-7 py-2.5 text-sm font-black uppercase tracking-[0.14em] text-white shadow-[0_12px_36px_rgba(0,0,0,0.45)] backdrop-blur-md"
-              >
-                <span
-                  aria-hidden
-                  className="absolute inset-0 bg-[linear-gradient(120deg,rgba(239,68,68,0.33),rgba(30,41,59,0.18),rgba(16,185,129,0.28))] opacity-85 transition-opacity duration-200 group-hover:opacity-100"
-                />
-                <span aria-hidden className="absolute inset-px rounded-full border border-white/15" />
-                <span className="relative inline-flex items-center gap-2">
-                  <span>Suivant</span>
-                  <span aria-hidden className="text-base leading-none">→</span>
-                </span>
-              </motion.button>
-            ) : (
+        <div className="absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2">
+          <AnimatePresence initial={false}>
+            {!showNextCta && (
               <motion.div
                 key="vs-badge"
                 className="bg-[#0D0D0D] border-2 border-[#333] rounded-full w-12 h-12 flex items-center justify-center"
@@ -216,7 +215,43 @@ export function ResultDisplay({
           </AnimatePresence>
         </div>
       </div>
-      
+
+      <div
+        className="pointer-events-none absolute inset-x-0 z-30 flex justify-center"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
+      >
+        <AnimatePresence initial={false}>
+          {showNextCta && (
+            <motion.button
+              key="next-cta"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNext();
+              }}
+              initial={{ opacity: 0, scale: 0.88, y: 4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.88, y: 4 }}
+              transition={{ duration: 0.18 }}
+              whileHover={{ scale: 1.03, y: -1 }}
+              whileTap={{ scale: 0.96 }}
+              className="group pointer-events-auto relative isolate min-h-12 overflow-hidden rounded-full border border-white/65 bg-[#0B1220]/92 px-7 py-2.5 text-sm font-black uppercase tracking-[0.14em] text-white shadow-[0_12px_36px_rgba(0,0,0,0.45)] backdrop-blur-md"
+            >
+              <span
+                aria-hidden
+                className="absolute inset-0 bg-[linear-gradient(120deg,rgba(239,68,68,0.33),rgba(30,41,59,0.18),rgba(16,185,129,0.28))] opacity-85 transition-opacity duration-200 group-hover:opacity-100"
+              />
+              <span aria-hidden className="absolute inset-px rounded-full border border-white/15" />
+              <span className="relative inline-flex items-center gap-2">
+                <span>Suivant</span>
+                <span aria-hidden className="text-base leading-none">→</span>
+              </span>
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
+
+
       <ResultCard 
         element={duel.elementB} 
         stats={elementBStats}

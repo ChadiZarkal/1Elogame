@@ -71,10 +71,11 @@ describe('Accueil', () => {
     }
   });
 
-  it('récupère les statistiques publiques au montage', async () => {
+  it('ne fait aucun appel réseau au montage', () => {
+    // L'accueil appelait `/api/stats/public` à chaque visite pour un résultat
+    // qu'aucun élément ne lisait — la barre de statistiques avait disparu avec
+    // la refonte, l'appel était resté. C'est la page la plus visitée du site.
     render(<HomePage />);
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/stats/public');
-    });
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 });
