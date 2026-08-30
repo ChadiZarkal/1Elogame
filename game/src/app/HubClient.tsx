@@ -217,11 +217,16 @@ export function HubClient() {
           par ajustement de valeurs. */}
       <main
         id="main-content"
-        className="relative z-10 mx-auto flex h-[calc(100dvh-var(--header-h,3rem))] w-full max-w-110 flex-col items-center justify-between px-5 py-6 [@media(max-height:1000px)]:py-3"
+        className="relative z-10 mx-auto flex h-[calc(100dvh-var(--header-h,3rem))] w-full max-w-110 flex-col items-center justify-between px-5 py-6 [@media(max-height:1000px)]:py-3 [@media(max-height:700px)]:py-2"
       >
         
-        {/* 1. Header (Minimalist & Branding Focus) */}
-        <header className="w-full space-y-4 [@media(max-height:1000px)]:space-y-1.5 flex flex-col items-center pt-2 [@media(max-height:1000px)]:pt-0">
+        {/* 1. Header (Minimalist & Branding Focus)
+            La ligne « Swipe pour changer de jeu » a été retirée : la rangée
+            d'onglets juste dessous montre déjà les quatre jeux et s'utilise au
+            doigt, si bien que cette consigne coûtait une vingtaine de pixels
+            pour redire ce que l'interface montre. Le geste de balayage
+            fonctionne toujours. Ces pixels vont au descriptif des jeux. */}
+        <header className="w-full flex flex-col items-center pt-2 [@media(max-height:1000px)]:pt-0">
           {/* Centered Brand Logo - enlarged and dominant.
               Porté par le h1 : la page n'avait aucun titre de niveau 1, le
               logo n'étant qu'une image. Le nom accessible du titre vient de
@@ -238,13 +243,9 @@ export function HubClient() {
               height={86}
               priority
               draggable={false}
-              className="h-auto w-[88vw] [@media(max-height:1000px)]:w-[62vw] max-w-115 object-contain drop-shadow-[0_0_28px_rgba(255,59,48,0.3)]"
+              className="h-auto w-[88vw] [@media(max-height:1000px)]:w-[62vw] [@media(max-height:700px)]:w-[48vw] [@media(max-height:600px)]:w-[40vw] max-w-115 object-contain drop-shadow-[0_0_28px_rgba(255,59,48,0.3)]"
             />
           </h1>
-
-          <p className="text-[10px] font-black tracking-[0.22em] uppercase text-[#CFCFD4]/70">
-            Swipe pour changer de jeu
-          </p>
         </header>
 
         {/* Floating help button moved out of header for cleaner logo stage */}
@@ -303,7 +304,7 @@ export function HubClient() {
             et le hub débordait de la fenêtre — 762 px réclamés pour 592 sur un
             360×640, très répandu. Le bouton de lancement tombait alors pile sur
             la ligne de flottaison, à moitié sous la barre de navigation. */}
-        <div className="w-full my-6 [@media(max-height:1000px)]:my-3 flex-1 min-h-0 flex flex-col justify-center">
+        <div className="w-full my-6 [@media(max-height:1000px)]:my-3 [@media(max-height:700px)]:my-1.5 flex-1 min-h-0 flex flex-col justify-center">
           {/* `initial={false}` : la carte est l'élément LCP de la page. Sans
               cela elle est rendue à opacity 0 et n'apparaît qu'après
               l'hydratation, ce qui repousse le LCP de plusieurs secondes sur
@@ -316,7 +317,7 @@ export function HubClient() {
               exit={{ opacity: 0, scale: 0.95, y: -15 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
               whileHover={{ y: -4 }}
-              className="relative w-full min-h-0 max-h-full rounded-4xl border bg-linear-to-b from-[#0F1012] to-[#040405] p-6.5 [@media(max-height:1000px)]:p-4 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.85)] flex flex-col justify-between overflow-hidden"
+              className="relative w-full min-h-0 max-h-full rounded-4xl border bg-linear-to-b from-[#0F1012] to-[#040405] p-6.5 [@media(max-height:1000px)]:p-4 [@media(max-height:700px)]:p-3.5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.85)] flex flex-col justify-between overflow-hidden"
               style={{
                 borderColor: `${activeCard.themeColor}22`,
                 boxShadow: `0 25px 50px -12px ${activeCard.themeColor}0C`
@@ -339,7 +340,7 @@ export function HubClient() {
                   réduirait alors au seul bouton. `min-h-0` seul suffit — le
                   bloc prend sa hauteur naturelle, et ne se comprime que
                   lorsque le `max-h-full` de la carte l'y oblige. */}
-              <div className="min-h-0 overflow-y-auto overscroll-contain scrollbar-hide space-y-4 [@media(max-height:1000px)]:space-y-2.5">
+              <div className="min-h-0 overflow-y-auto overscroll-contain scrollbar-hide space-y-4 [@media(max-height:1000px)]:space-y-2.5 [@media(max-height:700px)]:space-y-2">
                 {/* Mode Tag */}
                 <div className="flex items-center justify-between">
                   <span 
@@ -367,23 +368,25 @@ export function HubClient() {
                   >
                     {activeCard.title}
                   </h2>
-                  <p className="text-xs font-semibold tracking-wide" style={{ color: activeCard.themeColor }}>
+                  <p className="text-xs font-semibold tracking-wide [@media(max-height:600px)]:hidden" style={{ color: activeCard.themeColor }}>
                     {activeCard.tagline}
                   </p>
                 </div>
 
-                {/* Le descriptif redit en prose ce que disent les trois points
-                    ci-dessous. Sur écran court, où chaque ligne se dispute la
-                    place avec le bouton, ce sont les points qui restent : ils
-                    se lisent d'un coup d'œil. */}
-                <p className="hidden text-[13px] leading-relaxed text-[#D0D0D6] font-semibold pt-1 [@media(min-height:721px)]:block">
+                {/* Le descriptif est visible partout. Il avait été masqué sur
+                    écran court pour dégager le bouton ; la place a été reprise
+                    ailleurs — ligne de consigne supprimée, logo et onglets
+                    resserrés — plutôt qu'en retirant ce que la personne est
+                    venue lire. Taille et interlignage se resserrent d'un cran
+                    sur les écrans les plus courts. */}
+                <p className="text-[13px] [@media(max-height:700px)]:text-[12px] leading-relaxed [@media(max-height:700px)]:leading-snug text-[#D0D0D6] font-semibold pt-1">
                   {activeCard.desc}
                 </p>
 
                 {/* Specs / Bullet points */}
-                <ul className="space-y-2 pt-2">
+                <ul className="space-y-2 [@media(max-height:600px)]:space-y-1 pt-2 [@media(max-height:600px)]:pt-1">
                   {activeCard.bullets.map((bullet, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-[12px] font-black text-[#F0F0F4]">
+                    <li key={idx} className="flex items-center gap-2 text-[12px] [@media(max-height:600px)]:text-[11px] font-black text-[#F0F0F4]">
                       <span className="text-sm select-none" style={{ color: activeCard.themeColor }}>✔</span>
                       <span>{bullet}</span>
                     </li>
@@ -392,7 +395,7 @@ export function HubClient() {
               </div>
 
               {/* Massive Tactile Pulse Action Button */}
-              <div className="shrink-0 pt-6 [@media(max-height:1000px)]:pt-3">
+              <div className="shrink-0 pt-6 [@media(max-height:1000px)]:pt-3 [@media(max-height:700px)]:pt-2.5">
                 {activeCard.external ? (
                   <a
                     href={activeCard.href}
@@ -438,7 +441,7 @@ export function HubClient() {
             la grille 2×2 coûtait 144 px sous la carte, soit l'essentiel du
             débordement sur un 360×640. Les quatre entrées restent visibles
             dans les deux cas — seule leur disposition change. */}
-        <section className="w-full shrink-0 grid grid-cols-4 [@media(min-height:1001px)]:grid-cols-2 gap-2.5 mt-2">
+        <section className="w-full shrink-0 grid grid-cols-4 [@media(min-height:1001px)]:grid-cols-2 gap-2.5 mt-2 [@media(max-height:700px)]:mt-1">
           {SHORTCUTS.map((shortcut) => {
             const content = (
               <>
@@ -457,7 +460,7 @@ export function HubClient() {
               </>
             );
 
-            const className = `flex min-h-16 flex-col items-center justify-center rounded-2xl border px-1.5 py-3 text-center group transition-transform active:scale-95 ${shortcut.surface}`;
+            const className = `flex min-h-16 [@media(max-height:700px)]:min-h-14 flex-col items-center justify-center rounded-2xl border px-1.5 py-3 [@media(max-height:700px)]:py-2 text-center group transition-transform active:scale-95 ${shortcut.surface}`;
 
             return shortcut.href ? (
               <Link key={shortcut.short} href={shortcut.href} onClick={handleTap} className={className}>
