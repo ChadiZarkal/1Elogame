@@ -170,7 +170,7 @@ export function HubClient() {
   const activeCard = CARDS_DATA[selectedVibe];
 
   return (
-    <div className="relative min-h-[calc(100dvh-var(--header-h,3rem))] overflow-hidden bg-[#000000] text-[#E2E2E2] selection:bg-[#FF3B30]/30 selection:text-white">
+    <div className="relative min-h-dvh overflow-hidden bg-[#000000] text-[#E2E2E2] selection:bg-[#FF3B30]/30 selection:text-white">
       {/* Dynamic Background Shader & Grid */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         {/* Sleek matrix grid */}
@@ -214,10 +214,15 @@ export function HubClient() {
           de l'écran. Un plafond réel donne son sens au `flex-1` de la carte —
           elle prend ce qui reste, ni plus, et fait défiler son texte au-dedans
           si nécessaire. Le hub tient alors sur un écran par construction, pas
-          par ajustement de valeurs. */}
+          par ajustement de valeurs.
+
+          `100dvh` pleine hauteur, sans soustraire `--header-h` : la barre de
+          navigation du site n'est pas rendue sur cette route (voir
+          `SiteHeader`). Le rembourrage haut dégage l'encoche à sa place. */}
       <main
         id="main-content"
-        className="relative z-10 mx-auto flex h-[calc(100dvh-var(--header-h,3rem))] w-full max-w-110 flex-col items-center justify-between px-5 py-6 [@media(max-height:1000px)]:py-3 [@media(max-height:700px)]:py-2"
+        className="relative z-10 mx-auto flex h-dvh w-full max-w-110 flex-col items-center gap-3 [@media(max-height:1000px)]:gap-2.5 px-5 pb-6 [@media(max-height:1000px)]:pb-3"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}
       >
         
         {/* 1. Header (Minimalist & Branding Focus)
@@ -226,12 +231,12 @@ export function HubClient() {
             doigt, si bien que cette consigne coûtait une vingtaine de pixels
             pour redire ce que l'interface montre. Le geste de balayage
             fonctionne toujours. Ces pixels vont au descriptif des jeux. */}
-        <header className="w-full flex flex-col items-center pt-2 [@media(max-height:1000px)]:pt-0">
+        <header className="w-full shrink-0 flex flex-col items-center">
           {/* Centered Brand Logo - enlarged and dominant.
               Porté par le h1 : la page n'avait aucun titre de niveau 1, le
               logo n'étant qu'une image. Le nom accessible du titre vient de
               l'attribut alt — rien n'est ajouté de masqué. */}
-          <h1 className="py-2 [@media(max-height:1000px)]:py-0 scale-100 hover:scale-[1.01] active:scale-95 transition-transform duration-200">
+          <h1 className="scale-100 hover:scale-[1.01] active:scale-95 transition-transform duration-200">
             <Image
               src="/logo-rog-new.svg"
               alt="Red or Green — repérer les toxicités ordinaires"
@@ -243,7 +248,7 @@ export function HubClient() {
               height={86}
               priority
               draggable={false}
-              className="h-auto w-[88vw] [@media(max-height:1000px)]:w-[62vw] [@media(max-height:700px)]:w-[48vw] [@media(max-height:600px)]:w-[40vw] max-w-115 object-contain drop-shadow-[0_0_28px_rgba(255,59,48,0.3)]"
+              className="h-auto w-[88vw] [@media(max-height:1000px)]:w-[62vw] max-w-115 object-contain drop-shadow-[0_0_28px_rgba(255,59,48,0.3)]"
             />
           </h1>
         </header>
@@ -264,7 +269,7 @@ export function HubClient() {
         </button>
 
         {/* 2. Vibe Selector Capsule (Sliding layout indicator for 4 Games) */}
-        <div className="w-full bg-[#111112] border border-white/5 rounded-2xl p-1 mt-4 flex justify-between gap-1 relative shadow-2xl">
+        <div className="w-full shrink-0 bg-[#111112] border border-white/5 rounded-2xl p-1 flex justify-between gap-1 relative shadow-2xl">
           {(Object.keys(CARDS_DATA) as PersonaKey[]).map((key) => {
             const isSelected = selectedVibe === key;
             const data = CARDS_DATA[key];
@@ -304,7 +309,7 @@ export function HubClient() {
             et le hub débordait de la fenêtre — 762 px réclamés pour 592 sur un
             360×640, très répandu. Le bouton de lancement tombait alors pile sur
             la ligne de flottaison, à moitié sous la barre de navigation. */}
-        <div className="w-full my-6 [@media(max-height:1000px)]:my-3 [@media(max-height:700px)]:my-1.5 flex-1 min-h-0 flex flex-col justify-center">
+        <div className="w-full flex-1 min-h-0 flex flex-col">
           {/* `initial={false}` : la carte est l'élément LCP de la page. Sans
               cela elle est rendue à opacity 0 et n'apparaît qu'après
               l'hydratation, ce qui repousse le LCP de plusieurs secondes sur
@@ -317,7 +322,7 @@ export function HubClient() {
               exit={{ opacity: 0, scale: 0.95, y: -15 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
               whileHover={{ y: -4 }}
-              className="relative w-full min-h-0 max-h-full rounded-4xl border bg-linear-to-b from-[#0F1012] to-[#040405] p-6.5 [@media(max-height:1000px)]:p-4 [@media(max-height:700px)]:p-3.5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.85)] flex flex-col justify-between overflow-hidden"
+              className="relative w-full h-full min-h-0 rounded-4xl border bg-linear-to-b from-[#0F1012] to-[#040405] p-6.5 [@media(max-height:1000px)]:p-4 [@media(max-height:700px)]:p-3.5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.85)] flex flex-col justify-between overflow-hidden"
               style={{
                 borderColor: `${activeCard.themeColor}22`,
                 boxShadow: `0 25px 50px -12px ${activeCard.themeColor}0C`
@@ -340,7 +345,7 @@ export function HubClient() {
                   réduirait alors au seul bouton. `min-h-0` seul suffit — le
                   bloc prend sa hauteur naturelle, et ne se comprime que
                   lorsque le `max-h-full` de la carte l'y oblige. */}
-              <div className="min-h-0 overflow-y-auto overscroll-contain scrollbar-hide space-y-4 [@media(max-height:1000px)]:space-y-2.5 [@media(max-height:700px)]:space-y-2">
+              <div className="my-auto min-h-0 overflow-y-auto overscroll-contain scrollbar-hide space-y-4 [@media(max-height:1000px)]:space-y-2.5 [@media(max-height:700px)]:space-y-2">
                 {/* Mode Tag */}
                 <div className="flex items-center justify-between">
                   <span 
@@ -368,7 +373,7 @@ export function HubClient() {
                   >
                     {activeCard.title}
                   </h2>
-                  <p className="text-xs font-semibold tracking-wide [@media(max-height:600px)]:hidden" style={{ color: activeCard.themeColor }}>
+                  <p className="text-xs font-semibold tracking-wide" style={{ color: activeCard.themeColor }}>
                     {activeCard.tagline}
                   </p>
                 </div>
@@ -384,9 +389,9 @@ export function HubClient() {
                 </p>
 
                 {/* Specs / Bullet points */}
-                <ul className="space-y-2 [@media(max-height:600px)]:space-y-1 pt-2 [@media(max-height:600px)]:pt-1">
+                <ul className="space-y-2 pt-2">
                   {activeCard.bullets.map((bullet, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-[12px] [@media(max-height:600px)]:text-[11px] font-black text-[#F0F0F4]">
+                    <li key={idx} className="flex items-center gap-2 text-[12px] font-black text-[#F0F0F4]">
                       <span className="text-sm select-none" style={{ color: activeCard.themeColor }}>✔</span>
                       <span>{bullet}</span>
                     </li>
@@ -441,7 +446,7 @@ export function HubClient() {
             la grille 2×2 coûtait 144 px sous la carte, soit l'essentiel du
             débordement sur un 360×640. Les quatre entrées restent visibles
             dans les deux cas — seule leur disposition change. */}
-        <section className="w-full shrink-0 grid grid-cols-4 [@media(min-height:1001px)]:grid-cols-2 gap-2.5 mt-2 [@media(max-height:700px)]:mt-1">
+        <section className="w-full shrink-0 grid grid-cols-4 [@media(min-height:1001px)]:grid-cols-2 gap-2.5">
           {SHORTCUTS.map((shortcut) => {
             const content = (
               <>

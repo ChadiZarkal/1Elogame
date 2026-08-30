@@ -22,7 +22,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
 
-const HIDDEN_PATHS = [/^\/admin(\/|$)/, /^\/dixmais\/admin(\/|$)/];
+/**
+ * L'accueil est exclu : il porte déjà le logo en grand, la rangée d'onglets
+ * des quatre jeux et celle des quatre raccourcis. La barre y répétait la
+ * marque une seconde fois, vingt pixels au-dessus du logo, et coûtait 52 px
+ * de hauteur sur l'écran où chaque pixel se dispute au descriptif des jeux.
+ * Le plan du site reste atteignable par le pied de page, replié juste dessous.
+ */
+const HIDDEN_PATHS = [/^\/$/, /^\/admin(\/|$)/, /^\/dixmais\/admin(\/|$)/];
 
 /** Groupée par thème, comme le demandent les consignes de qualité. */
 const NAV_SECTIONS: {
