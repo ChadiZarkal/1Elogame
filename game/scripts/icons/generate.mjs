@@ -3,15 +3,15 @@
  *
  *   node scripts/icons/generate.mjs
  *
- * À relancer après toute retouche de la marque : les fichiers produits sont
- * versionnés, ils ne sont pas régénérés au build.
+ * À relancer après toute retouche du logo ou de la marque : les fichiers
+ * produits sont versionnés, ils ne sont pas régénérés au build.
  */
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { BRAND, markSvg } from './mark.mjs';
+import { markSvg } from './mark.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const pub = (f) => join(ROOT, 'public', f);
@@ -20,16 +20,19 @@ const app = (f) => join(ROOT, 'src', 'app', f);
 /** Coins de l'icône « any » : 22,3 % du côté, la squircle des plateformes. */
 const RADIUS_RATIO = 114 / 512;
 
-/**
- * Icône `any` : coins arrondis, marque au plus large.
- * Icône `maskable` : fond perdu, marque contenue dans le cercle de sûreté
- * (80 % du côté) — Android rogne l'icône selon la forme du lanceur, et une
- * marque à fond perdu y perd sa hampe.
- */
+/** Icône `any` : coins arrondis, lettrage au plus large. */
 const svgAny = (size) =>
-  markSvg({ size, markWidth: size * (300 / 512), radius: size * RADIUS_RATIO });
-const svgMaskable = (size) =>
-  markSvg({ size, markWidth: size * (270 / 512), radius: 0 });
+  markSvg({ size, contentRatio: 0.78, radius: size * RADIUS_RATIO });
+
+/**
+ * Icône `maskable` : fond perdu, lettrage contenu dans le cercle de sûreté.
+ *
+ * Android rogne l'icône selon la forme du lanceur — jusqu'à un cercle de 80 %
+ * du côté. Le lettrage empilé est plus haut que large : à 0,52 du côté, sa
+ * demi-diagonale reste sous le rayon de sûreté de 204,8 px (sur 512), et
+ * aucune lettre n'est coupée quelle que soit la découpe.
+ */
+const svgMaskable = (size) => markSvg({ size, contentRatio: 0.52, radius: 0 });
 
 const png = (svg, size) =>
   sharp(Buffer.from(svg)).resize(size, size).png({ compressionLevel: 9 }).toBuffer();
@@ -63,11 +66,14 @@ function ico(frames) {
   return Buffer.concat([header, ...entries, ...frames.map((f) => f.data)]);
 }
 
-/** Silhouette pleine, sans fond : Android la teinte lui-même (thémé Material You). */
+/**
+ * Silhouette pleine, sans fond : Android la teinte lui-même (thémé Material
+ * You). Le fond et les couleurs de marque tombent, seules les formes restent.
+ */
 function monochromeSvg() {
-  return markSvg({ size: 512, markWidth: 270, radius: 0 })
+  return svgMaskable(512)
     .replace(/<g clip-path="url\(#c\)">[\s\S]*?<\/g>/, '')
-    .replace(`fill="${BRAND.paper}"`, 'fill="black"');
+    .replace(/fill="(#FF2D2D|#22C55E|#FFFFFF)"/g, 'fill="black"');
 }
 
 const written = [];
@@ -87,8 +93,9 @@ write(pub('icon-512.png'), await png(svgAny(512), 512));
 write(pub('icon-maskable-192.png'), await png(svgMaskable(512), 192));
 write(pub('icon-maskable-512.png'), await png(svgMaskable(512), 512));
 
-// iOS applique son propre masque : on lui donne un carré à fond perdu.
-write(app('apple-icon.png'), await png(markSvg({ size: 512, markWidth: 300, radius: 0 }), 180));
+// iOS applique son propre masque : on lui donne un carré à fond perdu, avec
+// un peu plus de marge que l'icône `any` puisque la squircle rogne les coins.
+write(app('apple-icon.png'), await png(markSvg({ size: 512, contentRatio: 0.7, radius: 0 }), 180));
 
 // Repli pour les agents qui ignorent le SVG.
 write(

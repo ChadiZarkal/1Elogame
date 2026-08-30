@@ -304,6 +304,16 @@ export function HubClient() {
           })}
         </div>
 
+        {/* La consigne de balayage ne revient que sur les écrans assez hauts
+            pour qu'elle ne coûte rien : au-dessous de 780 px, chaque pixel se
+            dispute au descriptif des jeux et la rangée d'onglets suffit à
+            montrer qu'on change de jeu. Au-dessus, elle occupe l'espace qui
+            se lisait comme un vide entre les onglets et la carte, et elle y
+            dit quelque chose d'utile — que le geste marche aussi. */}
+        <p className="hidden shrink-0 text-[10px] font-black tracking-[0.22em] uppercase text-[#CFCFD4]/70 [@media(min-height:780px)]:block">
+          Swipe pour changer de jeu
+        </p>
+
         {/* 3. Hero Holographic Game Card (The Focal Point with ultra-smooth morphs) */}
         {/* `min-h-0` : sans lui, la carte impose sa hauteur de contenu au flex
             et le hub débordait de la fenêtre — 762 px réclamés pour 592 sur un
@@ -322,7 +332,7 @@ export function HubClient() {
               exit={{ opacity: 0, scale: 0.95, y: -15 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
               whileHover={{ y: -4 }}
-              className="relative w-full h-full min-h-0 rounded-4xl border bg-linear-to-b from-[#0F1012] to-[#040405] p-6.5 [@media(max-height:1000px)]:p-4 [@media(max-height:700px)]:p-3.5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.85)] flex flex-col justify-between overflow-hidden"
+              className="relative w-full h-full min-h-0 rounded-4xl border bg-linear-to-b from-[#0F1012] to-[#040405] p-6.5 [@media(min-height:780px)]:p-7 [@media(max-height:1000px)]:p-4 [@media(max-height:700px)]:p-3.5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.85)] flex flex-col justify-between overflow-hidden"
               style={{
                 borderColor: `${activeCard.themeColor}22`,
                 boxShadow: `0 25px 50px -12px ${activeCard.themeColor}0C`
@@ -330,6 +340,19 @@ export function HubClient() {
               onTouchStart={onTouchStart}
               onTouchEnd={onTouchEnd}
             >
+              {/* Filigrane de l'emoji du jeu, centre dans la carte.
+                  Sur un grand telephone il reste une centaine de pixels entre
+                  les puces et le bouton — le contenu tient en haut, le bouton
+                  est ancre en bas, et le milieu se lisait comme un trou. Une
+                  marque a 6 % d'opacite l'occupe sans rien ajouter a lire.
+                  Absent des ecrans courts, ou ce vide n'existe pas. */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 bottom-24 hidden select-none justify-center [@media(min-height:780px)]:flex"
+              >
+                <span className="text-[9rem] leading-none opacity-[0.06]">{activeCard.emoji}</span>
+              </div>
+
               {/* Backglow element on card */}
               <div 
                 className="absolute -top-24 -right-24 h-48 w-48 rounded-full blur-3xl opacity-20 pointer-events-none transition-all duration-500" 
@@ -345,11 +368,11 @@ export function HubClient() {
                   réduirait alors au seul bouton. `min-h-0` seul suffit — le
                   bloc prend sa hauteur naturelle, et ne se comprime que
                   lorsque le `max-h-full` de la carte l'y oblige. */}
-              <div className="my-auto min-h-0 overflow-y-auto overscroll-contain scrollbar-hide space-y-4 [@media(max-height:1000px)]:space-y-2.5 [@media(max-height:700px)]:space-y-2">
+              <div className="min-h-0 overflow-y-auto overscroll-contain scrollbar-hide space-y-4 [@media(min-height:780px)]:space-y-5 [@media(max-height:1000px)]:space-y-2.5 [@media(max-height:700px)]:space-y-2">
                 {/* Mode Tag */}
                 <div className="flex items-center justify-between">
                   <span 
-                    className="text-[9px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full bg-white/4"
+                    className="text-[9px] [@media(min-height:780px)]:text-[11px] font-black uppercase tracking-[0.2em] px-2.5 py-1 [@media(min-height:780px)]:px-3 [@media(min-height:780px)]:py-1.5 rounded-full bg-white/4"
                     style={{ color: activeCard.themeColor }}
                   >
                     {activeCard.tag}
@@ -367,13 +390,10 @@ export function HubClient() {
                       que l'ancien plus court ("ORACLE IA") et débordaient sur
                       petit écran à 26px fixe. leading-[1.05] laisse la place
                       à un retour à la ligne sans rogner les lettres. */}
-                  <h2
-                    className="font-black leading-[1.05] tracking-[-0.03em] text-white"
-                    style={{ fontSize: 'clamp(1.35rem, 6.8vw, 1.625rem)' }}
-                  >
+                  <h2 className="font-black leading-[1.05] tracking-[-0.03em] text-white text-[clamp(1.35rem,6.8vw,1.625rem)] [@media(min-height:780px)]:text-[clamp(1.6rem,7.4vw,2.1rem)]">
                     {activeCard.title}
                   </h2>
-                  <p className="text-xs font-semibold tracking-wide" style={{ color: activeCard.themeColor }}>
+                  <p className="text-xs [@media(min-height:780px)]:text-sm font-semibold tracking-wide" style={{ color: activeCard.themeColor }}>
                     {activeCard.tagline}
                   </p>
                 </div>
@@ -384,14 +404,14 @@ export function HubClient() {
                     resserrés — plutôt qu'en retirant ce que la personne est
                     venue lire. Taille et interlignage se resserrent d'un cran
                     sur les écrans les plus courts. */}
-                <p className="text-[13px] [@media(max-height:700px)]:text-[12px] leading-relaxed [@media(max-height:700px)]:leading-snug text-[#D0D0D6] font-semibold pt-1">
+                <p className="text-[13px] [@media(min-height:780px)]:text-[15px] [@media(max-height:700px)]:text-[12px] leading-relaxed [@media(max-height:700px)]:leading-snug text-[#D0D0D6] font-semibold pt-1">
                   {activeCard.desc}
                 </p>
 
                 {/* Specs / Bullet points */}
-                <ul className="space-y-2 pt-2">
+                <ul className="space-y-2 [@media(min-height:780px)]:space-y-3 pt-2">
                   {activeCard.bullets.map((bullet, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-[12px] font-black text-[#F0F0F4]">
+                    <li key={idx} className="flex items-center gap-2 [@media(min-height:780px)]:gap-2.5 text-[12px] [@media(min-height:780px)]:text-[13.5px] font-black text-[#F0F0F4]">
                       <span className="text-sm select-none" style={{ color: activeCard.themeColor }}>✔</span>
                       <span>{bullet}</span>
                     </li>
@@ -400,7 +420,7 @@ export function HubClient() {
               </div>
 
               {/* Massive Tactile Pulse Action Button */}
-              <div className="shrink-0 pt-6 [@media(max-height:1000px)]:pt-3 [@media(max-height:700px)]:pt-2.5">
+              <div className="shrink-0 pt-6 [@media(min-height:780px)]:pt-8 [@media(max-height:1000px)]:pt-3 [@media(max-height:700px)]:pt-2.5">
                 {activeCard.external ? (
                   <a
                     href={activeCard.href}
