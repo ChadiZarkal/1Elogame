@@ -1,15 +1,16 @@
 'use client';
 
-import { RefObject } from 'react';
+import { Dispatch, RefObject, SetStateAction, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import type { HistoryItem, CommunitySubmission } from './constants';
 import { PLACEHOLDERS } from './constants';
 import { MAX_FLAGORNOT_TEXT_LENGTH } from '@/config/constants';
+import { useSpeechRecognition } from '@/lib/useSpeechRecognition';
 
 interface IdlePhaseProps {
   input: string;
-  setInput: (v: string) => void;
+  setInput: Dispatch<SetStateAction<string>>;
   history: HistoryItem[];
   communitySubmissions: CommunitySubmission[];
   showCommunityTab: boolean;
@@ -36,11 +37,31 @@ export function IdlePhase({
   privateMode,
   setPrivateMode,
 }: IdlePhaseProps) {
+  /* Chaque segment reconnu s'ajoute à la suite de la saisie, sans jamais
+     dépasser la limite de l'Oracle : on peut donc taper puis dicter, ou
+     reprendre la parole plusieurs fois. */
+  const appendTranscript = useCallback(
+    (text: string) => {
+      const piece = text.trim();
+      if (!piece) return;
+      setInput((prev) => {
+        const base = prev.trimEnd();
+        const joined = base ? `${base} ${piece}` : piece;
+        return joined.slice(0, MAX_FLAGORNOT_TEXT_LENGTH);
+      });
+    },
+    [setInput],
+  );
+
+  const speechError = useCallback((message: string) => {
+    toast('🎙️ Dictée interrompue', { description: message, duration: 3200 });
+  }, []);
+
+  const speech = useSpeechRecognition(appendTranscript, speechError);
+
   const handleVoiceClick = () => {
-    toast('🎙️ Non disponible pour l\'instant', {
-      description: 'La saisie vocale arrive bientôt !',
-      duration: 2500,
-    });
+    if (speech.listening) speech.stop();
+    else speech.start();
   };
 
   const hasHistory = history.length > 0;
@@ -217,6 +238,24 @@ export function IdlePhase({
 
       {/* Bottom input dock — always visible */}
       <div className="shrink-0 relative z-10 px-4 pb-[max(16px,env(safe-area-inset-bottom))]">
+        {/* Retour d'écoute, au-dessus du dock.
+            Le champ est contrôlé par `input` : y écrire le texte encore
+            provisoire le ferait vaciller à chaque correction du moteur. Il
+            s'affiche donc à côté, et n'est versé dans la saisie qu'une fois
+            le segment déclaré définitif. `aria-live` l'annonce aux lecteurs
+            d'écran, qui n'ont pas d'autre indice que le micro a pris. */}
+        {speech.listening && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="mb-2 flex items-start gap-2 px-2 text-[13px] leading-snug"
+          >
+            <span aria-hidden className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-red-500 animate-mic-pulse" />
+            <p className="min-w-0 break-words text-[#9CA3AF] italic">
+              {speech.interim || 'Je t’écoute…'}
+            </p>
+          </div>
+        )}
         <motion.div
           className="rounded-3xl overflow-hidden oracle-glass"
           initial={{ opacity: 0, y: 18 }}
@@ -278,26 +317,44 @@ export function IdlePhase({
             </button>
 
             <div className="flex items-center gap-2">
-              {/* Voice button */}
-              <motion.button
-                onClick={handleVoiceClick}
-                whileTap={{ scale: 0.86 }}
-                className="w-11 h-11 rounded-2xl flex items-center justify-center transition-all animate-mic-pulse"
-                style={{
-                  background: 'rgba(139,92,246,0.1)',
-                  border: '1.5px solid rgba(139,92,246,0.28)',
-                  color: '#8B5CF6',
-                }}
-                aria-label="Saisie vocale (bientôt disponible)"
-              >
-                {/* Microphone SVG */}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                  <line x1="12" y1="19" x2="12" y2="23"/>
-                  <line x1="8" y1="23" x2="16" y2="23"/>
-                </svg>
-              </motion.button>
+              {/* Dictée vocale.
+                  Le bouton n'existe que si le navigateur sait reconnaître la
+                  parole : Firefox ne l'implémente pas, et un contrôle qui
+                  échoue vaut moins que pas de contrôle. La pulsation, elle,
+                  ne bat plus en permanence — elle ne signalait rien — mais
+                  seulement pendant l'écoute. */}
+              {speech.supported && (
+                <motion.button
+                  onClick={handleVoiceClick}
+                  whileTap={{ scale: 0.86 }}
+                  className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${
+                    speech.listening ? 'animate-mic-pulse' : ''
+                  }`}
+                  style={
+                    speech.listening
+                      ? {
+                          background: 'rgba(239,68,68,0.16)',
+                          border: '1.5px solid rgba(239,68,68,0.55)',
+                          color: '#F87171',
+                        }
+                      : {
+                          background: 'rgba(139,92,246,0.1)',
+                          border: '1.5px solid rgba(139,92,246,0.28)',
+                          color: '#8B5CF6',
+                        }
+                  }
+                  aria-label={speech.listening ? 'Arrêter la dictée' : 'Dicter à la voix'}
+                  aria-pressed={speech.listening}
+                >
+                  {/* Microphone SVG */}
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
+                  </svg>
+                </motion.button>
+              )}
 
               {/* Send button */}
               <motion.button

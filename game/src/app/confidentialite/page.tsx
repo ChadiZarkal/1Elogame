@@ -45,6 +45,7 @@ export default function ConfidentialitePage() {
           <ul>
             <li><strong>Genre et tranche d&apos;âge</strong> — sélectionnés avant de jouer aux duels. Ces données sont utilisées uniquement pour afficher des statistiques segmentées (classements par genre/âge).</li>
             <li><strong>Texte libre</strong> — situations soumises à l&apos;Oracle. Ces textes sont envoyés à un service d&apos;IA (Google Gemini) pour analyse.</li>
+            <li><strong>Voix</strong> — si vous utilisez le bouton de dictée de l&apos;Oracle. L&apos;enregistrement est traité par la reconnaissance vocale de votre navigateur, et non par nous : nous ne recevons que le texte obtenu. Sur Chrome et Edge, cette reconnaissance envoie l&apos;audio aux serveurs de Google ; sur Safari, elle peut être traitée sur l&apos;appareil. Nous ne conservons aucun enregistrement. La dictée est facultative : le clavier reste disponible.</li>
           </ul>
 
           <h3>3.2 Données collectées automatiquement</h3>
@@ -60,7 +61,11 @@ export default function ConfidentialitePage() {
             <li>Historique de session de jeu</li>
             <li>Résultats des tests d&apos;auto-évaluation</li>
           </ul>
-          <p>Ces données restent sur votre appareil et ne sont jamais transmises à nos serveurs.</p>
+          <p>
+            Ces données restent sur votre appareil et ne sont jamais transmises à nos serveurs.
+            La dictée vocale de l&apos;Oracle fait exception et est décrite au point 3.1 : elle
+            passe par la reconnaissance vocale de votre navigateur.
+          </p>
         </section>
 
         <section className="legal-page__section">
@@ -99,6 +104,7 @@ export default function ConfidentialitePage() {
           <ul>
             <li><strong>Vercel Inc.</strong> (États-Unis) — hébergement. Vercel est signataire du Data Processing Addendum (DPA) et utilise les Clauses Contractuelles Types.</li>
             <li><strong>Google Cloud / Gemini AI</strong> (États-Unis) — analyse des situations Oracle. Couvert par les Clauses Contractuelles Types de Google.</li>
+            <li><strong>Reconnaissance vocale du navigateur</strong> — sur Chrome et Edge, l&apos;audio de la dictée est transmis aux serveurs de Google par le navigateur lui-même. Ce transfert relève des conditions de votre navigateur, pas des nôtres : nous n&apos;y avons accès ni à l&apos;audio ni aux métadonnées.</li>
             <li><strong>Supabase Inc.</strong> — base de données. Le projet peut être hébergé en région EU.</li>
           </ul>
         </section>
