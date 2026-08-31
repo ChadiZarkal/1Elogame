@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CONTACT_EMAIL, INSTAGRAM_HANDLE, INSTAGRAM_URL } from '@/config/contact';
-import { InstallApp } from './InstallApp';
 
 /**
  * Pied de page présent sur toutes les routes publiques.
@@ -77,8 +76,6 @@ export function SiteFooter() {
       style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)' }}
     >
       <div className="mx-auto w-full max-w-3xl">
-        <InstallApp />
-
         <button
           type="button"
           onClick={() => setNavOpen((open) => !open)}

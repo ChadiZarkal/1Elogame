@@ -327,9 +327,10 @@ export function IdlePhase({
                 <motion.button
                   onClick={handleVoiceClick}
                   whileTap={{ scale: 0.86 }}
+                  disabled={speech.preparing}
                   className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${
                     speech.listening ? 'animate-mic-pulse' : ''
-                  }`}
+                  } ${speech.preparing ? 'opacity-50' : ''}`}
                   style={
                     speech.listening
                       ? {
@@ -343,7 +344,13 @@ export function IdlePhase({
                           color: '#8B5CF6',
                         }
                   }
-                  aria-label={speech.listening ? 'Arrêter la dictée' : 'Dicter à la voix'}
+                  aria-label={
+                    speech.listening
+                      ? 'Arrêter la dictée'
+                      : speech.preparing
+                        ? 'Autorisation du micro en cours'
+                        : 'Dicter à la voix'
+                  }
                   aria-pressed={speech.listening}
                 >
                   {/* Microphone SVG */}

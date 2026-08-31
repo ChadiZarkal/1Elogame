@@ -1,9 +1,9 @@
 /**
  * @file useSpeechRecognition.test.ts
  * @description Tests unitaires de la dictée vocale.
- * Couvre : absence de l'API (le cas de Firefox), langue et options passées au
- * moteur, remontée des segments définitifs, messages d'erreur en clair, et
- * retour au repos en fin de reconnaissance.
+ * Couvre : absence de l'API (le cas de Firefox), demande d'autorisation du
+ * micro, langue et options passées au moteur, remontée des segments
+ * définitifs, messages d'erreur en clair, retour au repos.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -19,7 +19,6 @@ class FakeRecognition {
   continuous = false;
   maxAlternatives = 0;
   started = false;
-  stopped = false;
   aborted = false;
 
   onresult: ((e: unknown) => void) | null = null;
@@ -40,7 +39,6 @@ class FakeRecognition {
     this.started = true;
   }
   stop() {
-    this.stopped = true;
     this.onend?.();
   }
   abort() {
@@ -66,10 +64,31 @@ function removeApi() {
   delete (window as Win).webkitSpeechRecognition;
 }
 
+/* `mediaDevices` est absent de jsdom : on le pose pour piloter l'autorisation. */
+function setMediaDevices(value: unknown) {
+  Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value });
+}
+function grantMicrophone() {
+  setMediaDevices({ getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [] }) });
+}
+function blockMicrophone(name = 'NotAllowedError') {
+  setMediaDevices({
+    getUserMedia: vi.fn().mockRejectedValue(new DOMException('refus', name)),
+  });
+}
+
+/** `start` est asynchrone : il attend la boîte d'autorisation du navigateur. */
+async function startAndSettle(start: () => void | Promise<void>) {
+  await act(async () => {
+    await start();
+  });
+}
+
 describe('useSpeechRecognition', () => {
   beforeEach(() => {
     FakeRecognition.last = null;
     removeApi();
+    setMediaDevices(undefined);
   });
   afterEach(() => {
     removeApi();
@@ -82,34 +101,74 @@ describe('useSpeechRecognition', () => {
     expect(result.current.supported).toBe(false);
   });
 
-  it("ne tente rien quand l'API est absente", () => {
+  it("ne tente rien quand l'API est absente", async () => {
     const onResult = vi.fn();
     const { result } = renderHook(() => useSpeechRecognition(onResult));
-    act(() => result.current.start());
+    await startAndSettle(result.current.start);
     expect(result.current.listening).toBe(false);
     expect(onResult).not.toHaveBeenCalled();
   });
 
-  it('se declare disponible et demarre en francais', () => {
+  it("demande l'autorisation du micro avant de demarrer", async () => {
     installApi();
+    grantMicrophone();
+    const { result } = renderHook(() => useSpeechRecognition(vi.fn()));
+
+    await startAndSettle(result.current.start);
+
+    // Sans cette demande explicite, la reconnaissance échouait sur
+    // « not-allowed » sans qu'aucune boîte n'ait été présentée.
+    const media = navigator.mediaDevices as unknown as { getUserMedia: ReturnType<typeof vi.fn> };
+    expect(media.getUserMedia).toHaveBeenCalledWith({ audio: true });
+    expect(result.current.listening).toBe(true);
+  });
+
+  it('ne demarre pas et explique quand le micro est bloque', async () => {
+    installApi();
+    blockMicrophone();
+    const onError = vi.fn();
+    const { result } = renderHook(() => useSpeechRecognition(vi.fn(), onError));
+
+    await startAndSettle(result.current.start);
+
+    expect(result.current.listening).toBe(false);
+    expect(FakeRecognition.last).toBeNull();
+    const message = onError.mock.calls[0][0] as string;
+    // Le message doit dire quoi faire, pas seulement que ça a échoué.
+    expect(message).toMatch(/adresse/i);
+  });
+
+  it('signale un appareil sans micro', async () => {
+    installApi();
+    blockMicrophone('NotFoundError');
+    const onError = vi.fn();
+    const { result } = renderHook(() => useSpeechRecognition(vi.fn(), onError));
+
+    await startAndSettle(result.current.start);
+
+    expect(onError.mock.calls[0][0]).toMatch(/aucun micro/i);
+  });
+
+  it('demarre en francais avec les resultats intermediaires', async () => {
+    installApi();
+    grantMicrophone();
     const { result } = renderHook(() => useSpeechRecognition(vi.fn()));
     expect(result.current.supported).toBe(true);
 
-    act(() => result.current.start());
+    await startAndSettle(result.current.start);
 
     const engine = FakeRecognition.last!;
     expect(engine.started).toBe(true);
     expect(engine.lang).toBe('fr-FR');
-    // Les résultats intermédiaires alimentent le retour d'écoute.
     expect(engine.interimResults).toBe(true);
-    expect(result.current.listening).toBe(true);
   });
 
-  it('ne remonte que les segments definitifs, les provisoires restant en apercu', () => {
+  it('ne remonte que les segments definitifs, les provisoires restant en apercu', async () => {
     installApi();
+    grantMicrophone();
     const onResult = vi.fn();
     const { result } = renderHook(() => useSpeechRecognition(onResult));
-    act(() => result.current.start());
+    await startAndSettle(result.current.start);
 
     act(() => FakeRecognition.last!.emit('il regarde mon', false));
     expect(onResult).not.toHaveBeenCalled();
@@ -119,36 +178,38 @@ describe('useSpeechRecognition', () => {
     expect(onResult).toHaveBeenCalledWith('Il regarde mon téléphone.');
   });
 
-  it('traduit les codes d erreur en messages lisibles', () => {
+  it('traduit les codes d erreur du moteur en messages lisibles', async () => {
     installApi();
+    grantMicrophone();
     const onError = vi.fn();
     const { result } = renderHook(() => useSpeechRecognition(vi.fn(), onError));
-    act(() => result.current.start());
+    await startAndSettle(result.current.start);
 
-    act(() => FakeRecognition.last!.onerror!({ error: 'not-allowed' }));
+    act(() => FakeRecognition.last!.onerror!({ error: 'no-speech' }));
 
-    expect(onError).toHaveBeenCalledTimes(1);
     const message = onError.mock.calls[0][0] as string;
-    expect(message).toMatch(/micro/i);
+    expect(message).toMatch(/entendu/i);
     // Le code brut n'aide personne.
-    expect(message).not.toContain('not-allowed');
+    expect(message).not.toContain('no-speech');
   });
 
-  it('reste muet sur une interruption volontaire', () => {
+  it('reste muet sur une interruption volontaire', async () => {
     installApi();
+    grantMicrophone();
     const onError = vi.fn();
     const { result } = renderHook(() => useSpeechRecognition(vi.fn(), onError));
-    act(() => result.current.start());
+    await startAndSettle(result.current.start);
 
     act(() => FakeRecognition.last!.onerror!({ error: 'aborted' }));
 
     expect(onError).not.toHaveBeenCalled();
   });
 
-  it('revient au repos en fin de reconnaissance', () => {
+  it('revient au repos en fin de reconnaissance', async () => {
     installApi();
+    grantMicrophone();
     const { result } = renderHook(() => useSpeechRecognition(vi.fn()));
-    act(() => result.current.start());
+    await startAndSettle(result.current.start);
     act(() => FakeRecognition.last!.emit('en cours', false));
     expect(result.current.listening).toBe(true);
 
@@ -158,10 +219,11 @@ describe('useSpeechRecognition', () => {
     expect(result.current.interim).toBe('');
   });
 
-  it('abandonne la reconnaissance au demontage', () => {
+  it('abandonne la reconnaissance au demontage', async () => {
     installApi();
+    grantMicrophone();
     const { result, unmount } = renderHook(() => useSpeechRecognition(vi.fn()));
-    act(() => result.current.start());
+    await startAndSettle(result.current.start);
     const engine = FakeRecognition.last!;
 
     unmount();

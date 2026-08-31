@@ -42,23 +42,5 @@ export function ServiceWorker() {
     return () => window.removeEventListener('load', register);
   }, []);
 
-  /* Extinction de la barre « Ajouter à l'écran d'accueil » du navigateur.
-   *
-   * Depuis que le site est réellement installable, Chrome l'affiche de
-   * lui-même à chaque visite, et rien dans la page ne permet de s'en
-   * débarrasser : c'est le navigateur qui décide. `preventDefault()` est le
-   * seul moyen documenté de la faire taire.
-   *
-   * L'écouteur est ici — dans le gabarit racine — et non dans `InstallApp`,
-   * parce que ce dernier vit dans le pied de page, absent des écrans de jeu
-   * immersifs : Chrome y reprendrait la main. `InstallApp` pose son propre
-   * écouteur pour récupérer l'événement et proposer l'installation ; les deux
-   * peuvent coexister, tous les écouteurs d'un même événement sont appelés. */
-  useEffect(() => {
-    const silence = (event: Event) => event.preventDefault();
-    window.addEventListener('beforeinstallprompt', silence);
-    return () => window.removeEventListener('beforeinstallprompt', silence);
-  }, []);
-
   return null;
 }

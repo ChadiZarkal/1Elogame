@@ -48,7 +48,7 @@ interface SpeechRecognitionLike extends EventTarget {
   interimResults: boolean;
   continuous: boolean;
   maxAlternatives: number;
-  start: () => void;
+  start: () => void | Promise<void>;
   stop: () => void;
   abort: () => void;
   onresult: ((e: SpeechRecognitionEventLike) => void) | null;
@@ -72,20 +72,69 @@ function getConstructor(): SpeechRecognitionCtor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+/**
+ * Marche à suivre quand le micro est bloqué au niveau du navigateur.
+ *
+ * Dans ce cas, aucune demande ne peut plus être présentée : le navigateur a
+ * mémorisé le refus et `getUserMedia` échoue sans rien afficher. La seule
+ * issue est le panneau des autorisations du site, qu'il faut donc décrire.
+ */
+const BLOCKED =
+  'Le micro est bloqué pour ce site. Touche l’icône à gauche de l’adresse, ' +
+  'autorise le micro, puis réessaie.';
+
 /** Messages en clair : « not-allowed » n'aide personne. */
 const MESSAGES: Record<string, string> = {
-  'not-allowed': "L'accès au micro a été refusé. Autorise-le dans les réglages du navigateur.",
-  'service-not-allowed': "L'accès au micro a été refusé. Autorise-le dans les réglages du navigateur.",
+  'not-allowed': BLOCKED,
+  'service-not-allowed': BLOCKED,
   'no-speech': "Je n'ai rien entendu. Réessaie en parlant un peu plus près.",
   'audio-capture': 'Aucun micro détecté sur cet appareil.',
   network: 'La reconnaissance vocale a besoin du réseau, et il manque à l’appel.',
   aborted: '',
 };
 
+/**
+ * Demande l'accès au micro, ce qui présente la boîte d'autorisation du
+ * navigateur.
+ *
+ * Sans cette étape, `SpeechRecognition.start()` échouait sur `not-allowed`
+ * sans que rien n'ait été demandé : la reconnaissance ne présente pas de
+ * demande d'elle-même quand aucune autorisation n'est encore accordée. Le
+ * flux audio obtenu est refermé aussitôt — la reconnaissance ouvre le sien,
+ * on ne voulait que la boîte de dialogue.
+ */
+async function requestMicrophone(): Promise<{ ok: true } | { ok: false; message: string }> {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    /* Navigateur sans `mediaDevices` : on laisse la reconnaissance tenter sa
+       chance plutôt que de refuser sur une supposition. */
+    return { ok: true };
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach((track) => track.stop());
+    return { ok: true };
+  } catch (error) {
+    const name = error instanceof DOMException ? error.name : '';
+    if (name === 'NotFoundError' || name === 'OverconstrainedError') {
+      return { ok: false, message: 'Aucun micro détecté sur cet appareil.' };
+    }
+    if (name === 'NotReadableError') {
+      return {
+        ok: false,
+        message: 'Le micro est déjà utilisé par une autre application.',
+      };
+    }
+    // `NotAllowedError`, et tout le reste : le refus est le cas courant.
+    return { ok: false, message: BLOCKED };
+  }
+}
+
 export interface UseSpeechRecognition {
   /** Le navigateur sait-il faire ? Sinon, ne montre pas le bouton. */
   supported: boolean;
   listening: boolean;
+  /** Vrai tant que la boîte d'autorisation du navigateur est à l'écran. */
+  preparing: boolean;
   /** Texte en cours de reconnaissance, encore susceptible de changer. */
   interim: string;
   start: () => void;
@@ -108,6 +157,8 @@ export function useSpeechRecognition(
     getSupportServerSnapshot,
   );
   const [listening, setListening] = useState(false);
+  /** Le temps que la boîte d'autorisation soit à l'écran. */
+  const [preparing, setPreparing] = useState(false);
   const [interim, setInterim] = useState('');
 
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
@@ -125,11 +176,21 @@ export function useSpeechRecognition(
     recognitionRef.current?.stop();
   }, []);
 
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
     if (recognitionRef.current) return; // déjà à l'écoute
 
     const Ctor = getConstructor();
     if (!Ctor) return;
+
+    setPreparing(true);
+    const permission = await requestMicrophone();
+    setPreparing(false);
+    if (!permission.ok) {
+      onError?.(permission.message);
+      return;
+    }
+    /* Un second appui a pu démarrer l'écoute pendant l'attente. */
+    if (recognitionRef.current) return;
 
     const recognition = new Ctor();
     recognition.lang = 'fr-FR';
@@ -171,5 +232,5 @@ export function useSpeechRecognition(
     setListening(true);
   }, [onResult, onError]);
 
-  return { supported, listening, interim, start, stop };
+  return { supported, listening, preparing, interim, start, stop };
 }
