@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CONTACT_EMAIL } from '@/config/contact';
+import { AdConsentReset } from '@/components/ads/AdConsentReset';
 
 export const metadata: Metadata = {
   title: 'Politique de Confidentialité',
@@ -106,6 +107,7 @@ export default function ConfidentialitePage() {
             <li><strong>Google Cloud / Gemini AI</strong> (États-Unis) — analyse des situations Oracle. Couvert par les Clauses Contractuelles Types de Google.</li>
             <li><strong>Reconnaissance vocale du navigateur</strong> — sur Chrome et Edge, l&apos;audio de la dictée est transmis aux serveurs de Google par le navigateur lui-même. Ce transfert relève des conditions de votre navigateur, pas des nôtres : nous n&apos;y avons accès ni à l&apos;audio ni aux métadonnées.</li>
             <li><strong>Supabase Inc.</strong> — base de données. Le projet peut être hébergé en région EU.</li>
+            <li><strong>Régie publicitaire</strong> — les scripts publicitaires sont servis depuis le domaine <code>profitableratecpmnetwork.com</code>, hors Union européenne. L&apos;appel de ces scripts transmet à la régie votre adresse IP, votre navigateur et la page consultée. <strong>Aucun script publicitaire n&apos;est appelé avant que vous n&apos;ayez accepté</strong> : sans accord, aucune donnée ne part vers la régie.</li>
           </ul>
         </section>
 
@@ -141,16 +143,32 @@ export default function ConfidentialitePage() {
             <li><strong>Analytics</strong> — Vercel Analytics et Speed Insights pour mesurer la performance du site.</li>
           </ul>
           <p>
-            Le site intègre le code de la régie <strong>Google AdSense</strong>.{' '}
-            <strong>Aucun emplacement publicitaire n&apos;est affiché et aucune annonce n&apos;est
-            diffusée à ce jour.</strong>
+            Le site affiche des <strong>encarts publicitaires</strong> opérés par une régie tierce,
+            dont les scripts sont servis depuis le domaine <code>profitableratecpmnetwork.com</code>.
+            Ces encarts sont signalés par la mention « Publicité » et apparaissent au bas des pages
+            de contenu — jamais pendant une partie.
           </p>
           <p>
-            Si des annonces venaient à être diffusées, des fournisseurs tiers, dont Google,
-            pourraient utiliser des cookies pour diffuser des annonces en fonction de vos visites
-            antérieures sur ce site ou sur d&apos;autres sites. Un message de consentement serait
-            alors présenté au préalable là où la réglementation l&apos;exige, et la présente page
-            serait mise à jour avant toute diffusion.
+            <strong>Ces scripts ne sont chargés qu&apos;après votre accord.</strong> À l&apos;endroit
+            précis où un encart s&apos;afficherait, un bloc vous demande d&apos;abord votre accord.
+            Tant que vous n&apos;avez pas répondu, ou si vous refusez, aucun script publicitaire
+            n&apos;est inséré dans la page et aucune donnée ne part vers la régie. Refuser se fait
+            d&apos;un seul geste, exactement comme accepter, et n&apos;enlève rien aux jeux : tout
+            reste accessible.
+          </p>
+          <p>
+            Une fois l&apos;accord donné, la régie et ses partenaires peuvent déposer des cookies et
+            utiliser des identifiants techniques pour mesurer l&apos;affichage des annonces et les
+            adapter à vos visites antérieures sur ce site ou sur d&apos;autres sites.
+          </p>
+          <p>
+            Votre choix est conservé dans le stockage local de votre navigateur, et vous pouvez le
+            reprendre à tout moment :
+          </p>
+          <AdConsentReset />
+          <p>
+            Le code de la régie <strong>Google AdSense</strong> reste par ailleurs intégré au site,
+            mais <strong>aucun emplacement AdSense n&apos;est affiché</strong> à ce jour.
           </p>
           <p>
             Vous pouvez désactiver la publicité personnalisée depuis les{' '}

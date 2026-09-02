@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, ArrowLeft, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { NativeAd } from '@/components/ads/NativeAd';
 import { GUIDE_FAQ } from './faq';
 
 interface FlagDef {
@@ -463,6 +464,11 @@ export default function GuidePage() {
             ))}
           </div>
         </section>
+
+        {/* Fin du guide : la page est longue et se lit d'un bout à l'autre,
+            c'est donc le seul endroit où l'encart tombe après la lecture et non
+            au milieu. Un seul par page, comme le recommande la régie. */}
+        <NativeAd />
 
       </div>
     </main>

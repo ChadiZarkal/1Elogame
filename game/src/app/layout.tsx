@@ -4,6 +4,7 @@ import { Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AdSenseScript } from "@/components/ads/AdSenseScript";
+import { AdOverlays } from "@/components/ads/AdOverlays";
 import { SiteFooter } from "@/components/ui/SiteFooter";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { CONTACT_EMAIL, INSTAGRAM_URL } from "@/config/contact";
@@ -247,6 +248,10 @@ export default function RootLayout({
             style: { background: '#1A1A1A', border: '1px solid #333', color: '#F5F5F5' },
           }}
         />
+        {/* La demande d'accord n'est pas ici : elle est posée dans le flux, à
+            l'emplacement même de l'encart (voir `NativeAd`). `AdOverlays`
+            n'insère rien tant que cet accord n'a pas été donné. */}
+        <AdOverlays />
         <ServiceWorker />
         <Analytics />
         <SpeedInsights />

@@ -121,17 +121,22 @@ export default function CGUPage() {
         <section className="legal-page__section">
           <h2>9. Publicité et consentement</h2>
           <p>
-            Le Service intègre le code de la régie <strong>Google AdSense</strong>.{' '}
-            <strong>Aucun emplacement publicitaire n&apos;est affiché sur les pages du site</strong>{' '}
-            et aucune annonce n&apos;y est diffusée à ce jour.
+            Le Service est financé par la publicité. Des <strong>encarts publicitaires</strong>
+            {' '}opérés par une régie tierce sont affichés au bas des pages de contenu, signalés par
+            la mention « Publicité ». Ils n&apos;apparaissent jamais pendant une partie, ni sur les
+            écrans d&apos;administration.
           </p>
           <p>
-            Si des annonces venaient à être diffusées, un message de consentement conforme serait
-            présenté avant tout affichage d&apos;annonces personnalisées aux personnes situées dans
-            l&apos;Espace économique européen, au Royaume-Uni et en Suisse, comme la réglementation
-            l&apos;exige. La présente page et la{' '}
-            <Link href="/confidentialite">politique de confidentialité</Link> seraient mises à jour
-            au préalable.
+            <strong>Ces encarts ne sont chargés qu&apos;après votre accord.</strong> À l&apos;endroit
+            où un encart s&apos;afficherait, un bloc vous demande d&apos;abord votre accord. Refuser
+            se fait du même geste qu&apos;accepter et ne restreint en rien l&apos;accès au Service :
+            aucune fonctionnalité n&apos;est réservée à ceux qui acceptent. Vous pouvez revenir sur
+            votre choix à tout moment depuis la{' '}
+            <Link href="/confidentialite">politique de confidentialité</Link>.
+          </p>
+          <p>
+            Le code de la régie <strong>Google AdSense</strong> reste intégré au Service, mais aucun
+            emplacement AdSense n&apos;est affiché à ce jour.
           </p>
           <p>
             Vous pouvez modifier ces préférences à tout moment depuis les{' '}

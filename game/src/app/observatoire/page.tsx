@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { NativeAd } from '@/components/ads/NativeAd';
 import {
   getObservatoryData,
   type GapEntry,
@@ -219,6 +220,8 @@ export default async function ObservatoirePage() {
             <Link href="/jeu">contribuer aux votes</Link> — chaque duel tranché déplace les scores.
           </p>
         </section>
+
+        <NativeAd />
       </div>
     </main>
   );

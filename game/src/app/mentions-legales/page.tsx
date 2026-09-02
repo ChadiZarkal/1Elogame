@@ -78,9 +78,14 @@ export default function MentionsLegalesPage() {
         <section className="legal-page__section">
           <h2>6. Publicité et transparence</h2>
           <p>
-            Le site peut afficher des encarts publicitaires opérés par <strong>Google AdSense</strong>.
-            Selon votre zone géographique et vos choix, ces annonces peuvent être personnalisées ou
-            non personnalisées.
+            Le site affiche des encarts publicitaires opérés par une régie tierce, servis depuis le
+            domaine <code>profitableratecpmnetwork.com</code>. Ils portent la mention
+            « Publicité » et ne sont chargés qu&apos;après votre accord.
+          </p>
+          <p>
+            L&apos;éditeur n&apos;exerce aucun contrôle éditorial sur les annonces diffusées, qui
+            sont sélectionnées par la régie. Une annonce choquante ou trompeuse peut nous être
+            signalée à l&apos;adresse de contact ci-dessus : nous la remonterons à la régie.
           </p>
           <p>
             Pour plus d&apos;informations sur les cookies et vos options de consentement, consultez la{' '}

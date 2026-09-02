@@ -22,6 +22,7 @@
  */
 
 import Link from 'next/link';
+import { NativeAd } from '@/components/ads/NativeAd';
 import type { FaqItem, PageNotes as PageNotesData } from '@/content/page-notes';
 
 export function faqPageJsonLd(faq: FaqItem[]) {
@@ -108,6 +109,14 @@ export function PageNotes({ notes, withFaqJsonLd = true }: Props) {
               ))}
             </>
           )}
+
+          {/* Emplacement publicitaire — placé ici, et nulle part ailleurs sous
+              un écran de jeu. C'est la fin du contenu éditorial : au-dessus, le
+              lecteur a déroulé ce qui l'intéressait ; en dessous il ne reste que
+              les liens vers les pages voisines. Aucun bouton d'action ne vit
+              dans cette bande, et le jeu lui-même est déjà loin au-dessus, dans
+              son cadre dimensionné à la fenêtre. */}
+          <NativeAd />
 
           {notes.related.length > 0 && (
             <nav className="page-notes__related" aria-label="Pages liées">
