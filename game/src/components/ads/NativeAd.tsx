@@ -3,22 +3,20 @@
 import { useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { isAdFreePath, NATIVE_BANNER } from '@/config/ads';
-import { useAdConsent } from '@/lib/adConsent';
-import { AdConsent } from './AdConsent';
 import { useAdsterraScript } from './useAdsterraScript';
 
 /**
  * @module components/ads/NativeAd
- * Encart natif Adsterra, et la demande d'accord qui le précède.
+ * Encart natif Adsterra.
  *
  * C'est le seul des trois formats fournis par la régie qui s'insère dans le
  * flux au lieu de se poser par-dessus : il occupe la place d'un bloc de
  * contenu, ne recouvre aucun bouton et n'ouvre aucune fenêtre. C'est la raison
  * pour laquelle c'est celui-là qui est allumé.
  *
- * Le composant porte les trois états du même emplacement : la question quand
- * elle n'a pas été posée, l'encart après un accord, rien après un refus. Les
- * réunir ici garantit qu'on ne peut pas placer l'un sans l'autre.
+ * Il se charge dès l'arrivée sur la page, sans rien demander. Ce choix est
+ * assumé côté produit ; ce qu'il implique est écrit dans les pages légales, qui
+ * décrivent le dépôt de traceurs et les moyens de s'y opposer.
  *
  * Deux choix de forme méritent d'être justifiés.
  *
@@ -36,20 +34,11 @@ import { useAdsterraScript } from './useAdsterraScript';
 export function NativeAd({ className = '' }: { className?: string }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname() ?? '';
-  const consent = useAdConsent();
 
-  /* Appelé sans condition, comme tout crochet : c'est lui qui refuse
-     l'insertion tant que l'accord manque, pas la branche de rendu ci-dessous. */
   useAdsterraScript(NATIVE_BANNER.src, NATIVE_BANNER.enabled, hostRef);
 
   if (!NATIVE_BANNER.enabled) return null;
   if (isAdFreePath(pathname)) return null;
-
-  /* `pending` est l'état du rendu serveur et du premier rendu client : ne rien
-     afficher évite l'écart d'hydratation et l'apparition d'un bloc chez
-     quelqu'un qui a déjà répondu. */
-  if (consent === 'pending' || consent === 'denied') return null;
-  if (consent === 'unknown') return <AdConsent className={className} />;
 
   return (
     <aside

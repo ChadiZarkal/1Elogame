@@ -248,9 +248,8 @@ export default function RootLayout({
             style: { background: '#1A1A1A', border: '1px solid #333', color: '#F5F5F5' },
           }}
         />
-        {/* La demande d'accord n'est pas ici : elle est posée dans le flux, à
-            l'emplacement même de l'encart (voir `NativeAd`). `AdOverlays`
-            n'insère rien tant que cet accord n'a pas été donné. */}
+        {/* Formats en recouvrement de la régie, tous deux éteints — la raison
+            de chacun est dans `config/ads.ts`. */}
         <AdOverlays />
         <ServiceWorker />
         <Analytics />

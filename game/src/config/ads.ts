@@ -22,15 +22,8 @@
  *   d'appel à action des trois jeux, qu'on vient de faire remonter au-dessus de
  *   la ligne de flottaison. Elle les recouvrirait.
  *
- * Passer l'un des deux à `true` suffit à l'activer : le composant, le
- * consentement et l'exclusion des routes sont déjà en place.
- *
- * Une réserve à connaître avant de le faire. L'accord est demandé *à
- * l'emplacement de l'encart natif* — c'est ce qui évite un bandeau posé sur les
- * boutons de jeu. Un format en recouvrement activé ne se chargerait donc que
- * chez les visiteurs ayant déjà croisé cet emplacement et accepté. Pour le
- * servir à tout le monde, il faudrait une demande à l'échelle du site, et
- * retrouver la question de l'endroit où la poser sans gêner.
+ * Passer l'un des deux à `true` suffit à l'activer : le composant et
+ * l'exclusion des routes sont déjà en place.
  */
 
 export interface AdUnit {

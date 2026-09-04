@@ -3,7 +3,6 @@
 import { useEffect, type RefObject } from 'react';
 import { usePathname } from 'next/navigation';
 import { isAdFreePath } from '@/config/ads';
-import { useAdConsent } from '@/lib/adConsent';
 
 /**
  * Insère un script de régie, et le retire au démontage.
@@ -14,9 +13,9 @@ import { useAdConsent } from '@/lib/adConsent';
  * et recréé à chaque changement de route — le script doit repasser derrière,
  * sinon l'emplacement reste vide sur toutes les pages sauf la première.
  *
- * Le crochet porte aussi les trois conditions d'autorisation, pour qu'aucun
- * appelant ne puisse en oublier une : l'emplacement doit être activé, la route
- * ne doit pas être exclue, et le consentement doit être accordé.
+ * Le crochet porte les deux conditions d'autorisation, pour qu'aucun appelant
+ * ne puisse en oublier une : l'emplacement doit être activé, et la route ne
+ * doit pas être exclue.
  *
  * @param target Élément qui reçoit le script. À défaut, `document.body`.
  */
@@ -26,9 +25,7 @@ export function useAdsterraScript(
   target?: RefObject<HTMLElement | null>,
 ) {
   const pathname = usePathname() ?? '';
-  const consent = useAdConsent();
-
-  const allowed = enabled && consent === 'granted' && !isAdFreePath(pathname);
+  const allowed = enabled && !isAdFreePath(pathname);
 
   useEffect(() => {
     if (!allowed) return;

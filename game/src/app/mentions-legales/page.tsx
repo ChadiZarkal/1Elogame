@@ -80,7 +80,7 @@ export default function MentionsLegalesPage() {
           <p>
             Le site affiche des encarts publicitaires opérés par une régie tierce, servis depuis le
             domaine <code>profitableratecpmnetwork.com</code>. Ils portent la mention
-            « Publicité » et ne sont chargés qu&apos;après votre accord.
+            « Publicité » et apparaissent au bas des pages de contenu, jamais pendant une partie.
           </p>
           <p>
             L&apos;éditeur n&apos;exerce aucun contrôle éditorial sur les annonces diffusées, qui
@@ -88,7 +88,7 @@ export default function MentionsLegalesPage() {
             signalée à l&apos;adresse de contact ci-dessus : nous la remonterons à la régie.
           </p>
           <p>
-            Pour plus d&apos;informations sur les cookies et vos options de consentement, consultez la{' '}
+            Pour plus d&apos;informations sur les cookies et sur les moyens de vous y opposer, consultez la{' '}
             <Link href="/confidentialite">Politique de Confidentialité</Link>.
           </p>
         </section>

@@ -1,13 +1,14 @@
 /**
  * @file adGating.test.tsx
- * @description Ce que garantit ce fichier : aucun script de régie n'entre dans
- * la page avant un accord explicite.
+ * @description Ce que garantit ce fichier : où la régie a le droit d'entrer, et
+ * où elle ne l'a pas.
  *
- * C'est l'invariant qui rend la publicité diffusable ici. Les CGU et la
- * politique de confidentialité du site s'engagent sur cet ordre — accord
- * d'abord, chargement ensuite — et le dépôt de traceurs publicitaires sans
- * accord préalable est une infraction, pas un défaut d'ergonomie. Un test le
- * tient donc, plutôt que la vigilance du prochain à passer.
+ * Les encarts se chargent sans rien demander. Les seules barrières qui restent
+ * sont donc l'interrupteur de chaque emplacement et la liste des routes
+ * exclues — écrans de jeu en cours, récapitulatif, sessions Flash Flag,
+ * administration. Ce sont exactement les endroits où un encart casserait
+ * l'écran ou n'aurait aucun contenu d'éditeur autour de lui, et rien dans le
+ * code ne les protège à part cette liste. D'où ces tests.
  *
  * La configuration réelle est remplacée par un jeu d'essai : ces tests doivent
  * continuer à décrire le mécanisme même le jour où l'un des interrupteurs de
@@ -15,7 +16,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 let pathname = '/guide';
 
@@ -43,7 +44,6 @@ vi.mock('@/config/ads', () => ({
 
 import { NativeAd } from '../NativeAd';
 import { AdOverlays } from '../AdOverlays';
-import { resetAdConsent, setAdConsent } from '@/lib/adConsent';
 
 /** Scripts de régie réellement présents dans le document. */
 function regieScripts() {
@@ -52,37 +52,29 @@ function regieScripts() {
   ).map((s) => s.src);
 }
 
-describe('chargement des régies et consentement', () => {
+describe("chargement de la régie", () => {
   beforeEach(() => {
     pathname = '/guide';
-    act(() => resetAdConsent());
   });
 
   afterEach(() => {
-    act(() => resetAdConsent());
     document.querySelectorAll('script[src^="https://regie.test"]').forEach((s) => s.remove());
   });
 
-  it("n'insère aucun script tant que la question n'a pas été posée", () => {
+  it('insère le script dès l’affichage de l’encart', () => {
     render(<NativeAd />);
-    expect(regieScripts()).toEqual([]);
-  });
-
-  it("n'insère aucun script après un refus", () => {
-    render(<NativeAd />);
-    act(() => setAdConsent('denied'));
-    expect(regieScripts()).toEqual([]);
-  });
-
-  it('insère le script de la régie une fois l’accord donné', () => {
-    render(<NativeAd />);
-    act(() => setAdConsent('granted'));
     expect(regieScripts()).toEqual([NATIVE_SRC]);
+  });
+
+  it('n’insère qu’un seul script par emplacement', () => {
+    render(<NativeAd />);
+    // Deux exemplaires se disputeraient le même conteneur, que la régie
+    // retrouve par un identifiant unique.
+    expect(regieScripts()).toHaveLength(1);
   });
 
   it('retire le script quand l’encart quitte la page', () => {
     const view = render(<NativeAd />);
-    act(() => setAdConsent('granted'));
     expect(regieScripts()).toHaveLength(1);
 
     view.unmount();
@@ -92,16 +84,18 @@ describe('chargement des régies et consentement', () => {
     expect(regieScripts()).toEqual([]);
   });
 
-  it('reste muet sur un écran de jeu, accord ou pas', () => {
+  it('reste muet sur un écran de jeu', () => {
     pathname = '/jeu/jouer';
-    render(<NativeAd />);
-    act(() => setAdConsent('granted'));
+    const { container } = render(<NativeAd />);
+
+    // Ni script, ni emplacement : un encart n'a pas sa place au milieu d'une
+    // partie, et l'écran y est dimensionné à la fenêtre pile.
     expect(regieScripts()).toEqual([]);
+    expect(container.querySelector('.native-ad')).toBeNull();
   });
 
-  it('laisse éteints les formats en recouvrement même avec un accord', () => {
+  it('laisse éteints les formats en recouvrement', () => {
     render(<AdOverlays />);
-    act(() => setAdConsent('granted'));
     // La barre sociale recouvrirait les boutons d'action, le pop-under
     // détournerait le premier geste de jeu : les deux sont livrés éteints.
     expect(regieScripts()).not.toContain(SOCIAL_SRC);
@@ -109,7 +103,6 @@ describe('chargement des régies et consentement', () => {
   });
 
   it('signale l’encart comme publicitaire et expose le conteneur attendu', () => {
-    act(() => setAdConsent('granted'));
     const { container } = render(<NativeAd />);
 
     // Un encart natif imite le contenu qui l'entoure : sans étiquette, il se
@@ -118,72 +111,13 @@ describe('chargement des régies et consentement', () => {
     // L'identifiant est imposé par la régie, qui retrouve son conteneur ainsi.
     expect(container.querySelector('#container-essai')).not.toBeNull();
   });
-});
 
-describe("demande d'accord, posée à l'emplacement de l'encart", () => {
-  beforeEach(() => {
-    pathname = '/guide';
-    act(() => resetAdConsent());
-  });
-
-  afterEach(() => {
-    act(() => resetAdConsent());
-  });
-
-  it('propose refuser et accepter au même niveau', () => {
-    render(<NativeAd />);
-    // Un refus plus coûteux que l'accord ne serait pas un accord libre : les
-    // deux réponses sont deux boutons frères.
-    expect(screen.getByRole('button', { name: 'Refuser' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Accepter' })).toBeInTheDocument();
-  });
-
-  it("ne recouvre rien : le bloc est dans le flux, jamais en position fixe", () => {
+  it('ne recouvre rien : l’encart vit dans le flux', () => {
     const { container } = render(<NativeAd />);
-    const block = container.querySelector('.ad-consent');
-    // C'est la correction du défaut mesuré sur l'Oracle : en `fixed`, ce bloc
-    // recouvrait de 15 px le bouton d'action de l'écran.
-    expect(block).not.toBeNull();
-    expect(block!.className).not.toContain('fixed');
-  });
-
-  it('cède la place à l’encart après un accord', () => {
-    const { container } = render(<NativeAd />);
-    act(() => setAdConsent('granted'));
-
-    expect(screen.queryByRole('button', { name: 'Accepter' })).toBeNull();
-    expect(container.querySelector('#container-essai')).not.toBeNull();
-  });
-
-  it('laisse la place vide après un refus', () => {
-    const { container } = render(<NativeAd />);
-    act(() => setAdConsent('denied'));
-
-    expect(screen.queryByRole('button', { name: 'Accepter' })).toBeNull();
-    expect(container.querySelector('#container-essai')).toBeNull();
-    // Ni encart, ni question qui reviendrait à chaque page.
-    expect(container.querySelector('.ad-consent')).toBeNull();
-  });
-
-  it('ne demande rien sur un écran de jeu', () => {
-    pathname = '/jeu/jouer';
-    const { container } = render(<NativeAd />);
-    expect(container.querySelector('.ad-consent')).toBeNull();
-  });
-
-  it('repose la question après une remise à zéro du choix', () => {
-    render(<NativeAd />);
-    act(() => setAdConsent('granted'));
-    expect(screen.queryByRole('button', { name: 'Accepter' })).toBeNull();
-
-    // Un accord qu'on ne peut pas retirer n'est pas un accord.
-    act(() => resetAdConsent());
-    expect(screen.getByRole('button', { name: 'Accepter' })).toBeInTheDocument();
-  });
-
-  it('retient la réponse d’une visite à l’autre', () => {
-    render(<NativeAd />);
-    act(() => setAdConsent('granted'));
-    expect(localStorage.getItem('rog:ad-consent')).toBe('granted');
+    const slot = container.querySelector('.native-ad');
+    // Le format natif a été retenu précisément pour ça : il prend la place d'un
+    // bloc de contenu au lieu de passer devant les boutons d'action.
+    expect(slot).not.toBeNull();
+    expect(slot!.className).not.toContain('fixed');
   });
 });

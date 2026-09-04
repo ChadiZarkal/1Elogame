@@ -119,7 +119,7 @@ export default function CGUPage() {
         </section>
 
         <section className="legal-page__section">
-          <h2>9. Publicité et consentement</h2>
+          <h2>9. Publicité</h2>
           <p>
             Le Service est financé par la publicité. Des <strong>encarts publicitaires</strong>
             {' '}opérés par une régie tierce sont affichés au bas des pages de contenu, signalés par
@@ -127,11 +127,10 @@ export default function CGUPage() {
             écrans d&apos;administration.
           </p>
           <p>
-            <strong>Ces encarts ne sont chargés qu&apos;après votre accord.</strong> À l&apos;endroit
-            où un encart s&apos;afficherait, un bloc vous demande d&apos;abord votre accord. Refuser
-            se fait du même geste qu&apos;accepter et ne restreint en rien l&apos;accès au Service :
-            aucune fonctionnalité n&apos;est réservée à ceux qui acceptent. Vous pouvez revenir sur
-            votre choix à tout moment depuis la{' '}
+            Ces encarts sont chargés à l&apos;ouverture des pages qui les portent, et les scripts de
+            la régie peuvent déposer des traceurs. Les moyens de vous y opposer — réglages du
+            navigateur, bloqueur de publicité, liens d&apos;opposition des régies — sont détaillés
+            dans la{' '}
             <Link href="/confidentialite">politique de confidentialité</Link>.
           </p>
           <p>
