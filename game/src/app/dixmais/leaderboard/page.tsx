@@ -8,6 +8,7 @@
 
 import { getDixMaisLeaderboard } from '@/lib/repositories/dixmais';
 import LeaderboardClient, { type LeaderboardEntry } from './LeaderboardClient';
+import { withPrerenderTimeout } from '@/lib/prerenderTimeout';
 
 export const revalidate = 300;
 
@@ -15,7 +16,7 @@ export default async function DixMaisLeaderboardPage() {
   let initialData: LeaderboardEntry[] = [];
 
   try {
-    initialData = await getDixMaisLeaderboard(100);
+    initialData = await withPrerenderTimeout(getDixMaisLeaderboard(100));
   } catch {
     // Base indisponible à la régénération : le composant client refera la
     // requête côté navigateur plutôt que de faire échouer la page.

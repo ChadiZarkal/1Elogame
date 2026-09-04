@@ -1,6 +1,7 @@
 import { getLeaderboardPage, type LeaderboardData } from '@/lib/leaderboard';
 import { LeaderboardClient } from './LeaderboardClient';
 import { ClassementEditorial } from './ClassementEditorial';
+import { withPrerenderTimeout } from '@/lib/prerenderTimeout';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
 
@@ -22,7 +23,9 @@ export default async function ClassementPage() {
   let initialData = EMPTY_LEADERBOARD;
 
   try {
-    initialData = await getLeaderboardPage({ sort: 'desc', limit: 30, offset: 0 });
+    initialData = await withPrerenderTimeout(
+      getLeaderboardPage({ sort: 'desc', limit: 30, offset: 0 }),
+    );
   } catch {
     // Base indisponible au build ou à la régénération : le composant client
     // refera la requête côté navigateur plutôt que de faire échouer la page.

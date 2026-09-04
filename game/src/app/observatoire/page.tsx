@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { NativeAd } from '@/components/ads/NativeAd';
+import { withPrerenderTimeout } from '@/lib/prerenderTimeout';
 import {
   getObservatoryData,
   type GapEntry,
@@ -103,7 +104,7 @@ export default async function ObservatoirePage() {
   let data = EMPTY;
 
   try {
-    data = await getObservatoryData(12);
+    data = await withPrerenderTimeout(getObservatoryData(12));
   } catch {
     // Base indisponible : la page reste lisible, sans les tableaux.
   }

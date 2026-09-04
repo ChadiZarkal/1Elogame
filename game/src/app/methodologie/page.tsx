@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getLeaderboardPage } from '@/lib/leaderboard';
+import { withPrerenderTimeout } from '@/lib/prerenderTimeout';
 
 export const metadata: Metadata = {
   title: 'Méthodologie — comment on classe les red flags',
@@ -15,7 +16,7 @@ export default async function MethodologiePage() {
   let totalElements = 0;
 
   try {
-    const data = await getLeaderboardPage({ limit: 1 });
+    const data = await withPrerenderTimeout(getLeaderboardPage({ limit: 1 }));
     totalElements = data.totalElements;
   } catch {
     // Base indisponible : la page reste lisible sans les chiffres.
