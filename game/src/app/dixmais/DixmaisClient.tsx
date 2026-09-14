@@ -18,12 +18,16 @@ import { Intro } from './Intro';
 import { ProfileCard } from './ProfileCard';
 import { ScoreDial } from './ScoreDial';
 import { Verdict } from './Verdict';
+import { ReportScreen } from './ReportScreen';
 import { useDixMais } from './useDixMais';
 import { scoreColor, withAlpha, START_SCORE } from './scale';
 
 export default function DixMaisPage() {
   const game = useDixMais();
   const { phase, round } = game;
+  /** La manche figée qu'affiche le verdict : toujours la dernière rangée dans
+   * l'historique, puisqu'elle y est versée au moment même où la phase bascule. */
+  const lastRound = game.history.at(-1) ?? null;
 
   // Le pied de page du site est un frère de cette page dans la mise en page
   // racine : le document reste donc défilant derrière le châssis `h-dvh`, et un
@@ -178,15 +182,23 @@ export default function DixMaisPage() {
             </motion.div>
           )}
 
-          {phase === 'verdict' && round && (
+          {phase === 'verdict' && lastRound && (
             <Verdict
               key="verdict"
-              identity={round.identity}
-              statements={round.statements}
-              ratings={round.ratings}
-              profileNumber={game.profileNumber}
+              round={lastRound}
+              sessionCount={game.history.length}
               onNext={game.nextProfile}
+              onReport={game.openReport}
               loadFailed={game.loadFailed}
+            />
+          )}
+
+          {phase === 'report' && game.history.length > 0 && (
+            <ReportScreen
+              key="report"
+              rounds={game.history}
+              onBack={game.closeReport}
+              onNext={game.nextProfile}
             />
           )}
         </AnimatePresence>

@@ -14,6 +14,8 @@ import type { DixMaisStatement } from '@/types/database';
 import { useHaptics } from '@/lib/hooks';
 import { START_SCORE, clampScore } from './scale';
 import { generateIdentity, type ProfileIdentity } from './profile';
+import { computeEnding, readCommunityStat, readTrajectory } from './endings';
+import type { PlayedRound } from './report';
 
 /** Fixé, et non plus aléatoire entre 5 et 9 : la carte de profil doit pouvoir
  * afficher **toutes** les révélations sans jamais en repousser une hors écran. */
@@ -33,7 +35,17 @@ const COACH_KEY = 'dixmais.coached';
  */
 const MAX_SEEN = 150;
 
-export type Phase = 'intro' | 'loading' | 'error' | 'reveal' | 'verdict';
+/**
+ * Nombre de fins récentes écartées au moment d'en choisir une nouvelle.
+ *
+ * Deux, et pas davantage : le plus petit groupe de fins interchangeables en
+ * compte trois (les replis d'élimination). En écarter deux force la rotation
+ * sans jamais vider le tirage ; en écarter trois le viderait, et la fin
+ * repartirait au hasard — exactement ce qu'on cherche à éviter.
+ */
+const RECENT_ENDINGS = 2;
+
+export type Phase = 'intro' | 'loading' | 'error' | 'reveal' | 'verdict' | 'report';
 
 export interface Round {
   statements: DixMaisStatement[];
@@ -70,6 +82,59 @@ function sendVote(statementId: string, sessionId: string, previous: number, next
   }).catch(() => null);
 }
 
+/**
+ * Fige une manche terminée : les phrases réellement lues, ce qu'elles ont
+ * coûté, ce qu'elles coûtent aux autres, et la fin retenue.
+ *
+ * La fin est décidée ici plutôt que dans l'écran de verdict, pour deux
+ * raisons : le rapport de session a besoin de la connaître, et le choix doit
+ * tenir compte des fins déjà servies — ce que l'écran de verdict, qui ne voit
+ * qu'une manche, ne peut pas faire.
+ */
+function closeRound(
+  round: Round,
+  ratings: number[],
+  profileNumber: number,
+  recentEndings: string[],
+): PlayedRound {
+  // L'élimination interrompt la manche : les phrases suivantes n'ont jamais
+  // été montrées et ne doivent entrer dans aucune statistique.
+  const played = round.statements.slice(0, ratings.length);
+  const deltas = ratings.map((r, i) => r - (i === 0 ? START_SCORE : ratings[i - 1]));
+  const stats = played.map(readCommunityStat);
+
+  const summary = played.map((s) => ({
+    id: s.id,
+    text: s.text,
+    type: s.type,
+    category: s.category,
+  }));
+
+  const ending = computeEnding(
+    {
+      traj: readTrajectory(ratings),
+      played: summary,
+      deltas,
+      community: stats.map((s) => s.avgDelta),
+    },
+    recentEndings,
+  );
+
+  return {
+    profileNumber,
+    name: round.identity.name,
+    age: round.identity.age,
+    played: summary,
+    ratings,
+    deltas,
+    community: stats.map((s) => s.avgDelta),
+    communityElim: stats.map((s) => s.eliminationRate),
+    final: ratings.at(-1) ?? START_SCORE,
+    eliminated: (ratings.at(-1) ?? START_SCORE) === 0,
+    ending,
+  };
+}
+
 export function useDixMais() {
   const haptics = useHaptics();
 
@@ -81,6 +146,9 @@ export function useDixMais() {
   const [profileNumber, setProfileNumber] = useState(0);
   const [showCoach, setShowCoach] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
+  /** Toutes les manches terminées de la session, dans l'ordre. La dernière est
+   * celle qu'affiche le verdict ; l'ensemble alimente le rapport. */
+  const [history, setHistory] = useState<PlayedRound[]>([]);
 
   const sessionId = useRef('');
   const seenIds = useRef<string[]>([]);
@@ -92,6 +160,13 @@ export function useDixMais() {
   /** Valeur courante de la jauge, lisible sans re-mémoïser les callbacks. */
   const draftRef = useRef(START_SCORE);
   const phaseRef = useRef<Phase>('intro');
+  /** Clés des dernières fins servies, passées à `computeEnding` pour qu'il ne
+   * les resserve pas tant qu'une autre est éligible. */
+  const recentEndings = useRef<string[]>([]);
+  /** Même valeur que `profileNumber`, lisible depuis `commit` sans l'ajouter à
+   * ses dépendances — le rappeler à chaque changement de numéro recréerait le
+   * callback au milieu d'une manche. */
+  const profileNumberRef = useRef(0);
 
   useEffect(() => { phaseRef.current = phase; }, [phase]);
 
@@ -171,7 +246,8 @@ export function useDixMais() {
         index: 0,
       });
       applyDraft(START_SCORE);
-      setProfileNumber((n) => n + 1);
+      profileNumberRef.current += 1;
+      setProfileNumber(profileNumberRef.current);
       setPhase('reveal');
     };
 
@@ -232,7 +308,14 @@ export function useDixMais() {
       locked.current = false;
 
       if (value === 0 || isLast) {
+        // Calculé ici et non dans une fonction de mise à jour d'état : choisir
+        // la fin met à jour `recentEndings`, et React réexécute ces fonctions
+        // en mode strict — la clé y serait empilée deux fois.
+        const finished = closeRound(round, ratings, profileNumberRef.current, recentEndings.current);
+        recentEndings.current = [...recentEndings.current, finished.ending.key].slice(-RECENT_ENDINGS);
+
         setRound((r) => (r ? { ...r, ratings } : r));
+        setHistory((h) => [...h, finished]);
         setPhase('verdict');
       } else {
         setRound((r) => (r ? { ...r, ratings, index: r.index + 1 } : r));
@@ -248,18 +331,26 @@ export function useDixMais() {
     if (timer.current) clearTimeout(timer.current);
     locked.current = false;
     seenIds.current = [];
+    recentEndings.current = [];
+    profileNumberRef.current = 0;
     setRound(null);
     setProfileNumber(0);
+    setHistory([]);
     setFlash(null);
     setLoadFailed(false);
     applyDraft(START_SCORE);
     setPhase('intro');
   }, [applyDraft]);
 
+  /** Le rapport n'est atteignable que depuis le verdict : on y revient. */
+  const openReport = useCallback(() => setPhase('report'), []);
+  const closeReport = useCallback(() => setPhase('verdict'), []);
+
   /** Teinte du fond : suit le doigt pendant la notation, se fige sur la note
-   * finale au verdict. */
+   * finale au verdict. Le rapport garde la teinte du dernier verdict plutôt
+   * que de repasser au vert de départ le temps d'un aller-retour. */
   const ambientScore =
-    phase === 'verdict' ? (round?.ratings.at(-1) ?? START_SCORE)
+    phase === 'verdict' || phase === 'report' ? (round?.ratings.at(-1) ?? START_SCORE)
     : phase === 'reveal' ? draft
     : START_SCORE;
 
@@ -276,9 +367,12 @@ export function useDixMais() {
     profileNumber,
     showCoach,
     loadFailed,
+    history,
     start: loadProfile,
     nextProfile: loadProfile,
     restart,
+    openReport,
+    closeReport,
     /** Verrouille la jauge pendant l'animation de validation. Dérivé de `flash`,
      * qui est un état : la ref `locked` ne provoquerait aucun rendu. */
     locked: flash !== null,

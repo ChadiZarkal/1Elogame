@@ -15,11 +15,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Trophy, Share2, Check } from 'lucide-react';
-import type { DixMaisStatement } from '@/types/database';
-import type { ProfileIdentity } from './profile';
+import { Trophy, Share2, Check, BarChart3 } from 'lucide-react';
 import { START_SCORE, scoreColor, scoreLabel, withAlpha } from './scale';
-import { computeEnding, readCommunityStat, readTrajectory, severityLine } from './endings';
+import { readTrajectory, severityLine } from './endings';
+import type { PlayedRound } from './report';
 
 const SHARE_URL = 'https://redorgreen.fr/dixmais';
 
@@ -32,30 +31,26 @@ function signed(n: number, digits = 1): string {
 }
 
 interface Props {
-  identity: ProfileIdentity;
-  statements: DixMaisStatement[];
-  ratings: number[];
-  profileNumber: number;
+  /** La manche telle que le jeu l'a figée : phrases lues, écarts, fin retenue.
+   * Le verdict ne recalcule plus rien — la fin dépend des manches précédentes,
+   * que cet écran ne voit pas. */
+  round: PlayedRound;
+  /** Nombre de profils jugés dans la session. */
+  sessionCount: number;
   onNext: () => void;
+  onReport: () => void;
   /** Le chargement du profil suivant a échoué : on reste sur le verdict plutôt
    * que de le détruire pour afficher un écran d'erreur. */
   loadFailed: boolean;
 }
 
-export function Verdict({
-  identity, statements, ratings, profileNumber, onNext, loadFailed,
-}: Props) {
+export function Verdict({ round, sessionCount, onNext, onReport, loadFailed }: Props) {
   const [copied, setCopied] = useState(false);
 
+  const { played, ratings, deltas, community, communityElim, ending } = round;
   const traj = readTrajectory(ratings);
-  // L'élimination interrompt la manche : les phrases non jouées sont exclues.
-  const played = statements.slice(0, ratings.length);
-  const ending = computeEnding(traj, played.map((s) => s.text));
   const tint = scoreColor(traj.final);
-
-  const deltas = ratings.map((r, i) => r - (i === 0 ? START_SCORE : ratings[i - 1]));
-  const community = played.map(readCommunityStat);
-  const severity = severityLine(deltas, community.map((c) => c.avgDelta));
+  const severity = severityLine(deltas, community);
 
   useEffect(() => {
     if (ending.tone !== 'triumphant') return;
@@ -76,7 +71,7 @@ export function Verdict({
   }, [ending.tone]);
 
   const share = async () => {
-    const text = `${identity.name}, ${identity.age} finit à ${traj.final}/10 — « ${ending.title} ». Et toi, tu lui mets combien ?`;
+    const text = `${round.name}, ${round.age} finit à ${traj.final}/10 — « ${ending.title} ». Et toi, tu lui mets combien ?`;
     try {
       if (navigator.share) {
         await navigator.share({ title: "C'est un 10 mais…", text, url: SHARE_URL });
@@ -110,7 +105,7 @@ export function Verdict({
         transition={{ duration: 0.4 }}
       >
         <p className="text-[11px] font-black uppercase tracking-[0.22em] text-white/45">
-          Profil #{profileNumber} · {identity.name}, {identity.age}
+          Profil #{round.profileNumber} · {round.name}, {round.age}
         </p>
         <motion.p
           initial={{ scale: 0.4, opacity: 0 }}
@@ -164,7 +159,8 @@ export function Verdict({
 
       <div className="flex flex-col gap-1.5">
         {played.map((stmt, i) => {
-          const { avgDelta, eliminationRate } = community[i];
+          const avgDelta = community[i];
+          const eliminationRate = communityElim[i];
           return (
             <div
               key={stmt.id}
@@ -239,6 +235,27 @@ export function Verdict({
         >
           Profil suivant →
         </motion.button>
+
+        {/* Le rapport n'apparaît qu'à partir du deuxième profil : sur un seul,
+            il ne dirait rien de plus que le verdict qu'on vient de lire. Le
+            compteur sert d'amorce — on voit le dossier s'épaissir. */}
+        {sessionCount >= 2 && (
+          <motion.button
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={onReport}
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-3 text-[11px] font-black uppercase tracking-widest"
+            style={{
+              background: 'rgba(139,92,246,0.12)',
+              border: '1px solid rgba(139,92,246,0.35)',
+              color: '#C4B5FD',
+            }}
+          >
+            <BarChart3 size={13} />
+            Mon rapport · {sessionCount} profils
+          </motion.button>
+        )}
 
         <div className="grid grid-cols-2 gap-2">
           <button

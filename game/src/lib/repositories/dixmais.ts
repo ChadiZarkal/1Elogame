@@ -42,17 +42,43 @@ const SEED_STATEMENTS: Omit<DixMaisStatement, 'id' | 'created_at' | 'votes_count
   { text: 'Il adore les animaux',                  type: 'positive', category: 'social',     is_active: true, is_approved: true },
 ];
 
+/**
+ * Compteurs simulés, déduits du rang de la phrase.
+ *
+ * À zéro, le mode simulé ne pouvait exercer aucune des comparaisons à la
+ * communauté : la sévérité, le taux d'élimination et le rapport de session
+ * passent tous par le seuil de `MIN_VOTES_FOR_COMPARISON`, et restaient donc
+ * invisibles en développement — c'est-à-dire justement là où on les vérifie.
+ *
+ * Déterministe et non aléatoire : deux chargements de suite doivent montrer
+ * les mêmes chiffres, sinon rien n'est reproductible.
+ */
+function mockStats(index: number, type: 'positive' | 'negative') {
+  const votes = 12 + ((index * 7) % 40);
+  // Les red flags coûtent, les green flags rapportent : l'ordre de grandeur
+  // suit celui observé en production (entre −1 et −6 par révélation).
+  const moyenne = type === 'negative' ? -1 - ((index * 3) % 5) : 0.5 + ((index * 2) % 3) * 0.5;
+  const tauxElimination = type === 'negative' ? ((index * 11) % 60) / 100 : 0;
+
+  return {
+    votes_count: votes,
+    total_delta: Math.round(moyenne * votes),
+    elimination_count: Math.round(tauxElimination * votes),
+  };
+}
+
 function buildMockStatements(): DixMaisStatement[] {
-  return SEED_STATEMENTS.map((s, i) => ({
-    ...s,
-    id: `mock-${i}`,
-    votes_count: 0,
-    total_delta: 0,
-    elimination_count: 0,
-    avg_delta: 0,
-    elimination_rate: 0,
-    created_at: new Date().toISOString(),
-  }));
+  return SEED_STATEMENTS.map((s, i) => {
+    const stats = mockStats(i, s.type);
+    return {
+      ...s,
+      ...stats,
+      id: `mock-${i}`,
+      avg_delta: stats.total_delta / stats.votes_count,
+      elimination_rate: (stats.elimination_count / stats.votes_count) * 100,
+      created_at: new Date().toISOString(),
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
