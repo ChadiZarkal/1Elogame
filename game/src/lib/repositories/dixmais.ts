@@ -243,16 +243,38 @@ export async function recordDixMaisVote(params: RecordVoteParams): Promise<void>
   } as any);
 
   if (error) {
-    console.warn('[VOTE] RPC failed, using fallback:', error.message);
-    // Fallback: direct insert + update
-    await Promise.all([
-      (supabase.from('dixmais_votes') as any).insert({
+    console.warn('[VOTE] RPC indisponible, repli :', error.message);
+    // Repli quand le RPC atomique ne répond pas (il arrive qu'il expire en 504).
+    //
+    // L'ancien repli passait un PostgrestFilterBuilder comme valeur de
+    // `votes_count` : PostgREST répondait 400 à tous les coups, et les votes
+    // arrivés par ce chemin n'étaient jamais comptés dans le classement, alors
+    // même que la ligne de vote, elle, était bien insérée.
+    //
+    // Lecture puis écriture : deux votes simultanés sur le même énoncé peuvent
+    // se télescoper et en perdre un, ce qui vaut mieux qu'un échec certain. Le
+    // chemin normal reste le RPC, atomique.
+    try {
+      await (supabase.from('dixmais_votes') as any).insert({
         statement_id, session_id, previous_score, new_score, delta, is_elimination: isElimination,
-      }),
-      (supabase.from('dixmais_statements') as any).update({
-        votes_count: (supabase as any).rpc('coalesce', {}),
-      }).eq('id', statement_id),
-    ]).catch((e: any) => console.warn('[VOTE] Fallback also failed:', e.message));
+      });
+
+      const { data: compteurs } = await (supabase
+        .from('dixmais_statements') as any)
+        .select('votes_count, total_delta, elimination_count')
+        .eq('id', statement_id)
+        .maybeSingle();
+
+      if (compteurs) {
+        await (supabase.from('dixmais_statements') as any).update({
+          votes_count: Number(compteurs.votes_count) + 1,
+          total_delta: Number(compteurs.total_delta) + delta,
+          elimination_count: Number(compteurs.elimination_count) + (isElimination ? 1 : 0),
+        }).eq('id', statement_id);
+      }
+    } catch (e: any) {
+      console.warn('[VOTE] Repli en échec lui aussi :', e?.message);
+    }
   }
 }
 
