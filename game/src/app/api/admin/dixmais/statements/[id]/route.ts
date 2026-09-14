@@ -13,8 +13,22 @@ const patchSchema = z.object({
   is_approved: z.boolean().optional(),
 });
 
+/**
+ * Depuis Next 15, le contexte d'une route dynamique expose `params` sous forme
+ * de promesse. Le lire comme un objet simple rendait `id` systématiquement
+ * `undefined` : PATCH et DELETE répondaient « ID manquant » sans jamais toucher
+ * la base — l'édition, la suppression et les bascules actif/approuvé du
+ * backoffice ne pouvaient donc pas fonctionner. Les autres routes dynamiques du
+ * projet (elements, flashflag) attendent déjà la promesse ; celle-ci ne le
+ * faisait pas.
+ */
+async function readId(ctx?: Record<string, unknown>): Promise<string | null> {
+  const params = await (ctx as { params?: Promise<{ id?: string }> } | undefined)?.params;
+  return params?.id ?? null;
+}
+
 export const PATCH = withApiHandler(async (req: NextRequest, ctx) => {
-  const id = (ctx?.params as { id?: string })?.id;
+  const id = await readId(ctx);
   if (!id) return apiError('BAD_REQUEST', 'ID manquant', 400);
 
   const body = await req.json();
@@ -26,7 +40,7 @@ export const PATCH = withApiHandler(async (req: NextRequest, ctx) => {
 }, { requireAdmin: true });
 
 export const DELETE = withApiHandler(async (_req: NextRequest, ctx) => {
-  const id = (ctx?.params as { id?: string })?.id;
+  const id = await readId(ctx);
   if (!id) return apiError('BAD_REQUEST', 'ID manquant', 400);
 
   await deleteDixMaisStatement(id);

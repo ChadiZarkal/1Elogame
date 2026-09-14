@@ -18,6 +18,18 @@ const TOKEN_KEY = 'dixmais_admin_token';
 function getToken() { return typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) ?? 'open' : 'open'; }
 function setToken(t: string) { if (typeof window !== 'undefined') localStorage.setItem(TOKEN_KEY, t); }
 
+/** Message d'erreur réel renvoyé par l'API, plutôt qu'un texte générique :
+ *  les échecs d'écriture viennent de la base ou de la configuration Supabase,
+ *  et le backoffice est le seul endroit où l'opérateur peut les voir. */
+async function readApiError(res: Response): Promise<string> {
+  try {
+    const json = await res.json();
+    return json?.error?.message ?? json?.error ?? `Erreur ${res.status}`;
+  } catch {
+    return `Erreur ${res.status}`;
+  }
+}
+
 async function adminFetch(url: string, opts: RequestInit = {}) {
   const token = getToken();
   return fetch(url, {
@@ -70,7 +82,9 @@ function Dashboard() {
 
   function showToast(msg: string, type: 'ok' | 'err') {
     setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
+    // Les messages d'erreur portent maintenant un diagnostic complet : trois
+    // secondes ne suffisent pas pour le lire.
+    setTimeout(() => setToast(null), type === 'err' ? 9000 : 3000);
   }
 
   const loadStatements = useCallback(async () => {
@@ -99,7 +113,7 @@ function Dashboard() {
         method: 'PATCH',
         body: JSON.stringify({ [field]: val }),
       });
-      if (!res.ok) { showToast('Mise à jour échouée', 'err'); return; }
+      if (!res.ok) { showToast(await readApiError(res), 'err'); return; }
       setStatements(prev => prev.map(s => s.id === id ? { ...s, [field]: val } : s));
     } catch { showToast('Erreur réseau', 'err'); }
   }
@@ -110,7 +124,7 @@ function Dashboard() {
         method: 'PATCH',
         body: JSON.stringify(fields),
       });
-      if (!res.ok) { showToast('Modification échouée', 'err'); return false; }
+      if (!res.ok) { showToast(await readApiError(res), 'err'); return false; }
       setStatements(prev => prev.map(s => s.id === id ? { ...s, ...fields } : s));
       showToast('Affirmation modifiée ✓', 'ok');
       return true;
@@ -121,7 +135,7 @@ function Dashboard() {
     if (!confirm('Supprimer définitivement cette affirmation ?')) return;
     try {
       const res = await adminFetch(`/api/admin/dixmais/statements/${id}`, { method: 'DELETE' });
-      if (!res.ok) { showToast('Suppression échouée', 'err'); return; }
+      if (!res.ok) { showToast(await readApiError(res), 'err'); return; }
       setStatements(prev => prev.filter(s => s.id !== id));
       showToast('Affirmation supprimée', 'ok');
     } catch { showToast('Erreur réseau', 'err'); }

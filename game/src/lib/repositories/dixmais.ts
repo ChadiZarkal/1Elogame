@@ -352,6 +352,29 @@ export async function getAllDixMaisStatements(): Promise<LeaderboardEntry[]> {
 }
 
 // ---------------------------------------------------------------------------
+// Admin: écritures
+// ---------------------------------------------------------------------------
+
+/**
+ * Message d'erreur d'écriture, enrichi du diagnostic le plus probable.
+ *
+ * `createDixmaisServerClient` retombe sur la clé anon quand la clé service role
+ * est absente. La RLS du projet n'autorise alors que la lecture : le jeu
+ * continue de tourner et le backoffice affiche bien la liste, mais INSERT,
+ * UPDATE et DELETE sont refusés. PostgREST répond soit une erreur brute
+ * incompréhensible pour l'opérateur, soit — pour UPDATE et DELETE — aucune
+ * erreur du tout et zéro ligne touchée. D'où ce message explicite plutôt que le
+ * texte natif seul.
+ */
+function writeError(action: string, detail: string): Error {
+  const hasServiceRole = Boolean(process.env.SUPABASE_DIXMAIS_SERVICE_ROLE_KEY);
+  const hint = hasServiceRole
+    ? ''
+    : " — SUPABASE_DIXMAIS_SERVICE_ROLE_KEY n'est pas définie : le serveur écrit avec la clé anon, que la RLS refuse. Ajoute la clé service role du projet Supabase dédié à « C'est un 10 mais... » dans les variables d'environnement, puis redéploie.";
+  return new Error(`Impossible de ${action} l'affirmation : ${detail}${hint}`);
+}
+
+// ---------------------------------------------------------------------------
 // Admin: create statement
 // ---------------------------------------------------------------------------
 export async function createDixMaisStatement(data: {
@@ -370,9 +393,16 @@ export async function createDixMaisStatement(data: {
     .from('dixmais_statements') as any)
     .insert({ text: data.text, type: data.type, category: data.category })
     .select()
-    .single();
+    .maybeSingle();
 
-  if (error) throw new Error(`Create statement error: ${error.message}`);
+  if (error) throw writeError('créer', error.message);
+  // Insertion acceptée mais aucune ligne relue : cas théorique où la RLS
+  // autorise INSERT sans autoriser la relecture. Ne pas fabriquer une ligne
+  // sans id — le backoffice l'afficherait avec des boutons modifier/supprimer
+  // inopérants. On prévient du doublon possible et on laisse rafraîchir.
+  if (!inserted) {
+    throw writeError('creer', "l'insertion est passée mais la ligne n'a pas pu être relue. Rafraîchis la liste avant de réessayer, sinon tu créeras un doublon");
+  }
   return inserted as DixMaisStatement;
 }
 
@@ -387,15 +417,23 @@ export async function updateDixMaisStatement(id: string, updates: Partial<Pick<D
   const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
   const supabase = createDixmaisServerClient();
 
+  // `.select()` sans `.single()` : une mise a jour qui ne touche aucune ligne
+  // n'est pas une erreur PostgREST, elle renvoie une liste vide. Avec
+  // `.single()` l'appel échouait sur un message de désérialisation qui ne
+  // désignait pas la vraie cause.
   const { data, error } = await (supabase
     .from('dixmais_statements') as any)
     .update(updates)
     .eq('id', id)
-    .select()
-    .single();
+    .select();
 
-  if (error) throw new Error(`Update statement error: ${error.message}`);
-  return data as DixMaisStatement;
+  if (error) throw writeError('modifier', error.message);
+
+  const rows = (data as DixMaisStatement[]) ?? [];
+  if (rows.length === 0) {
+    throw writeError('modifier', `aucune ligne modifiée pour l'id ${id} (id introuvable ou écriture refusée par la RLS)`);
+  }
+  return rows[0];
 }
 
 // ---------------------------------------------------------------------------
@@ -407,10 +445,17 @@ export async function deleteDixMaisStatement(id: string): Promise<void> {
   const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
   const supabase = createDixmaisServerClient();
 
-  const { error } = await (supabase
+  // Même raison que pour l'update : sans `.select()`, une suppression bloquée
+  // par la RLS répondait 200 sans rien supprimer, et le backoffice retirait la
+  // ligne de l'écran alors qu'elle était toujours en base.
+  const { data, error } = await (supabase
     .from('dixmais_statements') as any)
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .select('id');
 
-  if (error) throw new Error(`Delete statement error: ${error.message}`);
+  if (error) throw writeError('supprimer', error.message);
+  if (((data as { id: string }[]) ?? []).length === 0) {
+    throw writeError('supprimer', `aucune ligne supprimée pour l'id ${id} (id introuvable ou suppression refusée par la RLS)`);
+  }
 }

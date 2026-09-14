@@ -118,7 +118,12 @@ export function withApiHandler(handler: ApiHandler, options: ApiHandlerOptions =
       return await handler(req, ctx);
     } catch (error) {
       console.error(`[API Error] ${req.method} ${req.nextUrl.pathname}:`, error);
-      return apiError('INTERNAL_ERROR', 'Une erreur interne est survenue');
+      // Les routes d'administration rendent le message réel : leurs échecs sont
+      // presque toujours un problème de base ou de configuration que seul
+      // l'opérateur peut corriger, et "une erreur interne est survenue" ne lui
+      // laissait rien sur quoi agir. Les routes publiques restent opaques.
+      const detail = error instanceof Error ? error.message : String(error);
+      return apiError('INTERNAL_ERROR', options.requireAdmin ? detail : 'Une erreur interne est survenue');
     }
   };
 }
