@@ -10,6 +10,12 @@ const voteSchema = z.object({
   session_id: z.string().min(1).max(64),
   previous_score: z.number().int().min(0).max(10),
   new_score: z.number().int().min(0).max(10),
+  // Facultatifs : le jeu ne réclame le profil qu'au moment du rapport, et un
+  // joueur qui refuse continue de jouer — son vote compte, simplement pas dans
+  // une cohorte. `nullable` autant qu'`optional` : le client envoie `null`
+  // plutôt que d'omettre la clé quand il a demandé sans obtenir de réponse.
+  sex: z.enum(['homme', 'femme', 'autre']).nullable().optional(),
+  age: z.enum(['16-18', '19-22', '23-26', '27+']).nullable().optional(),
 });
 
 export const POST = withApiHandler(async (req: NextRequest) => {

@@ -197,6 +197,8 @@ export default function DixMaisPage() {
             <ReportScreen
               key="report"
               rounds={game.history}
+              profile={game.playerProfile}
+              onProfile={game.setPlayerProfile}
               onBack={game.closeReport}
               onNext={game.nextProfile}
             />

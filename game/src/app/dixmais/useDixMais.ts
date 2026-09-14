@@ -15,6 +15,8 @@ import { useHaptics } from '@/lib/hooks';
 import { START_SCORE, clampScore } from './scale';
 import { generateIdentity, type ProfileIdentity } from './profile';
 import { computeEnding, readCommunityStat, readTrajectory } from './endings';
+import { getProfile, saveProfile } from '@/lib/session';
+import type { PlayerProfile } from '@/types/game';
 import type { PlayedRound } from './report';
 
 /** Fixé, et non plus aléatoire entre 5 et 9 : la carte de profil doit pouvoir
@@ -69,7 +71,13 @@ async function fetchStatements(count: number, excludeIds: string[]): Promise<Dix
 }
 
 /** Tir et oubli : un vote perdu ne doit jamais interrompre une partie. */
-function sendVote(statementId: string, sessionId: string, previous: number, next: number) {
+function sendVote(
+  statementId: string,
+  sessionId: string,
+  previous: number,
+  next: number,
+  profile: PlayerProfile | null,
+) {
   fetch('/api/dixmais/vote', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -78,6 +86,11 @@ function sendVote(statementId: string, sessionId: string, previous: number, next
       session_id: sessionId,
       previous_score: previous,
       new_score: next,
+      // Le profil vient de l'enregistrement partagé avec les autres jeux : qui
+      // a déjà joué au Pire des deux contribue à sa cohorte sans qu'on lui
+      // redemande quoi que ce soit.
+      sex: profile?.sex ?? null,
+      age: profile?.age ?? null,
     }),
   }).catch(() => null);
 }
@@ -149,6 +162,9 @@ export function useDixMais() {
   /** Toutes les manches terminées de la session, dans l'ordre. La dernière est
    * celle qu'affiche le verdict ; l'ensemble alimente le rapport. */
   const [history, setHistory] = useState<PlayedRound[]>([]);
+  /** Sexe et tranche d'âge du joueur, partagés avec les autres jeux du site.
+   * `null` tant qu'il ne les a pas donnés — le jeu se joue sans. */
+  const [playerProfile, setPlayerProfileState] = useState<PlayerProfile | null>(null);
 
   const sessionId = useRef('');
   const seenIds = useRef<string[]>([]);
@@ -167,6 +183,8 @@ export function useDixMais() {
    * ses dépendances — le rappeler à chaque changement de numéro recréerait le
    * callback au milieu d'une manche. */
   const profileNumberRef = useRef(0);
+  /** Même valeur que `playerProfile`, lisible depuis `commit`. */
+  const profileRef = useRef<PlayerProfile | null>(null);
 
   useEffect(() => { phaseRef.current = phase; }, [phase]);
 
@@ -180,6 +198,12 @@ export function useDixMais() {
       setShowCoach(localStorage.getItem(COACH_KEY) !== '1');
     } catch {
       setShowCoach(true);
+    }
+
+    const known = getProfile();
+    if (known) {
+      profileRef.current = known;
+      setPlayerProfileState(known);
     }
 
     // Les confettis ne servent qu'à l'écran de fin : on les charge pendant un
@@ -291,7 +315,7 @@ export function useDixMais() {
     // redémarrage qui suit ramenait tout depuis le début.
     seenIds.current = [...seenIds.current, statement.id].slice(-MAX_SEEN);
 
-    sendVote(statement.id, sessionId.current, from, value);
+    sendVote(statement.id, sessionId.current, from, value, profileRef.current);
 
     if (value === 0) haptics.error();
     else if (delta <= -3) haptics.success();
@@ -346,6 +370,17 @@ export function useDixMais() {
   const openReport = useCallback(() => setPhase('report'), []);
   const closeReport = useCallback(() => setPhase('verdict'), []);
 
+  /**
+   * Le profil vaut pour les votes **suivants** seulement : ceux déjà envoyés
+   * sont partis anonymes, et les renvoyer créerait des doublons. Sur une
+   * soirée, la cohorte se remplit donc à partir du moment où le joueur répond.
+   */
+  const setPlayerProfile = useCallback((profile: PlayerProfile) => {
+    profileRef.current = profile;
+    setPlayerProfileState(profile);
+    saveProfile(profile);
+  }, []);
+
   /** Teinte du fond : suit le doigt pendant la notation, se fige sur la note
    * finale au verdict. Le rapport garde la teinte du dernier verdict plutôt
    * que de repasser au vert de départ le temps d'un aller-retour. */
@@ -368,6 +403,8 @@ export function useDixMais() {
     showCoach,
     loadFailed,
     history,
+    playerProfile,
+    setPlayerProfile,
     start: loadProfile,
     nextProfile: loadProfile,
     restart,

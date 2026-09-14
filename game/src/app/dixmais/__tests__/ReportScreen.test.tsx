@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ReportScreen } from '../ReportScreen';
 import { Verdict } from '../Verdict';
 import type { Ending } from '../endings';
@@ -60,7 +60,7 @@ describe('ReportScreen', () => {
   ];
 
   it('affiche le portrait, les compteurs et la frise des verdicts', () => {
-    render(<ReportScreen rounds={soiree} onBack={vi.fn()} onNext={vi.fn()} />);
+    render(<ReportScreen rounds={soiree} profile={null} onProfile={vi.fn()} onBack={vi.fn()} onNext={vi.fn()} />);
 
     expect(screen.getByText(/3 profils · 7 révélations/)).toBeInTheDocument();
     // Un seul profil éliminé sur les trois.
@@ -77,7 +77,7 @@ describe('ReportScreen', () => {
       manche([5, 1], { community: [-1, -1] }),
       manche([5, 1], { community: [-1, -1] }),
     ];
-    render(<ReportScreen rounds={dur} onBack={vi.fn()} onNext={vi.fn()} />);
+    render(<ReportScreen rounds={dur} profile={null} onProfile={vi.fn()} onBack={vi.fn()} onNext={vi.fn()} />);
 
     expect(screen.getByText(/extrêmement sévère/)).toBeInTheDocument();
     expect(screen.getByText('Ta sévérité')).toBeInTheDocument();
@@ -89,7 +89,7 @@ describe('ReportScreen', () => {
       manche([10, 10], { community: [-3, -3] }),
       manche([10, 10], { community: [-3, -3] }),
     ];
-    render(<ReportScreen rounds={tendre} onBack={vi.fn()} onNext={vi.fn()} />);
+    render(<ReportScreen rounds={tendre} profile={null} onProfile={vi.fn()} onBack={vi.fn()} onNext={vi.fn()} />);
 
     expect(screen.getByText(/aussi gentil que toi/)).toBeInTheDocument();
   });
@@ -98,7 +98,7 @@ describe('ReportScreen', () => {
   // serait du bruit présenté comme un verdict.
   it('masque les blocs dont la donnée manque plutôt que d’afficher un tiret', () => {
     const court = [manche([8, 6], { community: [null, null], communityElim: [null, null] })];
-    render(<ReportScreen rounds={court} onBack={vi.fn()} onNext={vi.fn()} />);
+    render(<ReportScreen rounds={court} profile={null} onProfile={vi.fn()} onBack={vi.fn()} onNext={vi.fn()} />);
 
     expect(screen.queryByText('Ta sévérité')).not.toBeInTheDocument();
     expect(screen.queryByText('Ta gâchette')).not.toBeInTheDocument();
@@ -113,7 +113,7 @@ describe('ReportScreen', () => {
         community: [-1, -1, -1, -1],
       }),
     ];
-    render(<ReportScreen rounds={rounds} onBack={vi.fn()} onNext={vi.fn()} />);
+    render(<ReportScreen rounds={rounds} profile={null} onProfile={vi.fn()} onBack={vi.fn()} onNext={vi.fn()} />);
 
     expect(screen.getByText('Ce qui te fait décrocher')).toBeInTheDocument();
     expect(screen.getByText(/La politique te coûte/)).toBeInTheDocument();
@@ -163,5 +163,93 @@ describe('Verdict — accès au rapport', () => {
       />,
     );
     expect(screen.getByText('TU ES SEUL AU MONDE')).toBeInTheDocument();
+  });
+});
+
+describe('ReportScreen — cohorte', () => {
+  const soiree = [
+    manche([8, 6, 4, 2], { name: 'Lucas' }),
+    manche([8, 6, 4, 2], { name: 'Emma' }),
+  ];
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('demande le profil quand il est inconnu, et le remonte une fois complet', async () => {
+    const onProfile = vi.fn();
+    render(
+      <ReportScreen rounds={soiree} profile={null} onProfile={onProfile} onBack={vi.fn()} onNext={vi.fn()} />,
+    );
+
+    expect(screen.getByText('Compare-toi aux gens comme toi')).toBeInTheDocument();
+
+    // Une seule réponse ne suffit pas : rien ne part tant que les deux
+    // pastilles ne sont pas posées.
+    fireEvent.click(screen.getByText('Femme'));
+    expect(onProfile).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByText('19-22'));
+    expect(onProfile).toHaveBeenCalledWith({ sex: 'femme', age: '19-22' });
+  });
+
+  it('ne demande rien quand le profil est déjà connu', () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [] }) }));
+    render(
+      <ReportScreen
+        rounds={soiree}
+        profile={{ sex: 'homme', age: '23-26' }}
+        onProfile={vi.fn()}
+        onBack={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText('Compare-toi aux gens comme toi')).not.toBeInTheDocument();
+  });
+
+  it('compare à la cohorte quand la base a de quoi répondre', async () => {
+    // La cohorte retire 1 point par révélation, le joueur 2 : il est plus dur.
+    const stats = ['Lucas-0', 'Lucas-1', 'Lucas-2', 'Lucas-3'].map((id) => ({
+      statement_id: id,
+      votes: 20,
+      avg_delta: -1,
+      elimination_rate: 8,
+    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: stats }) }),
+    );
+
+    render(
+      <ReportScreen
+        rounds={soiree}
+        profile={{ sex: 'femme', age: '19-22' }}
+        onProfile={vi.fn()}
+        onBack={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText('Face aux femmes de 19-22 ans')).toBeInTheDocument();
+    expect(screen.getByText(/plus sévère que les femmes de 19-22 ans/)).toBeInTheDocument();
+  });
+
+  // La cohorte peut n'avoir aucun vote : la migration qui la remplit vient
+  // d'être posée. L'écran doit alors se taire, pas afficher un bloc vide.
+  it('masque le bloc quand la cohorte ne renvoie rien', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [] }) }));
+
+    render(
+      <ReportScreen
+        rounds={soiree}
+        profile={{ sex: 'femme', age: '19-22' }}
+        onProfile={vi.fn()}
+        onBack={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Ta soirée · 2 profils · 8 révélations')).toBeInTheDocument());
+    expect(screen.queryByText(/Face aux/)).not.toBeInTheDocument();
   });
 });

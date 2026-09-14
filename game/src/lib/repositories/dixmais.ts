@@ -242,10 +242,15 @@ export interface RecordVoteParams {
   session_id: string;
   previous_score: number;
   new_score: number;
+  /** Profil du votant, quand il est connu. Facultatif : un vote anonyme reste
+   * un vote, il compte simplement dans la moyenne générale et dans aucune
+   * cohorte. */
+  sex?: string | null;
+  age?: string | null;
 }
 
 export async function recordDixMaisVote(params: RecordVoteParams): Promise<void> {
-  const { statement_id, session_id, previous_score, new_score } = params;
+  const { statement_id, session_id, previous_score, new_score, sex, age } = params;
 
   const isElimination = new_score === 0;
   const delta = new_score - previous_score;
@@ -266,6 +271,8 @@ export async function recordDixMaisVote(params: RecordVoteParams): Promise<void>
     p_new_score: new_score,
     p_delta: delta,
     p_is_elimination: isElimination,
+    p_sex: sex ?? null,
+    p_age: age ?? null,
   } as any);
 
   if (error) {
@@ -281,6 +288,9 @@ export async function recordDixMaisVote(params: RecordVoteParams): Promise<void>
     // se télescoper et en perdre un, ce qui vaut mieux qu'un échec certain. Le
     // chemin normal reste le RPC, atomique.
     try {
+      // Sans `sex` ni `age` : ce repli sert aussi quand la base n'a pas encore
+      // reçu la migration 021, cas où ces colonnes n'existent pas et où les
+      // nommer ferait échouer l'insertion. Le vote vaut mieux que le profil.
       await (supabase.from('dixmais_votes') as any).insert({
         statement_id, session_id, previous_score, new_score, delta, is_elimination: isElimination,
       });
@@ -520,4 +530,68 @@ export async function deleteDixMaisStatement(id: string): Promise<void> {
   if (((data as { id: string }[]) ?? []).length === 0) {
     throw writeError('supprimer', `aucune ligne supprimée pour l'id ${id} (id introuvable ou suppression refusée par la RLS)`);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Cohorte : comment votent les gens du même sexe et du même âge
+// ---------------------------------------------------------------------------
+
+/**
+ * Sous ce nombre de votes, la moyenne d'une cohorte sur un énoncé ne veut rien
+ * dire. Plus exigeant que le seuil de la moyenne générale : une cohorte est par
+ * construction plus étroite, et une poignée de votes y pèse bien plus lourd.
+ */
+export const MIN_COHORT_VOTES = 8;
+
+export interface CohortStat {
+  statement_id: string;
+  votes: number;
+  avg_delta: number;
+  elimination_rate: number;
+}
+
+/**
+ * Moyennes d'une cohorte, énoncé par énoncé.
+ *
+ * Phrase par phrase, et non en bloc : comparer la moyenne du joueur à la
+ * moyenne de la cohorte sur *tous* les énoncés mesurerait surtout la différence
+ * entre les deux paniers d'énoncés tirés, pas une différence de sévérité.
+ *
+ * Rend une liste vide — et non une erreur — quand la fonction n'existe pas
+ * encore en base : la comparaison par cohorte disparaît alors de l'écran, le
+ * reste du rapport tient debout.
+ */
+export async function getDixMaisCohortStats(
+  statementIds: string[],
+  sex: string | null,
+  age: string | null,
+): Promise<CohortStat[]> {
+  if (statementIds.length === 0) return [];
+
+  if (isMockMode()) {
+    // Cohorte simulée, un cran plus sévère que la moyenne générale : de quoi
+    // voir le bloc de comparaison en développement.
+    return statementIds.map((id, i) => ({
+      statement_id: id,
+      votes: MIN_COHORT_VOTES + ((i * 5) % 20),
+      avg_delta: -2 - ((i * 3) % 4),
+      elimination_rate: ((i * 13) % 50),
+    }));
+  }
+
+  const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
+  const supabase = createDixmaisServerClient();
+
+  const { data, error } = await supabase.rpc('dixmais_cohort_stats', {
+    p_statement_ids: statementIds,
+    p_sex: sex,
+    p_age: age,
+  } as any);
+
+  if (error) {
+    console.warn('[COHORTE] Lecture impossible :', error.message);
+    return [];
+  }
+
+  return ((data as CohortStat[]) ?? []).filter((row) => row.votes >= MIN_COHORT_VOTES);
 }

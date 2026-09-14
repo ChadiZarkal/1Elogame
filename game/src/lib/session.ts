@@ -66,6 +66,33 @@ export function getProfile(): PlayerProfile | null {
   return getSession()?.profile ?? null;
 }
 
+/**
+ * Enregistre le profil sans détruire le reste de la session.
+ *
+ * `initSession` repart d'une session vide : appelé depuis « C'est un 10
+ * mais… », où le profil est demandé en cours de partie et non à l'entrée, il
+ * effacerait les duels déjà vus et la série en cours de l'autre jeu, qui
+ * partage ce même enregistrement.
+ */
+export function saveProfile(profile: PlayerProfile): void {
+  if (!isLocalStorageAvailable()) return;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.SESSION);
+    const existing = stored ? (JSON.parse(stored) as Partial<GameSession>) : null;
+    const session: GameSession = {
+      seenDuels: existing?.seenDuels ?? [],
+      streak: existing?.streak ?? 0,
+      duelCount: existing?.duelCount ?? 0,
+      recentElementIds: existing?.recentElementIds,
+      elementAppearances: existing?.elementAppearances,
+      profile,
+    };
+    localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(session));
+  } catch {
+    /* stockage indisponible ou enregistrement illisible */
+  }
+}
+
 export function markDuelAsSeen(idA: string, idB: string): void {
   const session = getSession();
   if (!session) return;
