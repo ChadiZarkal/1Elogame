@@ -388,6 +388,20 @@ export async function getAllDixMaisStatements(): Promise<LeaderboardEntry[]> {
  * erreur du tout et zéro ligne touchée. D'où ce message explicite plutôt que le
  * texte natif seul.
  */
+/**
+ * Un énoncé déjà présent, refusé par l'index unique de la migration 020.
+ *
+ * Le message natif de PostgreSQL — « duplicate key value violates unique
+ * constraint » — ne dit rien à qui vient de saisir une affirmation. Celui-ci
+ * nomme la cause et la règle de comparaison, la même que `textKey`.
+ */
+function doublonRefuse(error: { code?: string } | null | undefined): Error | null {
+  if (error?.code !== '23505') return null;
+  return new Error(
+    "Cette affirmation existe déjà : un énoncé identique est enregistré (la comparaison ignore la casse et les espaces en trop).",
+  );
+}
+
 function writeError(action: string, detail: string): Error {
   const hasServiceRole = Boolean(process.env.SUPABASE_DIXMAIS_SERVICE_ROLE_KEY);
   const hint = hasServiceRole
@@ -417,13 +431,13 @@ export async function createDixMaisStatement(data: {
     .select()
     .maybeSingle();
 
-  if (error) throw writeError('créer', error.message);
+  if (error) throw doublonRefuse(error) ?? writeError('créer', error.message);
   // Insertion acceptée mais aucune ligne relue : cas théorique où la RLS
   // autorise INSERT sans autoriser la relecture. Ne pas fabriquer une ligne
   // sans id — le backoffice l'afficherait avec des boutons modifier/supprimer
   // inopérants. On prévient du doublon possible et on laisse rafraîchir.
   if (!inserted) {
-    throw writeError('creer', "l'insertion est passée mais la ligne n'a pas pu être relue. Rafraîchis la liste avant de réessayer, sinon tu créeras un doublon");
+    throw writeError('créer', "l'insertion est passée mais la ligne n'a pas pu être relue. Rafraîchis la liste avant de réessayer, sinon tu créeras un doublon");
   }
   return inserted as DixMaisStatement;
 }
@@ -449,7 +463,7 @@ export async function updateDixMaisStatement(id: string, updates: Partial<Pick<D
     .eq('id', id)
     .select();
 
-  if (error) throw writeError('modifier', error.message);
+  if (error) throw doublonRefuse(error) ?? writeError('modifier', error.message);
 
   const rows = (data as DixMaisStatement[]) ?? [];
   if (rows.length === 0) {

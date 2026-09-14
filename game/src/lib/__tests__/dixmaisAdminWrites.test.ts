@@ -79,4 +79,28 @@ describe("repositories/dixmais — ecritures du backoffice", () => {
     await expect(createDixMaisStatement({ text: 'Il ronfle', type: 'negative', category: 'lifestyle' }))
       .rejects.toThrow(/SUPABASE_DIXMAIS_SERVICE_ROLE_KEY/);
   });
+
+
+  // L'index unique de la migration 020 rend le doublon impossible depuis le
+  // backoffice. Reste à ce que l'opérateur comprenne le refus : le message
+  // natif de PostgreSQL ne parle que de contrainte violée.
+  it('traduit le refus de doublon a la creation', async () => {
+    createDixmaisServerClientMock.mockReturnValue(
+      fakeClient({ data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint "dixmais_statements_texte_unique"' } }),
+    );
+    const { createDixMaisStatement } = await import('@/lib/repositories/dixmais');
+
+    await expect(createDixMaisStatement({ text: 'Il est souvent violent', type: 'negative', category: 'caractere' }))
+      .rejects.toThrow(/Cette affirmation existe déjà/);
+  });
+
+  it('traduit le refus de doublon a la modification', async () => {
+    createDixmaisServerClientMock.mockReturnValue(
+      fakeClient({ data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint "dixmais_statements_texte_unique"' } }),
+    );
+    const { updateDixMaisStatement } = await import('@/lib/repositories/dixmais');
+
+    await expect(updateDixMaisStatement('s1', { text: 'Il est souvent violent' }))
+      .rejects.toThrow(/Cette affirmation existe déjà/);
+  });
 });

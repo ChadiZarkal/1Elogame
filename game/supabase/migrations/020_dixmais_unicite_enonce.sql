@@ -1,0 +1,31 @@
+-- =============================================================================
+-- 020_dixmais_unicite_enonce.sql
+-- « C'est un 10 mais… » — un texte, une seule ligne
+-- =============================================================================
+--
+-- POURQUOI
+--   La migration 019 a ramené la table à une ligne par texte, mais rien
+--   n'empêchait d'en recréer : le backoffice accepte n'importe quel énoncé, et
+--   c'est ainsi que les trois vagues du 25 juillet avaient produit 75 triplets.
+--   Un doublon ne se voit pas dans le jeu — `dedupeByText` n'en sert qu'un
+--   exemplaire — mais il dilue les votes entre deux lignes et rend l'édition
+--   imprévisible : on modifie une copie que le jeu ne sert pas.
+--
+-- LA NORME EST CELLE DU CODE
+--   Casse, espaces multiples et blancs de bord, exactement comme `textKey`
+--   (lib/repositories/dixmais) et comme les migrations 018 et 019. Deux
+--   énoncés qui ne diffèrent que par cela sont le même énoncé.
+--
+-- UNICITÉ GLOBALE, ET NON PAR TYPE
+--   Un même texte classé une fois red flag et une fois green flag n'aurait pas
+--   de sens : c'est l'énoncé qui est unique, pas le couple texte/type.
+--
+-- CE QUE VOIT L'OPÉRATEUR
+--   PostgreSQL rejette l'écriture avec le code 23505, que la couche d'accès
+--   traduit en « Cette affirmation existe déjà ». L'ajout comme la modification
+--   sont couverts : renommer un énoncé vers un texte déjà pris est refusé de
+--   la même manière.
+-- =============================================================================
+
+CREATE UNIQUE INDEX IF NOT EXISTS dixmais_statements_texte_unique
+    ON dixmais_statements (LOWER(BTRIM(REGEXP_REPLACE(text, '\s+', ' ', 'g'))));
