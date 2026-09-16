@@ -3,51 +3,20 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { Intro } from '../Intro';
 
 /**
- * Le profil est demandé avant la première note, et non dans le rapport.
- * Chaque vote part avec lui : demandé à la fin, il arrivait après une dizaine
- * de votes déjà enregistrés sans, c'est-à-dire après l'essentiel de ce que
- * joue quelqu'un qui ne fait qu'une partie.
+ * L'accueil ne demande plus rien et ne se désactive plus.
+ *
+ * Sexe et âge y ont été posés un temps, sous la démonstration animée —
+ * c'est-à-dire dans la zone défilante : il fallait faire défiler pour les
+ * trouver pendant que le bouton du bas en réclamait la réponse. Ils ont
+ * maintenant leur propre écran, derrière « Jouer ».
  */
-describe('Intro — profil avant la première note', () => {
-  it('demande le profil et retient le départ tant qu’il manque', () => {
+describe('Intro', () => {
+  it('ne pose aucune question et laisse partir tout de suite', () => {
     const onStart = vi.fn();
-    render(
-      <Intro onStart={onStart} failed={false} profile={null} profileChecked onProfile={vi.fn()} />,
-    );
+    render(<Intro onStart={onStart} failed={false} />);
 
-    const bouton = screen.getByRole('button', { name: /Réponds aux deux questions/ });
-    expect(bouton).toBeDisabled();
-
-    fireEvent.click(bouton);
-    expect(onStart).not.toHaveBeenCalled();
-  });
-
-  it('remonte le profil dès que les deux réponses sont posées', () => {
-    const onProfile = vi.fn();
-    render(
-      <Intro onStart={vi.fn()} failed={false} profile={null} profileChecked onProfile={onProfile} />,
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: 'Femme' }));
-    expect(onProfile).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByRole('button', { name: '19-22' }));
-    expect(onProfile).toHaveBeenCalledWith({ sex: 'femme', age: '19-22' });
-  });
-
-  it('ne demande rien à qui a déjà répondu ailleurs sur le site', () => {
-    const onStart = vi.fn();
-    render(
-      <Intro
-        onStart={onStart}
-        failed={false}
-        profile={{ sex: 'homme', age: '23-26' }}
-        profileChecked
-        onProfile={vi.fn()}
-      />,
-    );
-
-    expect(screen.queryByRole('button', { name: 'Femme' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Femme/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Réponds aux deux questions/)).not.toBeInTheDocument();
 
     const jouer = screen.getByRole('button', { name: 'Jouer' });
     expect(jouer).toBeEnabled();
@@ -55,36 +24,8 @@ describe('Intro — profil avant la première note', () => {
     expect(onStart).toHaveBeenCalled();
   });
 
-  // L'enregistrement local se lit dans un effet, donc après la première
-  // peinture : montrer le questionnaire avant de savoir le ferait apparaître
-  // puis disparaître chez tous ceux qui ont déjà un profil.
-  it('n’affiche rien tant que l’enregistrement local n’a pas été lu', () => {
-    render(
-      <Intro
-        onStart={vi.fn()}
-        failed={false}
-        profile={null}
-        profileChecked={false}
-        onProfile={vi.fn()}
-      />,
-    );
-
-    expect(screen.queryByRole('button', { name: 'Femme' })).not.toBeInTheDocument();
-    expect(screen.queryByText(/Réponds aux deux questions/)).not.toBeInTheDocument();
-    // Le bouton reste inerte : on ne peut pas partir sans savoir.
-    expect(screen.getByRole('button', { name: 'Jouer' })).toBeDisabled();
-  });
-
   it('propose de réessayer après un échec de chargement', () => {
-    render(
-      <Intro
-        onStart={vi.fn()}
-        failed
-        profile={{ sex: 'autre', age: '27+' }}
-        profileChecked
-        onProfile={vi.fn()}
-      />,
-    );
+    render(<Intro onStart={vi.fn()} failed />);
 
     expect(screen.getByRole('button', { name: 'Réessayer' })).toBeEnabled();
     expect(screen.getByText(/Connexion impossible/)).toBeInTheDocument();

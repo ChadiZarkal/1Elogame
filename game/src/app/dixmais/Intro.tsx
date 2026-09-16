@@ -19,8 +19,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Trophy } from 'lucide-react';
-import type { PlayerProfile } from '@/types/game';
-import { ProfilePicker } from './ProfilePicker';
 import { scoreColor, withAlpha } from './scale';
 
 /** Ouvre sur un red flag, comme le jeu : le serveur garantit que la première
@@ -32,25 +30,7 @@ const DEMO = [
   { text: 'il cuisine très bien', score: 5, connector: 'MAIS', icon: '🟢' },
 ] as const;
 
-interface IntroProps {
-  onStart: () => void;
-  failed: boolean;
-  /** Profil du joueur, `null` tant qu'il ne l'a pas donné. */
-  profile: PlayerProfile | null;
-  /** L'enregistrement local a été consulté — avant, on ne sait rien. */
-  profileChecked: boolean;
-  onProfile: (profile: PlayerProfile) => void;
-}
-
-export function Intro({ onStart, failed, profile, profileChecked, onProfile }: IntroProps) {
-  // Le profil conditionne le départ : chaque vote part avec lui, et le
-  // demander après coup laisserait la première partie — la seule, pour
-  // beaucoup — hors de toute statistique. Ceux qui ont déjà joué à un autre
-  // jeu du site ne voient rien : le profil est commun à tout le site.
-  const ready = profile !== null;
-  // Tant que l'enregistrement n'a pas été lu, on ne montre pas le
-  // questionnaire : il disparaîtrait aussitôt chez la plupart des joueurs.
-  const asking = profileChecked && !ready;
+export function Intro({ onStart, failed }: { onStart: () => void; failed: boolean }) {
   return (
     <motion.div
       key="intro"
@@ -107,12 +87,6 @@ export function Intro({ onStart, failed, profile, profileChecked, onProfile }: I
             Un 0 est éliminatoire : la partie s&apos;arrête là.
           </p>
 
-          {asking && (
-            <div className="mt-4 w-full max-w-xs">
-              <ProfilePicker onProfile={onProfile} />
-            </div>
-          )}
-
           <Link
             href="/dixmais/leaderboard"
             className="mt-4 flex min-h-11 items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.16em] transition-colors hover:text-amber-300"
@@ -132,23 +106,20 @@ export function Intro({ onStart, failed, profile, profileChecked, onProfile }: I
             Connexion impossible. Réessaie.
           </p>
         )}
+        {/* Le bouton ne demande rien et ne se désactive pas : sexe et âge sont
+            demandés *après* l'appui, sur leur propre écran. Placés ici, dans la
+            zone défilante, il fallait faire défiler pour les trouver pendant
+            que le bouton en réclamait la réponse. */}
         <motion.button
-          whileTap={ready ? { scale: 0.96 } : undefined}
+          whileTap={{ scale: 0.96 }}
           onClick={onStart}
-          disabled={!ready}
-          className="w-full rounded-2xl py-[18px] text-lg font-black uppercase tracking-widest text-black disabled:cursor-not-allowed"
+          className="w-full cursor-pointer rounded-2xl py-[18px] text-lg font-black uppercase tracking-widest text-black"
           style={{
-            background: ready
-              ? 'linear-gradient(135deg, #F59E0B 0%, #FFD700 100%)'
-              : 'rgba(255,255,255,0.08)',
-            color: ready ? '#000' : 'rgba(255,255,255,0.35)',
-            boxShadow: ready ? '0 8px 40px rgba(245,158,11,0.45)' : 'none',
-            cursor: ready ? 'pointer' : 'not-allowed',
+            background: 'linear-gradient(135deg, #F59E0B 0%, #FFD700 100%)',
+            boxShadow: '0 8px 40px rgba(245,158,11,0.45)',
           }}
         >
-          {/* Le libellé dit ce qui manque plutôt que de laisser un bouton mort
-              sans explication. */}
-          {asking ? 'Réponds aux deux questions' : failed ? 'Réessayer' : 'Jouer'}
+          {failed ? 'Réessayer' : 'Jouer'}
         </motion.button>
 
         {/* L'écran de jeu occupe exactement la hauteur de la fenêtre : rien

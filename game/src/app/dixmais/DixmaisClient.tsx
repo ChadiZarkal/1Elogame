@@ -19,6 +19,7 @@ import { ProfileCard } from './ProfileCard';
 import { ScoreDial } from './ScoreDial';
 import { Verdict } from './Verdict';
 import { ReportScreen } from './ReportScreen';
+import { ProfileStep } from './ProfileStep';
 import { useDixMais } from './useDixMais';
 import { scoreColor, withAlpha, START_SCORE } from './scale';
 
@@ -115,14 +116,14 @@ export default function DixMaisPage() {
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <AnimatePresence mode="wait">
           {(phase === 'intro' || phase === 'error') && (
-            <Intro
-              key="intro"
-              onStart={game.start}
-              failed={phase === 'error'}
-              profile={game.playerProfile}
-              profileChecked={game.profileChecked}
-              onProfile={game.setPlayerProfile}
-            />
+            <Intro key="intro" onStart={game.start} failed={phase === 'error'} />
+          )}
+
+          {/* Sexe et âge, une fois « Jouer » touché et seulement si on ne les
+              connaît pas encore. Écran à part : dans la zone défilante de
+              l'accueil, il fallait faire défiler pour les trouver. */}
+          {phase === 'profile' && (
+            <ProfileStep key="profile" onSubmit={game.submitProfile} />
           )}
 
           {phase === 'loading' && <Loading key="loading" />}

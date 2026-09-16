@@ -47,7 +47,7 @@ const MAX_SEEN = 150;
  */
 const RECENT_ENDINGS = 2;
 
-export type Phase = 'intro' | 'loading' | 'error' | 'reveal' | 'verdict' | 'report';
+export type Phase = 'intro' | 'profile' | 'loading' | 'error' | 'reveal' | 'verdict' | 'report';
 
 export interface Round {
   statements: DixMaisStatement[];
@@ -379,16 +379,36 @@ export function useDixMais() {
   const openReport = useCallback(() => setPhase('report'), []);
   const closeReport = useCallback(() => setPhase('verdict'), []);
 
-  /**
-   * Le profil vaut pour les votes **suivants** seulement : ceux déjà envoyés
-   * sont partis anonymes, et les renvoyer créerait des doublons. Sur une
-   * soirée, la cohorte se remplit donc à partir du moment où le joueur répond.
-   */
   const setPlayerProfile = useCallback((profile: PlayerProfile) => {
     profileRef.current = profile;
     setPlayerProfileState(profile);
     saveProfile(profile);
   }, []);
+
+  /**
+   * « Jouer » : on passe par l'étape de profil seulement si on ne le connaît
+   * pas. Les joueurs venus des autres jeux du site entrent directement en
+   * partie — le profil est enregistré une fois pour tout le site.
+   */
+  const start = useCallback(() => {
+    if (profileRef.current) {
+      void loadProfile();
+      return;
+    }
+    setPhase('profile');
+  }, [loadProfile]);
+
+  /**
+   * Fin de l'étape de profil : on enchaîne sur la première manche.
+   *
+   * `setPlayerProfile` écrit `profileRef` de façon synchrone, donc le tout
+   * premier vote part déjà étiqueté — c'est toute la raison de poser la
+   * question ici plutôt qu'à la fin.
+   */
+  const submitProfile = useCallback((profile: PlayerProfile) => {
+    setPlayerProfile(profile);
+    void loadProfile();
+  }, [setPlayerProfile, loadProfile]);
 
   /** Teinte du fond : suit le doigt pendant la notation, se fige sur la note
    * finale au verdict. Le rapport garde la teinte du dernier verdict plutôt
@@ -415,7 +435,8 @@ export function useDixMais() {
     playerProfile,
     profileChecked,
     setPlayerProfile,
-    start: loadProfile,
+    submitProfile,
+    start,
     nextProfile: loadProfile,
     restart,
     openReport,
