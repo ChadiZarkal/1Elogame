@@ -116,7 +116,7 @@ async function processProductionVote(
   );
 
   // Record vote + update both elements (ELO global + segmented + participations) + get rankings — all in parallel
-  const [, , , winnerRank, loserRank, totalResult] = await Promise.all([
+  const [voteInsert, winnerUpdate, loserUpdate, winnerRank, loserRank, totalResult] = await Promise.all([
     // 1. Record the vote
     typedInsert(supabase, 'votes', {
       element_gagnant_id: winnerId,
@@ -150,6 +150,8 @@ async function processProductionVote(
     supabase.from('elements').select('*', { count: 'exact', head: true }).eq('actif', true),
   ]);
 
+  reportWriteFailures({ voteInsert, winnerUpdate, loserUpdate }, winnerId, loserId);
+
   const winnerPercentage = estimatePercentage(newWinnerELO, newLoserELO);
   return {
     winner: {
@@ -169,6 +171,35 @@ async function processProductionVote(
 // ---------------------------------------------------------------------------
 // Shared helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Signale une écriture refusée, au lieu de la laisser passer sans bruit.
+ *
+ * C'est l'absence de ce garde-fou qui a coûté le plus cher. Les trois écritures
+ * partaient dans un `Promise.all` dont la valeur était jetée : le client
+ * Supabase ne lève pas, il rend `{ error }`. Quand la mise à jour des éléments
+ * s'est mise à échouer — une colonne du payload n'existait pas sur la base de
+ * production —, rien ne l'a dit. Sept mois et 3 547 votes plus tard, l'ELO
+ * n'avait pas bougé d'un point et les compteurs affichaient « 1 vote » sur des
+ * propositions qui en avaient reçu soixante.
+ *
+ * On journalise plutôt que de lever : le vote, lui, est bien enregistré, et
+ * faire échouer la requête pousserait le joueur à revoter — ce qui compterait
+ * deux fois.
+ */
+function reportWriteFailures(
+  writes: Record<string, { error?: { message?: string } | null } | null | undefined>,
+  winnerId: string,
+  loserId: string,
+): void {
+  for (const [nom, resultat] of Object.entries(writes)) {
+    const message = resultat?.error?.message;
+    if (!message) continue;
+    console.error(
+      `[VOTE] Écriture refusée (${nom}) — gagnant ${winnerId}, perdant ${loserId} : ${message}`,
+    );
+  }
+}
 
 function updateSegmentedElo(winner: Element, loser: Element, sexe: SexeVotant, age: AgeVotant, kFactor: number) {
   const sexField = getEloFieldForSex(sexe) as keyof Element;

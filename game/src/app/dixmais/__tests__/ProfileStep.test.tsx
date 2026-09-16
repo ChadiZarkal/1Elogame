@@ -48,6 +48,11 @@ describe('ProfileStep', () => {
   // Un bouton, et non un départ automatique au second appui : le profil vaut
   // pour tout le site, une pastille touchée par erreur serait enregistrée pour
   // de bon.
+  //
+  // Délai relevé : cinq appuis successifs redessinent l'écran cinq fois, et la
+  // suite complète tourne sur soixante-dix fichiers en parallèle. Le test passe
+  // en trois secondes isolément et dépassait les cinq secondes par défaut sous
+  // charge — c'est la machine qui est lente, pas l'écran.
   it('laisse corriger une réponse avant de partir', () => {
     const onSubmit = vi.fn();
     render(<ProfileStep onSubmit={onSubmit} />);
@@ -62,5 +67,5 @@ describe('ProfileStep', () => {
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
     expect(onSubmit).toHaveBeenCalledWith({ sex: 'femme', age: '23-26' });
-  });
+  }, 20000);
 });

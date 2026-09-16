@@ -141,15 +141,20 @@ function Question({ label, children }: { label: string; children: React.ReactNod
   );
 }
 
+/**
+ * Bouton ordinaire, et non `motion.button` : l'enfoncement se fait très bien
+ * en CSS, et sept composants animés sur un écran qu'on ne touche que deux fois
+ * coûtent plus qu'ils ne rapportent — à l'affichage comme au test, où ils
+ * suffisaient à faire dépasser le délai d'exécution.
+ */
 function Pastille({
   active, onClick, emoji, label,
 }: { active: boolean; onClick: () => void; emoji: string; label: string }) {
   return (
-    <motion.button
-      whileTap={{ scale: 0.94 }}
+    <button
       onClick={onClick}
       aria-pressed={active}
-      className="flex min-h-[64px] cursor-pointer flex-col items-center justify-center gap-1 rounded-xl transition-colors"
+      className="flex min-h-[64px] cursor-pointer flex-col items-center justify-center gap-1 rounded-xl transition-transform transition-colors active:scale-95"
       style={{
         background: active ? OR : 'rgba(255,255,255,0.05)',
         border: `1.5px solid ${active ? OR : 'rgba(255,255,255,0.1)'}`,
@@ -158,6 +163,6 @@ function Pastille({
     >
       <span className="text-base leading-none">{emoji}</span>
       <span className="text-[11px] font-black uppercase tracking-wide">{label}</span>
-    </motion.button>
+    </button>
   );
 }
