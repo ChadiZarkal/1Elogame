@@ -115,7 +115,14 @@ export default function DixMaisPage() {
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <AnimatePresence mode="wait">
           {(phase === 'intro' || phase === 'error') && (
-            <Intro key="intro" onStart={game.start} failed={phase === 'error'} />
+            <Intro
+              key="intro"
+              onStart={game.start}
+              failed={phase === 'error'}
+              profile={game.playerProfile}
+              profileChecked={game.profileChecked}
+              onProfile={game.setPlayerProfile}
+            />
           )}
 
           {phase === 'loading' && <Loading key="loading" />}
@@ -198,7 +205,6 @@ export default function DixMaisPage() {
               key="report"
               rounds={game.history}
               profile={game.playerProfile}
-              onProfile={game.setPlayerProfile}
               onBack={game.closeReport}
               onNext={game.nextProfile}
             />

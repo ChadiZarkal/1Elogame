@@ -162,9 +162,17 @@ export function useDixMais() {
   /** Toutes les manches terminées de la session, dans l'ordre. La dernière est
    * celle qu'affiche le verdict ; l'ensemble alimente le rapport. */
   const [history, setHistory] = useState<PlayedRound[]>([]);
-  /** Sexe et tranche d'âge du joueur, partagés avec les autres jeux du site.
-   * `null` tant qu'il ne les a pas donnés — le jeu se joue sans. */
+  /** Sexe et tranche d'âge du joueur, partagés avec les autres jeux du site. */
   const [playerProfile, setPlayerProfileState] = useState<PlayerProfile | null>(null);
+  /**
+   * L'enregistrement local a été consulté.
+   *
+   * Sans cet indicateur, `playerProfile` vaut `null` au premier rendu — la
+   * lecture se fait dans un effet, donc après la première peinture — et
+   * l'accueil montrerait le questionnaire le temps d'une image à quelqu'un qui
+   * a déjà répondu, sur un autre jeu du site ou à sa partie précédente.
+   */
+  const [profileChecked, setProfileChecked] = useState(false);
 
   const sessionId = useRef('');
   const seenIds = useRef<string[]>([]);
@@ -205,6 +213,7 @@ export function useDixMais() {
       profileRef.current = known;
       setPlayerProfileState(known);
     }
+    setProfileChecked(true);
 
     // Les confettis ne servent qu'à l'écran de fin : on les charge pendant un
     // temps mort plutôt que de figer l'animation au moment du verdict.
@@ -404,6 +413,7 @@ export function useDixMais() {
     loadFailed,
     history,
     playerProfile,
+    profileChecked,
     setPlayerProfile,
     start: loadProfile,
     nextProfile: loadProfile,

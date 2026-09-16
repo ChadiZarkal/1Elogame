@@ -17,7 +17,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Share2, Check, Skull, Flame, Users } from 'lucide-react';
-import type { AgeVotant, SexeVotant } from '@/types/database';
 import type { PlayerProfile } from '@/types/game';
 import { scoreColor, withAlpha } from './scale';
 import type { PlayedRound } from './report';
@@ -56,12 +55,11 @@ interface Props {
   rounds: PlayedRound[];
   /** Sexe et tranche d'âge du joueur, `null` tant qu'il ne les a pas donnés. */
   profile: PlayerProfile | null;
-  onProfile: (profile: PlayerProfile) => void;
   onBack: () => void;
   onNext: () => void;
 }
 
-export function ReportScreen({ rounds, profile, onProfile, onBack, onNext }: Props) {
+export function ReportScreen({ rounds, profile, onBack, onNext }: Props) {
   const [copied, setCopied] = useState(false);
   const [cohort, setCohort] = useState<CohortComparison | null>(null);
   // Le rapport se recalcule entièrement à chaque rendu sinon, et il traverse
@@ -199,10 +197,9 @@ export function ReportScreen({ rounds, profile, onProfile, onBack, onNext }: Pro
         </Block>
       )}
 
-      {/* La demande arrive ici, une fois que le joueur a vu ce que le rapport
-          sait faire : à l'entrée du jeu, c'est un formulaire de plus avant de
-          jouer ; à cet endroit, c'est un bloc de plus à débloquer. */}
-      {!profile && <ProfileAsk onProfile={onProfile} />}
+      {/* Rien n'est demandé ici : le profil est posé avant la première note,
+          sur l'écran d'accueil. Un joueur sans profil n'a simplement pas de
+          bloc de cohorte. */}
 
       {/* ── Le doigt sur la gâchette ─────────────────────────────────────── */}
       {elimination && (
@@ -344,84 +341,6 @@ function Figure({
         {icon}
         {label}
       </p>
-    </div>
-  );
-}
-
-const SEXES: { value: SexeVotant; label: string }[] = [
-  { value: 'homme', label: 'Homme' },
-  { value: 'femme', label: 'Femme' },
-  { value: 'autre', label: 'Autre' },
-];
-
-const AGES: AgeVotant[] = ['16-18', '19-22', '23-26', '27+'];
-
-/**
- * Demande du profil, en deux rangées de pastilles.
- *
- * Rien n'est validé par un bouton : dès que les deux réponses sont posées, le
- * profil part. Un formulaire de plus à soumettre, au milieu d'une soirée, ne
- * serait pas rempli.
- */
-function ProfileAsk({ onProfile }: { onProfile: (profile: PlayerProfile) => void }) {
-  const [sex, setSex] = useState<SexeVotant | null>(null);
-  const [age, setAge] = useState<AgeVotant | null>(null);
-
-  function choisir(nouveauSexe: SexeVotant | null, nouvelAge: AgeVotant | null) {
-    setSex(nouveauSexe);
-    setAge(nouvelAge);
-    if (nouveauSexe && nouvelAge) onProfile({ sex: nouveauSexe, age: nouvelAge });
-  }
-
-  return (
-    <div className="mt-4">
-      <p className="mb-2 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.18em] text-white/45">
-        <Users size={12} />
-        Compare-toi aux gens comme toi
-      </p>
-      <div
-        className="rounded-2xl px-4 py-3.5"
-        style={{
-          background: withAlpha(VIOLET, 0.07),
-          border: `1px dashed ${withAlpha(VIOLET, 0.32)}`,
-        }}
-      >
-        <p className="mb-3 text-[13px] font-semibold leading-snug text-white/70">
-          Dis-nous qui tu es, et on te dira si tu notes plus dur que les gens de ton âge.
-        </p>
-
-        <div className="mb-2 grid grid-cols-3 gap-1.5">
-          {SEXES.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => choisir(option.value, age)}
-              className="cursor-pointer rounded-lg py-2 text-[11px] font-black uppercase tracking-wide transition-colors"
-              style={{
-                background: sex === option.value ? VIOLET : 'rgba(255,255,255,0.06)',
-                color: sex === option.value ? '#fff' : 'rgba(255,255,255,0.5)',
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-4 gap-1.5">
-          {AGES.map((option) => (
-            <button
-              key={option}
-              onClick={() => choisir(sex, option)}
-              className="cursor-pointer rounded-lg py-2 text-[11px] font-black uppercase tracking-wide transition-colors"
-              style={{
-                background: age === option ? VIOLET : 'rgba(255,255,255,0.06)',
-                color: age === option ? '#fff' : 'rgba(255,255,255,0.5)',
-              }}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
