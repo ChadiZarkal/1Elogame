@@ -537,11 +537,21 @@ export async function deleteDixMaisStatement(id: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 /**
- * Sous ce nombre de votes, la moyenne d'une cohorte sur un énoncé ne veut rien
- * dire. Plus exigeant que le seuil de la moyenne générale : une cohorte est par
- * construction plus étroite, et une poignée de votes y pèse bien plus lourd.
+ * Aucun seuil par énoncé.
+ *
+ * La première version en exigeait huit, par symétrie avec la moyenne générale.
+ * Mesuré sur les données réelles, c'était inatteignable : avec 161 énoncés au
+ * catalogue, l'énoncé le mieux couvert de la plus grosse cohorte plafonnait à
+ * cinq votes, et il aurait fallu quelque 1 300 votes *par cohorte* pour que la
+ * comparaison s'affiche une seule fois. Une statistique qui ne sort jamais ne
+ * protège de rien.
+ *
+ * Le bruit est écarté autrement, et mieux : la comparaison porte sur la moyenne
+ * de plusieurs dizaines d'énoncés (voir `compareToCohort`), ce qui dilue une
+ * estimation isolée bien plus sûrement qu'un plancher par énoncé. Ce qui compte
+ * est le nombre total de votes derrière la comparaison, et il est vérifié là-bas.
  */
-export const MIN_COHORT_VOTES = 8;
+export const MIN_COHORT_VOTES = 1;
 
 export interface CohortStat {
   statement_id: string;

@@ -194,6 +194,11 @@ export function ReportScreen({ rounds, profile, onBack, onNext }: Props) {
           <p className="mt-3 text-[13px] font-semibold leading-snug text-white/75">
             {cohortSentence(cohort, profile)}
           </p>
+          {/* L'échantillon est annoncé : la cohorte est forcément plus étroite
+              que la moyenne générale, et le lecteur doit pouvoir en juger. */}
+          <p className="mt-1.5 text-[10px] font-bold uppercase tracking-wider text-white/30">
+            {plural(cohort.votes, 'vote')} de ta cohorte sur {plural(cohort.sample, 'révélation')}
+          </p>
         </Block>
       )}
 

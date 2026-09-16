@@ -191,7 +191,9 @@ describe('ReportScreen — cohorte', () => {
 
   it('compare à la cohorte quand la base a de quoi répondre', async () => {
     // La cohorte retire 1 point par révélation, le joueur 2 : il est plus dur.
-    const stats = ['Lucas-0', 'Lucas-1', 'Lucas-2', 'Lucas-3'].map((id) => ({
+    // Les deux manches, soit huit énoncés : au-dessus des cinq requis, et
+    // vingt votes par énoncé, largement au-dessus du total minimum.
+    const stats = ['Lucas-0', 'Lucas-1', 'Lucas-2', 'Lucas-3', 'Emma-0', 'Emma-1', 'Emma-2', 'Emma-3'].map((id) => ({
       statement_id: id,
       votes: 20,
       avg_delta: -1,

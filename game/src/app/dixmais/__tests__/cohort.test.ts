@@ -35,8 +35,8 @@ function manche(ratings: number[], ids: string[]): PlayedRound {
   };
 }
 
-function stat(id: string, avg: number): CohortStat {
-  return { statement_id: id, votes: 20, avg_delta: avg, elimination_rate: 10 };
+function stat(id: string, avg: number, votes = 20): CohortStat {
+  return { statement_id: id, votes, avg_delta: avg, elimination_rate: 10 };
 }
 
 describe('statementIdsOf', () => {
@@ -47,28 +47,56 @@ describe('statementIdsOf', () => {
 });
 
 describe('compareToCohort', () => {
-  // Même seuil que la sévérité générale : sous quatre phrases, l'écart tient
-  // au tirage bien plus qu'au tempérament.
-  it('ne conclut pas sur moins de quatre phrases comparables', () => {
-    const rounds = [manche([8, 6], ['a', 'b'])];
-    expect(compareToCohort(rounds, [stat('a', -1), stat('b', -1)])).toBeNull();
+  it('ne conclut pas sur moins de cinq phrases comparables', () => {
+    const rounds = [manche([8, 6, 4, 2], ['a', 'b', 'c', 'd'])];
+    const stats = ['a', 'b', 'c', 'd'].map((id) => stat(id, -1, 40));
+    expect(compareToCohort(rounds, stats)).toBeNull();
+  });
+
+  // Le garde-fou qui compte vraiment : la cohorte peut couvrir beaucoup
+  // d'énoncés avec très peu de monde derrière.
+  it('ne conclut pas quand la cohorte pèse trop peu de votes', () => {
+    const ids = ['a', 'b', 'c', 'd', 'e', 'f'];
+    const rounds = [manche([9, 8, 7, 6, 5, 4], ids)];
+    expect(compareToCohort(rounds, ids.map((id) => stat(id, -1, 2)))).toBeNull();
   });
 
   it('ignore les phrases que la cohorte ne couvre pas', () => {
+    const ids = ['a', 'b', 'c', 'd', 'e', 'f'];
     const rounds = [manche([8, 6, 4, 2, 0], ['a', 'b', 'c', 'd', 'e'])];
-    const comparaison = compareToCohort(rounds, ['a', 'b', 'c', 'd'].map((id) => stat(id, -1)));
+    const comparaison = compareToCohort(rounds, ids.map((id) => stat(id, -1, 20)));
 
     expect(comparaison).not.toBeNull();
-    expect(comparaison!.sample).toBe(4);
-    // Les quatre premières révélations coûtent 2 points chacune.
+    // Cinq révélations jouées, la sixième statistique ne concerne rien de vu.
+    expect(comparaison!.sample).toBe(5);
+    expect(comparaison!.votes).toBe(100);
     expect(comparaison!.mine).toBe(-2);
     expect(comparaison!.theirs).toBe(-1);
     expect(comparaison!.gap).toBe(-1);
   });
 
+  // Ce que l'ancien seuil rendait impossible : sur les données réelles, aucun
+  // énoncé n'atteignait huit votes dans une cohorte, et le bloc ne pouvait
+  // jamais s'afficher.
+  it('conclut avec un ou deux votes par énoncé, si le total suffit', () => {
+    const ids = Array.from({ length: 20 }, (_, i) => `s${i}`);
+    const rounds = [
+      manche([8, 6, 4, 2, 0], ids.slice(0, 5)),
+      manche([8, 6, 4, 2, 0], ids.slice(5, 10)),
+      manche([8, 6, 4, 2, 0], ids.slice(10, 15)),
+      manche([8, 6, 4, 2, 0], ids.slice(15, 20)),
+    ];
+    const comparaison = compareToCohort(rounds, ids.map((id) => stat(id, -1, 2)));
+
+    expect(comparaison).not.toBeNull();
+    expect(comparaison!.sample).toBe(20);
+    expect(comparaison!.votes).toBe(40);
+  });
+
   it('rend un écart positif quand le joueur est plus tendre', () => {
-    const rounds = [manche([10, 10, 9, 9], ['a', 'b', 'c', 'd'])];
-    const comparaison = compareToCohort(rounds, ['a', 'b', 'c', 'd'].map((id) => stat(id, -3)));
+    const ids = ['a', 'b', 'c', 'd', 'e'];
+    const rounds = [manche([10, 10, 9, 9, 9], ids)];
+    const comparaison = compareToCohort(rounds, ids.map((id) => stat(id, -3, 20)));
     expect(comparaison!.gap).toBeGreaterThan(2);
   });
 });

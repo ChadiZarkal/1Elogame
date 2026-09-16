@@ -25,7 +25,7 @@ export interface CohortStat {
 }
 
 export interface CohortComparison {
-  /** Moyenne du joueur sur les phrases où la cohorte est mesurable. */
+  /** Moyenne du joueur sur les phrases où la cohorte a voté. */
   mine: number;
   /** Moyenne de la cohorte sur ces mêmes phrases. */
   theirs: number;
@@ -33,13 +33,25 @@ export interface CohortComparison {
   gap: number;
   /** Nombre de phrases comparables. */
   sample: number;
+  /** Votes de la cohorte derrière la comparaison, tous énoncés confondus. */
+  votes: number;
 }
 
 /**
- * Même seuil que la sévérité générale : sous quatre phrases, l'écart tient au
- * tirage.
+ * Sous cinq phrases, l'écart tient au tirage plutôt qu'au tempérament.
  */
-const MIN_SAMPLE = 4;
+const MIN_SAMPLE = 5;
+
+/**
+ * Et sous ce total de votes, la cohorte n'est qu'une poignée de personnes.
+ *
+ * C'est ce seuil-ci qui protège du bruit, et non un plancher par énoncé : la
+ * comparaison moyenne plusieurs dizaines d'estimations, chacune pouvant reposer
+ * sur un seul vote. Une estimation isolée et extrême pèse alors un
+ * cinquantième, là où exiger huit votes par énoncé empêchait purement et
+ * simplement la comparaison d'exister.
+ */
+const MIN_TOTAL_VOTES = 25;
 
 /** Tous les identifiants vus dans la session, sans doublon. */
 export function statementIdsOf(rounds: PlayedRound[]): string[] {
@@ -75,19 +87,26 @@ export function compareToCohort(
 ): CohortComparison | null {
   const byId = new Map(stats.map((s) => [s.statement_id, s]));
   const pairs: [number, number][] = [];
+  let votes = 0;
 
   for (const round of rounds) {
     round.played.forEach((stmt, i) => {
       const stat = byId.get(stmt.id);
-      if (stat) pairs.push([round.deltas[i] ?? 0, stat.avg_delta]);
+      if (!stat) return;
+      pairs.push([round.deltas[i] ?? 0, stat.avg_delta]);
+      votes += stat.votes;
     });
   }
 
-  if (pairs.length < MIN_SAMPLE) return null;
+  if (pairs.length < MIN_SAMPLE || votes < MIN_TOTAL_VOTES) return null;
 
+  // Moyenne non pondérée des deux côtés : la moyenne de la cohorte est calculée
+  // énoncé par énoncé puis moyennée comme le joueur moyenne ses propres notes.
+  // Cumuler les votes bruts donnerait plus de poids aux énoncés les plus servis
+  // d'un côté seulement, et l'écart mesurerait ce déséquilibre.
   const mine = pairs.reduce((acc, p) => acc + p[0], 0) / pairs.length;
   const theirs = pairs.reduce((acc, p) => acc + p[1], 0) / pairs.length;
-  return { mine, theirs, gap: mine - theirs, sample: pairs.length };
+  return { mine, theirs, gap: mine - theirs, sample: pairs.length, votes };
 }
 
 // ---------------------------------------------------------------------------
