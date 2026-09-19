@@ -183,54 +183,7 @@ body:has(.main-container) {
   font-size: var(--font-size-s);
 }
 
-/*
- * L'écart à la moyenne, sous le score. La référence n'avait pas de bloc pour
- * cela : elle ne montrait que des rangs.
- */
-.stats-ecart {
-  margin: calc(var(--spacing) * 0.4) 0 0;
-  font-size: var(--font-size-m);
-  text-align: center;
-  line-height: 1.3;
-}
 
-.stats-ecart-base {
-  display: block;
-  color: var(--grey);
-  font-size: calc(var(--font-size-s) * 0.85);
-}
-
-/*
- * Le point noir. Posé en bandeau plutôt qu'en ligne de texte : c'est la phrase
- * qu'on relit, elle doit se détacher du reste au premier coup d'œil.
- */
-.stats-point-noir {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: calc(var(--spacing) * 0.5);
-  margin: var(--spacing) 0 0;
-  padding: var(--spacing-text-y) var(--spacing);
-  border: 1px solid var(--blueish-grey);
-  border-radius: var(--border-radius);
-  font-size: var(--font-size-m);
-}
-
-.stats-point-noir-label {
-  color: var(--grey);
-  font-size: var(--font-size-s);
-  text-transform: uppercase;
-}
-
-.stats-point-noir strong {
-  font-weight: bold;
-  text-transform: uppercase;
-}
-
-.stats-point-noir-valeur {
-  color: var(--grey);
-  font-size: var(--font-size-s);
-}
 
 /* La ligne sous les deux menus du préambule. */
 .intro-note {
@@ -270,34 +223,6 @@ body:has(.main-container) {
  * qu'inventés à côté.
  * ------------------------------------------------------------------------- */
 
-/*
- * L'archétype passe AVANT le score. C'est la ligne qu'on lit en premier et la
- * seule qu'on répète : un pourcentage ne décrit personne.
- */
-.stats-archetype {
-  text-align: center;
-  padding-bottom: calc(var(--spacing) * 0.5);
-  border-bottom: 2px solid var(--blueish-grey);
-}
-
-.stats-archetype-emoji {
-  display: block;
-  font-size: var(--font-size-xl);
-  line-height: 1;
-}
-
-.stats-archetype h3 {
-  margin: calc(var(--spacing) * 0.25) 0 0 0;
-  font-size: var(--font-size-xl);
-  font-weight: bold;
-  line-height: 1.05;
-}
-
-.stats-archetype p {
-  margin: calc(var(--spacing) * 0.35) 0 0 0;
-  color: var(--grey);
-  font-size: var(--font-size-s);
-}
 
 /* Une seule réponse qui porte le cinquième du score. */
 .stats-decisive {
@@ -584,3 +509,241 @@ body:has(.main-container) {
 /* Deux teintes distinctes, et jamais le rouge : il appartient au total. */
 .stats-sexe-h { color: #7dd3fc; }
 .stats-sexe-f { color: #f9a8d4; }
+
+/* ===========================================================================
+ * LA CARTE — le bloc conçu pour être capturé.
+ *
+ * LE PROBLÈME QU'ELLE RÉSOUT
+ *   Le récap faisait 2 607 px de haut pour un écran de 812. Les six
+ *   informations qui comptent — nom du profil, score, écart, point noir,
+ *   classements — étaient réparties sur trois écrans, chacune dans son propre
+ *   bloc avec sa propre marge. Une capture d'écran de téléphone n'attrapait
+ *   qu'un morceau, et le morceau ne voulait rien dire : le verdict sans le
+ *   score, ou le score sans le nom.
+ *
+ *   Pire, deux titres de trois centimètres se suivaient — le verdict à
+ *   `font-size-xxl`, puis l'archétype à `font-size-xl` — ce qui mangeait un
+ *   tiers du premier écran pour dire deux fois la même chose.
+ *
+ * CE QU'ELLE GARANTIT
+ *   Tout tient dans un cadre unique d'environ 300 px, place en haut, juste sous
+ *   la jauge. Une capture prise sans reflechir attrape le logo, la jauge et la
+ *   carte entiere — soit le resultat complet, signe.
+ *
+ * LA SIGNATURE N'EST PAS UNE DECORATION
+ *   Une capture d'ecran sans adresse est un rectangle anonyme : celui qui la
+ *   recoit ne sait ni d'ou elle vient ni ou aller faire la meme chose. C'est la
+ *   seule ligne de la carte dont la fonction est entierement tournee vers
+ *   quelqu'un qui n'a pas joue.
+ * ======================================================================== */
+
+.carte {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--spacing) * 0.35);
+  padding: var(--spacing);
+  border: 1px solid var(--blueish-grey);
+  border-radius: var(--border-radius);
+  /* Un fond legerement distinct du conteneur : sur une capture, c'est lui qui
+     dit ou la carte commence et ou elle finit. */
+  background-color: rgba(43, 41, 48, 0.35);
+  text-align: center;
+}
+
+
+.carte-verdict {
+  margin: 0;
+  color: var(--white);
+  font-size: calc(var(--font-size-s) * 0.9);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.carte-nom {
+  margin: 0;
+}
+
+/*
+ * Le titre de la carte. `clamp` plutot qu'une taille fixe : « LE DONNEUR DE
+ * LECONS » fait deux fois la longueur de « LE CROISE », et une taille unique
+ * obligeait le plus long a passer sur trois lignes pendant que le plus court
+ * flottait au milieu du vide.
+ */
+.client-container .game-wrapper .finish-block .carte-nom h3 {
+  margin: 0;
+  font-size: clamp(1.35rem, 7vw, 1.9rem);
+  font-weight: bold;
+  line-height: 1.05;
+  text-transform: uppercase;
+  /* Deux lignes de longueurs voisines plutot qu'une longue et un mot orphelin.
+     Non supporte partout, et sans consequence la ou il ne l'est pas. */
+  text-wrap: balance;
+}
+
+.carte-emoji {
+  margin-right: 0.3em;
+}
+
+.carte-nom p {
+  margin: calc(var(--spacing) * 0.25) 0 0;
+  color: var(--grey);
+  font-size: calc(var(--font-size-s) * 0.92);
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+/*
+ * Le score, en ligne de base commune avec son unite : un nombre de trois
+ * chiffres et un nombre d'un seul doivent poser leur « % red flag » au meme
+ * endroit, sinon la carte danse d'un joueur a l'autre.
+ */
+.carte-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.3em;
+  margin: calc(var(--spacing) * 0.15) 0 0;
+  line-height: 1;
+}
+
+.carte-score strong {
+  color: var(--light-red);
+  font-size: var(--font-size-xxl);
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+}
+
+.carte-score span {
+  color: var(--grey);
+  font-size: var(--font-size-m);
+  text-transform: uppercase;
+}
+
+/* Les trois lignes de contexte : une information par ligne, jamais deux. */
+.carte-lignes {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing) * 0.15);
+  width: 100%;
+  margin-top: calc(var(--spacing) * 0.35);
+  padding-top: calc(var(--spacing) * 0.5);
+  border-top: 1px solid var(--blueish-grey);
+}
+
+.carte-lignes p {
+  margin: 0;
+  color: var(--white);
+  font-size: calc(var(--font-size-s) * 0.92);
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.carte-lignes strong {
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.carte-valeur {
+  color: var(--grey);
+}
+
+.carte-sep {
+  color: var(--grey);
+}
+
+.carte-signature {
+  margin: calc(var(--spacing) * 0.35) 0 0;
+  color: var(--grey);
+  font-size: calc(var(--font-size-s) * 0.78);
+  letter-spacing: 0.12em;
+  opacity: 0.8;
+}
+
+/* ---------------------------------------------------------------------------
+ * Sous la carte : le detail.
+ * ------------------------------------------------------------------------- */
+
+.detail-titre {
+  margin: calc(var(--spacing) * 1.25) 0 0;
+  padding-top: var(--spacing);
+  border-top: 2px solid var(--blueish-grey);
+  color: var(--grey);
+  font-size: calc(var(--font-size-s) * 0.85);
+  letter-spacing: 0.2em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------------------
+ * Resserrement general du recap.
+ *
+ * La feuille de reference espace chaque bloc de `--spacing` (16 a 20 px) et
+ * ajoute ses propres marges par-dessus. Cumule sur huit blocs, cela faisait
+ * plus de trois cents pixels de vide. Les ecarts sont divises par deux : la
+ * page reste aeree, elle tient simplement sur un tiers de hauteur en moins.
+ * ------------------------------------------------------------------------- */
+
+.switch-quiz-end .client-container .game-wrapper .finish-block {
+  gap: calc(var(--spacing) * 0.5);
+}
+
+/*
+ * Le mesureur n'est visible que pendant la partie : la reserve de 4.5rem qu'on
+ * lui garde en bas du conteneur n'a aucune raison d'exister sur le recap, ou
+ * elle ajoutait 72 px de vide sous le dernier bouton.
+ */
+.switch-quiz-end .main-container .client-container {
+  padding-bottom: var(--spacing);
+}
+
+/* Le radar n'a plus de titre au-dessus de lui : il n'a plus besoin de marge. */
+.client-container .game-wrapper .finish-block .stats-subscores {
+  margin-top: calc(var(--spacing) * 0.5);
+}
+
+/*
+ * Uniquement les titres de section du detail. Ecrite en fourre-tout sur `h3`,
+ * cette regle rattrapait aussi le titre de la carte et le ramenait de 26 a
+ * 20 px — a specificite egale, la derniere feuille chargee l'emporte, et c'est
+ * celle-ci.
+ */
+.switch-quiz-end .client-container .game-wrapper .finish-block .stats-rare-section h3 {
+  margin-bottom: calc(var(--spacing) * 0.35);
+  font-size: var(--font-size-m);
+}
+
+.switch-quiz-end .client-container .game-wrapper .finish-block .stats-rare-section .subtitle {
+  margin-bottom: calc(var(--spacing) * 0.5);
+  font-size: calc(var(--font-size-s) * 0.85);
+}
+
+/* La reponse decisive : un filet, pas un pave. */
+.stats-decisive {
+  margin-top: calc(var(--spacing) * 0.5);
+  padding: calc(var(--spacing-text-y) * 0.75) var(--spacing);
+  font-size: calc(var(--font-size-s) * 0.9);
+}
+
+.stats-decisive-quote {
+  font-size: var(--font-size-s);
+}
+
+.stats-ressource {
+  margin-top: calc(var(--spacing) * 0.75);
+  padding: calc(var(--spacing) * 0.75);
+  font-size: calc(var(--font-size-s) * 0.9);
+}
+
+.partage {
+  margin-top: calc(var(--spacing) * 0.5);
+}
+
+/*
+ * Le bouton de partage de la reference reserve deux fois `--spacing` au-dessus
+ * de lui. Sous une carte deja delimitee, c'est un trou.
+ */
+.client-container .game-wrapper .finish-block .share-btn {
+  margin-top: var(--spacing);
+}

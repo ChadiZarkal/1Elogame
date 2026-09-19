@@ -82,6 +82,11 @@ export function PartageBar({
 
       <p className="partage-note">
         Celui qui l’ouvre devra deviner ton score avant de le voir.
+        {/* La carte du haut est dessinée pour être capturée : bornée, signée,
+            et posée assez haut pour tenir dans une capture prise sans viser.
+            Le dire évite que le lien soit le seul chemin de sortie. */}
+        <br />
+        Ou fais une capture de la carte, elle porte l’adresse.
       </p>
     </div>
   );

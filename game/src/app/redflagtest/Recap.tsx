@@ -5,21 +5,19 @@
  * Le récap, sur le markup de référence (celui que produisait
  * `ajax-get-stats.php`) :
  *
- *   div.stats-red-flag-pct     → le score, en pastille rouge
- *   ul.stats-flags             → li.flag-gender / .flag-age, drapeau coloré
+ *   section.carte              → la nôtre : le bloc que le joueur capture
  *   section.stats-subscores    → div.spider-chart-container
  *   section.stats-rare-section → ul.stats-rare avec p.rarity-pct
- *   button.share-btn           → refaire
  *
- * Le verdict, lui, vit hors de ce bloc : `flac.css` le stylise sous
- * `.game-wrapper .bracket-message`, au-dessus de la barre de progression. Il
- * est donc rendu par `Quiz.tsx`.
+ * CE QUI A ÉTÉ RAMASSÉ DANS LA CARTE
+ *   Le verdict, l'archétype, le score, l'écart à la moyenne, le point noir et
+ *   les deux classements vivaient dans six blocs séparés, étalés sur deux
+ *   écrans. La carte les réunit dans un cadre de trois cents pixels, posé assez
+ *   haut pour qu'une capture d'écran de téléphone l'attrape en entier.
  *
- * DEUX DRAPEAUX ET NON TROIS
- *   La référence en affichait trois : genre, âge, région. Le test ne demande
- *   pas la région — deux questions au démarrage sont déjà deux portes avant le
- *   jeu — et un drapeau « de ta région » calculé sur rien serait un ornement
- *   mensonger. Le CSS répartit les deux restants sans rien changer.
+ *   Les classements y sont passés du drapeau à la ligne de texte : deux images
+ *   de 3,5 rem pour annoncer « Top 77 % » coûtaient cent pixels de hauteur et
+ *   n'ajoutaient rien que le texte ne disait déjà.
  *
  * CE QUI EST DIT QUAND ON NE SAIT PAS
  *   Une cohorte trop mince porte son avertissement au lieu de se taire. Un rang
@@ -29,20 +27,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import type { Classement, ComparaisonPublique, Resultat } from '@/lib/rft/types';
+import type { ComparaisonPublique, Resultat } from '@/lib/rft/types';
 import type { PlayerProfile } from '@/types/game';
 import { PartageBar } from './PartageBar';
-
-/** Sous ce rang, on est dans la tête du classement : drapeau rouge. */
-const SEUIL_ROUGE = 33;
-const SEUIL_ORANGE = 66;
-
-/** Plus le « top » est bas, plus le joueur est extrême. */
-function couleur(top: number): 'red' | 'orange' | 'green' {
-  if (top <= SEUIL_ROUGE) return 'red';
-  if (top <= SEUIL_ORANGE) return 'orange';
-  return 'green';
-}
 
 const SEXES: Record<string, string> = {
   homme: 'des hommes',
@@ -122,81 +109,109 @@ export function Recap({
 
   return (
     <>
-      {/* L'archétype avant le score : c'est la ligne qu'on lit en premier et la
-          seule qu'on répète. Un pourcentage ne décrit personne. */}
-      {resultat.archetype && (
-        <div className="stats-archetype">
-          <span className="stats-archetype-emoji">{resultat.archetype.emoji}</span>
-          <h3>{resultat.archetype.titre}</h3>
-          {resultat.archetype.soustitre && <p>{resultat.archetype.soustitre}</p>}
-        </div>
-      )}
+      {/*
+        LA CARTE — le bloc que le joueur capture.
 
-      <div className="stats-red-flag-pct">
-        <p>
-          Tu es <strong>{affiche} %</strong> red flag
+        Tout ce qui se raconte tient dedans : le nom du profil, le score, l'ecart
+        a la moyenne, le point noir, et la marque. Elle est bornee, dense et
+        posee en haut pour qu'une capture d'ecran de telephone l'attrape en
+        entier, sans reglage et sans rognage.
+
+        Avant, ces memes informations s'etalaient sur deux ecrans, chacune dans
+        son bloc, avec deux titres de trois centimetres qui se suivaient — le
+        verdict puis l'archetype. Une capture n'attrapait qu'un morceau, et le
+        morceau ne voulait rien dire.
+      */}
+      <section className="carte" aria-label="Ton resultat">
+        {resultat.verdict && (
+          <p className="carte-verdict">{resultat.verdict.titre}</p>
+        )}
+
+        {/* Le nom du profil est le titre de la carte : c'est la ligne qu'on
+            repete, et un pourcentage ne decrit personne. */}
+        {resultat.archetype ? (
+          <div className="carte-nom">
+            <h3>
+              <span className="carte-emoji">{resultat.archetype.emoji}</span>
+              {resultat.archetype.titre}
+            </h3>
+            {resultat.archetype.soustitre && <p>{resultat.archetype.soustitre}</p>}
+          </div>
+        ) : (
+          resultat.verdict?.soustitre && (
+            <div className="carte-nom">
+              <p>{resultat.verdict.soustitre}</p>
+            </div>
+          )
+        )}
+
+        <p className="carte-score">
+          <strong>{affiche}</strong>
+          <span>% red flag</span>
         </p>
-      </div>
 
-      {/* Le rang est abstrait — personne ne sait ce qu'il faut faire pour passer
-          de 39 à 20. L'écart à une moyenne se comprend sans effort, et c'est la
-          phrase que le joueur répète. */}
-      {resultat.comparaison && (
-        <p className="stats-ecart">
-          {resultat.comparaison.ecart === 0 ? (
-            <>
-              Pile dans la moyenne {legendeCohorte(resultat.comparaison.cohorte, profil)}.
-            </>
-          ) : (
-            <>
-              <strong
-                style={{ color: resultat.comparaison.ecart > 0 ? 'var(--light-red)' : 'var(--light-green)' }}
-              >
-                {resultat.comparaison.ecart > 0 ? '+' : '−'}
-                {Math.abs(resultat.comparaison.ecart)} points
+        <div className="carte-lignes">
+          {resultat.comparaison && (
+            <p>
+              {resultat.comparaison.ecart === 0 ? (
+                <>Pile dans la moyenne {legendeCohorte(resultat.comparaison.cohorte, profil)}</>
+              ) : (
+                <>
+                  <strong
+                    style={{
+                      color: resultat.comparaison.ecart > 0
+                        ? 'var(--light-red)'
+                        : 'var(--light-green)',
+                    }}
+                  >
+                    {resultat.comparaison.ecart > 0 ? '+' : '\u2212'}
+                    {Math.abs(resultat.comparaison.ecart)} pts
+                  </strong>{' '}
+                  {resultat.comparaison.ecart > 0 ? 'au-dessus' : 'en dessous'} de la moyenne{' '}
+                  {legendeCohorte(resultat.comparaison.cohorte, profil)}
+                </>
+              )}
+            </p>
+          )}
+
+          {resultat.pointNoir && (
+            <p>
+              Point noir{' '}
+              <strong style={{ color: resultat.pointNoir.color ?? 'var(--red)' }}>
+                {resultat.pointNoir.label}
               </strong>{' '}
-              {resultat.comparaison.ecart > 0 ? 'au-dessus' : 'en dessous'} de la moyenne{' '}
-              {legendeCohorte(resultat.comparaison.cohorte, profil)}
-              <span className="stats-ecart-base">
-                {' '}(qui est à {resultat.comparaison.moyenne}, sur{' '}
-                {resultat.comparaison.effectif} parties)
-              </span>
-            </>
+              <span className="carte-valeur">{resultat.pointNoir.valeur} %</span>
+            </p>
           )}
-        </p>
-      )}
 
-      {/* Nommer l'axe qui domine : c'est la ligne qu'on relit à voix haute. Le
-          serveur se tait sur un profil uniforme plutôt que d'élire un point noir
-          séparé du deuxième par un point d'écart. */}
-      {resultat.pointNoir && (
-        <p className="stats-point-noir">
-          <span className="stats-point-noir-label">Ton point noir</span>
-          <strong style={{ color: resultat.pointNoir.color ?? 'var(--red)' }}>
-            {resultat.pointNoir.label}
-          </strong>
-          <span className="stats-point-noir-valeur">{resultat.pointNoir.valeur} %</span>
-        </p>
-      )}
+          {(resultat.classements.sexe || resultat.classements.age) && profil && (
+            <p>
+              {resultat.classements.sexe && (
+                <>
+                  Top <strong>{resultat.classements.sexe.top} %</strong>{' '}
+                  {SEXES[profil.sex] ?? 'des joueurs'}
+                </>
+              )}
+              {resultat.classements.sexe && resultat.classements.age && (
+                <span className="carte-sep"> · </span>
+              )}
+              {resultat.classements.age && (
+                <>
+                  Top <strong>{resultat.classements.age.top} %</strong>{' '}
+                  {legendeAge(profil.age)}
+                </>
+              )}
+            </p>
+          )}
+        </div>
 
-      {(resultat.classements.sexe || resultat.classements.age) && (
-        <ul className="stats-flags">
-          {resultat.classements.sexe && profil && (
-            <Drapeau
-              genre="gender"
-              rang={resultat.classements.sexe}
-              legende={SEXES[profil.sex] ?? 'des joueurs'}
-            />
-          )}
-          {resultat.classements.age && profil && (
-            <Drapeau
-              genre="age"
-              rang={resultat.classements.age}
-              legende={legendeAge(profil.age)}
-            />
-          )}
-        </ul>
-      )}
+        {/* Sans elle, une capture d'ecran est un rectangle anonyme : personne ne
+            sait d'ou elle vient ni ou aller la refaire. */}
+        <p className="carte-signature">redorgreen.fr/redflagtest</p>
+      </section>
+
+      {/* Sous la carte : tout ce qui se lit mais ne se capture pas. */}
+      <p className="detail-titre">Le détail</p>
 
       {/* Une seule réponse qui porte le cinquième du score : c'est la phrase la
           plus brutale que ces données permettent, et elle est vraie. */}
@@ -213,8 +228,6 @@ export function Recap({
 
       {resultat.axes.length >= 3 && (
         <section className="stats-subscores">
-          <h3>Profil</h3>
-          <hr />
           <Radar axes={resultat.axes} />
         </section>
       )}
@@ -224,8 +237,6 @@ export function Recap({
           sans prétendre à une forme. */}
       {resultat.axes.length > 0 && resultat.axes.length < 3 && (
         <section className="stats-subscores">
-          <h3>Profil</h3>
-          <hr />
           <ul className="subscore-bars">
             {resultat.axes.map((axe) => (
               <li key={axe.tagId}>
@@ -310,24 +321,6 @@ export function Recap({
   );
 }
 
-function Drapeau({
-  genre, rang, legende,
-}: { genre: 'gender' | 'age'; rang: Classement; legende: string }) {
-  const teinte = couleur(rang.top);
-
-  return (
-    <li className={`flag-${genre}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element -- markup de
-          référence ; `flac.css` dimensionne l'image via .img-flag. */}
-      <img className="img-flag" src={`/rft/img/flag-${genre}-${teinte}.svg`} alt="" />
-      <p>
-        <strong>Top {rang.top} %</strong>
-      </p>
-      <p>{legende}</p>
-      {rang.avertissement && <p className="low-sample-warning">({rang.avertissement})</p>}
-    </li>
-  );
-}
 
 /* ---------------------------------------------------------------------------
  * Le radar des sous-scores.

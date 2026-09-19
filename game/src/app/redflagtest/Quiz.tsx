@@ -309,16 +309,11 @@ export function Quiz() {
   return (
     <>
       <div className="game-wrapper">
-        {phase === 'recap' && resultat?.verdict && (
-          <div className="bracket-message">
-            <h2>
-              {resultat.verdict.emoji} {resultat.verdict.titre}
-            </h2>
-            {resultat.verdict.soustitre && (
-              <p className="subtitle">{resultat.verdict.soustitre}</p>
-            )}
-          </div>
-        )}
+        {/* LE VERDICT N'EST PLUS ICI.
+            `bracket-message` le posait en titre de trois centimetres au-dessus
+            de la barre, et la carte le reprenait quelques pixels plus bas : le
+            meme texte, deux fois, pour 230 px de hauteur. Il ne vit plus que
+            dans la carte, ou il tient sur une ligne a cote du reste. */}
 
         {phase === 'jeu' && quiz && (
           <p className="progress-count">

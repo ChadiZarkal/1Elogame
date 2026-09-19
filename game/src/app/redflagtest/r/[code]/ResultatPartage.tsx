@@ -32,15 +32,9 @@ export function ResultatPartage({ resultat }: { resultat: Resultat }) {
 
   return (
     <div className="game-wrapper">
-      {resultat.verdict && (
-        <div className="bracket-message">
-          <h2>
-            {resultat.verdict.emoji} {resultat.verdict.titre}
-          </h2>
-          {resultat.verdict.soustitre && <p className="subtitle">{resultat.verdict.soustitre}</p>}
-        </div>
-      )}
-
+      {/* Pas de `bracket-message` ici non plus : le verdict est dans la carte,
+          ou il tient sur une ligne. En titre au-dessus, il repoussait la carte
+          de deux cents pixels et disait deux fois la meme chose. */}
       <div className="finish-block">
         {/* Pas de profil : on ne connaît pas le sexe ni l'âge de celui qui a
             joué, et les drapeaux se taisent plutôt que d'en inventer un. */}
