@@ -129,20 +129,85 @@ body:has(.main-container) {
 }
 
 /*
- * Rappel permanent que rien de ce qui s'affiche n'est mesuré. Une maquette qui
- * annonce « Top 8 % des hommes » sans le dire serait un mensonge poli.
- *
- * Posé dans l'en-tête et nulle part ailleurs : le bas de l'écran appartient au
- * mesureur, qui est en position absolue par-dessus tout le reste.
+ * Une cohorte trop mince, déclarée plutôt que cachée. Un rang sur quatre
+ * joueurs reste un rang ; le présenter comme un rang sur mille serait le seul
+ * mensonge que cet écran ne peut pas se permettre.
  */
-.mockup-notice {
+.low-sample-warning {
+  color: var(--grey);
+  font-style: italic;
+  font-size: calc(var(--font-size-s) * 0.85);
+}
+
+/*
+ * Le repli du radar sous trois axes : deux points ne forment pas un polygone.
+ * Des barres disent la même chose sans prétendre à une forme.
+ */
+.subscore-bars {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing) * 0.4);
   margin: 0;
-  padding: calc(var(--spacing-text-y) * 0.5) calc(var(--spacing) * 0.75);
-  border: 1px dashed var(--yellow);
-  border-radius: var(--border-radius);
-  color: var(--yellow);
-  font-size: calc(var(--font-size-s) * 0.8);
-  line-height: 1.2;
+  padding: 0;
+  list-style: none;
+}
+
+.subscore-bars li {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing) * 0.5);
+}
+
+.subscore-label {
+  flex: 0 0 8rem;
+  text-align: left;
+  font-size: var(--font-size-s);
+}
+
+.subscore-track {
+  flex: 1;
+  height: 0.75rem;
+  overflow: hidden;
+  border-radius: 1000px;
+  background-color: var(--blueish-grey);
+}
+
+.subscore-fill {
+  display: block;
+  height: 100%;
+}
+
+.subscore-value {
+  flex: 0 0 3.5rem;
+  text-align: right;
+  font-size: var(--font-size-s);
+}
+
+/* La ligne sous les deux menus du préambule. */
+.intro-note {
+  margin: 0 var(--spacing);
+  color: var(--grey);
+  font-size: calc(var(--font-size-s) * 0.9);
   text-align: center;
-  text-transform: uppercase;
+}
+
+/*
+ * Un test sans question, une base injoignable : la référence n'avait pas prévu
+ * l'écran, parce que son contenu était dans les fichiers.
+ */
+.error-message {
+  margin: auto 0;
+  padding: var(--spacing);
+  text-align: center;
+}
+
+.error-message a {
+  color: var(--white);
+  text-decoration: underline;
+}
+
+.loading-message {
+  margin: auto 0;
+  text-align: center;
+  font-size: var(--font-size-l);
 }

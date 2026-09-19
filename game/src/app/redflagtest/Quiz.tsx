@@ -21,104 +21,206 @@
  * pulsation du fond pendant le calcul. Poser ces classes n'est pas cosmétique,
  * c'est ce qui allume le design.
  *
- * AUCUN APPEL RÉSEAU. Les questions viennent de `donnees.ts`, le récap de
- * `resultat.ts`, tous deux dans ce dossier.
+ * CE QUE CE COMPOSANT NE SAIT PAS, ET NE DOIT PAS SAVOIR
+ *   Les points. Le serveur envoie un `indice` de 0 à 2 par réponse, qui suffit
+ *   à faire bouger l'aiguille dans le bon sens et ne permet pas de reconstituer
+ *   le barème. Le score est calculé à la soumission, à partir des seuls
+ *   identifiants de réponses.
  */
 
-import { useEffect, useMemo, useState } from 'react';
-import { QUESTIONS, type Reponse } from './donnees';
-import { calculer } from './resultat';
+import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { getSession, initSession } from '@/lib/session';
+import { avancerAiguille } from '@/lib/rft/score';
+import type { PlayerProfile } from '@/types/game';
+import type { QuestionPublique, Resultat, Verdict } from '@/lib/rft/types';
+import { ProfilStep } from './ProfilStep';
 import { Recap } from './Recap';
 
-type Phase = 'jeu' | 'calcul' | 'recap';
+type Phase = 'chargement' | 'profil' | 'jeu' | 'calcul' | 'recap' | 'erreur';
 
 /** La classe que `flac.css` attend sur <body> pour chaque phase. */
-const CLASSE_BODY: Record<Phase, string> = {
+const CLASSE_BODY: Partial<Record<Phase, string>> = {
   jeu: 'switch-quiz-ongoing',
   calcul: 'switch-loading',
   recap: 'switch-quiz-end',
+  chargement: 'switch-loading',
 };
 
-const TOUTES_LES_CLASSES = Object.values(CLASSE_BODY);
+const TOUTES_LES_CLASSES = ['switch-quiz-ongoing', 'switch-loading', 'switch-quiz-end'];
 
-/**
- * Le temps que dure l'écran de calcul.
- *
- * Rien n'est calculé — tout est déjà connu au moment du dernier clic. Cette
- * pause existe parce que l'écran de chargement fait partie du front-end de
- * référence : le fond pulse, le mesureur disparaît, et le récap arrive comme un
- * verdict plutôt que comme un changement d'onglet.
- */
-const DUREE_CALCUL_MS = 1400;
+interface QuizCharge {
+  questions: QuestionPublique[];
+  verdicts: Verdict[];
+}
 
 export function Quiz() {
-  const [phase, setPhase] = useState<Phase>('jeu');
+  const [phase, setPhase] = useState<Phase>('chargement');
+  const [quiz, setQuiz] = useState<QuizCharge | null>(null);
+  const [profil, setProfil] = useState<PlayerProfile | null>(null);
   const [index, setIndex] = useState(0);
-  const [choix, setChoix] = useState<Map<string, Reponse>>(new Map());
+  const [choix, setChoix] = useState<Array<{ questionId: string; answerId: string }>>([]);
   const [clique, setClique] = useState<string | null>(null);
   const [aiguille, setAiguille] = useState(50);
-
-  const question = QUESTIONS[index];
-  const resultat = useMemo(() => calculer(choix), [choix]);
+  const [resultat, setResultat] = useState<Resultat | null>(null);
+  const [message, setMessage] = useState('');
+  const [debut, setDebut] = useState<number | null>(null);
 
   // Pousser un état dans le DOM est la seule chose pour laquelle un effet est
   // réellement fait.
   useEffect(() => {
     document.body.classList.remove(...TOUTES_LES_CLASSES);
-    document.body.classList.add(CLASSE_BODY[phase]);
+    const voulue = CLASSE_BODY[phase];
+    if (voulue) document.body.classList.add(voulue);
     return () => document.body.classList.remove(...TOUTES_LES_CLASSES);
   }, [phase]);
 
   useEffect(() => {
-    if (phase !== 'calcul') return;
-    const minuteur = setTimeout(() => setPhase('recap'), DUREE_CALCUL_MS);
-    return () => clearTimeout(minuteur);
-  }, [phase]);
+    let vivant = true;
 
-  const repondre = (reponse: Reponse) => {
-    if (clique) return; // Le temps de l'animation, un deuxième clic ne compte pas.
+    (async () => {
+      try {
+        const reponse = await fetch('/api/redflagtest/quiz');
+        const json = await reponse.json();
+        if (!vivant) return;
+
+        if (!json.success) {
+          setMessage(json.error?.message ?? 'Le test n’a pas pu être chargé.');
+          setPhase('erreur');
+          return;
+        }
+        if (json.data.questions.length === 0) {
+          setMessage('Le test n’a pas encore de questions.');
+          setPhase('erreur');
+          return;
+        }
+
+        setQuiz({ questions: json.data.questions, verdicts: json.data.verdicts });
+
+        // Le profil du site, donné une fois pour tous les jeux.
+        const connu = getSession()?.profile ?? null;
+        if (connu) {
+          setProfil(connu);
+          setDebut(Date.now());
+          setPhase('jeu');
+        } else {
+          setPhase('profil');
+        }
+      } catch {
+        if (!vivant) return;
+        setMessage('Connexion perdue.');
+        setPhase('erreur');
+      }
+    })();
+
+    return () => { vivant = false; };
+  }, []);
+
+  const demarrer = (choisi: PlayerProfile) => {
+    setProfil(choisi);
+    // Enregistré comme session de site : les autres jeux le retrouveront.
+    initSession(choisi);
+    setDebut(Date.now());
+    setPhase('jeu');
+  };
+
+  const envoyer = useCallback(
+    async (finaux: Array<{ questionId: string; answerId: string }>, qui: PlayerProfile | null) => {
+      setPhase('calcul');
+      try {
+        const reponse = await fetch('/api/redflagtest/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            choix: finaux,
+            sexe: qui?.sex ?? null,
+            age: qui?.age ?? null,
+            dureeMs: debut ? Date.now() - debut : null,
+          }),
+        });
+        const json = await reponse.json();
+        if (!json.success) {
+          setMessage(json.error?.message ?? 'Ton résultat n’a pas pu être calculé.');
+          setPhase('erreur');
+          return;
+        }
+        setResultat(json.data);
+        setPhase('recap');
+      } catch {
+        setMessage('Connexion perdue. Ton résultat n’a pas pu être calculé.');
+        setPhase('erreur');
+      }
+    },
+    [debut],
+  );
+
+  const repondre = (question: QuestionPublique, reponse: QuestionPublique['reponses'][number]) => {
+    if (!quiz || clique) return; // Le temps de l'animation, un deuxième clic ne compte pas.
     setClique(reponse.id);
 
-    const suivants = new Map(choix).set(question.id, reponse);
+    const suivants = [
+      ...choix.filter((c) => c.questionId !== question.id),
+      { questionId: question.id, answerId: reponse.id },
+    ];
     setChoix(suivants);
-
-    // L'aiguille ne fait jamais le chemin inverse du sens de la réponse : une
-    // réponse rouge ne part pas à gauche. Le pas est calé sur la longueur du
-    // quiz pour qu'une partie entièrement rouge traverse tout le cadran.
-    const pas = (reponse.poids * 2 - 1) * (50 / QUESTIONS.length);
-    setAiguille((position) => Math.min(100, Math.max(0, position + pas)));
+    setAiguille((p) => avancerAiguille(p, reponse.indice, quiz.questions.length));
 
     setTimeout(() => {
       setClique(null);
-      if (index + 1 >= QUESTIONS.length) setPhase('calcul');
+      if (index + 1 >= quiz.questions.length) void envoyer(suivants, profil);
       else setIndex((i) => i + 1);
     }, 220);
   };
 
   const recommencer = () => {
-    setChoix(new Map());
+    setChoix([]);
     setIndex(0);
     setClique(null);
     setAiguille(50);
+    setResultat(null);
+    setDebut(Date.now());
     setPhase('jeu');
   };
+
+  if (phase === 'chargement') {
+    return <p className="loading-message">Chargement…</p>;
+  }
+
+  if (phase === 'erreur') {
+    return (
+      <div className="error-message">
+        <p>{message}</p>
+        <Link href="/">Revenir à l’accueil</Link>
+      </div>
+    );
+  }
+
+  if (phase === 'profil') {
+    return <ProfilStep onDemarrer={demarrer} />;
+  }
+
+  const question = quiz?.questions[index];
 
   return (
     <>
       <div className="game-wrapper">
-        {phase === 'recap' && (
+        {phase === 'recap' && resultat?.verdict && (
           <div className="bracket-message">
             <h2>
               {resultat.verdict.emoji} {resultat.verdict.titre}
             </h2>
-            <p className="subtitle">{resultat.verdict.soustitre}</p>
+            {resultat.verdict.soustitre && (
+              <p className="subtitle">{resultat.verdict.soustitre}</p>
+            )}
           </div>
         )}
 
         <ProgressBar
-          total={QUESTIONS.length}
-          repondues={choix.size}
-          curseur={phase === 'recap' ? resultat.score : aiguille}
+          total={quiz?.questions.length ?? 0}
+          repondues={choix.length}
+          // À la fin, le curseur se pose sur le score réel — plafonné à la
+          // largeur du cadran, car le score, lui, peut dépasser cent.
+          curseur={phase === 'recap' && resultat ? Math.min(100, resultat.score) : aiguille}
         />
 
         {/* Masquées pendant le jeu, révélées sous `switch-quiz-end`. */}
@@ -132,11 +234,13 @@ export function Quiz() {
             c'est perdre les drapeaux, les highlights et la pastille du score. */}
         <div className="finish-block">
           {phase === 'calcul' && <p className="loading-message">On compte les dégâts…</p>}
-          {phase === 'recap' && <Recap resultat={resultat} onRecommencer={recommencer} />}
+          {phase === 'recap' && resultat && (
+            <Recap resultat={resultat} profil={profil} onRecommencer={recommencer} />
+          )}
         </div>
 
         <div className="question-container">
-          {phase === 'jeu' && (
+          {phase === 'jeu' && question && (
             <div className="question-block" data-question={index}>
               <div className="prompt">
                 <p>{question.texte}</p>
@@ -148,7 +252,7 @@ export function Quiz() {
                     key={reponse.id}
                     type="button"
                     className={`button-answer${clique === reponse.id ? ' is-picked' : ''}`}
-                    onClick={() => repondre(reponse)}
+                    onClick={() => repondre(question, reponse)}
                   >
                     {reponse.texte}
                   </button>
@@ -169,15 +273,8 @@ export function Quiz() {
  * triangulaire qui glisse au-dessus.
  */
 function ProgressBar({
-  total,
-  repondues,
-  curseur,
-}: {
-  total: number;
-  repondues: number;
-  /** 0..100 — la position du curseur de score. */
-  curseur: number;
-}) {
+  total, repondues, curseur,
+}: { total: number; repondues: number; curseur: number }) {
   return (
     <div className="progress-bar">
       <div className="score-cursor" style={{ left: `${curseur}%` }} />
@@ -196,7 +293,7 @@ function ProgressBar({
 /**
  * Le « redflag-o-meter », ancré en bas de l'écran.
  *
- * Il n'affiche jamais de nombre : tout l'effet du récap tient à ce que cinq
+ * Il n'affiche jamais de nombre : tout l'effet du récap tient à ce que les
  * questions soient passées sans en montrer un seul. `flac.css` ne le rend
  * visible que sous `body.switch-quiz-ongoing`, donc sa disparition au moment du
  * calcul n'est pas pilotée ici.

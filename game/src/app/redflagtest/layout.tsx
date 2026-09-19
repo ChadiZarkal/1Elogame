@@ -19,8 +19,14 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Red Flag Test',
-  description: 'Maquette du test — le front-end seul, sans calcul réel.',
-  // Une maquette n'a rien à faire dans un index de moteur de recherche.
+  description:
+    'Réponds au test et découvre ton pourcentage de red flag, ton profil par catégorie et ton classement.',
+  /*
+   * Fermé aux moteurs tant que le questionnaire n'est pas écrit. Une page
+   * indexée qui annonce « le test n'a pas encore de questions » est un mauvais
+   * premier résultat, et il resterait en cache bien après la mise en ligne du
+   * contenu. À rouvrir en supprimant cette ligne.
+   */
   robots: { index: false, follow: false },
 };
 

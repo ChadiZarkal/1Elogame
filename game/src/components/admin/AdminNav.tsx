@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: '/admin/moderation', label: 'Modération', icon: '🛡️', shortLabel: 'Modér.' },
   { href: '/admin/oracle', label: 'Oracle', icon: '🔮', shortLabel: 'Oracle' },
   { href: '/admin/flashflag', label: 'Flash Flag', icon: '⚡', shortLabel: 'Flash' },
+  { href: '/admin/redflagtest', label: 'Red Flag Test', icon: '🧪', shortLabel: 'RFT' },
 ];
 
 export function AdminNav() {

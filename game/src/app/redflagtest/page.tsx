@@ -1,17 +1,10 @@
 /**
  * @module redflagtest/page
- * Maquette du Red Flag Test — le front-end seul.
+ * Le Red Flag Test.
  *
- * CE QUE CETTE PAGE EST
- *   Le front-end de `ChadiZarkal/redorgreenorigin`, repris tel quel pour la
- *   partie questions et le récap, posé sur cinq questions écrites en dur. Elle
- *   existe pour qu'on puisse juger le rendu, rien d'autre.
- *
- * CE QU'ELLE N'EST PAS
- *   Il n'y a ni base de données, ni API, ni barème, ni enregistrement, ni
- *   branchement entre questions, ni écran d'entrée — le clic depuis l'accueil
- *   tombe directement sur la première question. Le score et les classements du
- *   récap sont fabriqués dans le navigateur à partir des réponses cliquées.
+ * Le front-end vient de `ChadiZarkal/redorgreenorigin`, repris tel quel. Le
+ * contenu — questions, réponses, points, tags, verdicts — se saisit dans
+ * `/admin/redflagtest` et vit en base. Rien n'est écrit en dur ici.
  *
  * Le cadre reproduit le markup d'origine : `main.main-container` >
  * `div.client-container` > `header.site-header`. Ces noms sont ce que
@@ -33,12 +26,6 @@ export default function RedflagtestPage() {
             <img className="logo-image" src="/rft/img/logo-rog.svg" alt="Red or Green" />
           </Link>
           <h1 className="site-tagline">Le test qui montre tes vraies couleurs...</h1>
-          {/* Le récap annonce « Top 8 % des hommes » et « 14 382 participant·es ».
-              Ces nombres ont l'air vrais, et ils ne le sont pas : le dire une
-              fois, en permanence, coûte une ligne. */}
-          <p className="mockup-notice">
-            Maquette — questions, score et statistiques sont inventés
-          </p>
         </header>
         <Quiz />
       </div>
