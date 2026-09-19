@@ -160,6 +160,111 @@ export function classement(effectif: number, plusHauts: number): Classement | nu
 }
 
 // ---------------------------------------------------------------------------
+// Le point noir
+// ---------------------------------------------------------------------------
+
+/**
+ * En dessous de cette valeur, l'axe le plus haut n'est pas un point noir : il
+ * est juste le moins bas d'un profil globalement sain.
+ */
+export const POINT_NOIR_MINIMUM = 40;
+
+/**
+ * Et il doit dominer le deuxième d'au moins cela.
+ *
+ * Sans cet écart, un radar presque rond — six axes à 52, 51, 50, 49, 48, 47 —
+ * désignerait un « point noir » choisi par un point d'écart, c'est-à-dire par
+ * le hasard des arrondis. Le profil de quelqu'un d'uniformément problématique
+ * n'a pas de point noir, et le dire serait inventer une information.
+ */
+export const POINT_NOIR_ECART = 12;
+
+/**
+ * L'axe qui domine nettement les autres, ou rien.
+ *
+ * C'est la phrase que le joueur répète à voix haute — « mon point noir c'est la
+ * loyauté » — donc elle doit être vraie. Mieux vaut ne rien dire que nommer un
+ * axe qui ne se distingue pas.
+ */
+export function pointNoir(axes: Axe[]): Axe | null {
+  if (axes.length < 2) return null;
+
+  const tries = [...axes].sort((a, b) => b.valeur - a.valeur);
+  const [premier, second] = tries;
+
+  if (premier.valeur < POINT_NOIR_MINIMUM) return null;
+  if (premier.valeur - second.valeur < POINT_NOIR_ECART) return null;
+  return premier;
+}
+
+// ---------------------------------------------------------------------------
+// La comparaison à la moyenne
+// ---------------------------------------------------------------------------
+
+export type NomCohorte = 'tous' | 'sexe' | 'age' | 'sexe_age';
+
+/** Une cohorte telle que la base la rend. */
+export interface CohorteBrute {
+  cohorte: NomCohorte;
+  effectif: number;
+  plusHauts: number;
+  /** `null` quand la cohorte est vide : il n'y a pas de moyenne de rien. */
+  moyenne: number | null;
+}
+
+/**
+ * En dessous de ce nombre de parties, une moyenne n'en est pas une.
+ *
+ * Plus bas que le seuil des rangs (vingt), parce qu'une moyenne est une
+ * statistique plus stable qu'un rang : elle bouge de quelques points quand un
+ * joueur s'ajoute, là où un rang peut sauter de vingt pour cent. L'effectif est
+ * transporté malgré tout, pour que l'écran puisse le citer.
+ */
+export const COMPARAISON_MIN = 8;
+
+/**
+ * Un écart en deçà duquel il n'y a rien à annoncer.
+ *
+ * « Un point au-dessus de la moyenne » n'est pas une information, c'est du
+ * bruit d'arrondi présenté comme un verdict.
+ */
+export const ECART_NEGLIGEABLE = 2;
+
+export interface Comparaison {
+  cohorte: NomCohorte;
+  /** Score moins moyenne, arrondi. Zéro quand l'écart est négligeable. */
+  ecart: number;
+  moyenne: number;
+  effectif: number;
+}
+
+/**
+ * La cohorte la plus précise qui soit assez fournie pour être citée.
+ *
+ * L'ordre de préférence va du plus parlant au plus général : « les hommes de
+ * 23-26 ans » dit davantage que « les hommes », qui dit davantage que « les
+ * joueurs ». On descend d'un cran chaque fois que la cohorte est trop mince,
+ * plutôt que de renoncer à comparer.
+ */
+const PREFERENCE: NomCohorte[] = ['sexe_age', 'sexe', 'age', 'tous'];
+
+export function comparaison(score: number, cohortes: CohorteBrute[]): Comparaison | null {
+  for (const nom of PREFERENCE) {
+    const c = cohortes.find((x) => x.cohorte === nom);
+    if (!c || c.moyenne === null || c.effectif < COMPARAISON_MIN) continue;
+
+    const brut = score - c.moyenne;
+    return {
+      cohorte: nom,
+      ecart: Math.abs(brut) < ECART_NEGLIGEABLE ? 0 : Math.round(brut),
+      moyenne: Math.round(c.moyenne),
+      effectif: c.effectif,
+    };
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Aiguille
 // ---------------------------------------------------------------------------
 

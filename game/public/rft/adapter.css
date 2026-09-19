@@ -183,6 +183,55 @@ body:has(.main-container) {
   font-size: var(--font-size-s);
 }
 
+/*
+ * L'écart à la moyenne, sous le score. La référence n'avait pas de bloc pour
+ * cela : elle ne montrait que des rangs.
+ */
+.stats-ecart {
+  margin: calc(var(--spacing) * 0.4) 0 0;
+  font-size: var(--font-size-m);
+  text-align: center;
+  line-height: 1.3;
+}
+
+.stats-ecart-base {
+  display: block;
+  color: var(--grey);
+  font-size: calc(var(--font-size-s) * 0.85);
+}
+
+/*
+ * Le point noir. Posé en bandeau plutôt qu'en ligne de texte : c'est la phrase
+ * qu'on relit, elle doit se détacher du reste au premier coup d'œil.
+ */
+.stats-point-noir {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: calc(var(--spacing) * 0.5);
+  margin: var(--spacing) 0 0;
+  padding: var(--spacing-text-y) var(--spacing);
+  border: 1px solid var(--blueish-grey);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-m);
+}
+
+.stats-point-noir-label {
+  color: var(--grey);
+  font-size: var(--font-size-s);
+  text-transform: uppercase;
+}
+
+.stats-point-noir strong {
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.stats-point-noir-valeur {
+  color: var(--grey);
+  font-size: var(--font-size-s);
+}
+
 /* La ligne sous les deux menus du préambule. */
 .intro-note {
   margin: 0 var(--spacing);

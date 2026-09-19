@@ -144,7 +144,30 @@ export interface Resultat {
   verdict: Verdict | null;
   classements: { sexe: Classement | null; age: Classement | null };
   axes: Axe[];
+  /**
+   * L'axe qui domine nettement les autres, quand il y en a un.
+   *
+   * `null` sur un profil uniforme : désigner un point noir séparé du deuxième
+   * par un point d'écart, c'est nommer le hasard des arrondis.
+   */
+  pointNoir: Axe | null;
+  /**
+   * L'écart à la moyenne d'une cohorte, quand elle est assez fournie.
+   *
+   * « Top 39 % » est un rang, et un rang est abstrait. « 12 points au-dessus de
+   * la moyenne des hommes de ton âge » se comprend sans effort.
+   */
+  comparaison: ComparaisonPublique | null;
   highlights: Highlight[];
   /** Nombre total de parties enregistrées, celle-ci comprise. */
   participants: number;
+}
+
+export interface ComparaisonPublique {
+  /** Quelle population sert de repère — l'écran en tire sa formulation. */
+  cohorte: 'tous' | 'sexe' | 'age' | 'sexe_age';
+  /** Points au-dessus (positif) ou en dessous. Zéro quand l'écart est du bruit. */
+  ecart: number;
+  moyenne: number;
+  effectif: number;
 }

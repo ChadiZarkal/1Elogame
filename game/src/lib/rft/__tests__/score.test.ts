@@ -9,6 +9,13 @@ import {
   maximumAtteignable,
   part,
   verdictPour,
+  comparaison,
+  pointNoir,
+  COMPARAISON_MIN,
+  POINT_NOIR_ECART,
+  POINT_NOIR_MINIMUM,
+  type CohorteBrute,
+  type NomCohorte,
   type ChoixResolu,
   type MaximumQuestion,
 } from '@/lib/rft/score';
@@ -236,5 +243,87 @@ describe('part', () => {
   it('arrondit et se tait sur un dénominateur nul', () => {
     expect(part(1, 8)).toBe(13);
     expect(part(0, 0)).toBe(0);
+  });
+});
+
+describe('pointNoir', () => {
+  const axe = (tagId: string, valeur: number) => ({
+    tagId, label: tagId, color: null, valeur, points: valeur, maximum: 100,
+  });
+
+  it('désigne l’axe qui domine nettement', () => {
+    const axes = [axe('loyaute', 78), axe('emprise', 40), axe('soi', 22)];
+    expect(pointNoir(axes)?.tagId).toBe('loyaute');
+  });
+
+  // Un radar presque rond n'a pas de point noir. Le désigner par un point
+  // d'écart, c'est nommer le hasard des arrondis.
+  it('se tait sur un profil uniforme', () => {
+    const axes = [axe('a', 52), axe('b', 51), axe('c', 50), axe('d', 49)];
+    expect(pointNoir(axes)).toBeNull();
+  });
+
+  // Le plus haut d'un profil sain n'est pas un point noir, il est le moins bas.
+  it('se tait quand même le sommet est bas', () => {
+    expect(pointNoir([axe('a', 30), axe('b', 4)])).toBeNull();
+    expect(POINT_NOIR_MINIMUM).toBe(40);
+  });
+
+  it('exige l’écart en plus du niveau', () => {
+    expect(pointNoir([axe('a', 60), axe('b', 60 - POINT_NOIR_ECART + 1)])).toBeNull();
+    expect(pointNoir([axe('a', 60), axe('b', 60 - POINT_NOIR_ECART)])?.tagId).toBe('a');
+  });
+
+  it('ne désigne rien avec moins de deux axes', () => {
+    expect(pointNoir([axe('seul', 95)])).toBeNull();
+    expect(pointNoir([])).toBeNull();
+  });
+});
+
+describe('comparaison', () => {
+  const co = (cohorte: NomCohorte, effectif: number, moyenne: number | null): CohorteBrute =>
+    ({ cohorte, effectif, plusHauts: 0, moyenne });
+
+  it('préfère la cohorte la plus précise', () => {
+    const c = comparaison(50, [
+      co('tous', 900, 30),
+      co('sexe', 400, 33),
+      co('age', 200, 35),
+      co('sexe_age', 120, 38),
+    ]);
+    expect(c?.cohorte).toBe('sexe_age');
+    expect(c?.ecart).toBe(12);
+    expect(c?.moyenne).toBe(38);
+  });
+
+  // On descend d'un cran plutôt que de renoncer à comparer.
+  it('recule vers une cohorte plus large quand la précise est trop mince', () => {
+    const c = comparaison(50, [
+      co('tous', 900, 30),
+      co('sexe', 400, 33),
+      co('sexe_age', 3, 38),
+    ]);
+    expect(c?.cohorte).toBe('sexe');
+  });
+
+  it('annonce aussi un score sous la moyenne', () => {
+    expect(comparaison(20, [co('tous', 50, 35)])?.ecart).toBe(-15);
+  });
+
+  // « Un point au-dessus de la moyenne » n'est pas une information, c'est du
+  // bruit d'arrondi présenté comme un verdict.
+  it('tait un écart négligeable', () => {
+    expect(comparaison(36, [co('tous', 50, 35)])?.ecart).toBe(0);
+    expect(comparaison(34, [co('tous', 50, 35)])?.ecart).toBe(0);
+  });
+
+  it('ne compare pas sans population', () => {
+    expect(comparaison(50, [])).toBeNull();
+    expect(comparaison(50, [co('tous', 0, null)])).toBeNull();
+    expect(comparaison(50, [co('tous', COMPARAISON_MIN - 1, 30)])).toBeNull();
+  });
+
+  it('transporte l’effectif, pour que l’écran puisse le citer', () => {
+    expect(comparaison(50, [co('tous', 431, 30)])?.effectif).toBe(431);
   });
 });

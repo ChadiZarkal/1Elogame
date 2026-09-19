@@ -21,7 +21,7 @@
 
 import type { Axe, QuestionAdmin, Resultat, Tag, Verdict } from './types';
 import type { ChoixResolu } from './score';
-import { classement, part } from './score';
+import { classement, comparaison, part, pointNoir } from './score';
 
 let compteur = 0;
 const id = (prefixe: string) => `${prefixe}-${++compteur}`;
@@ -216,6 +216,7 @@ export function resultat(args: {
 }): Resultat {
   const population = [...scoresFictifs, args.score];
   const plusHauts = population.filter((s) => s > args.score).length;
+  const moyenne = population.reduce((a, b) => a + b, 0) / population.length;
   const parId = new Map(args.questions.map((q) => [q.id, q]));
 
   return {
@@ -226,6 +227,10 @@ export function resultat(args: {
       age: classement(Math.round(population.length / 2), Math.round(plusHauts / 2)),
     },
     axes: args.axes,
+    pointNoir: pointNoir(args.axes),
+    comparaison: comparaison(args.score, [
+      { cohorte: 'sexe_age', effectif: population.length, plusHauts, moyenne },
+    ]),
     highlights: args.choix
       .map((c) => {
         const question = parId.get(c.questionId);

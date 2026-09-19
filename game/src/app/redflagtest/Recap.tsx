@@ -28,7 +28,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import type { Classement, Resultat } from '@/lib/rft/types';
+import type { Classement, ComparaisonPublique, Resultat } from '@/lib/rft/types';
 import type { PlayerProfile } from '@/types/game';
 
 /** Sous ce rang, on est dans la tête du classement : drapeau rouge. */
@@ -50,6 +50,27 @@ const SEXES: Record<string, string> = {
 
 function legendeAge(age: string): string {
   return age === '27+' ? 'des 27 ans et plus' : `des ${age} ans`;
+}
+
+/**
+ * La population citée dans la comparaison, en toutes lettres.
+ *
+ * Le serveur choisit la cohorte — la plus précise qui soit assez fournie — et
+ * l'écran la met en mots, parce que c'est lui qui a le profil du joueur sous la
+ * main.
+ */
+function legendeCohorte(cohorte: ComparaisonPublique['cohorte'], profil: PlayerProfile | null): string {
+  const sexe = profil ? (SEXES[profil.sex] ?? 'des joueurs') : 'des joueurs';
+  switch (cohorte) {
+    case 'sexe_age':
+      return profil ? `${sexe} de ${legendeAge(profil.age).replace(/^des /, '')}` : sexe;
+    case 'sexe':
+      return sexe;
+    case 'age':
+      return profil ? legendeAge(profil.age) : 'des joueurs';
+    default:
+      return 'des joueurs';
+  }
 }
 
 /**
@@ -103,6 +124,47 @@ export function Recap({
           Tu es <strong>{affiche} %</strong> red flag
         </p>
       </div>
+
+      {/* Le rang est abstrait — personne ne sait ce qu'il faut faire pour passer
+          de 39 à 20. L'écart à une moyenne se comprend sans effort, et c'est la
+          phrase que le joueur répète. */}
+      {resultat.comparaison && (
+        <p className="stats-ecart">
+          {resultat.comparaison.ecart === 0 ? (
+            <>
+              Pile dans la moyenne {legendeCohorte(resultat.comparaison.cohorte, profil)}.
+            </>
+          ) : (
+            <>
+              <strong
+                style={{ color: resultat.comparaison.ecart > 0 ? 'var(--light-red)' : 'var(--light-green)' }}
+              >
+                {resultat.comparaison.ecart > 0 ? '+' : '−'}
+                {Math.abs(resultat.comparaison.ecart)} points
+              </strong>{' '}
+              {resultat.comparaison.ecart > 0 ? 'au-dessus' : 'en dessous'} de la moyenne{' '}
+              {legendeCohorte(resultat.comparaison.cohorte, profil)}
+              <span className="stats-ecart-base">
+                {' '}(qui est à {resultat.comparaison.moyenne}, sur{' '}
+                {resultat.comparaison.effectif} parties)
+              </span>
+            </>
+          )}
+        </p>
+      )}
+
+      {/* Nommer l'axe qui domine : c'est la ligne qu'on relit à voix haute. Le
+          serveur se tait sur un profil uniforme plutôt que d'élire un point noir
+          séparé du deuxième par un point d'écart. */}
+      {resultat.pointNoir && (
+        <p className="stats-point-noir">
+          <span className="stats-point-noir-label">Ton point noir</span>
+          <strong style={{ color: resultat.pointNoir.color ?? 'var(--red)' }}>
+            {resultat.pointNoir.label}
+          </strong>
+          <span className="stats-point-noir-valeur">{resultat.pointNoir.valeur} %</span>
+        </p>
+      )}
 
       {(resultat.classements.sexe || resultat.classements.age) && (
         <ul className="stats-flags">

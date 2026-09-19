@@ -28,12 +28,16 @@ import {
   calculerAxes,
   calculerScore,
   classement,
+  comparaison,
   indicePour,
   maximumAtteignable,
   part,
+  pointNoir,
   verdictPour,
   type ChoixResolu,
+  type CohorteBrute,
   type MaximumQuestion,
+  type NomCohorte,
 } from './score';
 import type {
   Highlight,
@@ -442,12 +446,26 @@ export async function enregistrerPartie(s: Soumission): Promise<Resultat> {
   verifier(cohortes.error, 'Lecture des classements');
   verifier(parts.error, 'Lecture des parts de réponses');
 
-  type LigneCohorte = { cohorte: string; effectif: number; plus_hauts: number };
-  const cohorte = (nom: string) =>
-    (cohortes.data as LigneCohorte[] | null)?.find((c) => c.cohorte === nom);
-  const rang = (nom: string) => {
+  type LigneCohorte = {
+    cohorte: NomCohorte;
+    effectif: number;
+    plus_hauts: number;
+    // Postgres rend `avg` en NUMERIC, que PostgREST sérialise en chaîne pour ne
+    // pas perdre de précision — et `null` quand la cohorte est vide.
+    moyenne: string | number | null;
+  };
+
+  const brutes: CohorteBrute[] = ((cohortes.data as LigneCohorte[] | null) ?? []).map((c) => ({
+    cohorte: c.cohorte,
+    effectif: Number(c.effectif),
+    plusHauts: Number(c.plus_hauts),
+    moyenne: c.moyenne === null ? null : Number(c.moyenne),
+  }));
+
+  const cohorte = (nom: NomCohorte) => brutes.find((c) => c.cohorte === nom);
+  const rang = (nom: NomCohorte) => {
     const c = cohorte(nom);
-    return c ? classement(Number(c.effectif), Number(c.plus_hauts)) : null;
+    return c ? classement(c.effectif, c.plusHauts) : null;
   };
 
   type LignePart = { answer_id: string; choix: number; total_question: number };
@@ -463,8 +481,10 @@ export async function enregistrerPartie(s: Soumission): Promise<Resultat> {
     verdict,
     classements: { sexe: s.sexe ? rang('sexe') : null, age: s.age ? rang('age') : null },
     axes,
+    pointNoir: pointNoir(axes),
+    comparaison: comparaison(score, brutes),
     highlights: construireHighlights(choix, questions, partsParReponse),
-    participants: Number(cohorte('tous')?.effectif ?? 1),
+    participants: cohorte('tous')?.effectif ?? 1,
   };
 }
 
