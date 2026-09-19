@@ -26,6 +26,9 @@ const HIDDEN_PATHS = [
   /^\/dixmais\/admin(\/|$)/,
   /^\/jeu\/jouer(\/|$)/,
   /^\/flashflag\/session(\/|$)/,
+  /* Le test tient dans un écran, mesureur ancré en bas compris : un pied de
+     page en dessous le ferait déborder à chaque question. */
+  /^\/redflagtest(\/|$)/,
 ];
 
 const NAV_GROUPS: { title: string; links: { href: string; label: string }[] }[] = [

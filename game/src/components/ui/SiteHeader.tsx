@@ -29,7 +29,11 @@ import { Menu } from 'lucide-react';
  * de hauteur sur l'écran où chaque pixel se dispute au descriptif des jeux.
  * Le plan du site reste atteignable par le pied de page, replié juste dessous.
  */
-const HIDDEN_PATHS = [/^\/$/, /^\/admin(\/|$)/, /^\/dixmais\/admin(\/|$)/];
+/* `/redflagtest` apporte son propre en-tête, celui du front-end de référence —
+   et, accessoirement, celui-ci porte lui aussi la classe `site-header`, que
+   `flac.css` stylise. Les deux barres se superposeraient, l'une habillée par la
+   feuille de l'autre. */
+const HIDDEN_PATHS = [/^\/$/, /^\/admin(\/|$)/, /^\/dixmais\/admin(\/|$)/, /^\/redflagtest(\/|$)/];
 
 /** Groupée par thème, comme le demandent les consignes de qualité. */
 const NAV_SECTIONS: {

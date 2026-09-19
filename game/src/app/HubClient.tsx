@@ -33,9 +33,11 @@ const CARDS_DATA: Record<PersonaKey, {
     desc: 'Tu réponds au quiz en solo, puis tu obtiens un score simple pour voir ce que les autres peuvent percevoir comme red flag chez toi.',
     bullets: ['🧠 En solo, en quelques minutes', '📊 Score clair à la fin', '🙈 Anonyme'],
     cta: 'FAIRE LE TEST',
-    href: 'https://redflagtest.redorgreen.fr/',
+    /* Menait vers redflagtest.redorgreen.fr, l'application PHP d'origine. Pointe
+       désormais sur la maquette interne du test — front-end seul, sans calcul
+       réel. */
+    href: '/redflagtest',
     emoji: '🧪',
-    external: true
   },
   group: {
     id: 'jeu',

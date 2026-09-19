@@ -1,0 +1,148 @@
+/*
+ * LA NÔTRE — ne fait pas partie de la référence.
+ *
+ * `css/flac.css`, `css/reset.css`, `img/` et `fnt/` sont des copies conformes
+ * de ChadiZarkal/redorgreenorigin et doivent le rester à l'octet près, pour
+ * qu'une version plus récente s'installe par simple écrasure. Tout ce que
+ * l'application hôte casse se répare donc ici, ce qui garde la frontière
+ * visible.
+ *
+ * Ordre de chargement : reset.css → flac.css → adapter.css
+ */
+
+/*
+ * L'application hôte pose une classe de police sur <body>, et une classe
+ * (0,1,0) l'emporte sur le `html body` de flac.css (0,0,2) : tout ce qui hérite
+ * recevait la typographie du site au lieu d'Agdasima. La poser sur le conteneur
+ * règle tout le sous-arbre par héritage — sans !important, sans course à la
+ * spécificité.
+ */
+.main-container {
+  font-family: 'Agdasima', sans-serif;
+}
+
+/*
+ * L'application hôte fixe `html { height: 100% }` et un fond sombre sur <body>
+ * via Tailwind ; la référence attend un <body> de la hauteur de l'écran, qu'elle
+ * peint elle-même. Sans cette ligne le conteneur flotte sur le fond du site.
+ */
+body:has(.main-container) {
+  background-color: var(--color-bg-desktop);
+  min-height: 100svh;
+}
+
+/*
+ * La référence écrit `.main-container { min-height: 100% }`, et comptait sur un
+ * <main> enfant direct de <body>. Ici il est enveloppé par les fournisseurs de
+ * l'application (bornage d'erreurs, analytique, préférences de mouvement), dont
+ * les div n'ont pas de hauteur définie : un pourcentage n'a alors plus rien
+ * contre quoi se résoudre et retombe sur `auto`. Sur une question courte, le
+ * conteneur sombre s'arrêtait à 594 px et le fond brun du bureau occupait le
+ * dernier quart de l'écran, mesureur compris.
+ *
+ * Les unités de fenêtre ne dépendent d'aucun parent : elles traversent les
+ * enveloppes sans rien leur demander.
+ */
+.main-container {
+  min-height: 100svh;
+}
+
+/*
+ * COLLISION DE NOMS — la seule entre les deux feuilles, et elle est franche.
+ *
+ * `globals.css` de l'application et `flac.css` déclarent tous deux `.site-header`.
+ * Côté application c'est la barre de navigation du site : hauteur fixe de 3rem,
+ * fond opaque, flou d'arrière-plan, bordure basse. Côté référence c'est le bloc
+ * logo + accroche, qui doit se dimensionner sur son contenu. Résultat sans cette
+ * règle : l'en-tête est écrasé à 48 px, le logo de 96 px en déborde et recouvre
+ * l'accroche, la barre de progression et le début de la question.
+ *
+ * Réparé plutôt que renommé : c'est `.site-header` que `flac.css` stylise, et
+ * renommer la classe ferait perdre tout le reste de sa mise en forme. La règle
+ * est portée à (0,2,0) par `.main-container`, qui n'existe que sur cette route.
+ */
+.main-container .site-header {
+  height: auto;
+  border-bottom: none;
+  background: none;
+  backdrop-filter: none;
+  z-index: auto;
+  padding-top: var(--spacing);
+}
+
+/* ---------------------------------------------------------------------------
+ * Blocs auxquels la référence ne donne pas de classe, parce que son markup ne
+ * les avait pas. Écrits dans son idiome plutôt qu'inventés.
+ * ------------------------------------------------------------------------- */
+
+/*
+ * Le mesureur est en position absolue, calé en bas du `client-container`, et il
+ * mesure 4.5rem. La référence ne réservait que `margin-bottom: spacing * 1.5`
+ * sous les réponses — 24 px pour 72 px d'aiguille. Tant que les réponses
+ * tiennent en un mot, personne ne s'en aperçoit ; dès qu'une réponse fait trois
+ * lignes, la dernière passe sous la règle graduée.
+ *
+ * La réserve est posée sur le conteneur plutôt que sur les boutons, pour qu'elle
+ * profite aussi au récap, dont le dernier bloc tombait au même endroit.
+ */
+.main-container .client-container {
+  padding-bottom: calc(4.5rem + var(--spacing));
+}
+
+/* Deuxième ligne d'un énoncé, plus petite et grise. */
+.prompt-helper {
+  margin-top: calc(var(--spacing) * 0.35);
+  color: var(--grey);
+  font-size: var(--font-size-s);
+}
+
+/* Réponse déjà cliquée, le temps que la question quitte l'écran. */
+.button-answer.is-picked {
+  filter: brightness(1.35);
+}
+
+/*
+ * Le bloc texte d'un highlight. `.stats-rare li` est un flex qui sépare le
+ * texte de la pastille de pourcentage : sans `flex: 1`, le texte se serre à
+ * droite et la pastille dérive au milieu de la ligne.
+ */
+.question-answer {
+  flex: 1;
+  text-align: left;
+}
+
+/*
+ * La référence dessinait le radar avec Chart.js dans un <canvas> et lui donnait
+ * `height: 100%`. Ici c'est un SVG, qui se dimensionne seul — il ne manque que
+ * l'air autour.
+ */
+.spider-chart-container {
+  padding: calc(var(--spacing) * 0.5);
+  box-sizing: border-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .redflag-o-meter .meter-cursor,
+  .progress-bar .score-cursor {
+    transition-duration: 1ms;
+  }
+}
+
+/*
+ * Rappel permanent que rien de ce qui s'affiche n'est mesuré. Une maquette qui
+ * annonce « Top 8 % des hommes » sans le dire serait un mensonge poli.
+ *
+ * Posé dans l'en-tête et nulle part ailleurs : le bas de l'écran appartient au
+ * mesureur, qui est en position absolue par-dessus tout le reste.
+ */
+.mockup-notice {
+  margin: 0;
+  padding: calc(var(--spacing-text-y) * 0.5) calc(var(--spacing) * 0.75);
+  border: 1px dashed var(--yellow);
+  border-radius: var(--border-radius);
+  color: var(--yellow);
+  font-size: calc(var(--font-size-s) * 0.8);
+  line-height: 1.2;
+  text-align: center;
+  text-transform: uppercase;
+}
