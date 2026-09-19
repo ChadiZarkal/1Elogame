@@ -369,9 +369,18 @@ export function Quiz() {
                 ))}
               </div>
 
+              {/* Deux mots : le bouton est sous les réponses, et personne n'a
+                  besoin qu'on lui explique où mène une flèche gauche. Le libellé
+                  complet reste pour les lecteurs d'écran, qui, eux, entendent le
+                  bouton hors de son contexte visuel. */}
               {index > 0 && (
-                <button type="button" className="button-back" onClick={retour}>
-                  ← Revenir à la question précédente
+                <button
+                  type="button"
+                  className="button-back"
+                  onClick={retour}
+                  aria-label="Revenir à la question précédente"
+                >
+                  ← Retour
                 </button>
               )}
             </div>

@@ -25,7 +25,12 @@ export default function RedflagtestPage() {
                 next/image réécrirait l'URL. */}
             <img className="logo-image" src="/rft/img/logo-rog.svg" alt="Red or Green" />
           </Link>
-          <h1 className="site-tagline">Le test qui montre tes vraies couleurs...</h1>
+          {/* L'accroche de la référence restait affichée du début à la fin de
+              la partie, juste sous le logo. Elle n'apporte rien après le premier
+              écran et mange de la hauteur à chaque question. Le titre reste dans
+              le document — une page a besoin d'un h1, et un lecteur d'écran
+              aussi — mais il quitte l'écran. */}
+          <h1 className="visually-hidden">Red Flag Test</h1>
         </header>
         <Quiz />
       </div>
