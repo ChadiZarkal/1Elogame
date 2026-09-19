@@ -22,8 +22,9 @@ import { chargerContenu, SessionExpiree, type ContenuAdmin } from './api';
 import { QuestionsPanel } from './QuestionsPanel';
 import { TagsPanel } from './TagsPanel';
 import { VerdictsPanel } from './VerdictsPanel';
+import { ArchetypesPanel } from './ArchetypesPanel';
 
-type Onglet = 'questions' | 'tags' | 'verdicts';
+type Onglet = 'questions' | 'tags' | 'verdicts' | 'archetypes';
 
 export default function AdminRedflagtestPage() {
   const router = useRouter();
@@ -68,6 +69,7 @@ export default function AdminRedflagtestPage() {
     { cle: 'questions', label: 'Questions', compte: contenu?.questions.length ?? 0 },
     { cle: 'tags', label: 'Tags', compte: contenu?.tags.length ?? 0 },
     { cle: 'verdicts', label: 'Verdicts', compte: contenu?.verdicts.length ?? 0 },
+    { cle: 'archetypes', label: 'Archétypes', compte: contenu?.archetypes.length ?? 0 },
   ];
 
   return (
@@ -139,6 +141,15 @@ export default function AdminRedflagtestPage() {
             <VerdictsPanel
               verdicts={contenu.verdicts}
               budget={contenu.budget}
+              onRecharger={recharger}
+              onErreur={setErreur}
+            />
+          )}
+
+          {contenu && onglet === 'archetypes' && (
+            <ArchetypesPanel
+              archetypes={contenu.archetypes}
+              tags={contenu.tags}
               onRecharger={recharger}
               onErreur={setErreur}
             />

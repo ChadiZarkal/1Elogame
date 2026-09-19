@@ -28,8 +28,10 @@
  */
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import type { Classement, ComparaisonPublique, Resultat } from '@/lib/rft/types';
 import type { PlayerProfile } from '@/types/game';
+import { PartageBar } from './PartageBar';
 
 /** Sous ce rang, on est dans la tête du classement : drapeau rouge. */
 const SEUIL_ROUGE = 33;
@@ -113,12 +115,23 @@ export function Recap({
 }: {
   resultat: Resultat;
   profil: PlayerProfile | null;
-  onRecommencer: () => void;
+  /** Absent sur un résultat partagé : on ne « refait » pas la partie d'un autre. */
+  onRecommencer?: () => void;
 }) {
   const affiche = useCompteur(resultat.score);
 
   return (
     <>
+      {/* L'archétype avant le score : c'est la ligne qu'on lit en premier et la
+          seule qu'on répète. Un pourcentage ne décrit personne. */}
+      {resultat.archetype && (
+        <div className="stats-archetype">
+          <span className="stats-archetype-emoji">{resultat.archetype.emoji}</span>
+          <h3>{resultat.archetype.titre}</h3>
+          {resultat.archetype.soustitre && <p>{resultat.archetype.soustitre}</p>}
+        </div>
+      )}
+
       <div className="stats-red-flag-pct">
         <p>
           Tu es <strong>{affiche} %</strong> red flag
@@ -185,6 +198,19 @@ export function Recap({
         </ul>
       )}
 
+      {/* Une seule réponse qui porte le cinquième du score : c'est la phrase la
+          plus brutale que ces données permettent, et elle est vraie. */}
+      {resultat.reponseDecisive && (
+        <p className="stats-decisive">
+          Une seule réponse t’a coûté{' '}
+          <strong>{resultat.reponseDecisive.points} de tes {resultat.score} points</strong>
+          <span className="stats-decisive-quote">
+            « {resultat.reponseDecisive.reponse} »
+          </span>
+          <span className="stats-decisive-question">{resultat.reponseDecisive.question}</span>
+        </p>
+      )}
+
       {resultat.axes.length >= 3 && (
         <section className="stats-subscores">
           <h3>Profil</h3>
@@ -245,12 +271,41 @@ export function Recap({
         </section>
       )}
 
-      <button type="button" className="share-btn" onClick={onRecommencer}>
-        {/* eslint-disable-next-line @next/next/no-img-element -- markup de
-            référence ; `flac.css` dimensionne l'icône via .share-icon. */}
-        <img className="share-icon" src="/rft/img/symbol-share.svg" alt="" />
-        <p>Refaire le test</p>
-      </button>
+      {/* Au-delà du seuil d'une catégorie, le test cesse de faire de l'humour.
+          Placé avant le partage : ce n'est pas un bas de page. */}
+      {resultat.ressources.map((r) => (
+        <aside key={r.label} className="stats-ressource">
+          <p className="stats-ressource-cat">{r.label}</p>
+          <p>{r.texte}</p>
+          {r.lien && (
+            <Link href={r.lien} className="stats-ressource-lien">
+              Voir la ressource →
+            </Link>
+          )}
+        </aside>
+      ))}
+
+      {resultat.codePartage && (
+        <PartageBar
+          code={resultat.codePartage}
+          score={resultat.score}
+          archetype={resultat.archetype?.titre ?? null}
+        />
+      )}
+
+      {onRecommencer ? (
+        <button type="button" className="partage-copier" onClick={onRecommencer}>
+          Refaire le test
+        </button>
+      ) : (
+        <Link href="/redflagtest" className="share-btn">
+          <p>Faire le test</p>
+        </Link>
+      )}
+
+      <Link href="/redflagtest/stats" className="stats-public-link">
+        Voir ce que les autres ont répondu
+      </Link>
     </>
   );
 }

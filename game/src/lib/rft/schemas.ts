@@ -55,6 +55,33 @@ export const tagSchema = z.object({
     .default(null),
   position: z.number().int().min(0).default(0),
   isActive: z.boolean().default(true),
+  /*
+   * La ressource d'aide accrochée à la catégorie. Le seuil est un pourcentage
+   * de l'AXE, pas du score total : c'est la catégorie qui sait de quoi elle
+   * parle, et un seuil global afficherait un texte sur la violence à quelqu'un
+   * de simplement déloyal.
+   */
+  ressourceSeuil: z.number().int().min(1).max(100).nullable().default(null),
+  ressourceTexte: z.string().trim().max(600).nullable().default(null),
+  ressourceLien: z.string().trim().max(300).nullable().default(null),
+});
+
+/**
+ * Un archétype.
+ *
+ * La paire est normalisée avant l'écriture, pas ici : le formulaire n'a aucune
+ * raison de connaître l'ordre des identifiants, et lui imposer reviendrait à
+ * refuser une saisie sur deux avec un message de contrainte illisible.
+ */
+export const archetypeSchema = z.object({
+  tagA: z.string().min(1),
+  tagB: z.string().min(1).nullable().default(null),
+  emoji: z.string().trim().max(8).nullable().default(null),
+  titre: z.string().trim().min(1, 'Le titre ne peut pas être vide').max(80),
+  soustitre: z.string().trim().max(300).nullable().default(null),
+}).refine((a) => a.tagB === null || a.tagA !== a.tagB, {
+  message: 'Les deux catégories doivent être différentes',
+  path: ['tagB'],
 });
 
 export const verdictSchema = z.object({
@@ -71,3 +98,4 @@ export const ordreSchema = z.object({ ids: z.array(z.string().min(1)).max(500) }
 export type EntreeQuestion = z.infer<typeof questionSchema>;
 export type EntreeTag = z.infer<typeof tagSchema>;
 export type EntreeVerdict = z.infer<typeof verdictSchema>;
+export type EntreeArchetype = z.infer<typeof archetypeSchema>;

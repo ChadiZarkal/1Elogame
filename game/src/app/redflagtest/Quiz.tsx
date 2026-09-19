@@ -241,6 +241,30 @@ export function Quiz() {
     [quiz, clique, choix, debut, profil, envoyer],
   );
 
+  /**
+   * Revenir sur la question précédente.
+   *
+   * La réponse qu'on y avait donnée est EFFACÉE : la laisser en place ferait
+   * réapparaître l'écran avec un bouton déjà choisi, et surtout elle
+   * continuerait de compter si le joueur refermait l'onglet sans y retoucher.
+   * L'aiguille est rejouée depuis les réponses restantes plutôt que reculée
+   * d'un pas — le pas dépend de la réponse, et l'inverser à l'aveugle
+   * dériverait à chaque aller-retour.
+   */
+  const retour = useCallback(() => {
+    if (!quiz || clique || index === 0) return;
+
+    const precedente = quiz.questions[index - 1];
+    const restants = choix.filter((c) => c.questionId !== precedente.id);
+
+    setChoix(restants);
+    setIndex(index - 1);
+    setAiguille(aiguillePour(quiz.questions, restants));
+
+    if (restants.length === 0) oublier();
+    else enregistrer({ choix: restants, debut: debut ?? Date.now(), maj: Date.now() });
+  }, [quiz, clique, index, choix, debut]);
+
   const recommencer = () => {
     oublier();
     setChoix([]);
@@ -296,6 +320,12 @@ export function Quiz() {
           </div>
         )}
 
+        {phase === 'jeu' && quiz && (
+          <p className="progress-count">
+            Question <strong>{index + 1}</strong> sur {quiz.questions.length}
+          </p>
+        )}
+
         <ProgressBar
           total={quiz?.questions.length ?? 0}
           repondues={choix.length}
@@ -338,6 +368,12 @@ export function Quiz() {
                   </button>
                 ))}
               </div>
+
+              {index > 0 && (
+                <button type="button" className="button-back" onClick={retour}>
+                  ← Revenir à la question précédente
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -406,16 +442,33 @@ function ProgressBar({
     <div className="progress-bar">
       {curseur !== null && <ScoreCursor valeur={curseur} />}
       <div className="rounded-wrapper">
-        {Array.from({ length: total }, (_, i) => (
+        {total <= CELLULES_MAX ? (
+          Array.from({ length: total }, (_, i) => (
+            <div
+              key={i}
+              className={`progress-bar-cell cell-${i + 1}${i < repondues ? ' cell-active' : ''}`}
+            />
+          ))
+        ) : (
           <div
-            key={i}
-            className={`progress-bar-cell cell-${i + 1}${i < repondues ? ' cell-active' : ''}`}
+            className="progress-bar-fill"
+            style={{ width: `${total > 0 ? (repondues / total) * 100 : 0}%` }}
           />
-        ))}
+        )}
       </div>
     </div>
   );
 }
+
+/**
+ * Au-delà, les cellules cessent d'être lisibles.
+ *
+ * Chacune porte 4 px de marge. Sur un téléphone de 375 px, la barre en fait
+ * 343 : à trente-sept questions il reste 343 − 36 × 4 = 199 px pour trente-sept
+ * cellules, soit 5,4 px chacune. Ce n'est plus une barre de progression, c'est
+ * une rayure. Une barre pleine dit la même chose et se lit.
+ */
+const CELLULES_MAX = 15;
 
 /**
  * Le curseur, qui entre par la gauche et rejoint le score en une seconde et

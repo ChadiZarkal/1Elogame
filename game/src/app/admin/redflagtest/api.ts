@@ -10,12 +10,13 @@
  *   d'un back-office : on croit avoir saisi, on ne l'a pas fait.
  */
 
-import type { QuestionAdmin, Tag, Verdict } from '@/lib/rft/types';
+import type { Archetype, QuestionAdmin, Tag, Verdict } from '@/lib/rft/types';
 
 export interface ContenuAdmin {
   questions: QuestionAdmin[];
   tags: Tag[];
   verdicts: Verdict[];
+  archetypes: Archetype[];
   /** Le score qu'obtiendrait quelqu'un cochant systématiquement la pire réponse. */
   budget: number;
 }
@@ -93,3 +94,12 @@ export const modifierVerdict = (id: string, v: unknown) =>
 
 export const effacerVerdict = (id: string) =>
   appeler(`/api/admin/redflagtest/verdicts/${id}`, { method: 'DELETE' });
+
+export const creerArchetype = (a: unknown) =>
+  appeler('/api/admin/redflagtest/archetypes', { method: 'POST', body: JSON.stringify(a) });
+
+export const modifierArchetype = (id: string, a: unknown) =>
+  appeler(`/api/admin/redflagtest/archetypes/${id}`, { method: 'PUT', body: JSON.stringify(a) });
+
+export const effacerArchetype = (id: string) =>
+  appeler(`/api/admin/redflagtest/archetypes/${id}`, { method: 'DELETE' });

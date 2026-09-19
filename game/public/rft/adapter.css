@@ -260,3 +260,327 @@ body:has(.main-container) {
   text-align: center;
   font-size: var(--font-size-l);
 }
+
+/* ---------------------------------------------------------------------------
+ * Le récap enrichi : archétype, réponse décisive, ressources, partage.
+ *
+ * Aucun de ces blocs n'existe dans la feuille de référence, dont le récap
+ * s'arrêtait au score, aux drapeaux et aux highlights. Ils sont écrits dans son
+ * idiome — coins à 5 px, palette de variables, majuscules condensées — plutôt
+ * qu'inventés à côté.
+ * ------------------------------------------------------------------------- */
+
+/*
+ * L'archétype passe AVANT le score. C'est la ligne qu'on lit en premier et la
+ * seule qu'on répète : un pourcentage ne décrit personne.
+ */
+.stats-archetype {
+  text-align: center;
+  padding-bottom: calc(var(--spacing) * 0.5);
+  border-bottom: 2px solid var(--blueish-grey);
+}
+
+.stats-archetype-emoji {
+  display: block;
+  font-size: var(--font-size-xl);
+  line-height: 1;
+}
+
+.stats-archetype h3 {
+  margin: calc(var(--spacing) * 0.25) 0 0 0;
+  font-size: var(--font-size-xl);
+  font-weight: bold;
+  line-height: 1.05;
+}
+
+.stats-archetype p {
+  margin: calc(var(--spacing) * 0.35) 0 0 0;
+  color: var(--grey);
+  font-size: var(--font-size-s);
+}
+
+/* Une seule réponse qui porte le cinquième du score. */
+.stats-decisive {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing) * 0.2);
+  margin: var(--spacing) 0 0;
+  padding: var(--spacing-text-y) var(--spacing);
+  border-left: 3px solid var(--red);
+  text-align: left;
+  font-size: var(--font-size-s);
+}
+
+.stats-decisive-quote {
+  color: var(--light-green);
+  font-size: var(--font-size-m);
+  font-weight: bold;
+}
+
+.stats-decisive-question {
+  color: var(--grey);
+  font-size: calc(var(--font-size-s) * 0.9);
+}
+
+/*
+ * Le moment où le test cesse de faire de l'humour. Encadré d'orange et non de
+ * rouge : le rouge est la couleur du score, et cette boîte ne doit pas se lire
+ * comme une sanction de plus.
+ */
+.stats-ressource {
+  margin: var(--spacing) 0 0;
+  padding: var(--spacing);
+  border: 1px solid var(--orange);
+  border-radius: var(--border-radius);
+  text-align: left;
+  font-size: var(--font-size-s);
+}
+
+.stats-ressource-cat {
+  margin: 0 0 calc(var(--spacing) * 0.25) 0;
+  color: var(--orange);
+  font-size: calc(var(--font-size-s) * 0.85);
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.stats-ressource p {
+  margin: 0;
+}
+
+.stats-ressource-lien {
+  display: inline-block;
+  margin-top: calc(var(--spacing) * 0.5);
+  color: var(--white);
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------------------
+ * Partage
+ * ------------------------------------------------------------------------- */
+
+.partage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.partage-copier {
+  margin-top: calc(var(--spacing) * 0.75);
+  border: 1px solid var(--grey);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-text-y) var(--spacing);
+  background: none;
+  color: var(--white);
+  font-family: 'Agdasima', sans-serif;
+  font-size: var(--font-size-s);
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.partage-copier:hover {
+  border-color: var(--white);
+}
+
+.partage-note {
+  margin: calc(var(--spacing) * 0.5) 0 0;
+  color: var(--grey);
+  font-size: calc(var(--font-size-s) * 0.85);
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------------------
+ * La devinette d'un résultat partagé
+ * ------------------------------------------------------------------------- */
+
+.guess-value {
+  margin: 0;
+  color: var(--red);
+  font-size: var(--font-size-xxl);
+  font-weight: bold;
+  line-height: 1;
+}
+
+.guess-slider {
+  width: 100%;
+  max-width: 22rem;
+  margin: var(--spacing) 0;
+  accent-color: var(--red);
+}
+
+.guess-verdict {
+  margin: 0 var(--spacing);
+  padding: var(--spacing);
+  border: 1px solid var(--yellow);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-m);
+}
+
+.guess-skip {
+  margin-top: calc(var(--spacing) * 0.5);
+  border: none;
+  background: none;
+  color: var(--grey);
+  font-family: 'Agdasima', sans-serif;
+  font-size: var(--font-size-s);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.guess-skip:hover {
+  color: var(--white);
+}
+
+/* ---------------------------------------------------------------------------
+ * Progression
+ * ------------------------------------------------------------------------- */
+
+/*
+ * Le compteur remplace ce que les cellules ne peuvent plus dire au-delà de
+ * quinze questions. Il reste utile en deçà : « question 3 sur 5 » se lit plus
+ * vite qu'on ne compte des cases.
+ */
+.progress-count {
+  margin: 0;
+  color: var(--grey);
+  font-size: var(--font-size-s);
+  text-align: center;
+}
+
+.progress-count strong {
+  color: var(--white);
+  font-weight: bold;
+}
+
+/* La barre pleine, quand les cellules deviendraient des rayures de 5 px. */
+.progress-bar-fill {
+  display: block;
+  height: 100%;
+  background-color: var(--red);
+  transition: width 300ms cubic-bezier(0.86, 0, 0.07, 1);
+}
+
+/* Retour en arrière, et sortie discrète de l'écran de reprise. */
+.button-back {
+  margin-top: var(--spacing);
+  border: none;
+  background: none;
+  color: var(--grey);
+  font-family: 'Agdasima', sans-serif;
+  font-size: var(--font-size-s);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.button-back:hover {
+  color: var(--white);
+}
+
+/* ---------------------------------------------------------------------------
+ * La page publique de statistiques
+ * ------------------------------------------------------------------------- */
+
+.stats-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+  text-align: left;
+}
+
+.stats-page-tri {
+  display: flex;
+  gap: calc(var(--spacing) * 0.5);
+  justify-content: center;
+}
+
+.stats-page-tri button {
+  border: 1px solid var(--blueish-grey);
+  border-radius: var(--border-radius);
+  padding: calc(var(--spacing-text-y) * 0.6) var(--spacing);
+  background: none;
+  color: var(--grey);
+  font-family: 'Agdasima', sans-serif;
+  font-size: var(--font-size-s);
+  cursor: pointer;
+}
+
+.stats-page-tri .stats-tri-actif {
+  border-color: var(--red);
+  background-color: var(--red);
+  color: #fff;
+}
+
+.stats-question {
+  padding: var(--spacing);
+  border: 1px solid var(--blueish-grey);
+  border-radius: var(--border-radius);
+}
+
+.stats-question h3 {
+  margin: 0;
+  font-size: var(--font-size-m);
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.stats-question-base {
+  margin: calc(var(--spacing) * 0.25) 0 var(--spacing) 0;
+  color: var(--grey);
+  font-size: calc(var(--font-size-s) * 0.85);
+}
+
+/* L'écart qui fait la valeur de la page : il se voit avant d'être lu. */
+.stats-question-divise {
+  color: var(--yellow);
+  font-weight: bold;
+}
+
+.stats-barres {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing) * 0.75);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stats-barre-texte {
+  margin: 0 0 calc(var(--spacing) * 0.2) 0;
+  font-size: var(--font-size-s);
+}
+
+.stats-barre {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 1.4rem;
+  border-radius: calc(var(--border-radius) * 0.75);
+  background-color: var(--blueish-grey);
+  overflow: hidden;
+}
+
+.stats-barre-fond {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background-color: var(--red);
+}
+
+.stats-barre-valeur {
+  position: relative;
+  padding: 0 calc(var(--spacing) * 0.5);
+  font-size: var(--font-size-s);
+  font-weight: bold;
+}
+
+.stats-barre-sexes {
+  display: flex;
+  gap: var(--spacing);
+  margin: calc(var(--spacing) * 0.25) 0 0 0;
+  font-size: calc(var(--font-size-s) * 0.85);
+}
+
+/* Deux teintes distinctes, et jamais le rouge : il appartient au total. */
+.stats-sexe-h { color: #7dd3fc; }
+.stats-sexe-f { color: #f9a8d4; }

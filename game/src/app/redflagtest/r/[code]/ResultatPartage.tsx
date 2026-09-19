@@ -1,0 +1,51 @@
+'use client';
+
+/**
+ * @module redflagtest/r/ResultatPartage
+ * Le résultat de quelqu'un d'autre : la devinette, puis le récap.
+ *
+ * Le récap est LE MÊME composant que celui de fin de partie. Ces deux écrans
+ * doivent dire la même chose ; le seul moyen de s'en assurer est qu'ils passent
+ * par le même code. La seule différence tient en un accessoire absent —
+ * `onRecommencer` — parce qu'on ne « refait » pas la partie d'un autre.
+ */
+
+import { useEffect, useState } from 'react';
+import type { Resultat } from '@/lib/rft/types';
+import { Recap } from '../../Recap';
+import { Devinette } from './Devinette';
+
+export function ResultatPartage({ resultat }: { resultat: Resultat }) {
+  const [revele, setRevele] = useState(false);
+
+  // `flac.css` ne montre le bloc de fin que sous cette classe : sans elle, le
+  // récap est là mais invisible.
+  useEffect(() => {
+    if (!revele) return;
+    document.body.classList.add('switch-quiz-end');
+    return () => document.body.classList.remove('switch-quiz-end');
+  }, [revele]);
+
+  if (!revele) {
+    return <Devinette score={resultat.score} onReveler={() => setRevele(true)} />;
+  }
+
+  return (
+    <div className="game-wrapper">
+      {resultat.verdict && (
+        <div className="bracket-message">
+          <h2>
+            {resultat.verdict.emoji} {resultat.verdict.titre}
+          </h2>
+          {resultat.verdict.soustitre && <p className="subtitle">{resultat.verdict.soustitre}</p>}
+        </div>
+      )}
+
+      <div className="finish-block">
+        {/* Pas de profil : on ne connaît pas le sexe ni l'âge de celui qui a
+            joué, et les drapeaux se taisent plutôt que d'en inventer un. */}
+        <Recap resultat={resultat} profil={null} />
+      </div>
+    </div>
+  );
+}

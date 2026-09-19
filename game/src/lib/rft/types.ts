@@ -28,6 +28,33 @@ export interface Tag {
   color: string | null;
   position: number;
   isActive: boolean;
+  /**
+   * Au-delà de ce pourcentage sur l'axe, le récap cesse de faire de l'humour et
+   * propose quelque chose. `null` : jamais.
+   *
+   * Le seuil vit sur la catégorie parce que c'est elle qui sait de quoi elle
+   * parle. Un seuil global sur le score total afficherait un texte sur la
+   * violence à quelqu'un de simplement déloyal.
+   */
+  ressourceSeuil: number | null;
+  ressourceTexte: string | null;
+  ressourceLien: string | null;
+}
+
+/**
+ * Le nom donné au profil, lu sur les deux axes dominants.
+ *
+ * « ÇA SE VOIT DE LOIN » décrit un score. « LE CONTRÔLEUR AFFECTUEUX » décrit
+ * une personne, et c'est cela qu'on répète.
+ */
+export interface Archetype {
+  id: string;
+  tagA: string;
+  /** `null` quand un seul axe se détache vraiment. */
+  tagB: string | null;
+  emoji: string | null;
+  titre: string;
+  soustitre: string | null;
 }
 
 export interface ReponseAdmin {
@@ -130,6 +157,19 @@ export interface Axe {
   maximum: number;
 }
 
+/**
+ * Un renvoi vers une vraie ressource, quand le test cesse d'être un jeu.
+ *
+ * C'est ce qui le sépare d'un quiz de magazine, et c'est la chose à faire quand
+ * quelqu'un vient de cocher « oui » à la violence.
+ */
+export interface Ressource {
+  /** La catégorie qui l'a déclenchée, pour que le joueur sache pourquoi. */
+  label: string;
+  texte: string;
+  lien: string | null;
+}
+
 export interface Highlight {
   question: string;
   reponse: string;
@@ -158,9 +198,51 @@ export interface Resultat {
    * la moyenne des hommes de ton âge » se comprend sans effort.
    */
   comparaison: ComparaisonPublique | null;
+  /** Le nom du profil, quand un axe se détache assez pour en mériter un. */
+  archetype: Archetype | null;
+  /**
+   * La réponse qui a coûté le plus cher, quand elle pèse assez pour être citée.
+   *
+   * `null` sur un profil régulier : prétendre qu'une réponse à deux points « a
+   * fait la différence » serait faux.
+   */
+  reponseDecisive: { question: string; reponse: string; points: number } | null;
+  /** Les ressources déclenchées par les axes les plus hauts. */
+  ressources: Ressource[];
   highlights: Highlight[];
   /** Nombre total de parties enregistrées, celle-ci comprise. */
   participants: number;
+  /** L'adresse publique de cette partie, pour la partager. */
+  codePartage: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Statistiques publiques
+// ---------------------------------------------------------------------------
+
+/**
+ * Une réponse et sa popularité, au total et par sexe.
+ *
+ * Les trois dénominateurs sont transportés séparément : comparer une part
+ * d'hommes au total général donnerait des pourcentages qui ne somment pas à
+ * cent et des écarts inventés de toutes pièces.
+ */
+export interface StatReponse {
+  answerId: string;
+  texte: string;
+  points: number;
+  choix: number;
+  choixH: number;
+  choixF: number;
+}
+
+export interface StatQuestion {
+  questionId: string;
+  texte: string;
+  total: number;
+  totalH: number;
+  totalF: number;
+  reponses: StatReponse[];
 }
 
 export interface ComparaisonPublique {

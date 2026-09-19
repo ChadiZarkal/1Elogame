@@ -23,10 +23,15 @@ interface Brouillon {
   description: string;
   color: string;
   isActive: boolean;
+  /** Vide = aucune ressource proposée pour cette catégorie. */
+  ressourceSeuil: string;
+  ressourceTexte: string;
+  ressourceLien: string;
 }
 
 const VIDE: Brouillon = {
   id: null, slug: '', label: '', description: '', color: '#38bdf8', isActive: true,
+  ressourceSeuil: '', ressourceTexte: '', ressourceLien: '',
 };
 
 /** Un slug à partir du nom : minuscules, sans accent, tirets. */
@@ -75,6 +80,11 @@ export function TagsPanel({
         ? (tags.find((t) => t.id === brouillon.id)?.position ?? tags.length)
         : tags.length,
       isActive: brouillon.isActive,
+      // Une ressource sans seuil ou sans texte ne peut pas s'afficher : les
+      // trois champs partent ensemble ou pas du tout.
+      ressourceSeuil: brouillon.ressourceSeuil ? Number(brouillon.ressourceSeuil) : null,
+      ressourceTexte: brouillon.ressourceTexte.trim() || null,
+      ressourceLien: brouillon.ressourceLien.trim() || null,
     };
     void agir(() => (brouillon.id ? modifierTag(brouillon.id, charge) : creerTag(charge)));
   };
@@ -162,6 +172,52 @@ export function TagsPanel({
             </label>
           </div>
 
+          <fieldset className="mt-4 rounded-lg border border-white/10 p-3">
+            <legend className="px-1 text-xs font-bold uppercase tracking-wider text-[#737373]">
+              Ressource d’aide
+            </legend>
+            <p className="mb-2 text-[11px] leading-snug text-[#525252]">
+              Au-delà du seuil sur CET axe — pas sur le score total — le récap cesse de faire
+              de l’humour et affiche ce texte. Laisser le seuil vide pour ne jamais rien
+              proposer.
+            </p>
+
+            <div className="flex flex-wrap items-end gap-3">
+              <label className="text-xs font-bold uppercase tracking-wider text-[#737373]">
+                Seuil (%)
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={brouillon.ressourceSeuil}
+                  onChange={(e) => setBrouillon({ ...brouillon, ressourceSeuil: e.target.value })}
+                  placeholder="—"
+                  className="mt-1 w-20 rounded-lg border border-white/10 bg-[#0D0D0D] px-3 py-2 text-center text-sm font-black tabular-nums text-[#F5F5F5] outline-none focus:border-[#DC2626]"
+                />
+              </label>
+              <label className="min-w-[12rem] flex-1 text-xs font-bold uppercase tracking-wider text-[#737373]">
+                Lien
+                <input
+                  value={brouillon.ressourceLien}
+                  onChange={(e) => setBrouillon({ ...brouillon, ressourceLien: e.target.value })}
+                  placeholder="/ressources/violentometre"
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-[#0D0D0D] px-3 py-2 font-mono text-sm font-normal normal-case tracking-normal text-[#A3A3A3] outline-none focus:border-[#DC2626]"
+                />
+              </label>
+            </div>
+
+            <label className="mt-3 block text-xs font-bold uppercase tracking-wider text-[#737373]">
+              Texte
+              <textarea
+                rows={3}
+                value={brouillon.ressourceTexte}
+                onChange={(e) => setBrouillon({ ...brouillon, ressourceTexte: e.target.value })}
+                placeholder="Certaines de tes réponses décrivent des situations qui font du mal…"
+                className="mt-1 w-full rounded-lg border border-white/10 bg-[#0D0D0D] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#F5F5F5] outline-none focus:border-[#DC2626]"
+              />
+            </label>
+          </fieldset>
+
           <div className="mt-4 flex gap-2">
             <button
               onClick={enregistrer}
@@ -209,6 +265,11 @@ export function TagsPanel({
                   {n === 0
                     ? 'aucune question — cet axe n’apparaîtra pas sur le radar'
                     : `${n} question${n > 1 ? 's' : ''}`}
+                  {t.ressourceSeuil != null && (
+                    <span className="ml-2 text-[#E27C21]">
+                      ressource dès {t.ressourceSeuil} %
+                    </span>
+                  )}
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
@@ -221,6 +282,9 @@ export function TagsPanel({
                       description: t.description ?? '',
                       color: t.color ?? '#38bdf8',
                       isActive: t.isActive,
+                      ressourceSeuil: t.ressourceSeuil?.toString() ?? '',
+                      ressourceTexte: t.ressourceTexte ?? '',
+                      ressourceLien: t.ressourceLien ?? '',
                     })
                   }
                   disabled={occupe}

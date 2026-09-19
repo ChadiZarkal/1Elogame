@@ -33,6 +33,9 @@ import {
   maximumAtteignable,
   part,
   pointNoir,
+  reponseLaPlusChere,
+  ressourcesPour,
+  trouverArchetype,
   verdictPour,
   type ChoixResolu,
   type CohorteBrute,
@@ -40,11 +43,13 @@ import {
   type NomCohorte,
 } from './score';
 import type {
+  Archetype,
   Highlight,
   QuestionAdmin,
   QuizPublic,
   Resultat,
   Soumission,
+  StatQuestion,
   Tag,
   Verdict,
 } from './types';
@@ -82,7 +87,7 @@ export async function lireTags(): Promise<Tag[]> {
   const supabase = await client();
   const { data, error } = await supabase
     .from('rft_tags')
-    .select('id, slug, label, description, color, position, is_active')
+    .select('id, slug, label, description, color, position, is_active, resource_seuil, resource_texte, resource_lien')
     .order('position');
   verifier(error, 'Lecture des tags');
 
@@ -304,7 +309,7 @@ export async function reordonnerQuestions(ids: string[]): Promise<void> {
 
 export async function ecrireTag(
   id: string | null,
-  t: { slug: string; label: string; description: string | null; color: string | null; position: number; isActive: boolean },
+  t: EcritureTag,
 ): Promise<void> {
   if (isMockMode()) return fictif.ecrireTag(id, t);
 
@@ -316,6 +321,9 @@ export async function ecrireTag(
     color: t.color,
     position: t.position,
     is_active: t.isActive,
+    resource_seuil: t.ressourceSeuil,
+    resource_texte: t.ressourceTexte,
+    resource_lien: t.ressourceLien,
   };
 
   const { error } = id
@@ -361,11 +369,211 @@ export async function supprimerVerdict(id: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Archétypes
+// ---------------------------------------------------------------------------
+
+export interface EcritureTag {
+  slug: string;
+  label: string;
+  description: string | null;
+  color: string | null;
+  position: number;
+  isActive: boolean;
+  ressourceSeuil: number | null;
+  ressourceTexte: string | null;
+  ressourceLien: string | null;
+}
+
+export interface EcritureArchetype {
+  tagA: string;
+  tagB: string | null;
+  emoji: string | null;
+  titre: string;
+  soustitre: string | null;
+}
+
+export async function lireArchetypes(): Promise<Archetype[]> {
+  if (isMockMode()) return fictif.lireArchetypes();
+
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from('rft_archetypes')
+    .select('id, tag_a, tag_b, emoji, title, subtitle');
+  verifier(error, 'Lecture des archétypes');
+
+  return (data ?? []).map((r: RangeeArchetype) => ({
+    id: r.id,
+    tagA: r.tag_a,
+    tagB: r.tag_b,
+    emoji: r.emoji,
+    titre: r.title,
+    soustitre: r.subtitle,
+  }));
+}
+
+/**
+ * La paire est rangée avant d'être écrite.
+ *
+ * La base impose `tag_a < tag_b` pour qu'« Emprise + Loyauté » et
+ * « Loyauté + Emprise » soient la même ligne. Laisser le formulaire décider de
+ * l'ordre ferait échouer une saisie sur deux, avec un message de contrainte
+ * que personne n'aurait envie de lire.
+ */
+export async function ecrireArchetype(id: string | null, a: EcritureArchetype): Promise<void> {
+  if (isMockMode()) return fictif.ecrireArchetype(id, a);
+
+  const [tagA, tagB] = a.tagB === null
+    ? [a.tagA, null]
+    : [a.tagA, a.tagB].sort() as [string, string];
+
+  const supabase = await client();
+  const rangee = {
+    tag_a: tagA,
+    tag_b: tagB,
+    emoji: a.emoji,
+    title: a.titre,
+    subtitle: a.soustitre,
+  };
+
+  const { error } = id
+    ? await supabase.from('rft_archetypes').update(rangee).eq('id', id).select('id')
+    : await supabase.from('rft_archetypes').insert(rangee).select('id');
+  verifier(error, id ? 'Mise à jour de l’archétype' : 'Création de l’archétype');
+}
+
+export async function supprimerArchetype(id: string): Promise<void> {
+  if (isMockMode()) return fictif.supprimerArchetype(id);
+
+  const supabase = await client();
+  const { error } = await supabase.from('rft_archetypes').delete().eq('id', id);
+  verifier(error, 'Suppression de l’archétype');
+}
+
+// ---------------------------------------------------------------------------
 // Une partie
 // ---------------------------------------------------------------------------
 
 /** En dessous de cette part, une réponse ne mérite pas d'être signalée. */
 const HIGHLIGHTS_MAX = 3;
+
+/**
+ * Le code qui sert d'adresse publique à une partie.
+ *
+ * Tiré au hasard plutôt que dérivé de l'identifiant : un code devinable
+ * laisserait remonter à des résultats que personne n'a partagés. Neuf
+ * caractères en base 36 donnent cent mille milliards de combinaisons, ce qui
+ * rend la collision et l'énumération aussi improbables l'une que l'autre.
+ */
+function codePartage(): string {
+  const octets = new Uint8Array(9);
+  crypto.getRandomValues(octets);
+  return Array.from(octets, (o) => (o % 36).toString(36)).join('');
+}
+
+/** Tout le contenu dont dépend le calcul d'un résultat. */
+async function contexte() {
+  const [questions, tags, verdicts, archetypes] = await Promise.all([
+    lireQuestionsAdmin(),
+    lireTags(),
+    lireVerdicts(),
+    lireArchetypes(),
+  ]);
+  return { questions, tags, verdicts, archetypes };
+}
+
+type Contexte = Awaited<ReturnType<typeof contexte>>;
+
+/**
+ * Résout les identifiants envoyés par le client en réponses munies de leurs
+ * points, relus en base.
+ *
+ * Une réponse inconnue est ignorée plutôt que fatale : entre une question
+ * supprimée pendant qu'on y répondait et un écran d'erreur en fin de partie, le
+ * choix est vite fait.
+ */
+function resoudre(
+  questions: QuestionAdmin[],
+  choix: Array<{ questionId: string; answerId: string }>,
+): ChoixResolu[] {
+  const parId = new Map(questions.map((q) => [q.id, q]));
+  const resolus: ChoixResolu[] = [];
+
+  for (const c of choix) {
+    const question = parId.get(c.questionId);
+    const reponse = question?.reponses.find((r) => r.id === c.answerId);
+    if (!question || !reponse) continue;
+    resolus.push({
+      questionId: question.id,
+      answerId: reponse.id,
+      points: reponse.points,
+      tagIds: question.tagIds,
+    });
+  }
+  return resolus;
+}
+
+/** Le maximum atteignable, question par question. */
+function maximaDe(questions: QuestionAdmin[]): MaximumQuestion[] {
+  return questions
+    .filter((q) => q.active && q.reponses.length > 0)
+    .map((q) => ({
+      questionId: q.id,
+      maxPoints: Math.max(...q.reponses.map((r) => r.points)),
+      tagIds: q.tagIds,
+    }));
+}
+
+/**
+ * Assemble le résultat affiché, à partir des réponses et des agrégats.
+ *
+ * Partagé entre la fin de partie et la relecture d'un résultat partagé : ces
+ * deux écrans DOIVENT dire la même chose, et la seule façon de s'en assurer est
+ * qu'ils passent par le même code. Le résultat n'est d'ailleurs jamais figé en
+ * base — il se recalcule, pour qu'un lien partagé n'affiche pas éternellement
+ * des pourcentages de cohorte arrêtés au jour de la partie.
+ */
+function composer(
+  ctx: Contexte,
+  choix: ChoixResolu[],
+  brutes: CohorteBrute[],
+  parts: Map<string, number>,
+  code: string | null,
+  profil: { sexe: string | null; age: string | null },
+): Resultat {
+  const score = calculerScore(choix);
+  const axes = calculerAxes(choix, maximaDe(ctx.questions), ctx.tags.filter((t) => t.isActive));
+
+  const cohorte = (nom: NomCohorte) => brutes.find((c) => c.cohorte === nom);
+  const rang = (nom: NomCohorte) => {
+    const c = cohorte(nom);
+    return c ? classement(c.effectif, c.plusHauts) : null;
+  };
+
+  const chere = reponseLaPlusChere(choix, score);
+  const question = chere && ctx.questions.find((q) => q.id === chere.questionId);
+  const reponse = question?.reponses.find((r) => r.id === chere?.answerId);
+
+  return {
+    score,
+    verdict: verdictPour(score, ctx.verdicts),
+    classements: {
+      sexe: profil.sexe ? rang('sexe') : null,
+      age: profil.age ? rang('age') : null,
+    },
+    axes,
+    pointNoir: pointNoir(axes),
+    comparaison: comparaison(score, brutes),
+    archetype: trouverArchetype(axes, ctx.archetypes),
+    reponseDecisive:
+      question && reponse
+        ? { question: question.texte, reponse: reponse.texte, points: reponse.points }
+        : null,
+    ressources: ressourcesPour(axes, ctx.tags),
+    highlights: construireHighlights(choix, ctx.questions, parts),
+    participants: cohorte('tous')?.effectif ?? 1,
+    codePartage: code,
+  };
+}
 
 /**
  * Enregistre la partie et renvoie son résultat.
@@ -379,50 +587,20 @@ const HIGHLIGHTS_MAX = 3;
  * au vide et le rang bougerait d'une partie à l'autre pour un même score.
  */
 export async function enregistrerPartie(s: Soumission): Promise<Resultat> {
-  const [questions, tags, verdicts] = await Promise.all([
-    lireQuestionsAdmin(),
-    lireTags(),
-    lireVerdicts(),
-  ]);
-
-  const parId = new Map(questions.map((q) => [q.id, q]));
-  const choix: ChoixResolu[] = [];
-  for (const c of s.choix) {
-    const question = parId.get(c.questionId);
-    const reponse = question?.reponses.find((r) => r.id === c.answerId);
-    // Une réponse inconnue est ignorée plutôt que fatale : entre une question
-    // supprimée pendant qu'on y répondait et un écran d'erreur en fin de
-    // partie, le choix est vite fait.
-    if (!question || !reponse) continue;
-    choix.push({
-      questionId: question.id,
-      answerId: reponse.id,
-      points: reponse.points,
-      tagIds: question.tagIds,
-    });
-  }
-
+  const ctx = await contexte();
+  const choix = resoudre(ctx.questions, s.choix);
   const score = calculerScore(choix);
-  const maxima: MaximumQuestion[] = questions
-    .filter((q) => q.active && q.reponses.length > 0)
-    .map((q) => ({
-      questionId: q.id,
-      maxPoints: Math.max(...q.reponses.map((r) => r.points)),
-      tagIds: q.tagIds,
-    }));
-
-  const axes = calculerAxes(choix, maxima, tags.filter((t) => t.isActive));
-  const verdict = verdictPour(score, verdicts);
 
   if (isMockMode()) {
-    return fictif.resultat({ score, verdict, axes, choix, questions });
+    return fictif.resultat({ ctx, choix, score });
   }
 
   const supabase = await client();
+  const code = codePartage();
 
   const { data: run, error: erreurRun } = await supabase
     .from('rft_runs')
-    .insert({ score, sex: s.sexe, age: s.age, duration_ms: s.dureeMs })
+    .insert({ score, sex: s.sexe, age: s.age, duration_ms: s.dureeMs, share_code: code })
     .select('id')
     .single();
   verifier(erreurRun, 'Enregistrement de la partie');
@@ -437,8 +615,69 @@ export async function enregistrerPartie(s: Soumission): Promise<Resultat> {
     if (error) console.error('[RFT] Réponses de partie non enregistrées :', error.message);
   }
 
+  const { brutes, parts } = await agreger(score, s.sexe, s.age, choix);
+  return composer(ctx, choix, brutes, parts, code, { sexe: s.sexe, age: s.age });
+}
+
+/**
+ * Le résultat d'une partie partagée, relu depuis son code.
+ *
+ * Recalculé, jamais relu d'un cliché : les classements et les parts de réponses
+ * suivent la population d'aujourd'hui. Un lien ouvert six mois plus tard montre
+ * donc le même score, mais un rang qui a pu bouger — ce qui est la vérité.
+ */
+export async function lireResultatParCode(code: string): Promise<Resultat | null> {
+  if (isMockMode()) return fictif.resultatParCode(await contexte(), code);
+
+  const supabase = await client();
+
+  const { data: run, error } = await supabase
+    .from('rft_runs')
+    .select('id, score, sex, age')
+    .eq('share_code', code)
+    .maybeSingle();
+  verifier(error, 'Lecture de la partie partagée');
+  if (!run) return null;
+
+  const partie = run as { id: string; score: number; sex: string | null; age: string | null };
+
+  const { data: reponses, error: erreurReponses } = await supabase
+    .from('rft_run_answers')
+    .select('question_id, answer_id')
+    .eq('run_id', partie.id);
+  verifier(erreurReponses, 'Lecture des réponses de la partie');
+
+  const ctx = await contexte();
+  const choix = resoudre(
+    ctx.questions,
+    ((reponses ?? []) as Array<{ question_id: string; answer_id: string }>).map((r) => ({
+      questionId: r.question_id,
+      answerId: r.answer_id,
+    })),
+  );
+
+  // Le score relu, et non recalculé : une question dont le barème a changé
+  // depuis ne doit pas réécrire après coup le résultat de quelqu'un.
+  const { brutes, parts } = await agreger(partie.score, partie.sex, partie.age, choix);
+  const resultat = composer(ctx, choix, brutes, parts, code, {
+    sexe: partie.sex,
+    age: partie.age,
+  });
+
+  return { ...resultat, score: partie.score };
+}
+
+/** Les deux agrégats dont dépend le récap : cohortes et parts de réponses. */
+async function agreger(
+  score: number,
+  sexe: string | null,
+  age: string | null,
+  choix: ChoixResolu[],
+): Promise<{ brutes: CohorteBrute[]; parts: Map<string, number> }> {
+  const supabase = await client();
+
   const [cohortes, parts] = await Promise.all([
-    supabase.rpc('rft_cohortes', { p_score: score, p_sex: s.sexe, p_age: s.age }),
+    supabase.rpc('rft_cohortes', { p_score: score, p_sex: sexe, p_age: age }),
     choix.length > 0
       ? supabase.rpc('rft_parts_reponses', { p_answer_ids: choix.map((c) => c.answerId) })
       : Promise.resolve({ data: [], error: null }),
@@ -454,39 +693,27 @@ export async function enregistrerPartie(s: Soumission): Promise<Resultat> {
     // pas perdre de précision — et `null` quand la cohorte est vide.
     moyenne: string | number | null;
   };
-
-  const brutes: CohorteBrute[] = ((cohortes.data as LigneCohorte[] | null) ?? []).map((c) => ({
-    cohorte: c.cohorte,
-    effectif: Number(c.effectif),
-    plusHauts: Number(c.plus_hauts),
-    moyenne: c.moyenne === null ? null : Number(c.moyenne),
-  }));
-
-  const cohorte = (nom: NomCohorte) => brutes.find((c) => c.cohorte === nom);
-  const rang = (nom: NomCohorte) => {
-    const c = cohorte(nom);
-    return c ? classement(c.effectif, c.plusHauts) : null;
-  };
-
   type LignePart = { answer_id: string; choix: number; total_question: number };
-  const partsParReponse = new Map(
-    ((parts.data as LignePart[] | null) ?? []).map((p) => [
-      p.answer_id,
-      part(Number(p.choix), Number(p.total_question)),
-    ]),
-  );
 
   return {
-    score,
-    verdict,
-    classements: { sexe: s.sexe ? rang('sexe') : null, age: s.age ? rang('age') : null },
-    axes,
-    pointNoir: pointNoir(axes),
-    comparaison: comparaison(score, brutes),
-    highlights: construireHighlights(choix, questions, partsParReponse),
-    participants: cohorte('tous')?.effectif ?? 1,
+    brutes: ((cohortes.data as LigneCohorte[] | null) ?? []).map((c) => ({
+      cohorte: c.cohorte,
+      effectif: Number(c.effectif),
+      plusHauts: Number(c.plus_hauts),
+      moyenne: c.moyenne === null ? null : Number(c.moyenne),
+    })),
+    parts: new Map(
+      ((parts.data as LignePart[] | null) ?? []).map((p) => [
+        p.answer_id,
+        part(Number(p.choix), Number(p.total_question)),
+      ]),
+    ),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Mise en forme du récap
+// ---------------------------------------------------------------------------
 
 /**
  * Les réponses qui distinguent le plus le joueur.
@@ -521,6 +748,60 @@ function construireHighlights(
 }
 
 // ---------------------------------------------------------------------------
+// Statistiques publiques
+// ---------------------------------------------------------------------------
+
+/**
+ * Ce que la page publique affiche : chaque question, chaque réponse, et la part
+ * qui l'a choisie — au total, chez les hommes, chez les femmes.
+ *
+ * Les points n'y figurent pas. La page est publique : y faire apparaître le
+ * barème le rendrait consultable par tout le monde, et le test truquable.
+ */
+export async function lireStatsPubliques(): Promise<StatQuestion[]> {
+  const questions = (await lireQuestionsAdmin()).filter(
+    (q) => q.active && q.reponses.length > 0,
+  );
+
+  if (isMockMode()) return fictif.stats(questions);
+
+  const supabase = await client();
+  const { data, error } = await supabase.rpc('rft_stats_publiques', {});
+  verifier(error, 'Lecture des statistiques');
+
+  type Ligne = {
+    question_id: string; answer_id: string;
+    choix: number; choix_h: number; choix_f: number;
+    total: number; total_h: number; total_f: number;
+  };
+  const parReponse = new Map(
+    ((data as Ligne[] | null) ?? []).map((l) => [l.answer_id, l]),
+  );
+
+  return questions.map((q) => {
+    const premiere = q.reponses.map((r) => parReponse.get(r.id)).find(Boolean);
+    return {
+      questionId: q.id,
+      texte: q.texte,
+      total: Number(premiere?.total ?? 0),
+      totalH: Number(premiere?.total_h ?? 0),
+      totalF: Number(premiere?.total_f ?? 0),
+      reponses: q.reponses.map((r) => {
+        const l = parReponse.get(r.id);
+        return {
+          answerId: r.id,
+          texte: r.texte,
+          points: r.points,
+          choix: Number(l?.choix ?? 0),
+          choixH: Number(l?.choix_h ?? 0),
+          choixF: Number(l?.choix_f ?? 0),
+        };
+      }),
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Le budget de points, pour l'administration
 // ---------------------------------------------------------------------------
 
@@ -541,6 +822,15 @@ export function budget(questions: QuestionAdmin[]): number {
 // Conversions
 // ---------------------------------------------------------------------------
 
+interface RangeeArchetype {
+  id: string;
+  tag_a: string;
+  tag_b: string | null;
+  emoji: string | null;
+  title: string;
+  subtitle: string | null;
+}
+
 interface RangeeQuestion {
   id: string;
   position: number;
@@ -552,6 +842,7 @@ interface RangeeQuestion {
 function rangeeVersTag(r: {
   id: string; slug: string; label: string; description: string | null;
   color: string | null; position: number; is_active: boolean;
+  resource_seuil: number | null; resource_texte: string | null; resource_lien: string | null;
 }): Tag {
   return {
     id: r.id,
@@ -561,6 +852,9 @@ function rangeeVersTag(r: {
     color: r.color,
     position: r.position,
     isActive: r.is_active,
+    ressourceSeuil: r.resource_seuil,
+    ressourceTexte: r.resource_texte,
+    ressourceLien: r.resource_lien,
   };
 }
 

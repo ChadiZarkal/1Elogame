@@ -11,6 +11,14 @@ import {
   verdictPour,
   comparaison,
   pointNoir,
+  paireDominante,
+  clePaire,
+  trouverArchetype,
+  reponseLaPlusChere,
+  ressourcesPour,
+  ARCHETYPE_ECART,
+  ARCHETYPE_MINIMUM,
+  POINTS_DECISIFS,
   COMPARAISON_MIN,
   POINT_NOIR_ECART,
   POINT_NOIR_MINIMUM,
@@ -325,5 +333,155 @@ describe('comparaison', () => {
 
   it('transporte l’effectif, pour que l’écran puisse le citer', () => {
     expect(comparaison(50, [co('tous', 431, 30)])?.effectif).toBe(431);
+  });
+});
+
+describe('paireDominante', () => {
+  const axe = (tagId: string, valeur: number) => ({
+    tagId, label: tagId, color: null, valeur, points: valeur, maximum: 100,
+  });
+
+  it('retient les deux axes quand ils se tiennent', () => {
+    expect(paireDominante([axe('a', 80), axe('b', 70), axe('c', 20)]))
+      .toEqual({ tagA: 'a', tagB: 'b' });
+  });
+
+  // Au-delà de l'écart, ce n'est plus un profil à deux dominantes : c'est un
+  // seul axe qui écrase le reste, et traîner un second thème l'inventerait.
+  it('n’en retient qu’un quand le second décroche', () => {
+    expect(paireDominante([axe('a', 90), axe('b', 90 - ARCHETYPE_ECART - 1)]))
+      .toEqual({ tagA: 'a', tagB: null });
+  });
+
+  // Un profil sain n'a pas d'archétype, et c'est une bonne nouvelle à lui
+  // annoncer autrement qu'en le baptisant « LE SURVEILLANT ».
+  it('se tait sur un profil sain', () => {
+    expect(paireDominante([axe('a', ARCHETYPE_MINIMUM - 1), axe('b', 10)])).toBeNull();
+    expect(paireDominante([])).toBeNull();
+  });
+
+  it('gère un axe unique', () => {
+    expect(paireDominante([axe('seul', 90)])).toEqual({ tagA: 'seul', tagB: null });
+  });
+});
+
+describe('clePaire', () => {
+  // La base impose `tag_a < tag_b`. Sans ce tri, la moitié des recherches ne
+  // trouverait rien — et de façon imprévisible, selon l'ordre des axes.
+  it('range la paire, quel que soit l’ordre reçu', () => {
+    expect(clePaire({ tagA: 'zzz', tagB: 'aaa' }))
+      .toBe(clePaire({ tagA: 'aaa', tagB: 'zzz' }));
+  });
+
+  it('distingue une dominante unique d’une paire', () => {
+    expect(clePaire({ tagA: 'a', tagB: null })).not.toBe(clePaire({ tagA: 'a', tagB: 'b' }));
+  });
+});
+
+describe('trouverArchetype', () => {
+  const axe = (tagId: string, valeur: number) => ({
+    tagId, label: tagId, color: null, valeur, points: valeur, maximum: 100,
+  });
+  const arch = (id: string, tagA: string, tagB: string | null) => ({
+    id, tagA, tagB, emoji: null, titre: id, soustitre: null,
+  });
+
+  it('trouve la paire, écrite dans l’autre sens', () => {
+    const trouve = trouverArchetype(
+      [axe('emprise', 80), axe('loyaute', 75)],
+      [arch('STRATEGE', 'loyaute', 'emprise')],
+    );
+    expect(trouve?.titre).toBe('STRATEGE');
+  });
+
+  // Une paire sans nom est un trou dans le contenu, pas une raison de priver le
+  // joueur de sa ligne.
+  it('se rabat sur l’axe dominant seul quand la paire manque', () => {
+    const trouve = trouverArchetype(
+      [axe('emprise', 80), axe('loyaute', 75)],
+      [arch('SURVEILLANT', 'emprise', null)],
+    );
+    expect(trouve?.titre).toBe('SURVEILLANT');
+  });
+
+  it('ne rend rien quand rien ne correspond', () => {
+    expect(trouverArchetype([axe('emprise', 80)], [arch('X', 'colere', null)])).toBeNull();
+  });
+
+  it('ne rend rien sur un profil sans dominante', () => {
+    expect(trouverArchetype([axe('a', 12), axe('b', 8)], [arch('X', 'a', null)])).toBeNull();
+  });
+});
+
+describe('reponseLaPlusChere', () => {
+  const c = (points: number, id: string) => ({
+    questionId: id, answerId: `${id}-a`, points, tagIds: [],
+  });
+
+  it('désigne la réponse qui porte le score', () => {
+    const chere = reponseLaPlusChere([c(10, 'q1'), c(3, 'q2'), c(2, 'q3')], 15);
+    expect(chere?.questionId).toBe('q1');
+  });
+
+  // Sur un test bien réparti, la plus chère pèse un dixième du total :
+  // l'annoncer serait dire une banalité.
+  it('se tait sur un profil régulier', () => {
+    const reguliers = Array.from({ length: 12 }, (_, i) => c(5, `q${i}`));
+    expect(reponseLaPlusChere(reguliers, 60)).toBeNull();
+  });
+
+  it('exige un poids absolu en plus de la part', () => {
+    // 4 points sur 8, soit la moitié du score — mais quatre points ne sont pas
+    // une gifle.
+    expect(reponseLaPlusChere([c(4, 'q1'), c(4, 'q2')], 8)).toBeNull();
+    expect(POINTS_DECISIFS).toBe(5);
+  });
+
+  it('ne rend rien sur une partie vide ou un score nul', () => {
+    expect(reponseLaPlusChere([], 0)).toBeNull();
+    expect(reponseLaPlusChere([c(-3, 'q1')], 0)).toBeNull();
+  });
+});
+
+describe('ressourcesPour', () => {
+  const axe = (tagId: string, valeur: number) => ({
+    tagId, label: tagId, color: null, valeur, points: valeur, maximum: 100,
+  });
+  const tag = (id: string, seuil: number | null, texte: string | null = 'aide') => ({
+    id, slug: id, label: id.toUpperCase(), description: null, color: null,
+    position: 0, isActive: true,
+    ressourceSeuil: seuil, ressourceTexte: texte, ressourceLien: '/ressources/x',
+  });
+
+  it('propose la ressource au-delà du seuil', () => {
+    const r = ressourcesPour([axe('colere', 70)], [tag('colere', 55)]);
+    expect(r).toHaveLength(1);
+    expect(r[0].label).toBe('COLERE');
+  });
+
+  it('ne propose rien en deçà', () => {
+    expect(ressourcesPour([axe('colere', 54)], [tag('colere', 55)])).toEqual([]);
+  });
+
+  // Le seuil vit sur la catégorie, pas sur le score total : sans cela, un texte
+  // sur la violence s'afficherait pour quelqu'un de simplement déloyal.
+  it('n’applique le seuil d’une catégorie qu’à son propre axe', () => {
+    const r = ressourcesPour(
+      [axe('loyaute', 100), axe('colere', 10)],
+      [tag('colere', 55), tag('loyaute', null)],
+    );
+    expect(r).toEqual([]);
+  });
+
+  it('classe la plus grave en premier', () => {
+    const r = ressourcesPour(
+      [axe('emprise', 70), axe('colere', 95)],
+      [tag('colere', 55), tag('emprise', 55)],
+    );
+    expect(r.map((x) => x.label)).toEqual(['COLERE', 'EMPRISE']);
+  });
+
+  it('ignore un seuil sans texte à afficher', () => {
+    expect(ressourcesPour([axe('colere', 90)], [tag('colere', 55, null)])).toEqual([]);
   });
 });

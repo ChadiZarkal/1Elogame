@@ -19,9 +19,12 @@
  * serveur de développement, et c'est très bien ainsi.
  */
 
-import type { Axe, QuestionAdmin, Resultat, Tag, Verdict } from './types';
+import type { Archetype, QuestionAdmin, Resultat, StatQuestion, Tag, Verdict } from './types';
 import type { ChoixResolu } from './score';
-import { classement, comparaison, part, pointNoir } from './score';
+import {
+  calculerAxes, classement, comparaison, part, pointNoir, reponseLaPlusChere,
+  ressourcesPour, trouverArchetype, verdictPour,
+} from './score';
 
 let compteur = 0;
 const id = (prefixe: string) => `${prefixe}-${++compteur}`;
@@ -31,11 +34,11 @@ const id = (prefixe: string) => `${prefixe}-${++compteur}`;
 // ---------------------------------------------------------------------------
 
 const tags: Tag[] = [
-  { id: 'tag-communication', slug: 'communication', label: 'Communication', description: 'Dire les choses, écouter, gérer un désaccord', color: '#38bdf8', position: 1, isActive: true },
-  { id: 'tag-respect', slug: 'respect', label: 'Respect', description: 'Limites, consentement, considération de l’autre', color: '#f472b6', position: 2, isActive: true },
-  { id: 'tag-confiance', slug: 'confiance', label: 'Confiance', description: 'Jalousie, transparence, fiabilité', color: '#a78bfa', position: 3, isActive: true },
-  { id: 'tag-controle', slug: 'controle', label: 'Contrôle', description: 'Emprise, surveillance, besoin de décider pour l’autre', color: '#fb923c', position: 4, isActive: true },
-  { id: 'tag-egoisme', slug: 'egoisme', label: 'Égoïsme', description: 'Place laissée à l’autre, réciprocité, effort', color: '#facc15', position: 5, isActive: true },
+  { id: 'tag-communication', slug: 'communication', label: 'Communication', description: 'Dire les choses, écouter, gérer un désaccord', color: '#38bdf8', position: 1, isActive: true, ressourceSeuil: null, ressourceTexte: null, ressourceLien: null },
+  { id: 'tag-respect', slug: 'respect', label: 'Respect', description: 'Limites, consentement, considération de l’autre', color: '#f472b6', position: 2, isActive: true, ressourceSeuil: null, ressourceTexte: null, ressourceLien: null },
+  { id: 'tag-confiance', slug: 'confiance', label: 'Confiance', description: 'Jalousie, transparence, fiabilité', color: '#a78bfa', position: 3, isActive: true, ressourceSeuil: null, ressourceTexte: null, ressourceLien: null },
+  { id: 'tag-controle', slug: 'controle', label: 'Contrôle', description: 'Emprise, surveillance, besoin de décider pour l’autre', color: '#fb923c', position: 4, isActive: true, ressourceSeuil: 55, ressourceTexte: 'Surveiller, fouiller, décider pour l’autre : ce sont des comportements qui ont un nom, et une échelle.', ressourceLien: '/ressources/violentometre' },
+  { id: 'tag-egoisme', slug: 'egoisme', label: 'Égoïsme', description: 'Place laissée à l’autre, réciprocité, effort', color: '#facc15', position: 5, isActive: true, ressourceSeuil: null, ressourceTexte: null, ressourceLien: null },
 ];
 
 const verdicts: Verdict[] = [
@@ -171,7 +174,7 @@ export function reordonner(ids: string[]): void {
 
 export function ecrireTag(
   tagId: string | null,
-  t: { slug: string; label: string; description: string | null; color: string | null; position: number; isActive: boolean },
+  t: Omit<Tag, 'id'>,
 ): void {
   const existant = tags.find((x) => x.id === tagId);
   if (existant) Object.assign(existant, t);
@@ -199,39 +202,127 @@ export function supprimerVerdict(verdictId: string): void {
 }
 
 // ---------------------------------------------------------------------------
+// Archétypes
+// ---------------------------------------------------------------------------
+
+const archetypes: Archetype[] = [
+  { id: 'a-1', tagA: 'tag-confiance', tagB: 'tag-controle', emoji: '👁️', titre: 'LE SURVEILLANT', soustitre: 'Tu sais toujours où est tout le monde. On ne t’a rien demandé.' },
+  { id: 'a-2', tagA: 'tag-communication', tagB: 'tag-confiance', emoji: '🎭', titre: 'LE STRATÈGE', soustitre: 'Tu ne mens pas tout le temps. Juste quand ça sert.' },
+  { id: 'a-3', tagA: 'tag-egoisme', tagB: 'tag-respect', emoji: '🪐', titre: 'LE CENTRE DU MONDE', soustitre: 'La conversation revient toujours au même endroit.' },
+  { id: 'a-4', tagA: 'tag-controle', tagB: null, emoji: '🔑', titre: 'LE PROPRIÉTAIRE', soustitre: 'Tu appelles ça de l’attention. Personne d’autre ne l’appelle comme ça.' },
+  { id: 'a-5', tagA: 'tag-communication', tagB: null, emoji: '📖', titre: 'LE NARRATEUR', soustitre: 'Dans chacune de tes histoires, tu es celui qu’on a mal compris.' },
+  { id: 'a-6', tagA: 'tag-egoisme', tagB: null, emoji: '📣', titre: 'LE DONNEUR DE LEÇONS', soustitre: 'Tu as réfléchi à tout. Sauf à toi.' },
+];
+
+export function lireArchetypes(): Archetype[] {
+  return archetypes.map((a) => ({ ...a }));
+}
+
+export function ecrireArchetype(
+  archetypeId: string | null,
+  a: { tagA: string; tagB: string | null; emoji: string | null; titre: string; soustitre: string | null },
+): void {
+  const existant = archetypes.find((x) => x.id === archetypeId);
+  if (existant) Object.assign(existant, a);
+  else archetypes.push({ id: id('a'), ...a });
+}
+
+export function supprimerArchetype(archetypeId: string): void {
+  const i = archetypes.findIndex((a) => a.id === archetypeId);
+  if (i >= 0) archetypes.splice(i, 1);
+}
+
+// ---------------------------------------------------------------------------
 // Résultat
 // ---------------------------------------------------------------------------
 
 /**
- * Le récap en local : le score, le verdict et les axes sont les vrais — ils
- * sortent du même calcul qu'en production. Seuls les classements et les parts
- * de réponses sont simulés, faute de parties enregistrées.
+ * Les parties jouées en local, pour que les liens de partage fonctionnent.
+ *
+ * Posées sur `globalThis` et non dans une variable de module : en
+ * développement, Next compile les routes d'API et les composants serveur dans
+ * deux graphes distincts, et chacun obtient sa propre instance du module. Une
+ * partie enregistrée par la route de soumission serait donc introuvable par la
+ * page de résultat partagé — un 404 qui n'existe qu'en local, et qui ferait
+ * chercher un bug là où il n'y en a pas.
+ */
+const memoire = globalThis as unknown as { __rftParties?: Map<string, ChoixResolu[]> };
+const partiesLocales = (memoire.__rftParties ??= new Map<string, ChoixResolu[]>());
+
+interface ContexteFictif {
+  questions: QuestionAdmin[];
+  tags: Tag[];
+  verdicts: Verdict[];
+  archetypes: Archetype[];
+}
+
+/**
+ * Le récap en local.
+ *
+ * Le score, le verdict, les axes, l'archétype, la réponse décisive et les
+ * ressources sont les VRAIS — ils sortent du même calcul qu'en production.
+ * Seuls les classements et les parts de réponses sont simulés, faute de parties
+ * enregistrées.
  */
 export function resultat(args: {
-  score: number;
-  verdict: Verdict | null;
-  axes: Axe[];
+  ctx: ContexteFictif;
   choix: ChoixResolu[];
-  questions: QuestionAdmin[];
+  score: number;
 }): Resultat {
-  const population = [...scoresFictifs, args.score];
-  const plusHauts = population.filter((s) => s > args.score).length;
+  const code = id('code');
+  partiesLocales.set(code, args.choix);
+  return composer(args.ctx, args.choix, args.score, code);
+}
+
+export function resultatParCode(ctx: ContexteFictif, code: string): Resultat | null {
+  const choix = partiesLocales.get(code);
+  if (!choix) return null;
+  return composer(ctx, choix, choix.reduce((a, c) => a + c.points, 0), code);
+}
+
+function composer(
+  ctx: ContexteFictif,
+  choix: ChoixResolu[],
+  score: number,
+  code: string,
+): Resultat {
+  const population = [...scoresFictifs, score];
+  const plusHauts = population.filter((s) => s > score).length;
   const moyenne = population.reduce((a, b) => a + b, 0) / population.length;
-  const parId = new Map(args.questions.map((q) => [q.id, q]));
+  const parId = new Map(ctx.questions.map((q) => [q.id, q]));
+
+  const maxima = ctx.questions
+    .filter((q) => q.active && q.reponses.length > 0)
+    .map((q) => ({
+      questionId: q.id,
+      maxPoints: Math.max(...q.reponses.map((r) => r.points)),
+      tagIds: q.tagIds,
+    }));
+  const axes = calculerAxes(choix, maxima, ctx.tags.filter((t) => t.isActive));
+
+  const chere = reponseLaPlusChere(choix, score);
+  const questionChere = chere && parId.get(chere.questionId);
+  const reponseChere = questionChere?.reponses.find((r) => r.id === chere?.answerId);
 
   return {
-    score: args.score,
-    verdict: args.verdict,
+    score,
+    verdict: verdictPour(score, ctx.verdicts),
     classements: {
       sexe: classement(population.length, plusHauts),
       age: classement(Math.round(population.length / 2), Math.round(plusHauts / 2)),
     },
-    axes: args.axes,
-    pointNoir: pointNoir(args.axes),
-    comparaison: comparaison(args.score, [
+    axes,
+    pointNoir: pointNoir(axes),
+    comparaison: comparaison(score, [
       { cohorte: 'sexe_age', effectif: population.length, plusHauts, moyenne },
     ]),
-    highlights: args.choix
+    archetype: trouverArchetype(axes, ctx.archetypes),
+    reponseDecisive:
+      questionChere && reponseChere
+        ? { question: questionChere.texte, reponse: reponseChere.texte, points: reponseChere.points }
+        : null,
+    ressources: ressourcesPour(axes, ctx.tags),
+    highlights: choix
       .map((c) => {
         const question = parId.get(c.questionId);
         const reponse = question?.reponses.find((r) => r.id === c.answerId);
@@ -251,5 +342,70 @@ export function resultat(args: {
       .sort((a, b) => a.part - b.part)
       .slice(0, 3),
     participants: population.length,
+    codePartage: code,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Statistiques
+// ---------------------------------------------------------------------------
+
+/**
+ * Des parts inventées mais COHÉRENTES : chaque population est tirée de sa
+ * propre distribution, normalisée séparément, de sorte que les pourcentages
+ * d'une question somment à cent chez les hommes comme chez les femmes.
+ *
+ * Une première version multipliait simplement la part générale par un facteur
+ * selon le sexe. Elle affichait « 115 % des hommes », ce qui est impossible et
+ * ce qu'aucune vraie donnée ne produira jamais — mais un écran qui montre 115 %
+ * apprend à ne plus lire l'écran, et c'est le pire service à rendre à une page
+ * de statistiques.
+ *
+ * Le penchant simulé : les femmes choisissent moins souvent les réponses
+ * chargées. C'est faux, mais c'est la FORME que prendront les vraies données,
+ * ce qui suffit à juger la page.
+ */
+export function stats(questionsActives: QuestionAdmin[]): StatQuestion[] {
+  /** Répartit `total` selon des poids, sans perdre ni inventer de réponse. */
+  const repartir = (total: number, poids: number[]): number[] => {
+    const somme = poids.reduce((a, b) => a + b, 0) || 1;
+    const parts = poids.map((p) => Math.floor((p / somme) * total));
+    // Les arrondis à la baisse laissent un reste : il va à la réponse la plus
+    // lourde, pour que le compte tombe juste.
+    const reste = total - parts.reduce((a, b) => a + b, 0);
+    if (parts.length > 0) parts[poids.indexOf(Math.max(...poids))] += reste;
+    return parts;
+  };
+
+  return questionsActives.map((q, iq) => {
+    const total = 180 + iq * 13;
+    const totalH = Math.round(total * 0.62);
+    const totalF = total - totalH;
+
+    // Plus une réponse est chargée, moins elle est choisie — et l'effet est
+    // plus marqué chez les femmes.
+    const base = q.reponses.map((r) => 1 / (1 + Math.max(0, r.points)));
+    const poidsH = q.reponses.map((r, i) => base[i] * (r.points > 0 ? 1.35 : 1));
+    const poidsF = q.reponses.map((r, i) => base[i] * (r.points > 0 ? 0.55 : 1));
+
+    const tous = repartir(total, base);
+    const hommes = repartir(totalH, poidsH);
+    const femmes = repartir(totalF, poidsF);
+
+    return {
+      questionId: q.id,
+      texte: q.texte,
+      total,
+      totalH,
+      totalF,
+      reponses: q.reponses.map((r, i) => ({
+        answerId: r.id,
+        texte: r.texte,
+        points: r.points,
+        choix: tous[i],
+        choixH: hommes[i],
+        choixF: femmes[i],
+      })),
+    };
+  });
 }

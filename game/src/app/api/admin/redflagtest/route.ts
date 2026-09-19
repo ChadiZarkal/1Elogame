@@ -1,5 +1,7 @@
 import { withApiHandler, apiSuccess } from '@/lib/apiHelpers';
-import { budget, lireQuestionsAdmin, lireTags, lireVerdicts } from '@/lib/rft/repository';
+import {
+  budget, lireArchetypes, lireQuestionsAdmin, lireTags, lireVerdicts,
+} from '@/lib/rft/repository';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,11 +21,12 @@ export const dynamic = 'force-dynamic';
  *   que vaut le questionnaire tel qu'il est écrit, pas à contraindre la saisie.
  */
 export const GET = withApiHandler(async () => {
-  const [questions, tags, verdicts] = await Promise.all([
+  const [questions, tags, verdicts, archetypes] = await Promise.all([
     lireQuestionsAdmin(),
     lireTags(),
     lireVerdicts(),
+    lireArchetypes(),
   ]);
 
-  return apiSuccess({ questions, tags, verdicts, budget: budget(questions) });
+  return apiSuccess({ questions, tags, verdicts, archetypes, budget: budget(questions) });
 }, { requireAdmin: true });

@@ -17,7 +17,7 @@
  *   prendre. Les points bruts restent transportés à côté.
  */
 
-import type { Axe, Classement, Indice, Verdict } from './types';
+import type { Archetype, Axe, Classement, Indice, Ressource, Tag, Verdict } from './types';
 
 /** Une réponse choisie, telle que le serveur la relit en base. */
 export interface ChoixResolu {
@@ -198,6 +198,91 @@ export function pointNoir(axes: Axe[]): Axe | null {
 }
 
 // ---------------------------------------------------------------------------
+// L'archétype
+// ---------------------------------------------------------------------------
+
+/**
+ * En dessous de cette valeur sur l'axe dominant, personne n'a d'archétype.
+ *
+ * Nommer « LE SURVEILLANT » quelqu'un dont l'axe le plus haut est à 20 % serait
+ * lui coller une étiquette que ses réponses ne portent pas. Un profil sain n'a
+ * pas d'archétype, et c'est une bonne nouvelle à lui annoncer autrement.
+ */
+export const ARCHETYPE_MINIMUM = 34;
+
+/**
+ * Le deuxième axe entre dans l'archétype s'il est à moins de cela du premier.
+ *
+ * Au-delà, ce n'est plus un profil à deux dominantes : c'est un seul axe qui
+ * écrase le reste, et l'archétype doit le dire seul plutôt que de traîner un
+ * second thème qui n'existe pas.
+ */
+export const ARCHETYPE_ECART = 20;
+
+/** Les deux axes qui définissent l'archétype, ou rien. */
+export interface PaireDominante {
+  tagA: string;
+  /** `null` quand un seul axe se détache vraiment. */
+  tagB: string | null;
+}
+
+export function paireDominante(axes: Axe[]): PaireDominante | null {
+  if (axes.length === 0) return null;
+
+  const tries = [...axes].sort((a, b) => b.valeur - a.valeur);
+  const [premier, second] = tries;
+  if (premier.valeur < ARCHETYPE_MINIMUM) return null;
+
+  const accompagne = second !== undefined && premier.valeur - second.valeur <= ARCHETYPE_ECART;
+  return { tagA: premier.tagId, tagB: accompagne ? second.tagId : null };
+}
+
+/**
+ * La clé de recherche d'une paire, rangée dans l'ordre.
+ *
+ * La base impose `tag_a < tag_b` pour qu'« Emprise + Loyauté » et
+ * « Loyauté + Emprise » soient la même ligne. Le tri doit donc être refait ici,
+ * sans quoi la moitié des recherches ne trouverait rien — et de façon
+ * imprévisible, selon l'ordre des axes.
+ */
+export function clePaire(paire: PaireDominante): string {
+  if (paire.tagB === null) return `${paire.tagA}|`;
+  const [a, b] = [paire.tagA, paire.tagB].sort();
+  return `${a}|${b}`;
+}
+
+// ---------------------------------------------------------------------------
+// La réponse la plus chère
+// ---------------------------------------------------------------------------
+
+/**
+ * La part du score qu'une seule réponse doit peser pour mériter d'être citée.
+ *
+ * Sur un test bien réparti, la réponse la plus chère pèse un dixième du total :
+ * l'annoncer serait dire une banalité. C'est quand une seule réponse porte le
+ * cinquième du score que la phrase devient une gifle — et qu'elle est vraie.
+ */
+export const PART_DECISIVE = 0.2;
+
+/** Elle doit aussi valoir quelque chose en absolu : trois points sur douze, non. */
+export const POINTS_DECISIFS = 5;
+
+/**
+ * La réponse qui a coûté le plus cher, quand elle pèse assez pour compter.
+ *
+ * `null` sur un profil régulier — c'est le cas le plus courant, et prétendre
+ * qu'une réponse à deux points « a fait la différence » serait faux.
+ */
+export function reponseLaPlusChere(choix: ChoixResolu[], score: number): ChoixResolu | null {
+  if (choix.length === 0 || score <= 0) return null;
+
+  const pire = choix.reduce((max, c) => (c.points > max.points ? c : max), choix[0]);
+  if (pire.points < POINTS_DECISIFS) return null;
+  if (pire.points / score < PART_DECISIVE) return null;
+  return pire;
+}
+
+// ---------------------------------------------------------------------------
 // La comparaison à la moyenne
 // ---------------------------------------------------------------------------
 
@@ -262,6 +347,43 @@ export function comparaison(score: number, cohortes: CohorteBrute[]): Comparaiso
     };
   }
   return null;
+}
+
+/** L'archétype correspondant aux deux axes dominants, s'il a été écrit. */
+export function trouverArchetype(axes: Axe[], archetypes: Archetype[]): Archetype | null {
+  const paire = paireDominante(axes);
+  if (!paire) return null;
+
+  const cherchee = clePaire(paire);
+  const trouve = archetypes.find((a) => clePaire({ tagA: a.tagA, tagB: a.tagB }) === cherchee);
+  if (trouve) return trouve;
+
+  // Rien pour cette paire : on se rabat sur l'axe dominant seul plutôt que de
+  // ne rien afficher. Un archétype manquant est un trou dans le contenu, pas
+  // une raison de priver le joueur de sa ligne.
+  const seul = clePaire({ tagA: paire.tagA, tagB: null });
+  return archetypes.find((a) => clePaire({ tagA: a.tagA, tagB: a.tagB }) === seul) ?? null;
+}
+
+/**
+ * Les ressources déclenchées, une par catégorie ayant dépassé son seuil.
+ *
+ * Triées par gravité décroissante : quand deux s'appliquent, celle de l'axe le
+ * plus haut passe en premier.
+ */
+export function ressourcesPour(axes: Axe[], tags: Tag[]): Ressource[] {
+  const parId = new Map(tags.map((t) => [t.id, t]));
+
+  return axes
+    .filter((axe) => {
+      const tag = parId.get(axe.tagId);
+      return tag?.ressourceSeuil != null && tag.ressourceTexte && axe.valeur >= tag.ressourceSeuil;
+    })
+    .sort((a, b) => b.valeur - a.valeur)
+    .map((axe) => {
+      const tag = parId.get(axe.tagId)!;
+      return { label: tag.label, texte: tag.ressourceTexte!, lien: tag.ressourceLien };
+    });
 }
 
 // ---------------------------------------------------------------------------
