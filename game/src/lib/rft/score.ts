@@ -211,6 +211,36 @@ export function legendeAge(age: string | null): string {
   return age === '27+' ? 'des 27 ans et plus' : `des ${age} ans`;
 }
 
+/*
+ * LES FORMES COURTES, POUR LES DRAPEAUX.
+ *
+ * Sous un drapeau, la légende dispose d'une colonne de quatre-vingts pixels.
+ * « des 27 ans et plus » y tient tant que la police condensée de la référence
+ * est chargée — et elle arrive en `font-display: swap`, donc le premier
+ * affichage se fait avec le repli du système, beaucoup plus large. Deux
+ * légendes sur trois passaient alors à deux lignes pendant que la troisième
+ * restait à une : la rangée devenait bancale, et le restait sur les téléphones
+ * où la police met du temps à venir.
+ *
+ * Le contexte est déjà donné par le drapeau et par le « Top X % » au-dessus :
+ * « FEMMES » suffit, et tient sur une ligne dans n'importe quelle police.
+ */
+
+const SEXES_COURTS: Record<string, string> = {
+  homme: 'hommes',
+  femme: 'femmes',
+  autre: 'joueurs',
+};
+
+export function legendeSexeCourte(sexe: string | null): string {
+  return (sexe && SEXES_COURTS[sexe]) || 'joueurs';
+}
+
+export function legendeAgeCourte(age: string | null): string {
+  if (!age) return 'ton âge';
+  return age === '27+' ? '27 ans +' : `${age} ans`;
+}
+
 /** La population de référence d'une comparaison. */
 export function legendeCohorte(
   cohorte: NomCohorte,

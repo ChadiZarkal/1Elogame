@@ -22,8 +22,8 @@
 import type { Archetype, QuestionAdmin, Resultat, StatQuestion, Tag, Verdict } from './types';
 import type { ChoixResolu } from './score';
 import {
-  calculerAxes, classement, comparaison, legendeAge, legendeCohorte, legendeSexe,
-  part, pointNoir, reponseLaPlusChere, ressourcesPour, trouverArchetype, verdictPour,
+  calculerAxes, classement, comparaison, legendeAgeCourte, legendeCohorte,
+  legendeSexeCourte, part, pointNoir, reponseLaPlusChere, ressourcesPour, trouverArchetype, verdictPour,
 } from './score';
 
 let compteur = 0;
@@ -321,15 +321,15 @@ function composer(
     score,
     verdict: verdictPour(score, ctx.verdicts),
     classements: {
-      tous: classement(population.length, plusHauts, 'de tout le monde'),
+      tous: classement(population.length, plusHauts, 'tous'),
       sexe: profil.sexe
-        ? classement(population.length, plusHauts, legendeSexe(profil.sexe))
+        ? classement(population.length, plusHauts, legendeSexeCourte(profil.sexe))
         : null,
       age: profil.age
         ? classement(
             Math.round(population.length / 2),
             Math.round(plusHauts / 2),
-            legendeAge(profil.age),
+            legendeAgeCourte(profil.age),
           )
         : null,
     },

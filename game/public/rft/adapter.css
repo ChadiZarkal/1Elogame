@@ -866,15 +866,42 @@ body:has(.main-container) {
   font-weight: bold;
 }
 
+/*
+ * La legende tient sur UNE ligne, dans n'importe quelle police.
+ *
+ * La colonne fait quatre-vingts pixels sur un petit telephone. Avec les anciens
+ * libelles — « de tout le monde », « des 27 ans et plus » — deux colonnes sur
+ * trois passaient a deux lignes pendant que la troisieme restait a une, des que
+ * la police condensee de la reference n'etait pas encore chargee. Elle arrive
+ * en `font-display: swap` : le premier affichage se fait donc toujours avec le
+ * repli du systeme, beaucoup plus large.
+ *
+ * Les libelles sont desormais courts — « femmes », « 19-22 ans » — et la taille
+ * suit la largeur de l'ecran. Le contexte est donne par le drapeau et par le
+ * « Top X % » juste au-dessus : il n'y a rien a repeter.
+ */
 .carte-flags .flag-legende {
   margin: 0;
   color: var(--grey);
-  font-size: calc(var(--font-size-s) * 0.78);
+  font-size: clamp(0.6rem, 2.6vw, 0.78rem);
   line-height: 1.15;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.carte-flags .low-sample-warning {
-  margin: 0;
-  font-size: calc(var(--font-size-s) * 0.7);
+.carte-flags .flag-rang {
+  white-space: nowrap;
+}
+
+/* Le rang repose sur une cohorte mince : la note est sous la rangee. */
+.flag-etoile {
+  color: var(--yellow);
+}
+
+.carte-minces {
+  margin: calc(var(--spacing) * 0.3) 0 0;
+  color: var(--grey);
+  font-size: calc(var(--font-size-s) * 0.72);
+  font-style: italic;
+  line-height: 1.2;
 }

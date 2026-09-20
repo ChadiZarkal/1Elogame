@@ -83,6 +83,17 @@ export function Recap({
 }) {
   const affiche = useCompteur(resultat.score);
 
+  /* Les cohortes dont le rang repose sur trop peu de monde pour vouloir dire
+     quelque chose. Le rang reste affiche — le cacher serait pire — mais on dit
+     ce qu'il vaut, une fois pour toutes plutot que sous chaque drapeau. */
+  const cohortesMinces = [
+    resultat.classements.tous,
+    resultat.classements.sexe,
+    resultat.classements.age,
+  ]
+    .filter((c) => c?.avertissement)
+    .map((c) => c!.legende);
+
   return (
     <>
       {/*
@@ -169,6 +180,17 @@ export function Recap({
               <Drapeau genre="age" rang={resultat.classements.age} />
             )}
           </ul>
+        )}
+
+        {/* L'avertissement de cohorte mince vivait sous chaque drapeau
+            concerne. Il n'en touchait qu'un ou deux sur trois, et sa longueur
+            deformait la colonne : une rangee bancale, exactement ce qu'on voit
+            sur un telephone ou la police condensee n'est pas encore arrivee. Une
+            etoile sur le rang, une note partagee dessous. */}
+        {cohortesMinces.length > 0 && (
+          <p className="carte-minces">
+            * {cohortesMinces.join(', ')} — encore peu de parties
+          </p>
         )}
 
         <div className="carte-lignes">
@@ -359,9 +381,9 @@ function Drapeau({
       <img className="img-flag" src={`/rft/img/flag-${genre}-${rang.couleur}.svg`} alt="" />
       <p className="flag-rang">
         <strong>Top {rang.top} %</strong>
+        {rang.avertissement && <span className="flag-etoile">*</span>}
       </p>
       <p className="flag-legende">{rang.legende}</p>
-      {rang.avertissement && <p className="low-sample-warning">({rang.avertissement})</p>}
     </li>
   );
 }
