@@ -22,8 +22,8 @@
 import type { Archetype, QuestionAdmin, Resultat, StatQuestion, Tag, Verdict } from './types';
 import type { ChoixResolu } from './score';
 import {
-  calculerAxes, classement, comparaison, part, pointNoir, reponseLaPlusChere,
-  ressourcesPour, trouverArchetype, verdictPour,
+  calculerAxes, classement, comparaison, legendeAge, legendeCohorte, legendeSexe,
+  part, pointNoir, reponseLaPlusChere, ressourcesPour, trouverArchetype, verdictPour,
 } from './score';
 
 let compteur = 0;
@@ -246,8 +246,18 @@ export function supprimerArchetype(archetypeId: string): void {
  * page de résultat partagé — un 404 qui n'existe qu'en local, et qui ferait
  * chercher un bug là où il n'y en a pas.
  */
-const memoire = globalThis as unknown as { __rftParties?: Map<string, ChoixResolu[]> };
-const partiesLocales = (memoire.__rftParties ??= new Map<string, ChoixResolu[]>());
+const memoire = globalThis as unknown as { __rftParties?: Map<string, PartieLocale> };
+const partiesLocales = (memoire.__rftParties ??= new Map<string, PartieLocale>());
+
+interface PartieLocale {
+  choix: ChoixResolu[];
+  profil: Profil;
+}
+
+interface Profil {
+  sexe: string | null;
+  age: string | null;
+}
 
 interface ContexteFictif {
   questions: QuestionAdmin[];
@@ -268,16 +278,18 @@ export function resultat(args: {
   ctx: ContexteFictif;
   choix: ChoixResolu[];
   score: number;
+  profil: Profil;
 }): Resultat {
   const code = id('code');
-  partiesLocales.set(code, args.choix);
-  return composer(args.ctx, args.choix, args.score, code);
+  partiesLocales.set(code, { choix: args.choix, profil: args.profil });
+  return composer(args.ctx, args.choix, args.score, code, args.profil);
 }
 
 export function resultatParCode(ctx: ContexteFictif, code: string): Resultat | null {
-  const choix = partiesLocales.get(code);
-  if (!choix) return null;
-  return composer(ctx, choix, choix.reduce((a, c) => a + c.points, 0), code);
+  const partie = partiesLocales.get(code);
+  if (!partie) return null;
+  const score = partie.choix.reduce((a, c) => a + c.points, 0);
+  return composer(ctx, partie.choix, score, code, partie.profil);
 }
 
 function composer(
@@ -285,6 +297,7 @@ function composer(
   choix: ChoixResolu[],
   score: number,
   code: string,
+  profil: Profil,
 ): Resultat {
   const population = [...scoresFictifs, score];
   const plusHauts = population.filter((s) => s > score).length;
@@ -308,14 +321,26 @@ function composer(
     score,
     verdict: verdictPour(score, ctx.verdicts),
     classements: {
-      sexe: classement(population.length, plusHauts),
-      age: classement(Math.round(population.length / 2), Math.round(plusHauts / 2)),
+      tous: classement(population.length, plusHauts, 'de tout le monde'),
+      sexe: profil.sexe
+        ? classement(population.length, plusHauts, legendeSexe(profil.sexe))
+        : null,
+      age: profil.age
+        ? classement(
+            Math.round(population.length / 2),
+            Math.round(plusHauts / 2),
+            legendeAge(profil.age),
+          )
+        : null,
     },
     axes,
     pointNoir: pointNoir(axes),
-    comparaison: comparaison(score, [
-      { cohorte: 'sexe_age', effectif: population.length, plusHauts, moyenne },
-    ]),
+    comparaison: (() => {
+      const c = comparaison(score, [
+        { cohorte: 'sexe_age', effectif: population.length, plusHauts, moyenne },
+      ]);
+      return c ? { ...c, legende: legendeCohorte(c.cohorte, profil) } : null;
+    })(),
     archetype: trouverArchetype(axes, ctx.archetypes),
     reponseDecisive:
       questionChere && reponseChere

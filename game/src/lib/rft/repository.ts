@@ -33,6 +33,9 @@ import {
   maximumAtteignable,
   part,
   pointNoir,
+  legendeAge,
+  legendeCohorte,
+  legendeSexe,
   reponseLaPlusChere,
   ressourcesPour,
   trouverArchetype,
@@ -544,9 +547,9 @@ function composer(
   const axes = calculerAxes(choix, maximaDe(ctx.questions), ctx.tags.filter((t) => t.isActive));
 
   const cohorte = (nom: NomCohorte) => brutes.find((c) => c.cohorte === nom);
-  const rang = (nom: NomCohorte) => {
+  const rang = (nom: NomCohorte, legende: string) => {
     const c = cohorte(nom);
-    return c ? classement(c.effectif, c.plusHauts) : null;
+    return c ? classement(c.effectif, c.plusHauts, legende) : null;
   };
 
   const chere = reponseLaPlusChere(choix, score);
@@ -557,12 +560,16 @@ function composer(
     score,
     verdict: verdictPour(score, ctx.verdicts),
     classements: {
-      sexe: profil.sexe ? rang('sexe') : null,
-      age: profil.age ? rang('age') : null,
+      tous: rang('tous', 'de tout le monde'),
+      sexe: profil.sexe ? rang('sexe', legendeSexe(profil.sexe)) : null,
+      age: profil.age ? rang('age', legendeAge(profil.age)) : null,
     },
     axes,
     pointNoir: pointNoir(axes),
-    comparaison: comparaison(score, brutes),
+    comparaison: (() => {
+      const c = comparaison(score, brutes);
+      return c ? { ...c, legende: legendeCohorte(c.cohorte, profil) } : null;
+    })(),
     archetype: trouverArchetype(axes, ctx.archetypes),
     reponseDecisive:
       question && reponse
@@ -592,7 +599,7 @@ export async function enregistrerPartie(s: Soumission): Promise<Resultat> {
   const score = calculerScore(choix);
 
   if (isMockMode()) {
-    return fictif.resultat({ ctx, choix, score });
+    return fictif.resultat({ ctx, choix, score, profil: { sexe: s.sexe, age: s.age } });
   }
 
   const supabase = await client();

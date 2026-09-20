@@ -17,7 +17,9 @@
  *   prendre. Les points bruts restent transportés à côté.
  */
 
-import type { Archetype, Axe, Classement, Indice, Ressource, Tag, Verdict } from './types';
+import type {
+  Archetype, Axe, Classement, CouleurDrapeau, Indice, Ressource, Tag, Verdict,
+} from './types';
 
 /** Une réponse choisie, telle que le serveur la relit en base. */
 export interface ChoixResolu {
@@ -149,14 +151,83 @@ export const COHORTE_MINCE = 20;
  * « top 34 % », pas « top 33 % ». Annoncer un rang meilleur que le rang réel
  * est le seul mensonge que cet écran ne peut pas se permettre.
  */
-export function classement(effectif: number, plusHauts: number): Classement | null {
+export function classement(
+  effectif: number,
+  plusHauts: number,
+  /** « de tout le monde », « des hommes », « des 23-26 ans ». */
+  legende: string,
+): Classement | null {
   if (effectif <= 0) return null;
+
+  const top = borne(Math.ceil(((plusHauts + 1) / effectif) * 100), 1, 100);
   return {
-    top: borne(Math.ceil(((plusHauts + 1) / effectif) * 100), 1, 100),
+    top,
+    legende,
+    couleur: couleurDuRang(top),
     effectif,
     avertissement:
       effectif < COHORTE_MINCE ? `seulement ${effectif} participant${effectif > 1 ? 's' : ''}` : null,
   };
+}
+
+/**
+ * La teinte du drapeau : rouge quand on est dans la tete du classement.
+ *
+ * Elle est calculee ici et non a l'affichage parce que la page d'un resultat
+ * partage ne connait ni le sexe ni l'age de celui qui a joue — elle ne peut
+ * donc rien deduire elle-meme. Tout ce qui se dit du rang doit venir du serveur,
+ * sans quoi les deux ecrans divergent.
+ */
+export function couleurDuRang(top: number): CouleurDrapeau {
+  if (top <= 33) return 'red';
+  if (top <= 66) return 'orange';
+  return 'green';
+}
+
+// ---------------------------------------------------------------------------
+// Les cohortes, en toutes lettres
+// ---------------------------------------------------------------------------
+
+/*
+ * Écrites ici plutôt qu'à l'affichage, et partagées par la production et la
+ * maquette locale : la page d'un résultat partagé ne connaît pas le profil de
+ * celui qui a joué, et deux écrans — ou deux modes — qui les rédigeraient
+ * chacun de leur côté finiraient par se contredire. C'est d'ailleurs arrivé :
+ * la maquette annonçait « des hommes » à une joueuse.
+ */
+
+const SEXES: Record<string, string> = {
+  homme: 'des hommes',
+  femme: 'des femmes',
+  autre: 'des joueurs',
+};
+
+export function legendeSexe(sexe: string | null): string {
+  return (sexe && SEXES[sexe]) || 'des joueurs';
+}
+
+export function legendeAge(age: string | null): string {
+  if (!age) return 'de ton âge';
+  return age === '27+' ? 'des 27 ans et plus' : `des ${age} ans`;
+}
+
+/** La population de référence d'une comparaison. */
+export function legendeCohorte(
+  cohorte: NomCohorte,
+  profil: { sexe: string | null; age: string | null },
+): string {
+  switch (cohorte) {
+    case 'sexe_age':
+      return profil.age
+        ? `${legendeSexe(profil.sexe)} de ${legendeAge(profil.age).replace(/^des /, '')}`
+        : legendeSexe(profil.sexe);
+    case 'sexe':
+      return legendeSexe(profil.sexe);
+    case 'age':
+      return legendeAge(profil.age);
+    default:
+      return 'de tout le monde';
+  }
 }
 
 // ---------------------------------------------------------------------------

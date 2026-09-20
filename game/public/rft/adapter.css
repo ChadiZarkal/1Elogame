@@ -747,3 +747,134 @@ body:has(.main-container) {
 .client-container .game-wrapper .finish-block .share-btn {
   margin-top: var(--spacing);
 }
+
+/* ===========================================================================
+ * LA JAUGE DE LA CARTE : UNE ECHELLE, PAS UN REMPLISSAGE
+ *
+ * Elle vivait dans la barre de progression, qui restait ENTIEREMENT ROUGE au
+ * recap — toutes les questions etant repondues, toutes les cellules etaient
+ * actives. Une echelle uniformement rouge ne situe rien : le curseur pouvait
+ * aussi bien marquer 4 que 96, l'oeil n'avait aucun repere.
+ *
+ * Le degrade rend la position lisible avant meme qu'on lise le nombre. Les
+ * trois teintes sont celles de la palette de reference ; le jaune est pose au
+ * milieu pour que le centre de l'echelle soit le centre de la barre.
+ *
+ * Elle est dans la carte et non au-dessus parce que la page d'un resultat
+ * partage n'affiche pas la barre de progression du jeu : sans ce demenagement,
+ * l'ecran que le plus de monde voit n'avait aucune jauge.
+ * ======================================================================== */
+
+.carte-jauge {
+  position: relative;
+  width: 100%;
+  height: 1.2rem;
+  margin-top: calc(var(--spacing) * 0.45);
+  border-radius: 1000px;
+  background: linear-gradient(
+    90deg,
+    var(--light-green) 0%,
+    var(--yellow) 48%,
+    var(--orange) 66%,
+    var(--light-red) 100%
+  );
+}
+
+/*
+ * Le curseur de la reference, repris tel quel — meme image, meme duree. Il
+ * deborde volontairement au-dessus de la piste : c'est ce qui le fait lire
+ * comme un marqueur pose dessus et non comme une part remplie.
+ */
+.carte-jauge-curseur {
+  position: absolute;
+  top: -0.45rem;
+  bottom: 0.3rem;
+  width: 26px;
+  background-image: url("./img/score-cursor.svg");
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  transform: translateX(-50%);
+  transition: left 1500ms cubic-bezier(0.86, 0, 0.07, 1);
+  filter: drop-shadow(0 0 0.3rem var(--dark-grey));
+}
+
+.carte-jauge-gauche,
+.carte-jauge-droite {
+  position: absolute;
+  top: 100%;
+  margin-top: 2px;
+  color: var(--grey);
+  font-size: calc(var(--font-size-s) * 0.72);
+  opacity: 0.8;
+}
+
+.carte-jauge-gauche { left: 0; }
+.carte-jauge-droite { right: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .carte-jauge-curseur { transition-duration: 1ms; }
+}
+
+/* ---------------------------------------------------------------------------
+ * LES TROIS DRAPEAUX, DANS LA CARTE
+ *
+ * Ils avaient ete remplaces par une ligne de texte pour gagner cent pixels.
+ * C'etait une mauvaise affaire : « Top 77 % des hommes » se lit, mais ne se
+ * VOIT pas, et une carte destinee a la capture doit se comprendre avant d'etre
+ * lue. La couleur du drapeau donne la reponse au premier coup d'oeil.
+ *
+ * La reference les stylise sous `.finish-block .stats-flags`, ce que la carte
+ * ne peut pas reutiliser : ses drapeaux sont plus petits, et son texte plus
+ * serre. Les regles sont donc reecrites ici, dans le meme idiome.
+ * ------------------------------------------------------------------------- */
+
+.carte-flags {
+  display: flex;
+  justify-content: space-around;
+  gap: calc(var(--spacing) * 0.4);
+  width: 100%;
+  /* Large en haut : les legendes de la jauge debordent sous sa piste. */
+  margin: calc(var(--spacing) * 0.9) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.carte-flags li {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/*
+ * 2.6rem et non 3.5 comme la reference : trois drapeaux a sa taille d'origine
+ * font a eux seuls la moitie de la hauteur de la carte.
+ */
+.carte-flags .img-flag {
+  width: 2.6rem;
+  height: auto;
+}
+
+.carte-flags .flag-rang {
+  margin: calc(var(--spacing) * 0.15) 0 0;
+  font-size: calc(var(--font-size-s) * 0.95);
+  line-height: 1.1;
+}
+
+.carte-flags .flag-rang strong {
+  font-weight: bold;
+}
+
+.carte-flags .flag-legende {
+  margin: 0;
+  color: var(--grey);
+  font-size: calc(var(--font-size-s) * 0.78);
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.carte-flags .low-sample-warning {
+  margin: 0;
+  font-size: calc(var(--font-size-s) * 0.7);
+}

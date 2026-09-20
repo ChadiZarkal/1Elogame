@@ -27,40 +27,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import type { ComparaisonPublique, Resultat } from '@/lib/rft/types';
-import type { PlayerProfile } from '@/types/game';
+import type { Classement, Resultat } from '@/lib/rft/types';
 import { PartageBar } from './PartageBar';
-
-const SEXES: Record<string, string> = {
-  homme: 'des hommes',
-  femme: 'des femmes',
-  autre: 'des joueurs',
-};
-
-function legendeAge(age: string): string {
-  return age === '27+' ? 'des 27 ans et plus' : `des ${age} ans`;
-}
-
-/**
- * La population citée dans la comparaison, en toutes lettres.
- *
- * Le serveur choisit la cohorte — la plus précise qui soit assez fournie — et
- * l'écran la met en mots, parce que c'est lui qui a le profil du joueur sous la
- * main.
- */
-function legendeCohorte(cohorte: ComparaisonPublique['cohorte'], profil: PlayerProfile | null): string {
-  const sexe = profil ? (SEXES[profil.sex] ?? 'des joueurs') : 'des joueurs';
-  switch (cohorte) {
-    case 'sexe_age':
-      return profil ? `${sexe} de ${legendeAge(profil.age).replace(/^des /, '')}` : sexe;
-    case 'sexe':
-      return sexe;
-    case 'age':
-      return profil ? legendeAge(profil.age) : 'des joueurs';
-    default:
-      return 'des joueurs';
-  }
-}
 
 /**
  * Fait défiler le nombre jusqu'à sa valeur, pour qu'il atterrisse au lieu
@@ -97,11 +65,19 @@ function useCompteur(cible: number, duree = 1400): number {
   return valeur;
 }
 
+/*
+ * LE RÉCAP N'A PLUS BESOIN DU PROFIL DU JOUEUR.
+ *
+ * Il recevait auparavant le sexe et l'âge pour écrire « des hommes de 23-26
+ * ans » sous les drapeaux. La page d'un résultat partagé, elle, ne les connaît
+ * pas — et les drapeaux y disparaissaient donc, c'est-à-dire précisément sur
+ * l'écran que le plus de monde voit. Les légendes sont désormais écrites par le
+ * serveur, qui relit le profil avec la partie.
+ */
 export function Recap({
-  resultat, profil, onRecommencer,
+  resultat, onRecommencer,
 }: {
   resultat: Resultat;
-  profil: PlayerProfile | null;
   /** Absent sur un résultat partagé : on ne « refait » pas la partie d'un autre. */
   onRecommencer?: () => void;
 }) {
@@ -150,11 +126,56 @@ export function Recap({
           <span>% red flag</span>
         </p>
 
+        {/*
+          LA JAUGE, DANS LA CARTE.
+
+          Elle vivait dans la barre de progression, au-dessus — c'est-a-dire
+          dans le composant du JEU. La page d'un resultat partage n'en avait
+          donc aucune, et c'est pourtant l'ecran que le plus de monde voit. Elle
+          est ici pour que la carte se suffise a elle-meme : capturee seule, elle
+          montre encore ou le score se situe.
+        */}
+        <div className="carte-jauge">
+          <Curseur valeur={Math.min(100, resultat.score)} />
+          <span className="carte-jauge-gauche">Green Flag</span>
+          <span className="carte-jauge-droite">Red Flag</span>
+        </div>
+
+        {/*
+          LES TROIS DRAPEAUX — c'est ici que le joueur se situe.
+
+          Ils avaient ete remplaces par une ligne de texte pour gagner cent
+          pixels. C'etait une mauvaise affaire : « Top 77 % des hommes » se lit,
+          mais ne se VOIT pas, et une carte que l'on capture doit se comprendre
+          avant d'etre lue. Le drapeau donne la reponse par sa couleur, du vert
+          au rouge, avant meme qu'on ait dechiffre le chiffre.
+
+          Trois cohortes du plus large au plus precis : tout le monde d'abord,
+          parce que c'est la question qu'on se pose en premier, puis son sexe et
+          sa tranche d'age. La reference n'en affichait que trois aussi — genre,
+          age, region — et ses images sont reprises telles quelles.
+        */}
+        {(resultat.classements.tous
+          || resultat.classements.sexe
+          || resultat.classements.age) && (
+          <ul className="carte-flags">
+            {resultat.classements.tous && (
+              <Drapeau genre="region" rang={resultat.classements.tous} />
+            )}
+            {resultat.classements.sexe && (
+              <Drapeau genre="gender" rang={resultat.classements.sexe} />
+            )}
+            {resultat.classements.age && (
+              <Drapeau genre="age" rang={resultat.classements.age} />
+            )}
+          </ul>
+        )}
+
         <div className="carte-lignes">
           {resultat.comparaison && (
             <p>
               {resultat.comparaison.ecart === 0 ? (
-                <>Pile dans la moyenne {legendeCohorte(resultat.comparaison.cohorte, profil)}</>
+                <>Pile dans la moyenne {resultat.comparaison.legende}</>
               ) : (
                 <>
                   <strong
@@ -164,11 +185,11 @@ export function Recap({
                         : 'var(--light-green)',
                     }}
                   >
-                    {resultat.comparaison.ecart > 0 ? '+' : '\u2212'}
+                    {resultat.comparaison.ecart > 0 ? '+' : '−'}
                     {Math.abs(resultat.comparaison.ecart)} pts
                   </strong>{' '}
                   {resultat.comparaison.ecart > 0 ? 'au-dessus' : 'en dessous'} de la moyenne{' '}
-                  {legendeCohorte(resultat.comparaison.cohorte, profil)}
+                  {resultat.comparaison.legende}
                 </>
               )}
             </p>
@@ -180,27 +201,7 @@ export function Recap({
               <strong style={{ color: resultat.pointNoir.color ?? 'var(--red)' }}>
                 {resultat.pointNoir.label}
               </strong>{' '}
-              <span className="carte-valeur">{resultat.pointNoir.valeur} %</span>
-            </p>
-          )}
-
-          {(resultat.classements.sexe || resultat.classements.age) && profil && (
-            <p>
-              {resultat.classements.sexe && (
-                <>
-                  Top <strong>{resultat.classements.sexe.top} %</strong>{' '}
-                  {SEXES[profil.sex] ?? 'des joueurs'}
-                </>
-              )}
-              {resultat.classements.sexe && resultat.classements.age && (
-                <span className="carte-sep"> · </span>
-              )}
-              {resultat.classements.age && (
-                <>
-                  Top <strong>{resultat.classements.age.top} %</strong>{' '}
-                  {legendeAge(profil.age)}
-                </>
-              )}
+              <span className="carte-valeur">{resultat.pointNoir.valeur} %</span>
             </p>
           )}
         </div>
@@ -321,6 +322,49 @@ export function Recap({
   );
 }
 
+
+/**
+ * Le curseur de la jauge.
+ *
+ * Monte a zero puis lance vers le score a la premiere image : pose d'emblee a
+ * sa valeur finale, il apparaitrait sur place et la transition n'aurait rien a
+ * animer. C'est la meme seconde et demie que la feuille de reference donne a
+ * son propre curseur.
+ */
+function Curseur({ valeur }: { valeur: number }) {
+  const [pose, setPose] = useState(0);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setPose(valeur));
+    return () => cancelAnimationFrame(frame);
+  }, [valeur]);
+
+  return <span className="carte-jauge-curseur" style={{ left: `${pose}%` }} />;
+}
+
+/**
+ * Un drapeau de classement, sur le markup de la reference.
+ *
+ * La couleur vient du SERVEUR, pas d'un calcul local : la page d'un resultat
+ * partage ne connait pas le profil de celui qui a joue, et deux ecrans qui
+ * deduiraient chacun leur teinte finiraient par diverger.
+ */
+function Drapeau({
+  genre, rang,
+}: { genre: 'gender' | 'age' | 'region'; rang: Classement }) {
+  return (
+    <li className={`flag-${genre}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- markup de
+          reference ; `flac.css` dimensionne l'image via .img-flag. */}
+      <img className="img-flag" src={`/rft/img/flag-${genre}-${rang.couleur}.svg`} alt="" />
+      <p className="flag-rang">
+        <strong>Top {rang.top} %</strong>
+      </p>
+      <p className="flag-legende">{rang.legende}</p>
+      {rang.avertissement && <p className="low-sample-warning">({rang.avertissement})</p>}
+    </li>
+  );
+}
 
 /* ---------------------------------------------------------------------------
  * Le radar des sous-scores.

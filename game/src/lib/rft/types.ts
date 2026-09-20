@@ -138,9 +138,25 @@ export interface Soumission {
   dureeMs: number | null;
 }
 
+/**
+ * La teinte du drapeau. Trois valeurs seulement, parce que les images de la
+ * feuille de référence n'existent qu'en trois versions.
+ */
+export type CouleurDrapeau = 'red' | 'orange' | 'green';
+
 export interface Classement {
   /** « Top X % » : la part des joueurs qui ont fait aussi fort ou plus fort. */
   top: number;
+  /**
+   * La population, en toutes lettres : « de tout le monde », « des hommes ».
+   *
+   * Calculée par le serveur et non par l'écran, parce que la page d'un résultat
+   * partagé ne connaît ni le sexe ni l'âge de celui qui a joué. Sans cela, les
+   * drapeaux disparaissaient de cette page — c'est-à-dire de celle que le plus
+   * de monde voit.
+   */
+  legende: string;
+  couleur: CouleurDrapeau;
   effectif: number;
   /** Renseigné quand la cohorte est trop mince pour que le rang veuille dire quelque chose. */
   avertissement: string | null;
@@ -182,7 +198,16 @@ export interface Resultat {
   /** Somme des points. Peut dépasser 100 — c'est voulu. */
   score: number;
   verdict: Verdict | null;
-  classements: { sexe: Classement | null; age: Classement | null };
+  /**
+   * Trois cohortes, du plus large au plus precis. « Tout le monde » repond a la
+   * question qu'on se pose d'abord ; les deux autres a celle qu'on se pose
+   * ensuite.
+   */
+  classements: {
+    tous: Classement | null;
+    sexe: Classement | null;
+    age: Classement | null;
+  };
   axes: Axe[];
   /**
    * L'axe qui domine nettement les autres, quand il y en a un.
@@ -246,8 +271,10 @@ export interface StatQuestion {
 }
 
 export interface ComparaisonPublique {
-  /** Quelle population sert de repère — l'écran en tire sa formulation. */
+  /** Quelle population sert de repère. */
   cohorte: 'tous' | 'sexe' | 'age' | 'sexe_age';
+  /** Cette population en toutes lettres, écrite par le serveur. */
+  legende: string;
   /** Points au-dessus (positif) ou en dessous. Zéro quand l'écart est du bruit. */
   ecart: number;
   moyenne: number;

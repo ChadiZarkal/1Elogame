@@ -36,9 +36,7 @@ export function ResultatPartage({ resultat }: { resultat: Resultat }) {
           ou il tient sur une ligne. En titre au-dessus, il repoussait la carte
           de deux cents pixels et disait deux fois la meme chose. */}
       <div className="finish-block">
-        {/* Pas de profil : on ne connaît pas le sexe ni l'âge de celui qui a
-            joué, et les drapeaux se taisent plutôt que d'en inventer un. */}
-        <Recap resultat={resultat} profil={null} />
+        <Recap resultat={resultat} />
       </div>
     </div>
   );

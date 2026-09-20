@@ -321,18 +321,12 @@ export function Quiz() {
           </p>
         )}
 
-        <ProgressBar
-          total={quiz?.questions.length ?? 0}
-          repondues={choix.length}
-          // `null` pendant la partie : voir l'en-tête de ProgressBar.
-          curseur={phase === 'recap' && resultat ? Math.min(100, resultat.score) : null}
-        />
-
-        {/* Masquées pendant le jeu, révélées sous `switch-quiz-end`. */}
-        <div className="progress-bar-captions">
-          <span className="caption-left">Green Flag</span>
-          <span className="caption-right">Red Flag</span>
-        </div>
+        {/* La barre ne sert plus qu'a compter les questions : au recap, c'est
+            la jauge de la carte qui situe le score, et elle le fait aussi sur la
+            page d'un resultat partage — ce que celle-ci ne pouvait pas. */}
+        {phase !== 'recap' && (
+          <ProgressBar total={quiz?.questions.length ?? 0} repondues={choix.length} />
+        )}
 
         {/* `flac.css` cache ce bloc hors de la phase de fin, et c'est lui qui
             porte la mise en forme de tout le récap : sortir le contenu d'ici,
@@ -340,7 +334,7 @@ export function Quiz() {
         <div className="finish-block">
           {phase === 'calcul' && <p className="loading-message">On compte les dégâts…</p>}
           {phase === 'recap' && resultat && (
-            <Recap resultat={resultat} profil={profil} onRecommencer={recommencer} />
+            <Recap resultat={resultat} onRecommencer={recommencer} />
           )}
         </div>
 
@@ -423,28 +417,21 @@ function Reprise({
 }
 
 /**
- * La barre, qui a deux vies.
+ * La barre de progression : une cellule par question, qui se remplit.
  *
- * PENDANT LA PARTIE c'est une barre de progression : une cellule par question,
- * qui se remplit en rouge. Pas de curseur.
+ * Elle ne porte plus de curseur. Il y avait été branché sur l'aiguille pendant
+ * toute la partie, où il faisait doublon avec le mesureur du bas — et surtout,
+ * posé sur une barre qui compte les questions, il se lisait comme un « tu es
+ * ici » alors qu'il annonçait un score provisoire.
  *
- * AU RÉCAP elle devient une échelle Green Flag → Red Flag, et le curseur
- * triangulaire y glisse jusqu'au score en une seconde et demie. C'est bien la
- * lecture voulue par la feuille de référence : les légendes « Green Flag » et
- * « Red Flag » n'apparaissent que sous `switch-quiz-end`, et la transition de
- * 1 500 ms du curseur est une révélation, pas un suivi en direct.
- *
- * Le curseur avait d'abord été branché sur l'aiguille pendant toute la partie.
- * Il faisait alors doublon avec le mesureur du bas, qui dit déjà exactement
- * cela — et surtout, posé sur une barre qui compte les questions, il se lisait
- * comme un « tu es ici » alors qu'il annonçait un score provisoire.
+ * Au récap, la barre disparaît : c'est la jauge de la carte qui situe le score,
+ * au même endroit que sur la page d'un résultat partagé.
  */
 function ProgressBar({
-  total, repondues, curseur,
-}: { total: number; repondues: number; curseur: number | null }) {
+  total, repondues,
+}: { total: number; repondues: number }) {
   return (
     <div className="progress-bar">
-      {curseur !== null && <ScoreCursor valeur={curseur} />}
       <div className="rounded-wrapper">
         {total <= CELLULES_MAX ? (
           Array.from({ length: total }, (_, i) => (
@@ -473,27 +460,6 @@ function ProgressBar({
  * une rayure. Une barre pleine dit la même chose et se lit.
  */
 const CELLULES_MAX = 15;
-
-/**
- * Le curseur, qui entre par la gauche et rejoint le score en une seconde et
- * demie — la transition que `flac.css` lui donne.
- *
- * Il est monté à zéro puis déplacé à la première image : posé d'emblée à sa
- * valeur finale, il apparaîtrait sur place et la transition n'aurait rien à
- * animer. C'est un composant à part précisément pour cela — il naît avec la
- * phase de fin, donc son état de départ est zéro sans qu'on ait à le remettre à
- * zéro.
- */
-function ScoreCursor({ valeur }: { valeur: number }) {
-  const [pose, setPose] = useState(0);
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => setPose(valeur));
-    return () => cancelAnimationFrame(frame);
-  }, [valeur]);
-
-  return <div className="score-cursor" style={{ left: `${pose}%` }} />;
-}
 
 /**
  * Le « redflag-o-meter », ancré en bas de l'écran.

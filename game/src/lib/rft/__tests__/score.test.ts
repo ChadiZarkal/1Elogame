@@ -4,6 +4,7 @@ import {
   calculerAxes,
   calculerScore,
   classement,
+  couleurDuRang,
   COHORTE_MINCE,
   indicePour,
   maximumAtteignable,
@@ -168,38 +169,65 @@ describe('calculerAxes', () => {
 });
 
 describe('classement', () => {
+  const rang = (effectif: number, plusHauts: number) =>
+    classement(effectif, plusHauts, 'de tout le monde');
+
   // La partie qui vient d'être jouée est déjà comptée dans l'effectif : le rang
   // du joueur est donc exactement `plusHauts + 1`.
   it('traduit un rang en pourcentage', () => {
-    expect(classement(100, 7)?.top).toBe(8);
+    expect(rang(100, 7)?.top).toBe(8);
   });
 
   it('donne le sommet au meilleur d’une large cohorte', () => {
-    expect(classement(200, 0)?.top).toBe(1);
+    expect(rang(200, 0)?.top).toBe(1);
   });
 
   // Arrondir au plus proche donnerait « top 33 % » : annoncer un rang meilleur
   // que le rang réel est le seul mensonge que cet écran ne peut pas se
   // permettre.
   it('arrondit vers le haut, jamais au plus proche', () => {
-    expect(classement(3, 0)?.top).toBe(34);
+    expect(rang(3, 0)?.top).toBe(34);
   });
 
   it('place le dernier à cent pour cent', () => {
-    expect(classement(50, 49)?.top).toBe(100);
+    expect(rang(50, 49)?.top).toBe(100);
   });
 
   it('déclare une cohorte trop mince plutôt que de la cacher', () => {
-    const mince = classement(4, 1);
+    const mince = rang(4, 1);
     expect(mince?.top).toBe(50);
     expect(mince?.avertissement).toBe('seulement 4 participants');
 
-    expect(classement(1, 0)?.avertissement).toBe('seulement 1 participant');
-    expect(classement(COHORTE_MINCE, 5)?.avertissement).toBeNull();
+    expect(rang(1, 0)?.avertissement).toBe('seulement 1 participant');
+    expect(rang(COHORTE_MINCE, 5)?.avertissement).toBeNull();
   });
 
   it('ne rend rien sur une cohorte vide', () => {
-    expect(classement(0, 0)).toBeNull();
+    expect(rang(0, 0)).toBeNull();
+  });
+
+  // La légende et la teinte viennent du serveur, jamais de l'écran : la page
+  // d'un résultat partagé ne connaît pas le profil de celui qui a joué, et deux
+  // écrans qui les déduiraient chacun finiraient par diverger.
+  it('transporte sa légende telle quelle', () => {
+    expect(classement(50, 10, 'des 23-26 ans')?.legende).toBe('des 23-26 ans');
+  });
+
+  it('teinte le drapeau selon le rang', () => {
+    expect(rang(100, 4)?.couleur).toBe('red');
+    expect(rang(100, 49)?.couleur).toBe('orange');
+    expect(rang(100, 89)?.couleur).toBe('green');
+  });
+});
+
+describe('couleurDuRang', () => {
+  it('passe du rouge au vert en descendant le classement', () => {
+    expect(couleurDuRang(1)).toBe('red');
+    expect(couleurDuRang(33)).toBe('red');
+    expect(couleurDuRang(34)).toBe('orange');
+    expect(couleurDuRang(66)).toBe('orange');
+    expect(couleurDuRang(67)).toBe('green');
+    expect(couleurDuRang(100)).toBe('green');
   });
 });
 
