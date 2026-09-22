@@ -1,16 +1,22 @@
 /**
  * @file page.test.tsx
- * @description Accueil — sélecteur de jeu et contenu éditorial servi sous lui.
+ * @description Accueil — la vitrine des jeux et le contenu éditorial sous elle.
  *
- * Ces tests portent volontairement sur ce qui doit rester vrai : la page
- * possède un titre de niveau 1, elle expose les quatre jeux, et la présentation
- * du site est rendue sans interaction ni hydratation. C'est ce dernier point
- * qui compte pour l'indexation : le sélecteur ne rend qu'une carte à la fois,
- * donc l'essentiel du texte doit venir d'ailleurs.
+ * Ces tests portent sur ce qui doit rester vrai : la page possède un titre de
+ * niveau 1, elle expose *tous* les jeux, et elle le fait sans interaction ni
+ * hydratation.
+ *
+ * Ce dernier point n'est plus seulement une question d'indexation. La version
+ * précédente était un carrousel : un seul jeu sur quatre était rendu, les
+ * autres derrière un onglet. Le test correspondant passait quand même, parce
+ * qu'il se contentait de chercher les intitulés d'onglets — et il est passé
+ * tout du long alors que Flash Flag, un jeu bien réel, n'était atteignable
+ * depuis l'accueil par aucun chemin. D'où l'assertion sur les `href` : c'est
+ * elle, et non la présence d'un texte, qui dit qu'un jeu est joignable.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import HomePage from '@/app/page';
 import { HOME_NOTES } from '@/content/page-notes';
 
@@ -40,20 +46,37 @@ describe('Accueil', () => {
       .toMatch(/Red or Green/i);
   });
 
-  // getAllByText : le jeu sélectionné apparaît deux fois — dans l'onglet du
-  // sélecteur et dans le titre de la carte héro.
-  it('propose les quatre jeux dans le sélecteur', () => {
+  it("nomme les cinq jeux, sans qu'il faille toucher à quoi que ce soit", () => {
     render(<HomePage />);
-    for (const titre of ['REDFLAG TEST', 'LE PIRE DES DEUX', 'SOUMETS TON CAS', "C'est un 10 mais..."]) {
-      expect(screen.getAllByText(titre).length).toBeGreaterThan(0);
+    for (const titre of [
+      'RED FLAG TEST',
+      'LE PIRE DES DEUX',
+      "C'EST UN 10 MAIS…",
+      'FLASH FLAG',
+      "L'ORACLE",
+    ]) {
+      expect(screen.getByRole('heading', { level: 3, name: titre })).toBeDefined();
     }
   });
 
-  it('expose les liens vers le classement et les ressources', () => {
+  it('mène à chacun des cinq jeux', () => {
+    render(<HomePage />);
+    const liens = Array.from(document.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    for (const href of ['/jeu', '/dixmais', '/flashflag', '/flagornot']) {
+      expect(liens).toContain(href);
+    }
+    // Le Red Flag Test est encore servi par l'application d'origine.
+    expect(liens.some((h) => h?.includes('redflagtest'))).toBe(true);
+  });
+
+  it('expose les repères et les ressources sans tiroir à ouvrir', () => {
     render(<HomePage />);
     const links = Array.from(document.querySelectorAll('a')).map((a) => a.getAttribute('href'));
-    expect(links).toContain('/classement');
-    expect(links).toContain('/ressources');
+    // `/ressources` vivait derrière la feuille « Safe zone » : il fallait
+    // deviner qu'un bouclier cachait des liens pour l'atteindre.
+    for (const href of ['/classement', '/ressources', '/guide', '/observatoire']) {
+      expect(links).toContain(href);
+    }
   });
 
   it('rend la présentation du site sans interaction', () => {
