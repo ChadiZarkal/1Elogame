@@ -1,8 +1,10 @@
 # Accueil — proposition de refonte
 
 Fait suite à [DESIGN-MOBILE-RECHERCHE.md](./DESIGN-MOBILE-RECHERCHE.md), dont
-les numéros de source sont repris ici. Rien dans ce document n'est mis en œuvre :
-c'est une proposition à valider, à amender ou à refuser point par point.
+les numéros de source sont repris ici.
+
+**Les lots 1 à 4 sont mis en œuvre** — voir la §7 en fin de document pour l'état
+exact et ce que la mesure a corrigé. Les lots 5 et 6 restent des propositions.
 
 **Contrainte posée :** conserver la direction artistique. Tout ce qui suit est
 donc un réglage d'exécution, jamais un changement d'identité — la §5.2 du
@@ -300,3 +302,71 @@ solidité :
 
 Si le lot 5 ne déplace ni l'un ni l'autre, il aura coûté une requête pour rien —
 et il faudra le dire.
+
+---
+
+## 7. État — lots 1 à 4 mis en œuvre
+
+Faits le 23 septembre 2026, sur la branche `refontemaximale-front`.
+
+| Lot | État |
+|---|---|
+| 1 — surfaces et rampe de texte | fait |
+| 2 — échelles typographique et d'espacement | fait |
+| 3 — verbes d'action sur les cartes | fait |
+| 4 — `svh`, vérification des halos | fait |
+| 5 — arbitrage en direct au premier écran | **non fait**, en attente d'arbitrage |
+| 6 — palette en OKLCH | **non fait** |
+
+### Ce qui a été mesuré
+
+À 320 × 568, 360 × 640 et 390 × 844 : aucun débordement horizontal, aucune
+cible interactive sous 44 px, rien sous 12 px, les quatre cartes à 163 px
+exactement, et une carte coupée par le bas du premier écran dans les trois cas.
+
+Contraste : zéro texte sous son seuil, le pire rapport de la page étant 4,92:1
+pour 4,5 requis.
+
+### Trois choses trouvées en route
+
+**La valeur que j'avais proposée pour le texte tertiaire était mauvaise.** Le
+`#6E6E78` de la §2.2 semblait juste à l'œil et donnait **3,71:1** sur
+`--surface-1`, pour 4,5 requis à 12 px. Cinq textes échouaient : la ligne des
+garanties et les quatre lignes de format. La valeur retenue, `#82828D`, est
+calculée pour tenir le seuil sur les deux surfaces, pas choisie. C'est
+exactement le cas que la §2.2 annonçait — « à vérifier par la mesure, pas à
+l'œil » — et il s'est produit.
+
+**Le nombre de caractères ne prédit pas le nombre de lignes.** La carte de
+l'Oracle et celle de « C'est un 10 mais… » portaient toutes deux 54 caractères ;
+l'une tenait en deux lignes, l'autre en trois, selon l'endroit où tombaient les
+coupures de mots. Trois tentatives de raccourcissement à l'estime ont échoué
+avant de mesurer la largeur réelle et de déplacer la mise en garde de l'Oracle
+vers sa ligne de format.
+
+**Le fond noir n'était pas une décision, c'était un contournement.** Le site
+possédait déjà `--bg-primary: #0A0A0B`, posé sur `body`, qui n'est pas du noir
+pur. L'accueil posait `bg-black` par-dessus. Retirer cette classe suffisait :
+il n'y avait pas de nouveau jeton de fond à inventer, seulement à cesser de
+masquer celui qui existait.
+
+**La vérification des halos a d'abord produit une conclusion fausse, corrigée.**
+J'avais lu `getComputedStyle().transform` pour vérifier que le calque décoratif
+était bien promu sur le GPU, et conclu que `transform-gpu` ne faisait rien
+parce que la valeur calculée restait la matrice identité. Le test ne prouvait
+rien : `translateZ(0)` **est** la matrice identité, et un élément promu de cette
+façon est indistinguable d'un élément qui ne l'est pas. La promotion passe donc
+maintenant par `will-change: transform`, qui demande la même chose et se lit
+dans la feuille calculée — donc se teste.
+
+Ce qui a réellement été établi sur le coût des halos : la page ne contient
+**aucun** `backdrop-filter`, le cher, celui qui rééchantillonne ce qu'il y a
+derrière. Les deux halos sont des `filter: blur()` sur des aplats de couleur,
+et mesurent 320 × 320 et 256 × 256 — sous le seuil au-delà duquel un grand
+rayon commence à peser. Les rayons n'ont donc pas été touchés.
+
+**Ce qui n'a pas pu être vérifié :** la cadence de défilement sur un vrai
+téléphone. La mesure d'images par seconde demande `requestAnimationFrame`, qui
+ne se déclenche pas quand le volet du navigateur est masqué, et une mesure
+prise sur cette machine ne dirait de toute façon rien d'un appareil d'entrée de
+gamme. L'argument ci-dessus est structurel, pas expérimental.

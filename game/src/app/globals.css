@@ -8,6 +8,33 @@
   --accent-red: #EF4444;
   --accent-green: #10B981;
   --accent-gold: #F59E0B;
+
+  /* ----- Paliers de surface -------------------------------------------
+   * Sur un fond très sombre, l'élévation ne se rend pas par l'ombre : une
+   * ombre portée y est invisible. C'est la surface qui doit s'éclaircir —
+   * une carte est *plus claire* que son fond, pas *ombrée*. D'où une échelle
+   * de gris plutôt qu'une échelle d'ombres.
+   *
+   * Le fond de page est `--bg-primary`, déjà posé sur `body` ci-dessus, et
+   * qui n'est délibérément pas du noir pur : sous du texte clair, `#000000`
+   * provoque de l'halation — le texte semble déborder et vibrer — fait vibrer
+   * optiquement les accents saturés, et scintille au défilement sur un écran
+   * OLED, dont les pixels noirs sont éteints.
+   * Voir docs/DESIGN-MOBILE-RECHERCHE.md §4.4. */
+  --surface-1: #121216;
+  --surface-2: #1A1A20;
+  --border-subtle: rgb(255 255 255 / 0.08);
+
+  /* ----- Rampe de texte ------------------------------------------------
+   * Le blanc pur sur fond sombre relève du même défaut que le noir pur sous
+   * du texte clair. Un blanc cassé réduit l'éblouissement sans rien coûter
+   * en lisibilité. */
+  --text-1: #E8E8EC;
+  --text-2: #A0A0AA;
+  /* #6E6E78 semblait bon a l'oeil et donnait 3,71:1 sur --surface-1, pour
+     4,5 requis sous 18,5 px. Cette valeur-ci est calculee pour tenir le
+     seuil sur les deux surfaces, pas choisie. */
+  --text-3: #82828D;
 }
 
 /* ========== Base Layer ========== */
