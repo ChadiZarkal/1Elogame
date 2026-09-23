@@ -14,12 +14,17 @@
  * le pied de page et dans la barre de navigation — laquelle est justement
  * masquée sur l'accueil. Il n'existait donc aucun chemin vers lui depuis ici.
  *
- * D'où le parti pris inverse : les cinq jeux sont posés les uns sous les
- * autres, chacun avec sa promesse en une phrase et son format. La page défile,
- * comme toutes les pages. C'est la contrainte de tenir en une fenêtre sans
+ * D'où le parti pris inverse : les jeux sont posés les uns sous les autres,
+ * chacun avec sa promesse en une phrase et son format. La page défile, comme
+ * toutes les pages. C'est la contrainte de tenir en une fenêtre sans
  * défilement qui avait poussé la typographie sous le seuil de lisibilité — les
  * deux points de rupture `max-height` du fichier précédent ne faisaient que
  * répartir la pénurie. Rien n'est plus petit que 11 px ici.
+ *
+ * La page montre aussi ce que le site produit — le compte des votes et les
+ * trois comportements les plus mal jugés, lus dans la base par `page.tsx`.
+ * Elle affirmait que « ce sont les joueurs qui tranchent » sans jamais montrer
+ * ce qu'ils avaient tranché.
  *
  * Les deux tiroirs ont disparu. « Comment jouer » redisait, en cinq
  * paragraphes cachés derrière un bouton, ce que chaque carte dit désormais sur
@@ -30,7 +35,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, ArrowUpRight, Shield } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Shield, Trophy } from 'lucide-react';
 import { useHaptics } from '@/lib/hooks';
 
 type Jeu = {
@@ -52,6 +57,11 @@ type Jeu = {
  * hiérarchise les jeux : ils ont tous la même carte, la même taille, le même
  * poids visuel. Changer la vitrine revient donc à déplacer une ligne, sans
  * toucher à la mise en page.
+ *
+ * Flash Flag n'y figure pas : choix éditorial, il n'est pas mis en avant. Il
+ * reste joignable par le pied de page et par la barre de navigation, présents
+ * sur toutes les autres routes — c'est sa seule voie d'accès depuis l'accueil,
+ * et elle passe par le bas de cette page.
  */
 const JEUX: Jeu[] = [
   {
@@ -66,16 +76,6 @@ const JEUX: Jeu[] = [
     externe: true,
   },
   {
-    id: 'jeu',
-    couleur: '#2ECC71',
-    emoji: '🔥',
-    titre: 'LE PIRE DES DEUX',
-    promesse:
-      'Deux comportements, tu désignes le plus grave. Ce vote fait le classement.',
-    format: 'Solo ou à plusieurs · 2 min',
-    href: '/jeu',
-  },
-  {
     id: 'dixmais',
     couleur: '#F59E0B',
     emoji: '⭐',
@@ -86,16 +86,6 @@ const JEUX: Jeu[] = [
     href: '/dixmais',
   },
   {
-    id: 'flashflag',
-    couleur: '#FF3B30',
-    emoji: '⚡',
-    titre: 'FLASH FLAG',
-    promesse:
-      'Un sprint de questions chronométrées, côte à côte ou envoyé par lien.',
-    format: 'À deux ou par lien · 1 min',
-    href: '/flashflag',
-  },
-  {
     id: 'oracle',
     couleur: '#88CEFF',
     emoji: '🔮',
@@ -104,6 +94,16 @@ const JEUX: Jeu[] = [
       'Tu racontes ta situation, une IA tranche red ou green.',
     format: 'Solo · 30 s · une amorce, pas un verdict',
     href: '/flagornot',
+  },
+  {
+    id: 'jeu',
+    couleur: '#2ECC71',
+    emoji: '🔥',
+    titre: 'LE PIRE DES DEUX',
+    promesse:
+      'Deux comportements, tu désignes le plus grave. Ce vote fait le classement.',
+    format: 'Solo ou à plusieurs · 2 min',
+    href: '/jeu',
   },
 ];
 
@@ -116,34 +116,29 @@ const REPERES: { emoji: string; titre: string; sous: string; href: string; coule
   {
     emoji: '🚩',
     titre: 'GUIDE DES FLAGS',
-    sous: 'Green, white, orange, red, black',
+    sous: 'Green, white, orange, red, black : ce que chaque couleur veut dire',
     href: '/guide',
     couleur: '#2ECC71',
   },
   {
-    emoji: '🏆',
-    titre: 'LE PALMARÈS',
-    sous: 'Les comportements les plus mal notés',
-    href: '/classement',
-    couleur: '#F59E0B',
-  },
-  {
     emoji: '📊',
     titre: "L'OBSERVATOIRE",
-    sous: 'Là où hommes, femmes et âges divergent',
+    sous: 'Là où hommes, femmes et générations ne sont pas d’accord',
     href: '/observatoire',
     couleur: '#88CEFF',
   },
-  {
-    emoji: '🧭',
-    titre: 'TESTS SÉRIEUX',
-    sous: 'Violentomètre, consentomètre, et les autres',
-    href: '/ressources',
-    couleur: '#A78BFA',
-  },
 ];
+/** Ce que `page.tsx` a pu lire. `null` et liste vide = base muette. */
+export type DonneesHub = {
+  votes: number | null;
+  comportementsClasses: number | null;
+  pires: { rang: number; texte: string; votes: number }[];
+};
 
-export function HubClient() {
+/** Séparateur de milliers français, pour que 128394 se lise. */
+const nombre = new Intl.NumberFormat('fr-FR');
+
+export function HubClient({ votes, comportementsClasses, pires }: DonneesHub) {
   const { tap } = useHaptics();
 
   return (
@@ -190,8 +185,17 @@ export function HubClient() {
             « Red flag » désigne aujourd&apos;hui tout et n&apos;importe quoi.
             Ici, ce sont les joueurs qui tranchent.
           </p>
+          {/* Le chiffre remplace un adjectif. « Ce sont les joueurs qui
+              tranchent » ne veut rien dire tant qu'on ne sait pas combien ils
+              sont ; s'il manque, la ligne se réduit aux garanties. */}
           <p className="mt-3 text-[12px] font-black uppercase tracking-[0.16em] text-[#6E6E78] [@media(max-height:700px)]:mt-2">
-            Sans compte · sans pub · anonyme
+            {votes !== null && votes > 0 && (
+              <>
+                <span className="text-[#B8B8C0]">{nombre.format(votes)} votes</span>
+                {' · '}
+              </>
+            )}
+            Sans compte · sans pub
           </p>
         </header>
 
@@ -213,6 +217,67 @@ export function HubClient() {
           </ul>
         </section>
 
+        {/* ── Ce que les votes ont donné ────────────────────────────────── */}
+        {/* Rendu seulement s'il y a de quoi le remplir : un podium vide, ou
+            un podium à une ligne, dit moins que pas de podium du tout. */}
+        {pires.length >= 3 && (
+          <section className="mt-9" aria-labelledby="titre-palmares">
+            <h2
+              id="titre-palmares"
+              className="mb-3 flex items-center gap-2 text-[12px] font-black uppercase tracking-[0.2em] text-[#8E8E93]"
+            >
+              <Trophy size={13} aria-hidden className="text-[#F59E0B]" />
+              Les pires, d&apos;après les votes
+            </h2>
+
+            <ol className="overflow-hidden rounded-2xl border border-white/7 bg-[#0C0C0E]">
+              {pires.map((pire) => (
+                <li
+                  key={pire.rang}
+                  className="flex items-start gap-3 border-b border-white/5 px-4 py-3.5 last:border-b-0"
+                >
+                  <span
+                    aria-hidden
+                    className="mt-px w-5 shrink-0 text-[15px] font-black tabular-nums text-[#F59E0B]"
+                  >
+                    {pire.rang}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14px] font-semibold leading-snug text-[#DCDCE2]">
+                      {pire.texte}
+                    </span>
+                    {/* Un comportement fraîchement ajouté n'a pas encore été
+                        soumis : « 0 votes » sous une place de podium se lit
+                        comme une erreur. Pas de compte, pas de ligne. */}
+                    {pire.votes > 0 && (
+                      <span className="mt-0.5 block text-[12px] font-bold uppercase tracking-wide text-[#6E6E78]">
+                        {nombre.format(pire.votes)} votes
+                      </span>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ol>
+
+            <Link
+              href="/classement"
+              onClick={tap}
+              className="group mt-2.5 flex min-h-12 items-center justify-between gap-3 rounded-xl border border-white/6 bg-white/2 px-4 py-3.5 text-[13.5px] font-bold text-[#C9C9D1] transition hover:border-white/15 hover:bg-white/5"
+            >
+              <span>
+                {comportementsClasses !== null && comportementsClasses > 0
+                  ? `Le classement complet — ${nombre.format(comportementsClasses)} comportements`
+                  : 'Le classement complet'}
+              </span>
+              <ArrowRight
+                size={14}
+                aria-hidden
+                className="shrink-0 text-[#F59E0B] transition-transform group-hover:translate-x-0.5"
+              />
+            </Link>
+          </section>
+        )}
+
         {/* ── Les repères ───────────────────────────────────────────────── */}
         <section className="mt-9" aria-labelledby="titre-reperes">
           <h2
@@ -222,7 +287,7 @@ export function HubClient() {
             Comprendre
           </h2>
 
-          <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+          <ul className="grid grid-cols-2 gap-2.5">
             {REPERES.map((repere) => (
               <li key={repere.href}>
                 <Link
