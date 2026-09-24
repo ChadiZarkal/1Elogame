@@ -48,6 +48,12 @@ type Jeu = {
   promesse: string;
   /** Format et durée. Le visiteur choisit surtout là-dessus. */
   format: string;
+  /**
+   * Le verbe. Un titre et une flèche disent qu'il se passe quelque chose, pas
+   * quoi : la recherche sur les intitulés est constante là-dessus — verbe +
+   * objet, tourné vers le résultat pour la personne.
+   */
+  action: string;
   href: string;
   externe?: boolean;
 };
@@ -71,6 +77,7 @@ const JEUX: Jeu[] = [
     titre: 'RED FLAG TEST',
     promesse: 'Ce que les autres voient comme red flag chez toi.',
     format: 'Solo · anonyme',
+    action: 'Faire le test',
     href: 'https://redflagtest.redorgreen.fr/',
     externe: true,
   },
@@ -81,6 +88,7 @@ const JEUX: Jeu[] = [
     titre: "C'EST UN 10 MAIS…",
     promesse: 'Il part de 10 sur 10. Cinq révélations le font chuter.',
     format: 'Solo · 3 min · le 0 élimine',
+    action: 'Noter un profil',
     href: '/dixmais',
   },
   {
@@ -90,6 +98,7 @@ const JEUX: Jeu[] = [
     titre: "L'ORACLE",
     promesse: 'Tu racontes ta situation, l’IA tranche.',
     format: 'Solo · 30 s · une amorce',
+    action: 'Soumettre mon cas',
     href: '/flagornot',
   },
   {
@@ -99,6 +108,7 @@ const JEUX: Jeu[] = [
     titre: 'LE PIRE DES DEUX',
     promesse: 'Deux comportements, tu désignes le plus grave.',
     format: 'Solo ou à plusieurs · 2 min',
+    action: 'Lancer un duel',
     href: '/jeu',
   },
 ];
@@ -394,6 +404,14 @@ function CarteJeu({ jeu, onTap }: { jeu: Jeu; onTap: () => void }) {
             style={{ color: jeu.couleur }}
           >
             {jeu.format}
+          </p>
+
+          {/* Le verbe, en blanc et non dans la teinte du jeu : la ligne de
+              format juste au-dessus porte déjà cette teinte, et deux lignes
+              de la même couleur l'une sous l'autre se lisent comme une seule.
+              Ce n'est pas un bouton — toute la carte reste la cible. */}
+          <p className="mt-2 text-[12px] font-black uppercase tracking-[0.1em] text-white/90">
+            {jeu.action}
           </p>
         </div>
 
