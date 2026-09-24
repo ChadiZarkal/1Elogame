@@ -69,8 +69,7 @@ const JEUX: Jeu[] = [
     couleur: '#FFB4AA',
     emoji: '🧪',
     titre: 'RED FLAG TEST',
-    promesse:
-      'Le score de ce que les autres perçoivent comme red flag chez toi.',
+    promesse: 'Ce que les autres voient comme red flag chez toi.',
     format: 'Solo · anonyme',
     href: 'https://redflagtest.redorgreen.fr/',
     externe: true,
@@ -80,8 +79,7 @@ const JEUX: Jeu[] = [
     couleur: '#F59E0B',
     emoji: '⭐',
     titre: "C'EST UN 10 MAIS…",
-    promesse:
-      'Il part de 10 sur 10. Cinq révélations tombent, tu renotes à chaque fois.',
+    promesse: 'Il part de 10 sur 10. Cinq révélations le font chuter.',
     format: 'Solo · 3 min · le 0 élimine',
     href: '/dixmais',
   },
@@ -90,9 +88,8 @@ const JEUX: Jeu[] = [
     couleur: '#88CEFF',
     emoji: '🔮',
     titre: "L'ORACLE",
-    promesse:
-      'Tu racontes ta situation, une IA tranche red ou green.',
-    format: 'Solo · 30 s · une amorce, pas un verdict',
+    promesse: 'Tu racontes ta situation, l’IA tranche.',
+    format: 'Solo · 30 s · une amorce',
     href: '/flagornot',
   },
   {
@@ -100,8 +97,7 @@ const JEUX: Jeu[] = [
     couleur: '#2ECC71',
     emoji: '🔥',
     titre: 'LE PIRE DES DEUX',
-    promesse:
-      'Deux comportements, tu désignes le plus grave. Ce vote fait le classement.',
+    promesse: 'Deux comportements, tu désignes le plus grave.',
     format: 'Solo ou à plusieurs · 2 min',
     href: '/jeu',
   },
@@ -182,8 +178,8 @@ export function HubClient({ votes, comportementsClasses, pires }: DonneesHub) {
               logo aux onglets. Deux phrases, rendues côté serveur, lisibles
               avant toute interaction. */}
           <p className="mt-4 max-w-[32ch] text-[15px] font-semibold leading-relaxed text-[#B8B8C0] [@media(max-height:700px)]:mt-3">
-            « Red flag » désigne aujourd&apos;hui tout et n&apos;importe quoi.
-            Ici, ce sont les joueurs qui tranchent.
+            « Red flag » désigne tout et n&apos;importe quoi. Ici, les joueurs
+            tranchent.
           </p>
           {/* Le chiffre remplace un adjectif. « Ce sont les joueurs qui
               tranchent » ne veut rien dire tant qu'on ne sait pas combien ils
