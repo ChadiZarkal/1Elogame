@@ -8,6 +8,26 @@
   --accent-red: #EF4444;
   --accent-green: #10B981;
   --accent-gold: #F59E0B;
+
+  /* ----- Paliers de surface -------------------------------------------
+   * Sur un fond très sombre, l'élévation ne se rend pas par l'ombre : une
+   * ombre portée y est invisible. C'est la surface qui s'éclaircit — une
+   * carte est *plus claire* que son fond, pas *ombrée*.
+   *
+   * Le fond de page reste `--bg-primary`, posé sur `body`, qui n'est pas du
+   * noir pur : sous du texte clair, `#000000` provoque de l'halation, fait
+   * vibrer les accents saturés et scintille au défilement sur OLED. */
+  --surface-1: #121216;
+  --surface-2: #1A1A20;
+  --border-subtle: rgb(255 255 255 / 0.08);
+
+  /* ----- Rampe de texte ------------------------------------------------
+   * Un blanc cassé réduit l'éblouissement sans rien coûter en lisibilité.
+   * `--text-3` est calculé pour tenir 4,5:1 sur les deux surfaces — le
+   * #6E6E78 qui semblait juste à l'œil n'en donnait que 3,71. */
+  --text-1: #E8E8EC;
+  --text-2: #A0A0AA;
+  --text-3: #82828D;
 }
 
 /* ========== Base Layer ========== */
@@ -72,25 +92,6 @@
     color: inherit;
     font: inherit;
   }
-}
-
-/* ========== Bandeau défilant de l'accueil ==========
-   Ces règles vivaient dans un `<style jsx global>` de `HubClient`, donc
-   insérées après l'hydratation : le bandeau se repliait sur plusieurs lignes
-   au premier rendu puis se rétractait, en pleine zone LCP. */
-
-@keyframes marquee {
-  0% {
-    transform: translateX(0%);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-.animate-marquee-custom {
-  display: flex;
-  width: max-content;
-  animation: marquee 28s linear infinite;
 }
 
 /* ========== Emplacements publicitaires ==========

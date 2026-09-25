@@ -1,674 +1,517 @@
 'use client';
 
-import { useState, useCallback, useMemo, useRef } from 'react';
+/**
+ * @module app/HubClient
+ * Accueil : ce que propose le site, visible sans rien toucher.
+ *
+ * La version précédente était un carrousel à onglets. Un seul jeu sur quatre
+ * était rendu ; les trois autres se résumaient à des intitulés de 7,5 px dans
+ * une rangée d'onglets. Or la seule question d'un visiteur qui arrive ici est
+ * « qu'est-ce qu'on peut faire ? », et y répondre demandait quatre gestes sur
+ * des cibles qu'on ne pouvait pas lire. La contrainte de tout faire tenir dans
+ * une fenêtre sans défilement avait poussé la typographie sous le seuil de
+ * lisibilité ; les points de rupture `max-height` ne faisaient que répartir la
+ * pénurie.
+ *
+ * La page suit maintenant l'ordre des questions qu'on se pose en arrivant :
+ *
+ *   1. C'est quoi ?          — le logo, une phrase, le nombre de votes.
+ *   2. Je fais quoi ?        — un point d'entrée recommandé, avec un vrai
+ *                              bouton, placé à mi-écran : là où le pouce
+ *                              tombe sans effort.
+ *   3. Il y a quoi d'autre ? — les trois autres jeux, posés les uns sous les
+ *                              autres, chacun avec sa promesse et son format.
+ *   4. C'est sérieux ?       — ce que les votes ont réellement donné.
+ *   5. Et si ça ne va pas ?  — les repères, puis l'aide, en clair.
+ *
+ * Un point d'entrée unique plutôt que quatre cartes de même poids : face à
+ * des choix équivalents, on hésite, et l'hésitation se paie en départs. Les
+ * autres jeux restent visibles, entiers, dès le premier écran — la
+ * recommandation oriente, elle ne cache rien.
+ *
+ * Les deux tiroirs ont disparu. « Comment jouer » redisait, derrière un
+ * bouton, ce que chaque carte dit désormais sur la page. « Safe zone » cachait
+ * le seul contenu du site qui ne devrait jamais demander un geste pour
+ * apparaître.
+ */
+
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Shield, HelpCircle, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, Shield, Trophy } from 'lucide-react';
 import { useHaptics } from '@/lib/hooks';
 
-type PersonaKey = 'redflag' | 'group' | 'doubt' | 'dixmais';
-
-const CARDS_DATA: Record<PersonaKey, {
+type Jeu = {
   id: string;
-  themeColor: string;
-  glowColor: string;
-  tag: string;
-  title: string;
-  tagline: string;
-  desc: string;
-  bullets: string[];
-  cta: string;
-  href: string;
+  /** Teinte du jeu en aplat : liseré, bouton, halo. */
+  couleur: string;
+  /**
+   * La même teinte, éclaircie, pour le texte. Un accent saturé en petites
+   * capitales sur fond sombre vibre ; en aplat, il ne pose aucun problème.
+   */
+  couleurTexte: string;
   emoji: string;
-  external?: boolean;
-}> = {
-  redflag: {
-    id: 'redflagtest',
-    themeColor: '#FFB4AA',
-    glowColor: 'rgba(255, 180, 170, 0.4)',
-    tag: '🧪 TEST PERSONNEL',
-    title: 'REDFLAG TEST',
-    tagline: 'Faire le point sur tes comportements.',
-    desc: 'Tu réponds au quiz en solo, puis tu obtiens un score simple pour voir ce que les autres peuvent percevoir comme red flag chez toi.',
-    bullets: ['🧠 En solo, en quelques minutes', '📊 Score clair à la fin', '🙈 Anonyme'],
-    cta: 'FAIRE LE TEST',
-    /* Menait vers redflagtest.redorgreen.fr, l'application PHP d'origine. Pointe
-       désormais sur la maquette interne du test — front-end seul, sans calcul
-       réel. */
-    href: '/redflagtest',
-    emoji: '🧪',
-  },
-  group: {
-    id: 'jeu',
-    themeColor: '#2ECC71',
-    glowColor: 'rgba(46, 204, 113, 0.4)',
-    tag: '👥 JEU DE GROUPE',
-    title: 'LE PIRE DES DEUX',
-    tagline: 'Voter pour le plus red flag.',
-    desc: 'Entre deux choix, votez pour celui qui est le plus red flag. Découvrez ensuite quel pourcentage de la communauté est d\'accord avec vous.',
-    bullets: ['👥 Solo ou groupe', '🚩 Vote pour le pire des deux', '📊 Comparaison avec la communauté'],
-    cta: 'LANCER LE DUEL',
-    href: '/jeu',
-    emoji: '🔥'
-  },
-  doubt: {
-    id: 'oracle',
-    themeColor: '#88CEFF',
-    glowColor: 'rgba(136, 206, 255, 0.4)',
-    tag: '🔮 AVIS RAPIDE IA',
-    title: 'SOUMETS TON CAS',
-    tagline: 'Obtenir un premier avis sur un doute.',
-    desc: 'Tu décris une situation en texte libre et l\'Oracle renvoie un verdict red ou green avec justification. Utile pour prendre du recul vite.',
-    bullets: ['✍️ Saisie libre', '🧠 Verdict + explication', '🗂 Historique communautaire (optionnel)'],
-    cta: 'LANCER UNE ANALYSE',
-    href: '/flagornot',
-    emoji: '🔮'
-  },
-  dixmais: {
-    id: 'dixmais',
-    themeColor: '#F59E0B',
-    glowColor: 'rgba(245, 158, 11, 0.4)',
-    tag: '⭐ JEU DE NOTATION',
-    title: "C'est un 10 mais...",
-    tagline: 'Combien vaut-il vraiment ?',
-    desc: 'Il commence à 10. Puis les révélations s\'enchaînent. À chaque info, tu réévalues sa note. Jusqu\'où va-t-il chuter ?',
-    bullets: ['⭐ 5 révélations par profil', '📉 La note se réévalue à chaque révélation', '🚫 Le 0 est éliminatoire — fin du profil'],
-    cta: 'JOUER MAINTENANT',
-    href: '/dixmais',
-    emoji: '⭐'
-  }
+  titre: string;
+  /** Une phrase : ce qu'on fait, pas ce que c'est. */
+  promesse: string;
+  /** Format et durée. On choisit surtout là-dessus. */
+  format: string;
+  /** Le verbe. Un titre et une flèche disent qu'il se passe quelque chose, pas quoi. */
+  action: string;
+  href: string;
 };
 
 /**
- * Rangée secondaire du hub. Le guide des flags et les outils d'auto-évaluation
- * n'étaient joignables que par le pied de page, sous une page qui tient en un
- * écran : personne n'y descendait, alors que ce sont les deux contenus les plus
- * utiles du site. `href` absent = ouvre la feuille Safe Zone.
+ * Le point d'entrée. Le Red Flag Test est le seul jeu qui parle de la
+ * personne qui joue, et le seul dont le résultat se partage : c'est lui qui
+ * répond le mieux à « par où je commence ? ».
  */
-const SHORTCUTS: {
-  emoji: string;
-  short: string;
-  label: string;
-  href?: string;
-  surface: string;
-  tone: string;
-}[] = [
+const VEDETTE: Jeu = {
+  id: 'redflagtest',
+  couleur: '#FFB4AA',
+  couleurTexte: '#FFC4BC',
+  emoji: '🧪',
+  titre: 'RED FLAG TEST',
+  promesse: 'Ce que les autres voient comme red flag chez toi.',
+  format: 'Solo · anonyme · score en %',
+  action: 'Faire le test',
+  href: '/redflagtest',
+};
+
+/**
+ * L'ordre de ce tableau est l'ordre de la page. Le pire des deux ferme la
+ * liste : choix éditorial.
+ */
+const AUTRES_JEUX: Jeu[] = [
   {
-    emoji: '🏆',
-    short: 'Palmarès',
-    label: 'LE PALMARÈS',
-    href: '/classement',
-    surface: 'bg-[#0F1012] border-white/5',
-    tone: 'text-[#A6A6A6] group-hover:text-[#2ECC71]',
+    id: 'dixmais',
+    couleur: '#F59E0B',
+    couleurTexte: '#FFC04D',
+    emoji: '⭐',
+    titre: "C'EST UN 10 MAIS…",
+    promesse: 'Il part de 10 sur 10. Cinq révélations le font chuter.',
+    format: 'Solo · 3 min · le 0 élimine',
+    action: 'Noter un profil',
+    href: '/dixmais',
   },
   {
-    emoji: '🚩',
-    short: 'Guide',
-    label: 'GUIDE DES FLAGS',
-    href: '/guide',
-    surface: 'bg-[#2ECC71]/8 border-[#2ECC71]/25',
-    tone: 'text-[#2ECC71]',
+    id: 'oracle',
+    couleur: '#88CEFF',
+    couleurTexte: '#A8DBFF',
+    emoji: '🔮',
+    titre: "L'ORACLE",
+    promesse: 'Tu racontes ta situation, l’IA tranche.',
+    format: 'Solo · 30 s · une amorce',
+    action: 'Soumettre mon cas',
+    href: '/flagornot',
   },
   {
-    emoji: '🧭',
-    short: 'Tests',
-    label: 'TESTS SÉRIEUX',
-    href: '/ressources',
-    surface: 'bg-[#0F1012] border-white/5',
-    tone: 'text-[#A6A6A6] group-hover:text-[#8B5CF6]',
-  },
-  {
-    emoji: '🛡',
-    short: 'Safe zone',
-    label: 'SAFE ZONE',
-    surface: 'bg-[#0F1012] border-white/5',
-    tone: 'text-[#A6A6A6] group-hover:text-[#10B981]',
+    id: 'jeu',
+    couleur: '#2ECC71',
+    couleurTexte: '#5FE39B',
+    emoji: '🔥',
+    titre: 'LE PIRE DES DEUX',
+    promesse: 'Deux comportements, tu désignes le plus grave.',
+    format: 'Solo ou à plusieurs · 2 min',
+    action: 'Lancer un duel',
+    href: '/jeu',
   },
 ];
 
-export function HubClient() {
+/** Ce qu'on vient lire plutôt que jouer. */
+const REPERES: { emoji: string; titre: string; sous: string; href: string; couleur: string }[] = [
+  {
+    emoji: '🚩',
+    titre: 'GUIDE DES FLAGS',
+    sous: 'Green, white, orange, red, black : ce que chaque couleur veut dire',
+    href: '/guide',
+    couleur: '#5FE39B',
+  },
+  {
+    emoji: '📊',
+    titre: "L'OBSERVATOIRE",
+    sous: 'Là où hommes, femmes et générations ne sont pas d’accord',
+    href: '/observatoire',
+    couleur: '#A8DBFF',
+  },
+];
+
+/** Ce que `page.tsx` a pu lire. `null` et liste vide = base muette. */
+export type DonneesHub = {
+  votes: number | null;
+  comportementsClasses: number | null;
+  pires: { rang: number; texte: string; votes: number }[];
+};
+
+/** Séparateur de milliers français, pour que 128394 se lise. */
+const nombre = new Intl.NumberFormat('fr-FR');
+
+/**
+ * Anneau de focus commun. Toute la page se parcourt au clavier ; sans lui, la
+ * position courante n'était visible nulle part sur ce fond sombre.
+ */
+const FOCUS =
+  'outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-primary)]';
+
+/** Intitulé de section : même style partout, pour que la page se lise en rayons. */
+function TitreSection({ id, children }: { id: string; children: React.ReactNode }) {
+  return (
+    <h2
+      id={id}
+      className="mb-3 flex items-center gap-2 text-[12px] font-black uppercase tracking-[0.2em] text-(--text-2)"
+    >
+      {children}
+    </h2>
+  );
+}
+
+export function HubClient({ votes, comportementsClasses, pires }: DonneesHub) {
   const { tap } = useHaptics();
-  const [selectedVibe, setSelectedVibe] = useState<PersonaKey>('redflag');
-  const [safeZoneOpen, setSafeZoneOpen] = useState(false);
-  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
-  const touchStartXRef = useRef<number | null>(null);
-
-  const vibeOrder = useMemo(() => Object.keys(CARDS_DATA) as PersonaKey[], []);
-
-  const handleTap = useCallback(() => {
-    tap();
-  }, [tap]);
-
-  const switchVibeByStep = useCallback((step: number) => {
-    setSelectedVibe((prev) => {
-      const currentIndex = vibeOrder.indexOf(prev);
-      const nextIndex = (currentIndex + step + vibeOrder.length) % vibeOrder.length;
-      return vibeOrder[nextIndex];
-    });
-    tap();
-  }, [tap, vibeOrder]);
-
-  const onTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    touchStartXRef.current = e.changedTouches[0]?.clientX ?? null;
-  }, []);
-
-  const onTouchEnd = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    if (touchStartXRef.current === null) return;
-    const endX = e.changedTouches[0]?.clientX ?? touchStartXRef.current;
-    const deltaX = endX - touchStartXRef.current;
-    touchStartXRef.current = null;
-
-    // Swipe threshold to avoid accidental tab switches on scroll.
-    if (Math.abs(deltaX) < 42) return;
-
-    if (deltaX < 0) {
-      switchVibeByStep(1);
-    } else {
-      switchVibeByStep(-1);
-    }
-  }, [switchVibeByStep]);
-
-  const activeCard = CARDS_DATA[selectedVibe];
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-[#000000] text-[#E2E2E2] selection:bg-[#FF3B30]/30 selection:text-white">
-      {/* Dynamic Background Shader & Grid */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        {/* Sleek matrix grid */}
-        <div className="absolute inset-0 bg-[#000000] bg-[linear-gradient(to_right,#111_1px,transparent_1px),linear-gradient(to_bottom,#111_1px,transparent_1px)] bg-size-[32px_32px] opacity-60" />
-        
-        {/* Fluid morphing vaporwave orbs with dynamic color changes */}
-        <div 
-          className="absolute -top-40 left-1/2 -translate-x-1/2 h-125 w-125 rounded-full blur-[160px] opacity-25 transition-all duration-1000 ease-in-out"
-          style={{ 
-            backgroundColor: activeCard.themeColor,
-            boxShadow: `0 0 120px ${activeCard.themeColor}` 
-          }} 
-        />
-        
-        <div className="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-[#111] blur-[100px] opacity-40" />
-        <div className="absolute bottom-40 -right-20 h-80 w-80 rounded-full bg-[#111] blur-[100px] opacity-40" />
+    <div className="relative min-h-svh text-(--text-1) selection:bg-[#FF3B30]/30 selection:text-white">
+      {/* Décor. `fixed` : la page défile, et un halo ancré en haut du document
+          disparaîtrait au premier écran. `will-change` le fait composer une
+          fois pour toutes plutôt que repeindre ses flous à chaque image. */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 z-0 overflow-hidden will-change-transform"
+      >
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#141417_1px,transparent_1px),linear-gradient(to_bottom,#141417_1px,transparent_1px)] bg-size-[32px_32px] opacity-60" />
+        <div className="absolute -top-40 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-[#FF3B30] opacity-15 blur-[110px]" />
+        <div className="absolute -bottom-32 -left-24 h-64 w-64 rounded-full bg-[#2ECC71] opacity-10 blur-[100px]" />
       </div>
 
-      {/* Le bandeau défilant était habillé par un `<style jsx global>` inséré
-          après l'hydratation : entre la première peinture et ce moment, les
-          deux `<span>` n'avaient ni `display: flex` ni `width: max-content`,
-          se repliaient sur plusieurs lignes, triplaient la hauteur du bandeau
-          puis se rétractaient d'un coup — en pleine zone LCP. Les six règles
-          vivent désormais dans `globals.css`, servies avec la page. */}
-
-      {/* Infinite scrolling ticker behind the main card */}
-      <div className="absolute top-[32%] w-full py-2 bg-white/2 border-y border-white/4 overflow-hidden pointer-events-none z-0 transform -rotate-2 select-none">
-        <div className="animate-marquee-custom text-[10px] font-black tracking-[0.15em] uppercase text-white/15 gap-8">
-          <span>🚩 Il ne sait pas séparer l&apos;œuvre de l&apos;artiste • 🟢 Elle donne toujours les bons conseils • 🚩 Il met du lait avant les céréales • 🟢 Elle parle à son psy • 🚩 Il couvre ses potes charos • 🟢 Elle s&apos;amuse en boîte sans lui  • </span>
-          <span>🚩 Il ne sait pas séparer l&apos;œuvre de l&apos;artiste • 🟢 Elle donne toujours les bons conseils • 🚩 Il met du lait avant les céréales • 🟢 Elle parle à son psy • 🚩 Il couvre ses potes charos • 🟢 Elle s&apos;amuse en boîte sans lui  • </span>
-        </div>
-      </div>
-
-      {/* Main Container constrained to ergonomic vertical phone viewport */}
-      {/* `[@media(max-height:1000px)]` — sur un 360x640, très répandu, le bouton
-          qui lance le jeu tombait entièrement sous la ligne de flottaison : il
-          fallait faire défiler pour jouer. Les écrans hauts gardent l'aération
-          d'origine, les écrans courts se resserrent. */}
-      {/* Hauteur imposée, et non plancher : avec un simple `min-height`, la
-          carte n'avait aucune pression pour se comprimer et le hub débordait
-          de l'écran. Un plafond réel donne son sens au `flex-1` de la carte —
-          elle prend ce qui reste, ni plus, et fait défiler son texte au-dedans
-          si nécessaire. Le hub tient alors sur un écran par construction, pas
-          par ajustement de valeurs.
-
-          `100dvh` pleine hauteur, sans soustraire `--header-h` : la barre de
-          navigation du site n'est pas rendue sur cette route (voir
-          `SiteHeader`). Le rembourrage haut dégage l'encoche à sa place. */}
       <main
         id="main-content"
-        className="relative z-10 mx-auto flex h-dvh w-full max-w-110 flex-col items-center gap-3 [@media(max-height:1000px)]:gap-2.5 px-5 pb-6 [@media(max-height:1000px)]:pb-3"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}
+        className="relative z-10 mx-auto w-full max-w-110 px-4 pb-16 min-[360px]:px-5 sm:max-w-xl sm:px-8"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
       >
-        
-        {/* 1. Header (Minimalist & Branding Focus)
-            La ligne « Swipe pour changer de jeu » a été retirée : la rangée
-            d'onglets juste dessous montre déjà les quatre jeux et s'utilise au
-            doigt, si bien que cette consigne coûtait une vingtaine de pixels
-            pour redire ce que l'interface montre. Le geste de balayage
-            fonctionne toujours. Ces pixels vont au descriptif des jeux. */}
-        <header className="w-full shrink-0 flex flex-col items-center">
-          {/* Centered Brand Logo - enlarged and dominant.
-              Porté par le h1 : la page n'avait aucun titre de niveau 1, le
-              logo n'étant qu'une image. Le nom accessible du titre vient de
-              l'attribut alt — rien n'est ajouté de masqué. */}
-          <h1 className="scale-100 hover:scale-[1.01] active:scale-95 transition-transform duration-200">
+        {/* ── 1. C'est quoi ? ────────────────────────────────────────────── */}
+        <header className="flex flex-col items-center text-center">
+          <h1>
             <Image
               src="/logo-rog-new.svg"
               alt="Red or Green — repérer les toxicités ordinaires"
-              /* Dimensions du fichier : 192 × 86. Les 540 × 118 déclarés
-                 auparavant ne correspondaient à rien et faisaient réserver à
-                 Next une boîte deux fois trop plate — l'image sautait à sa
-                 vraie proportion au chargement, sur l'élément LCP de la page. */
+              /* 192 × 86 : les dimensions réelles du fichier. */
               width={192}
               height={86}
               priority
               draggable={false}
-              className="h-auto w-[88vw] [@media(max-height:1000px)]:w-[62vw] max-w-115 object-contain drop-shadow-[0_0_28px_rgba(255,59,48,0.3)]"
+              className="h-auto w-40 object-contain drop-shadow-[0_0_28px_rgba(255,59,48,0.3)] min-[390px]:w-48 sm:w-56"
             />
           </h1>
+
+          <p className="mt-3 max-w-[30ch] text-[16px] font-semibold leading-snug text-(--text-1)">
+            « Red flag » désigne tout et n&apos;importe quoi. Ici, les joueurs
+            tranchent.
+          </p>
+          {/* Le chiffre remplace un adjectif : « les joueurs tranchent » ne
+              veut rien dire tant qu'on ne sait pas combien ils sont. S'il
+              manque, la ligne se réduit aux garanties.
+              « Sans pub » a disparu de cette ligne : des annonces sont
+              servies sur le site, la promesse était fausse. */}
+          <p className="mt-2 text-[12px] font-black uppercase tracking-[0.14em] text-(--text-3)">
+            {votes !== null && votes > 0 && (
+              <>
+                <span className="text-(--text-2)">{nombre.format(votes)} votes</span>
+                {' · '}
+              </>
+            )}
+            Sans compte · anonyme
+          </p>
         </header>
 
-        {/* Floating help button moved out of header for cleaner logo stage */}
-        <button
-          onClick={() => {
-            handleTap();
-            setHowToPlayOpen(true);
-          }}
-          /* `absolute` : ce bouton appartient au hub, pas à la fenêtre. En
-             `fixed` il suivait le lecteur jusque dans le contenu éditorial. */
-          className="absolute top-4 right-4 z-40 h-10 w-10 rounded-full border border-white/10 bg-black/55 text-white/70 backdrop-blur-md hover:text-white active:scale-90 transition-all cursor-pointer"
-          aria-label="Comment jouer ?"
-        >
-          <span className="sr-only">Comment jouer ?</span>
-          <HelpCircle size={17} className="mx-auto" />
-        </button>
-
-        {/* 2. Vibe Selector Capsule (Sliding layout indicator for 4 Games) */}
-        <div className="w-full shrink-0 bg-[#111112] border border-white/5 rounded-2xl p-1 flex justify-between gap-1 relative shadow-2xl">
-          {(Object.keys(CARDS_DATA) as PersonaKey[]).map((key) => {
-            const isSelected = selectedVibe === key;
-            const data = CARDS_DATA[key];
-            return (
-              <button
-                key={key}
-                onClick={() => {
-                  setSelectedVibe(key);
-                  handleTap();
-                }}
-                className={`relative z-10 grow py-2.5 px-1 rounded-xl flex flex-col items-center justify-center gap-1 transition-all select-none cursor-pointer ${
-                  isSelected ? 'text-black font-black' : 'text-[#8E8E93] hover:text-white'
-                }`}
-              >
-                {isSelected && (
-                  <motion.div
-                    layoutId="activeVibeBg"
-                    className="absolute inset-0 rounded-xl z-[-1]"
-                    style={{ backgroundColor: activeCard.themeColor }}
-                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                  />
-                )}
-                <span className="text-base leading-none">{data.emoji}</span>
-                {/* Titre complet (pas le raccourci) : 4 titres désormais plus
-                    longs partagent une rangée étroite, d'où une taille réduite,
-                    un retour à la ligne autorisé et un tracking resserré. */}
-                <span className="font-black uppercase text-[7.5px] tracking-tight leading-[1.1] text-center">
-                  {data.title}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* La consigne de balayage ne revient que sur les écrans assez hauts
-            pour qu'elle ne coûte rien : au-dessous de 780 px, chaque pixel se
-            dispute au descriptif des jeux et la rangée d'onglets suffit à
-            montrer qu'on change de jeu. Au-dessus, elle occupe l'espace qui
-            se lisait comme un vide entre les onglets et la carte, et elle y
-            dit quelque chose d'utile — que le geste marche aussi. */}
-        <p className="hidden shrink-0 text-[10px] font-black tracking-[0.22em] uppercase text-[#CFCFD4]/70 [@media(min-height:780px)]:block">
-          Swipe pour changer de jeu
-        </p>
-
-        {/* 3. Hero Holographic Game Card (The Focal Point with ultra-smooth morphs) */}
-        {/* `min-h-0` : sans lui, la carte impose sa hauteur de contenu au flex
-            et le hub débordait de la fenêtre — 762 px réclamés pour 592 sur un
-            360×640, très répandu. Le bouton de lancement tombait alors pile sur
-            la ligne de flottaison, à moitié sous la barre de navigation. */}
-        <div className="w-full flex-1 min-h-0 flex flex-col">
-          {/* `initial={false}` : la carte est l'élément LCP de la page. Sans
-              cela elle est rendue à opacity 0 et n'apparaît qu'après
-              l'hydratation, ce qui repousse le LCP de plusieurs secondes sur
-              connexion lente. Le morph entre jeux, lui, reste animé. */}
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={selectedVibe}
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -15 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
-              whileHover={{ y: -4 }}
-              className="relative w-full h-full min-h-0 rounded-4xl border bg-linear-to-b from-[#0F1012] to-[#040405] p-6.5 [@media(min-height:780px)]:p-7 [@media(max-height:1000px)]:p-4 [@media(max-height:700px)]:p-3.5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.85)] flex flex-col justify-between overflow-hidden"
-              style={{
-                borderColor: `${activeCard.themeColor}22`,
-                boxShadow: `0 25px 50px -12px ${activeCard.themeColor}0C`
-              }}
-              onTouchStart={onTouchStart}
-              onTouchEnd={onTouchEnd}
-            >
-              {/* Filigrane de l'emoji du jeu, centre dans la carte.
-                  Sur un grand telephone il reste une centaine de pixels entre
-                  les puces et le bouton — le contenu tient en haut, le bouton
-                  est ancre en bas, et le milieu se lisait comme un trou. Une
-                  marque a 6 % d'opacite l'occupe sans rien ajouter a lire.
-                  Absent des ecrans courts, ou ce vide n'existe pas. */}
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-x-0 bottom-24 hidden select-none justify-center [@media(min-height:780px)]:flex"
-              >
-                <span className="text-[9rem] leading-none opacity-[0.06]">{activeCard.emoji}</span>
-              </div>
-
-              {/* Backglow element on card */}
-              <div 
-                className="absolute -top-24 -right-24 h-48 w-48 rounded-full blur-3xl opacity-20 pointer-events-none transition-all duration-500" 
-                style={{ backgroundColor: activeCard.themeColor }}
-              />
-
-              {/* Le descriptif défile dans la carte au lieu de la faire
-                  grandir : sur écran court, c'est lui qui poussait le bouton
-                  hors de vue. Le bouton, lui, reste hors de cette boîte —
-                  toujours au bas de la carte, toujours au même endroit. */}
-              {/* Pas de `flex-1` ici : `flex-basis: 0` ferait compter ce bloc
-                  pour zéro dans la hauteur intrinsèque de la carte, qui se
-                  réduirait alors au seul bouton. `min-h-0` seul suffit — le
-                  bloc prend sa hauteur naturelle, et ne se comprime que
-                  lorsque le `max-h-full` de la carte l'y oblige. */}
-              <div className="min-h-0 overflow-y-auto overscroll-contain scrollbar-hide space-y-4 [@media(min-height:780px)]:space-y-5 [@media(max-height:1000px)]:space-y-2.5 [@media(max-height:700px)]:space-y-2">
-                {/* Mode Tag */}
-                <div className="flex items-center justify-between">
-                  <span 
-                    className="text-[9px] [@media(min-height:780px)]:text-[11px] font-black uppercase tracking-[0.2em] px-2.5 py-1 [@media(min-height:780px)]:px-3 [@media(min-height:780px)]:py-1.5 rounded-full bg-white/4"
-                    style={{ color: activeCard.themeColor }}
-                  >
-                    {activeCard.tag}
-                  </span>
-                  
-                  <span className="text-xl font-bold opacity-30 select-none">
-                    {activeCard.emoji}
-                  </span>
-                </div>
-
-                {/* Big aggressive headline */}
-                <div className="space-y-1">
-                  {/* clamp() plutôt qu'une taille fixe : les nouveaux titres
-                      ("LE PIRE DES DEUX", "SOUMETS TON CAS") sont plus longs
-                      que l'ancien plus court ("ORACLE IA") et débordaient sur
-                      petit écran à 26px fixe. leading-[1.05] laisse la place
-                      à un retour à la ligne sans rogner les lettres. */}
-                  <h2 className="font-black leading-[1.05] tracking-[-0.03em] text-white text-[clamp(1.35rem,6.8vw,1.625rem)] [@media(min-height:780px)]:text-[clamp(1.6rem,7.4vw,2.1rem)]">
-                    {activeCard.title}
-                  </h2>
-                  <p className="text-xs [@media(min-height:780px)]:text-sm font-semibold tracking-wide" style={{ color: activeCard.themeColor }}>
-                    {activeCard.tagline}
-                  </p>
-                </div>
-
-                {/* Le descriptif est visible partout. Il avait été masqué sur
-                    écran court pour dégager le bouton ; la place a été reprise
-                    ailleurs — ligne de consigne supprimée, logo et onglets
-                    resserrés — plutôt qu'en retirant ce que la personne est
-                    venue lire. Taille et interlignage se resserrent d'un cran
-                    sur les écrans les plus courts. */}
-                <p className="text-[13px] [@media(min-height:780px)]:text-[15px] [@media(max-height:700px)]:text-[12px] leading-relaxed [@media(max-height:700px)]:leading-snug text-[#D0D0D6] font-semibold pt-1">
-                  {activeCard.desc}
-                </p>
-
-                {/* Specs / Bullet points */}
-                <ul className="space-y-2 [@media(min-height:780px)]:space-y-3 pt-2">
-                  {activeCard.bullets.map((bullet, idx) => (
-                    <li key={idx} className="flex items-center gap-2 [@media(min-height:780px)]:gap-2.5 text-[12px] [@media(min-height:780px)]:text-[13.5px] font-black text-[#F0F0F4]">
-                      <span className="text-sm select-none" style={{ color: activeCard.themeColor }}>✔</span>
-                      <span>{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Massive Tactile Pulse Action Button */}
-              <div className="shrink-0 pt-6 [@media(min-height:780px)]:pt-8 [@media(max-height:1000px)]:pt-3 [@media(max-height:700px)]:pt-2.5">
-                {activeCard.external ? (
-                  <a
-                    href={activeCard.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={handleTap}
-                    className="relative group w-full py-4 px-6 rounded-2xl flex items-center justify-between font-black text-xs uppercase tracking-widest text-black transition-all active:scale-[0.97] shadow-xl hover:brightness-110"
-                    style={{
-                      backgroundColor: activeCard.themeColor,
-                      boxShadow: `0 8px 30px ${activeCard.themeColor}3F`
-                    }}
-                  >
-                    <span>{activeCard.cta}</span>
-                    <div className="flex items-center gap-1 bg-black/10 px-3 py-1 rounded-lg">
-                      <span className="font-extrabold text-[10px]">GO</span>
-                      <ArrowRight size={12} strokeWidth={2.5} />
-                    </div>
-                  </a>
-                ) : (
-                  <Link
-                    href={activeCard.href}
-                    onClick={handleTap}
-                    className="relative group w-full py-4 px-6 rounded-2xl flex items-center justify-between font-black text-xs uppercase tracking-widest text-black transition-all active:scale-[0.97] shadow-xl hover:brightness-110"
-                    style={{
-                      backgroundColor: activeCard.themeColor,
-                      boxShadow: `0 8px 30px ${activeCard.themeColor}3F`
-                    }}
-                  >
-                    <span>{activeCard.cta}</span>
-                    <div className="flex items-center gap-1 bg-black/10 px-3 py-1 rounded-lg">
-                      <span className="font-extrabold text-[10px]">GO</span>
-                      <ArrowRight size={12} strokeWidth={2.5} />
-                    </div>
-                  </Link>
-                )}
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* 4. Rangée secondaire (voir `SHORTCUTS`).
-            Une rangée de quatre sur écran court, deux rangées de deux ailleurs :
-            la grille 2×2 coûtait 144 px sous la carte, soit l'essentiel du
-            débordement sur un 360×640. Les quatre entrées restent visibles
-            dans les deux cas — seule leur disposition change. */}
-        <section className="w-full shrink-0 grid grid-cols-4 [@media(min-height:1001px)]:grid-cols-2 gap-2.5">
-          {SHORTCUTS.map((shortcut) => {
-            const content = (
-              <>
-                <span className="text-lg leading-none">{shortcut.emoji}</span>
-                {/* Deux intitulés : sur une rangée de quatre, chaque cellule ne
-                    fait que 78 px et « GUIDE DES FLAGS » y partait sur trois
-                    lignes rognées. La forme longue reste sur la grille 2×2. */}
-                <span
-                  className={`mt-1.5 min-w-0 text-center text-[9px] font-black uppercase leading-tight transition-colors ${shortcut.tone}`}
-                >
-                  <span className="[@media(min-height:1001px)]:hidden">{shortcut.short}</span>
-                  <span className="hidden tracking-wider [@media(min-height:1001px)]:inline">
-                    {shortcut.label}
-                  </span>
-                </span>
-              </>
-            );
-
-            const className = `flex min-h-16 [@media(max-height:700px)]:min-h-14 flex-col items-center justify-center rounded-2xl border px-1.5 py-3 [@media(max-height:700px)]:py-2 text-center group transition-transform active:scale-95 ${shortcut.surface}`;
-
-            return shortcut.href ? (
-              <Link key={shortcut.short} href={shortcut.href} onClick={handleTap} className={className}>
-                {content}
-              </Link>
-            ) : (
-              <button
-                key={shortcut.short}
-                onClick={() => {
-                  handleTap();
-                  setSafeZoneOpen(true);
-                }}
-                className={`${className} cursor-pointer`}
-              >
-                {content}
-              </button>
-            );
-          })}
+        {/* ── 2. Je fais quoi ? ──────────────────────────────────────────── */}
+        <section className="mt-6" aria-labelledby="titre-depart">
+          <TitreSection id="titre-depart">Commence par là</TitreSection>
+          <CarteVedette jeu={VEDETTE} onTap={tap} />
         </section>
 
+        {/* ── 3. Il y a quoi d'autre ? ───────────────────────────────────── */}
+        <section className="mt-8" aria-labelledby="titre-jeux">
+          <TitreSection id="titre-jeux">Les autres jeux</TitreSection>
+          <ul className="grid gap-3">
+            {AUTRES_JEUX.map((jeu) => (
+              <li key={jeu.id}>
+                <CarteJeu jeu={jeu} onTap={tap} />
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* ── 4. C'est sérieux ? ─────────────────────────────────────────── */}
+        {/* Rendu seulement s'il y a de quoi le remplir : un podium vide, ou à
+            une ligne, dit moins que pas de podium du tout. */}
+        {pires.length >= 3 && (
+          <section className="mt-10" aria-labelledby="titre-palmares">
+            <TitreSection id="titre-palmares">
+              <Trophy size={13} aria-hidden className="text-[#F59E0B]" />
+              Les pires, d&apos;après les votes
+            </TitreSection>
+
+            <ol className="overflow-hidden rounded-2xl border border-(--border-subtle) bg-(--surface-1)">
+              {pires.map((pire) => (
+                <li
+                  key={pire.rang}
+                  className="flex items-start gap-3 border-b border-(--border-subtle) px-4 py-3 last:border-b-0"
+                >
+                  <span
+                    aria-hidden
+                    className="mt-px w-5 shrink-0 text-[16px] font-black tabular-nums text-[#FFC04D]"
+                  >
+                    {pire.rang}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[15px] font-semibold leading-snug text-(--text-1)">
+                      {pire.texte}
+                    </span>
+                    {/* Un comportement fraîchement ajouté n'a pas encore été
+                        soumis : « 0 votes » sous une place de podium se lit
+                        comme une erreur. */}
+                    {pire.votes > 0 && (
+                      <span className="mt-0.5 block text-[12px] font-bold uppercase tracking-wide text-(--text-3)">
+                        {nombre.format(pire.votes)} votes
+                      </span>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ol>
+
+            <LienLigne href="/classement" onTap={tap} fleche="text-[#FFC04D]">
+              {comportementsClasses !== null && comportementsClasses > 0
+                ? `Le classement complet — ${nombre.format(comportementsClasses)} comportements`
+                : 'Le classement complet'}
+            </LienLigne>
+          </section>
+        )}
+
+        {/* ── 5a. Comprendre ─────────────────────────────────────────────── */}
+        <section className="mt-10" aria-labelledby="titre-reperes">
+          <TitreSection id="titre-reperes">Comprendre</TitreSection>
+          <ul className="grid grid-cols-2 gap-3">
+            {REPERES.map((repere) => (
+              <li key={repere.href}>
+                <Link
+                  href={repere.href}
+                  onClick={tap}
+                  className={`group flex h-full flex-col rounded-2xl border border-(--border-subtle) bg-(--surface-1) p-4 transition-colors hover:bg-(--surface-2) motion-safe:active:scale-[0.98] ${FOCUS}`}
+                >
+                  <span aria-hidden className="text-xl leading-none">
+                    {repere.emoji}
+                  </span>
+                  <span
+                    className="mt-2 text-[12px] font-black uppercase leading-tight tracking-wide"
+                    style={{ color: repere.couleur }}
+                  >
+                    {repere.titre}
+                  </span>
+                  <span className="mt-1 text-[13px] font-medium leading-snug text-(--text-2)">
+                    {repere.sous}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* ── 5b. Et si ça ne va pas ? ───────────────────────────────────── */}
+        {/* Ce bloc était un tiroir : il fallait avoir l'idée d'appuyer sur un
+            bouclier pour le trouver. C'est le seul contenu de la page dont on
+            peut avoir besoin dans l'urgence. */}
+        <section
+          className="mt-10 rounded-3xl border border-[#10B981]/25 bg-[#08110C] p-5"
+          aria-labelledby="titre-safe"
+        >
+          <div className="flex items-center gap-2 text-[12px] font-black uppercase tracking-[0.18em] text-[#34D399]">
+            <Shield size={14} aria-hidden />
+            <h2 id="titre-safe">Si ce n&apos;est plus un jeu</h2>
+          </div>
+          <p className="mt-2 text-[15px] font-medium leading-relaxed text-[#A7C9B8]">
+            Certaines situations ne se règlent pas par un vote. Le violentomètre
+            et les autres échelles sont des outils d&apos;auto-évaluation
+            sérieux, avec les numéros vers qui se tourner.
+          </p>
+          <div className="mt-4 flex flex-col">
+            <LienLigne href="/ressources" onTap={tap} fleche="text-[#34D399]" vert>
+              Violentomètre et outils d&apos;auto-évaluation
+            </LienLigne>
+            <LienLigne href="/a-propos" onTap={tap} fleche="text-(--text-3)">
+              Qui fait ce site, et sur quelles données
+            </LienLigne>
+          </div>
+        </section>
       </main>
-
-      {/* ================= MODALS & DRAWERS (Keeping main UI incredibly pristine) ================= */}
-      
-      {/* Drawer 1: Safe Zone (Emerald green glow bottom sheet) */}
-      <AnimatePresence>
-        {safeZoneOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.65 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSafeZoneOpen(false)}
-              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md cursor-pointer"
-            />
-            {/* Slide-Up Sheet */}
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-              className="fixed bottom-0 left-0 right-0 z-50 mx-auto w-full max-w-110 rounded-t-4xl border-t border-[#10B981]/20 bg-linear-to-b from-[#080d0a] to-[#040504] px-6 pt-5 pb-[max(2rem,env(safe-area-inset-bottom))] shadow-[0_-15px_50px_rgba(16,185,129,0.15)] max-h-[85dvh] overflow-y-auto overscroll-contain"
-            >
-              <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mb-4" />
-              
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-1.5 text-xs font-black text-[#10B981] uppercase tracking-[0.2em]">
-                  <Shield size={14} /> ESPACE DE SÉCURITÉ
-                </div>
-                <button 
-                  onClick={() => setSafeZoneOpen(false)} 
-                  className="p-1 text-white/40 hover:text-white active:scale-90 transition-transform cursor-pointer"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <h3 className="text-lg font-black text-white">Besoin d&apos;aide ou d&apos;éclaircissement ?</h3>
-              <p className="text-xs text-[#A7C5B8] leading-relaxed font-semibold mt-1">
-                Le respect n&apos;est pas négociable. Retrouve un espace centralisé avec des outils interactifs, des repères utiles et des ressources d&apos;accompagnement.
-              </p>
-
-              <div className="mt-5 space-y-3">
-                <Link
-                  href="/ressources"
-                  onClick={() => { handleTap(); setSafeZoneOpen(false); }}
-                  className="group flex items-center justify-between rounded-xl bg-[#12241C]/40 border border-[#10B981]/15 px-4 py-3.5 text-xs font-semibold text-[#D1FAE5] transition hover:bg-[#153427] hover:border-[#10B981]/30"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-base select-none">🧭</span>
-                    <span className="font-bold">Violentomètre, interactif et autres tests</span>
-                  </div>
-                  <ArrowRight size={14} className="text-[#10B981] opacity-70 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-
-                <Link
-                  href="/guide"
-                  onClick={() => { handleTap(); setSafeZoneOpen(false); }}
-                  className="group flex items-center justify-between rounded-xl bg-[#12241C]/40 border border-[#10B981]/15 px-4 py-3.5 text-xs font-semibold text-[#D1FAE5] transition hover:bg-[#153427] hover:border-[#10B981]/30"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-base select-none">🏳️</span>
-                    <span className="font-bold">Guide des flags : Green, Red, Black...</span>
-                  </div>
-                  <ArrowRight size={14} className="text-[#10B981] opacity-70 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              </div>
-
-              <div className="mt-6 border-t border-white/4 pt-4 text-center">
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#10B981]/50">100% Anonyme & Sécurisé</span>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Drawer 2: Comment jouer / Rules of the game (Violet glow bottom sheet) */}
-      <AnimatePresence>
-        {howToPlayOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.65 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setHowToPlayOpen(false)}
-              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md cursor-pointer"
-            />
-            {/* Slide-Up Sheet */}
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-              className="fixed bottom-0 left-0 right-0 z-50 mx-auto w-full max-w-110 rounded-t-4xl border-t border-[#88CEFF]/20 bg-linear-to-b from-[#080b0f] to-[#040405] px-6 pt-5 pb-[max(2rem,env(safe-area-inset-bottom))] shadow-[0_-15px_50px_rgba(136,206,255,0.15)] max-h-[85dvh] overflow-y-auto overscroll-contain"
-            >
-              <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mb-4" />
-              
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-1.5 text-xs font-black text-[#88CEFF] uppercase tracking-[0.2em]">
-                  <HelpCircle size={14} /> FONCTIONNEMENT DES JEUX
-                </div>
-                <button 
-                  onClick={() => setHowToPlayOpen(false)} 
-                  className="p-1 text-white/40 hover:text-white active:scale-90 transition-transform cursor-pointer"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <h3 className="text-lg font-black text-white">Prêt à révéler les vérités ?</h3>
-              <p className="text-xs text-[#88CEFF]/70 leading-relaxed font-semibold mt-1">
-                La plateforme se joue 100% sans compte et sans pub. En un clin d’œil, choisis le jeu adapté à ton humeur :
-              </p>
-
-              <div className="mt-5 space-y-4">
-                <div className="flex gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-[#FFB4AA]/10 flex items-center justify-center text-[#FFB4AA] shrink-0 text-sm">🧪</div>
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-black text-white uppercase tracking-wide">Faire le point sur toi (Red Flag Test)</p>
-                    <p className="text-[11px] text-[#A6A6A6]">Un quiz solo pour identifier tes habitudes relationnelles. Tu repars avec un score clair et facile à lire.</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-[#2ECC71]/10 flex items-center justify-center text-[#2ECC71] shrink-0 text-sm">🎮</div>
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-black text-white uppercase tracking-wide">Voter pour le plus red flag (Red or Green Duel)</p>
-                    <p className="text-[11px] text-[#A6A6A6]">Entre deux choix, votez pour le plus red flag. Comparez votre avis au pourcentage de la communauté.</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-[#88CEFF]/10 flex items-center justify-center text-[#88CEFF] shrink-0 text-sm">🔮</div>
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-black text-white uppercase tracking-wide">Obtenir un premier avis (Oracle IA)</p>
-                    <p className="text-[11px] text-[#A6A6A6]">Tu écris ton doute et l IA donne un verdict red ou green avec explication. Pratique pour prendre du recul.</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-[#F59E0B]/10 flex items-center justify-center text-[#F59E0B] shrink-0 text-sm">⭐</div>
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-black text-white uppercase tracking-wide">Combien vaut-il vraiment ? (C&apos;est un 10 mais...)</p>
-                    <p className="text-[11px] text-[#A6A6A6]">Chaque profil commence à 10. Les révélations s&apos;enchaînent. Note après chaque info. Le 0 est éliminatoire.</p>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setHowToPlayOpen(false)}
-                className="mt-6 w-full py-3 rounded-xl bg-white text-black font-black text-xs uppercase tracking-wider active:scale-95 transition-transform cursor-pointer"
-              >
-                C&apos;est parti !
-              </button>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
     </div>
+  );
+}
+
+/**
+ * Le point d'entrée recommandé. Toute la carte est la cible ; le bouton en
+ * bas n'en est que la partie la plus visible — il dit où appuyer à qui
+ * hésite, sans être un lien dans le lien.
+ */
+function CarteVedette({ jeu, onTap }: { jeu: Jeu; onTap: () => void }) {
+  return (
+    <Link
+      href={jeu.href}
+      onClick={onTap}
+      className={`group relative block overflow-hidden rounded-3xl border bg-(--surface-1) p-5 transition-colors hover:bg-(--surface-2) motion-safe:active:scale-[0.99] ${FOCUS}`}
+      style={{ borderColor: `${jeu.couleur}40` }}
+    >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full opacity-20 blur-3xl"
+        style={{ backgroundColor: jeu.couleur }}
+      />
+
+      <div className="relative flex items-start gap-3">
+        <span aria-hidden className="text-3xl leading-none">
+          {jeu.emoji}
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[23px] font-black uppercase leading-none tracking-[-0.02em] text-white">
+            {jeu.titre}
+          </h3>
+          <p
+            className="mt-2 text-[12px] font-black uppercase tracking-[0.08em]"
+            style={{ color: jeu.couleurTexte }}
+          >
+            <Format texte={jeu.format} />
+          </p>
+        </div>
+      </div>
+
+      <p className="relative mt-3 text-[16px] font-semibold leading-snug text-(--text-1)">
+        {jeu.promesse}
+      </p>
+
+      {/* 52 px de haut : au-dessus des 44 recommandés, pour la seule action
+          que la page pousse. Texte noir sur la teinte du jeu : plus de 12:1. */}
+      <span
+        className="relative mt-4 flex h-13 items-center justify-center gap-2 rounded-2xl text-[15px] font-black uppercase tracking-[0.08em] text-black shadow-[0_8px_30px_-8px_var(--halo)] transition-[filter] group-hover:brightness-110"
+        style={{ backgroundColor: jeu.couleur, ['--halo' as string]: `${jeu.couleur}80` }}
+      >
+        {jeu.action}
+        <ArrowRight
+          size={18}
+          strokeWidth={2.75}
+          aria-hidden
+          className="transition-transform motion-safe:group-hover:translate-x-0.5"
+        />
+      </span>
+    </Link>
+  );
+}
+
+/**
+ * Un jeu secondaire. Toute la carte est la cible — sur un téléphone, c'est le
+ * geste qu'on fait de toute façon.
+ */
+function CarteJeu({ jeu, onTap }: { jeu: Jeu; onTap: () => void }) {
+  return (
+    <Link
+      href={jeu.href}
+      onClick={onTap}
+      className={`group relative flex h-full overflow-hidden rounded-2xl border border-(--border-subtle) bg-(--surface-1) py-4 pl-5 pr-4 transition-colors hover:bg-(--surface-2) motion-safe:active:scale-[0.985] ${FOCUS}`}
+    >
+      {/* Liseré de teinte : il identifie le jeu du coin de l'œil, au défilement. */}
+      <span
+        aria-hidden
+        className="absolute inset-y-0 left-0 w-1"
+        style={{ backgroundColor: jeu.couleur }}
+      />
+
+      <div className="flex min-w-0 flex-1 items-start gap-3">
+        <span aria-hidden className="mt-0.5 text-2xl leading-none">
+          {jeu.emoji}
+        </span>
+
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[19px] font-black uppercase leading-[1.1] tracking-[-0.02em] text-white">
+            {jeu.titre}
+          </h3>
+          <p className="mt-1.5 text-[15px] font-semibold leading-snug text-(--text-2)">
+            {jeu.promesse}
+          </p>
+          <p
+            className="mt-2 text-[12px] font-black uppercase tracking-[0.06em]"
+            style={{ color: jeu.couleurTexte }}
+          >
+            <Format texte={jeu.format} />
+          </p>
+          {/* Le verbe, en blanc et non dans la teinte du jeu : deux lignes de
+              la même couleur l'une sous l'autre se liraient comme une seule. */}
+          <p className="mt-2 flex items-center gap-1.5 text-[12px] font-black uppercase tracking-[0.1em] text-(--text-1)">
+            {jeu.action}
+            <ArrowRight
+              size={14}
+              strokeWidth={2.5}
+              aria-hidden
+              className="transition-transform motion-safe:group-hover:translate-x-0.5"
+            />
+          </p>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+/**
+ * Une ligne de format ne se coupe qu'entre ses éléments, jamais au milieu
+ * d'un : à 320 px, « SCORE EN % » laissait son « % » seul sur une ligne.
+ */
+function Format({ texte }: { texte: string }) {
+  const parties = texte.split(' · ');
+  return (
+    <>
+      {parties.map((partie, i) => (
+        <span key={partie}>
+          {/* Le point reste collé à ce qui le précède : une ligne ne
+              commence jamais par « · ». */}
+          <span className="whitespace-nowrap">
+            {partie}
+            {i < parties.length - 1 && ' ·'}
+          </span>
+          {i < parties.length - 1 && ' '}
+        </span>
+      ))}
+    </>
+  );
+}
+
+/** Lien pleine largeur, à flèche. 48 px de haut au minimum : une cible sûre. */
+function LienLigne({
+  href,
+  onTap,
+  fleche,
+  vert = false,
+  children,
+}: {
+  href: string;
+  onTap: () => void;
+  /** Classe de couleur de la flèche. */
+  fleche: string;
+  /** Variante du bloc d'aide. */
+  vert?: boolean;
+  children: React.ReactNode;
+}) {
+  const surface = vert
+    ? 'border-[#10B981]/20 bg-[#10B981]/8 text-[#D1FAE5] hover:bg-[#10B981]/14'
+    : 'border-(--border-subtle) bg-white/3 text-(--text-1) hover:bg-white/6';
+
+  return (
+    <Link
+      href={href}
+      onClick={onTap}
+      className={`group mt-3 flex min-h-12 items-center justify-between gap-3 rounded-xl border px-4 py-3 text-[14px] font-bold transition-colors first:mt-0 ${surface} ${FOCUS}`}
+    >
+      <span>{children}</span>
+      <ArrowRight
+        size={16}
+        aria-hidden
+        className={`shrink-0 transition-transform motion-safe:group-hover:translate-x-0.5 ${fleche}`}
+      />
+    </Link>
   );
 }
