@@ -11,6 +11,8 @@ export default function robots(): MetadataRoute.Robots {
           '/',
           '/jeu',
           '/flagornot',
+          '/redflagtest',
+          '/redflagtest/stats',
           '/guide',
           '/classement',
           '/dixmais',

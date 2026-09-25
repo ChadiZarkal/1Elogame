@@ -6,8 +6,9 @@ export const metadata: Metadata = {
   title: 'Ce que les autres ont répondu',
   description:
     'Les réponses du Red Flag Test, question par question, et l’écart entre les hommes et les femmes.',
-  // Rouverte en même temps que le test : voir le layout.
-  robots: { index: false, follow: false },
+  // Sa propre adresse, sinon elle hériterait de celle du test et se
+  // déclarerait doublon de /redflagtest.
+  alternates: { canonical: '/redflagtest/stats' },
 };
 
 export default function PageStats() {

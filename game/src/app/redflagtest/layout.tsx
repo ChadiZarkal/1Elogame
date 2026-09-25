@@ -22,12 +22,19 @@ export const metadata: Metadata = {
   description:
     'Réponds au test et découvre ton pourcentage de red flag, ton profil par catégorie et ton classement.',
   /*
-   * Fermé aux moteurs tant que le questionnaire n'est pas écrit. Une page
-   * indexée qui annonce « le test n'a pas encore de questions » est un mauvais
-   * premier résultat, et il resterait en cache bien après la mise en ligne du
-   * contenu. À rouvrir en supprimant cette ligne.
+   * Ouvert aux moteurs : le questionnaire est écrit. Il était fermé tant que
+   * la page n'aurait annoncé que « le test n'a pas encore de questions ».
+   *
+   * L'adresse canonique est indispensable, pas décorative. Le layout racine
+   * déclare `canonical: '/'`, dont hérite toute route qui ne dit rien : sans
+   * cette ligne, /redflagtest se présenterait à Google comme un doublon de
+   * l'accueil, et lever le `noindex` n'aurait rien changé. Les autres jeux
+   * déclarent tous la leur, pour la même raison.
+   *
+   * Les résultats partagés (`r/[code]`) restent fermés : ils portent leur
+   * propre règle, qui prime sur celle-ci.
    */
-  robots: { index: false, follow: false },
+  alternates: { canonical: '/redflagtest' },
 };
 
 export default function RedflagtestLayout({ children }: { children: React.ReactNode }) {
