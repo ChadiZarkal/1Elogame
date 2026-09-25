@@ -15,7 +15,6 @@ const BLOCKED_PATHS = [
   /^\/admin(\/|$)/,
   /^\/dixmais\/admin(\/|$)/,
   /^\/jeu\/recap(\/|$)/,
-  /^\/flashflag\/session(\/|$)/,
 ];
 
 interface AdSenseScriptProps {

@@ -12,19 +12,6 @@ export { getPublicStats, getAdminStats, getDailyVoteStats } from './stats';
 export type { DailyVoteStat } from './stats';
 export { getRecentSubmissions, saveSubmission, getGlobalVerdictCounts } from './community';
 export { saveAnalyticsSession, getAnalyticsSessions } from './analytics';
-export {
-	listFlashFlagStandardTests,
-	getFlashFlagTestById,
-	getAdminFlashFlagTestById,
-	createFlashFlagSession,
-	getFlashFlagSessionByCode,
-	startFlashFlagSession,
-	submitFlashFlagAnswers,
-	listAdminFlashFlagTests,
-	createAdminFlashFlagTest,
-	updateAdminFlashFlagTest,
-	disableAdminFlashFlagTest,
-} from './flashflag';
 
 export {
 	getRandomStatements,

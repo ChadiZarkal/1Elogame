@@ -11,7 +11,6 @@ export default function robots(): MetadataRoute.Robots {
           '/',
           '/jeu',
           '/flagornot',
-          '/flashflag',
           '/guide',
           '/classement',
           '/dixmais',
@@ -30,8 +29,8 @@ export default function robots(): MetadataRoute.Robots {
           '/mentions-legales',
           '/confidentialite',
         ],
-        // Les pages d'état éphémère — /jeu/jouer, /jeu/recap, /flagornot/stats
-        // et /flashflag/session/* — ne sont pas listées ici : elles portent un
+        // Les pages d'état éphémère — /jeu/jouer, /jeu/recap et
+        // /flagornot/stats — ne sont pas listées ici : elles portent un
         // `noindex` en métadonnées, que Google doit pouvoir explorer pour le
         // prendre en compte. Les interdire ici l'en empêcherait.
         disallow: ['/admin', '/admin/', '/dixmais/admin', '/api/'],

@@ -64,6 +64,13 @@ const nextConfig: NextConfig = {
       // désignent explicitement. Redirigée en permanent plutôt que supprimée,
       // pour conserver les liens entrants existants.
       { source: '/redflag', destination: '/jeu', permanent: true },
+      // Flash Flag a été retiré : ses tables n'avaient jamais été créées en
+      // production, le jeu ne pouvait donc pas fonctionner. Ses liens de
+      // session étaient faits pour être envoyés — il en circule forcément.
+      // Ils mènent à l'accueil plutôt qu'à une page d'erreur.
+      { source: '/flashflag', destination: '/', permanent: true },
+      { source: '/flashflag/:path*', destination: '/', permanent: true },
+      { source: '/admin/flashflag', destination: '/admin', permanent: true },
     ];
   },
 

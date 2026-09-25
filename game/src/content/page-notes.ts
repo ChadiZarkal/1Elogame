@@ -69,7 +69,6 @@ export const HOME_NOTES: PageNotes = {
         'Le pire des deux — deux comportements, tu désignes le plus grave. C\'est ce jeu qui alimente le classement.',
         "C'est un 10 mais… — un profil part de 10 sur 10 et cinq révélations tombent. La note se réajuste à chaque fois : le jeu montre où tu décroches.",
         "L'Oracle — tu écris une situation, un modèle génératif rend un verdict tranché. À prendre pour ce que c'est : une amorce de discussion, pas un avis autorisé.",
-        'Flash Flag — un test court et chronométré, à faire côte à côte ou à envoyer par lien.',
       ],
     },
     {
@@ -370,80 +369,6 @@ export const ORACLE_NOTES: PageNotes = {
     { href: '/guide', label: 'Guide des flags' },
     { href: '/classement', label: 'Classement des red flags' },
     { href: '/ressources', label: "Outils d'auto-évaluation" },
-    { href: '/a-propos', label: 'À propos du site' },
-  ],
-};
-
-// ---------------------------------------------------------------------------
-// Flash Flag
-// ---------------------------------------------------------------------------
-
-export const FLASHFLAG_NOTES: PageNotes = {
-  title: 'Comprendre Flash Flag',
-  lede:
-    "Flash Flag est un test court et chronométré : une série de questions, quelques secondes pour répondre à chacune, un score à la fin. Il s'envoie à quelqu'un ou se fait côte à côte.",
-  blocks: [
-    {
-      heading: 'Ce que mesure le chronomètre',
-      body: [
-        "Chaque question est limitée dans le temps. La contrainte n'est pas là pour mettre la pression : elle sert à récupérer une première réaction plutôt qu'une réponse construite. Sans limite, on répond ce qu'on estime devoir répondre ; avec, on répond ce qui vient.",
-        "Une question sans réponse dans le temps imparti est comptée comme telle. L'absence de choix est une information, elle n'est pas neutralisée.",
-      ],
-    },
-    {
-      heading: 'Comment lire le score',
-      body: [
-        "Chaque option porte une valeur, et le score final additionne les réponses. Un score élevé signale que les réponses vont majoritairement dans le sens des comportements considérés comme sains par le barème du test ; un score bas signale l'inverse.",
-        "Ce chiffre n'a pas de valeur diagnostique. Il dépend entièrement des questions posées, et un test personnalisé écrit par un joueur ne repose sur aucun barème validé.",
-      ],
-    },
-    {
-      heading: 'Les deux façons de jouer',
-      bullets: [
-        "Sur un seul téléphone, en passant l'appareil : le résultat s'affiche à la fin de la série.",
-        "Par lien : le test est envoyé, la personne répond de son côté, et le résultat revient une fois la série terminée.",
-        "Un test peut reprendre une série standard, ou être écrit entièrement par le joueur qui l'envoie.",
-      ],
-    },
-    {
-      heading: "Ce que ce test n'est pas",
-      body: [
-        "Flash Flag est un jeu. Ce n'est ni un test de personnalité, ni un test de compatibilité, ni un outil d'évaluation d'une relation. Les questions ne sont pas validées cliniquement et le score ne prédit rien.",
-        "Si l'objectif est de faire le point sur une situation réelle, les outils d'auto-évaluation de la section ressources — construits à partir de barèmes institutionnels — sont conçus pour cela. " +
-          EMERGENCY,
-      ],
-    },
-  ],
-  faq: [
-    {
-      question: 'Faut-il installer une application ?',
-      answer: "Non. Tout se passe dans le navigateur, sans compte ni installation.",
-    },
-    {
-      question: 'Combien de temps dure un test ?',
-      answer:
-        "Quelques minutes. Chaque question dispose de sa propre limite de temps, généralement de l'ordre de quelques secondes.",
-    },
-    {
-      question: 'Puis-je écrire mes propres questions ?',
-      answer:
-        "Oui. Un test personnalisé accepte tes propres questions et leurs réponses, chacune associée à une valeur qui entre dans le score final.",
-    },
-    {
-      question: 'La personne qui répond voit-elle mes réponses ?',
-      answer:
-        "Le test envoyé par lien recueille les réponses de la personne à qui tu l'envoies, et te renvoie son résultat une fois la série terminée.",
-    },
-    {
-      question: 'Le résultat a-t-il une valeur scientifique ?',
-      answer:
-        "Aucune. Les séries de questions ne sont pas des instruments validés, et le score ne constitue pas une évaluation psychologique.",
-    },
-  ],
-  related: [
-    { href: '/guide', label: 'Guide des flags' },
-    { href: '/ressources', label: "Outils d'auto-évaluation" },
-    { href: '/jeu', label: 'Red or Green — le duel' },
     { href: '/a-propos', label: 'À propos du site' },
   ],
 };

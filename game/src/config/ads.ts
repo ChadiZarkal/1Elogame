@@ -67,7 +67,6 @@ export const AD_FREE_PATHS: RegExp[] = [
   /^\/dixmais\/admin(\/|$)/,
   /^\/jeu\/jouer(\/|$)/,
   /^\/jeu\/recap(\/|$)/,
-  /^\/flashflag\/session(\/|$)/,
   /^\/hors-ligne(\/|$)/,
 ];
 

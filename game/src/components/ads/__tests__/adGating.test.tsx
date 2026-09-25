@@ -5,7 +5,7 @@
  *
  * Les encarts se chargent sans rien demander. Les seules barrières qui restent
  * sont donc l'interrupteur de chaque emplacement et la liste des routes
- * exclues — écrans de jeu en cours, récapitulatif, sessions Flash Flag,
+ * exclues — écrans de jeu en cours, récapitulatif,
  * administration. Ce sont exactement les endroits où un encart casserait
  * l'écran ou n'aurait aucun contenu d'éditeur autour de lui, et rien dans le
  * code ne les protège à part cette liste. D'où ces tests.

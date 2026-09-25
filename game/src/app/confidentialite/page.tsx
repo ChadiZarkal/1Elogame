@@ -156,7 +156,7 @@ export default function ConfidentialitePage() {
           <p>
             Les encarts apparaissent uniquement au bas des pages de contenu — sous les jeux, en fin
             de guide et d&apos;Observatoire. Ils ne sont chargés ni pendant une partie
-            (<code>/jeu/jouer</code>, <code>/jeu/recap</code>, les sessions Flash Flag), ni sur les
+            (<code>/jeu/jouer</code>, <code>/jeu/recap</code>), ni sur les
             écrans d&apos;administration.
           </p>
           <p>

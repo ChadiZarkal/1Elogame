@@ -19,7 +19,7 @@ const patchSchema = z.object({
  * `undefined` : PATCH et DELETE répondaient « ID manquant » sans jamais toucher
  * la base — l'édition, la suppression et les bascules actif/approuvé du
  * backoffice ne pouvaient donc pas fonctionner. Les autres routes dynamiques du
- * projet (elements, flashflag) attendent déjà la promesse ; celle-ci ne le
+ * projet (elements) attendent déjà la promesse ; celle-ci ne le
  * faisait pas.
  */
 async function readId(ctx?: Record<string, unknown>): Promise<string | null> {

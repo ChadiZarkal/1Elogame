@@ -46,7 +46,6 @@ const NAV_SECTIONS: {
       { href: '/jeu', label: 'Le pire des deux' },
       { href: '/dixmais', label: "C'est un 10 mais…" },
       { href: '/flagornot', label: "L'Oracle" },
-      { href: '/flashflag', label: 'Flash Flag' },
     ],
   },
   {

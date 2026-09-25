@@ -634,14 +634,6 @@ export function HubClient() {
                 </div>
 
                 <div className="flex gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-[#FF3B30]/10 flex items-center justify-center text-[#FF3B30] shrink-0 text-sm">🚩</div>
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-black text-white uppercase tracking-wide">Tester les réactions à chaud (Flash Flag)</p>
-                    <p className="text-[11px] text-[#A6A6A6]">Un test chronométré de 10 questions. Utile pour voir des réponses spontanées, sans trop réfléchir.</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
                   <div className="w-7 h-7 rounded-lg bg-[#2ECC71]/10 flex items-center justify-center text-[#2ECC71] shrink-0 text-sm">🎮</div>
                   <div className="space-y-0.5">
                     <p className="text-xs font-black text-white uppercase tracking-wide">Voter pour le plus red flag (Red or Green Duel)</p>
