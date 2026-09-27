@@ -16,18 +16,20 @@
  * La page suit maintenant l'ordre des questions qu'on se pose en arrivant :
  *
  *   1. C'est quoi ?          — le logo, une phrase, le nombre de votes.
- *   2. Je fais quoi ?        — un point d'entrée recommandé, avec un vrai
- *                              bouton, placé à mi-écran : là où le pouce
- *                              tombe sans effort.
- *   3. Il y a quoi d'autre ? — les trois autres jeux, posés les uns sous les
- *                              autres, chacun avec sa promesse et son format.
+ *   2. Je fais quoi ?        — les deux jeux phares, le Red Flag Test et
+ *                              « C'est un 10 mais… », chacun avec son vrai
+ *                              bouton. Les deux boutons tiennent dans le
+ *                              premier écran d'un téléphone courant.
+ *   3. Il y a quoi d'autre ? — L'Oracle et Le pire des deux, en rangées plus
+ *                              légères : présents, entiers, mais sans
+ *                              disputer l'attention aux deux premiers.
  *   4. C'est sérieux ?       — ce que les votes ont réellement donné.
  *   5. Et si ça ne va pas ?  — les repères, puis l'aide, en clair.
  *
- * Un point d'entrée unique plutôt que quatre cartes de même poids : face à
- * des choix équivalents, on hésite, et l'hésitation se paie en départs. Les
- * autres jeux restent visibles, entiers, dès le premier écran — la
- * recommandation oriente, elle ne cache rien.
+ * Deux niveaux plutôt que quatre cartes de même poids : face à des choix
+ * équivalents, on hésite, et l'hésitation se paie en départs. La hiérarchie
+ * visuelle reprend celle du site — deux jeux qui portent l'essentiel, deux
+ * qui le complètent.
  *
  * Les deux tiroirs ont disparu. « Comment jouer » redisait, derrière un
  * bouton, ce que chaque carte dit désormais sur la page. « Safe zone » cachait
@@ -61,27 +63,21 @@ type Jeu = {
 };
 
 /**
- * Le point d'entrée. Le Red Flag Test est le seul jeu qui parle de la
- * personne qui joue, et le seul dont le résultat se partage : c'est lui qui
- * répond le mieux à « par où je commence ? ».
+ * Les deux jeux phares du site. L'ordre du tableau est l'ordre de la page :
+ * le Red Flag Test d'abord, parce qu'il parle de la personne qui joue.
  */
-const VEDETTE: Jeu = {
-  id: 'redflagtest',
-  couleur: '#FFB4AA',
-  couleurTexte: '#FFC4BC',
-  emoji: '🧪',
-  titre: 'RED FLAG TEST',
-  promesse: 'Ce que les autres voient comme red flag chez toi.',
-  format: 'Solo · anonyme · score en %',
-  action: 'Faire le test',
-  href: '/redflagtest',
-};
-
-/**
- * L'ordre de ce tableau est l'ordre de la page. Le pire des deux ferme la
- * liste : choix éditorial.
- */
-const AUTRES_JEUX: Jeu[] = [
+const PHARES: Jeu[] = [
+  {
+    id: 'redflagtest',
+    couleur: '#FFB4AA',
+    couleurTexte: '#FFC4BC',
+    emoji: '🧪',
+    titre: 'RED FLAG TEST',
+    promesse: 'Ce que les autres voient comme red flag chez toi.',
+    format: 'Solo · anonyme · score en %',
+    action: 'Faire le test',
+    href: '/redflagtest',
+  },
   {
     id: 'dixmais',
     couleur: '#F59E0B',
@@ -93,6 +89,10 @@ const AUTRES_JEUX: Jeu[] = [
     action: 'Noter un profil',
     href: '/dixmais',
   },
+];
+
+/** Les jeux d'appoint. Le pire des deux ferme la liste : choix éditorial. */
+const AUTRES_JEUX: Jeu[] = [
   {
     id: 'oracle',
     couleur: '#88CEFF',
@@ -183,7 +183,7 @@ export function HubClient({ votes, comportementsClasses, pires }: DonneesHub) {
 
       <main
         id="main-content"
-        className="relative z-10 mx-auto w-full max-w-110 px-4 pb-16 min-[360px]:px-5 sm:max-w-xl sm:px-8"
+        className="relative z-10 mx-auto w-full max-w-110 px-4 pb-16 min-[360px]:px-5 sm:max-w-2xl sm:px-8"
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
       >
         {/* ── 1. C'est quoi ? ────────────────────────────────────────────── */}
@@ -197,11 +197,11 @@ export function HubClient({ votes, comportementsClasses, pires }: DonneesHub) {
               height={86}
               priority
               draggable={false}
-              className="h-auto w-40 object-contain drop-shadow-[0_0_28px_rgba(255,59,48,0.3)] min-[390px]:w-48 sm:w-56"
+              className="h-auto w-32 object-contain drop-shadow-[0_0_28px_rgba(255,59,48,0.3)] min-[390px]:w-40 sm:w-52"
             />
           </h1>
 
-          <p className="mt-3 max-w-[30ch] text-[16px] font-semibold leading-snug text-(--text-1)">
+          <p className="mt-2 max-w-[30ch] text-[16px] font-semibold leading-snug text-(--text-1)">
             « Red flag » désigne tout et n&apos;importe quoi. Ici, les joueurs
             tranchent.
           </p>
@@ -210,7 +210,7 @@ export function HubClient({ votes, comportementsClasses, pires }: DonneesHub) {
               manque, la ligne se réduit aux garanties.
               « Sans pub » a disparu de cette ligne : des annonces sont
               servies sur le site, la promesse était fausse. */}
-          <p className="mt-2 text-[12px] font-black uppercase tracking-[0.14em] text-(--text-3)">
+          <p className="mt-1.5 text-[12px] font-black uppercase tracking-[0.14em] text-(--text-3)">
             {votes !== null && votes > 0 && (
               <>
                 <span className="text-(--text-2)">{nombre.format(votes)} votes</span>
@@ -222,15 +222,24 @@ export function HubClient({ votes, comportementsClasses, pires }: DonneesHub) {
         </header>
 
         {/* ── 2. Je fais quoi ? ──────────────────────────────────────────── */}
-        <section className="mt-6" aria-labelledby="titre-depart">
-          <TitreSection id="titre-depart">Commence par là</TitreSection>
-          <CarteVedette jeu={VEDETTE} onTap={tap} />
+        <section className="mt-4" aria-labelledby="titre-phares">
+          <TitreSection id="titre-phares">Les deux jeux phares</TitreSection>
+          {/* Côte à côte dès qu'il y a la place : deux cartes de même poids
+              disent « l'un ou l'autre », là où deux cartes empilées se lisent
+              comme un premier et un second. */}
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {PHARES.map((jeu) => (
+              <li key={jeu.id}>
+                <CartePhare jeu={jeu} onTap={tap} />
+              </li>
+            ))}
+          </ul>
         </section>
 
         {/* ── 3. Il y a quoi d'autre ? ───────────────────────────────────── */}
-        <section className="mt-8" aria-labelledby="titre-jeux">
-          <TitreSection id="titre-jeux">Les autres jeux</TitreSection>
-          <ul className="grid gap-3">
+        <section className="mt-6" aria-labelledby="titre-jeux">
+          <TitreSection id="titre-jeux">Et aussi</TitreSection>
+          <ul className="grid gap-2 sm:grid-cols-2">
             {AUTRES_JEUX.map((jeu) => (
               <li key={jeu.id}>
                 <CarteJeu jeu={jeu} onTap={tap} />
@@ -347,16 +356,20 @@ export function HubClient({ votes, comportementsClasses, pires }: DonneesHub) {
 }
 
 /**
- * Le point d'entrée recommandé. Toute la carte est la cible ; le bouton en
- * bas n'en est que la partie la plus visible — il dit où appuyer à qui
- * hésite, sans être un lien dans le lien.
+ * Un jeu phare. Toute la carte est la cible ; le bouton en bas n'en est que
+ * la partie la plus visible — il dit où appuyer à qui hésite, sans être un
+ * lien dans le lien.
+ *
+ * Plus compacte qu'une carte unique ne pourrait l'être : il faut que les deux
+ * boutons tiennent dans le premier écran. Sur un 360 × 640, le second finit
+ * au-dessus de la ligne de flottaison.
  */
-function CarteVedette({ jeu, onTap }: { jeu: Jeu; onTap: () => void }) {
+function CartePhare({ jeu, onTap }: { jeu: Jeu; onTap: () => void }) {
   return (
     <Link
       href={jeu.href}
       onClick={onTap}
-      className={`group relative block overflow-hidden rounded-3xl border bg-(--surface-1) p-5 transition-colors hover:bg-(--surface-2) motion-safe:active:scale-[0.99] ${FOCUS}`}
+      className={`group relative flex h-full flex-col overflow-hidden rounded-3xl border bg-(--surface-1) p-4 transition-colors hover:bg-(--surface-2) motion-safe:active:scale-[0.99] min-[390px]:p-5 ${FOCUS}`}
       style={{ borderColor: `${jeu.couleur}40` }}
     >
       <span
@@ -370,7 +383,7 @@ function CarteVedette({ jeu, onTap }: { jeu: Jeu; onTap: () => void }) {
           {jeu.emoji}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="text-[23px] font-black uppercase leading-none tracking-[-0.02em] text-white">
+          <h3 className="text-[21px] font-black uppercase leading-[1.05] tracking-[-0.02em] text-white">
             {jeu.titre}
           </h3>
           <p
@@ -382,14 +395,16 @@ function CarteVedette({ jeu, onTap }: { jeu: Jeu; onTap: () => void }) {
         </div>
       </div>
 
-      <p className="relative mt-3 text-[16px] font-semibold leading-snug text-(--text-1)">
+      <p className="relative mt-2.5 text-[15px] font-semibold leading-snug text-(--text-1)">
         {jeu.promesse}
       </p>
+      <span aria-hidden className="block h-3.5 shrink-0" />
 
-      {/* 52 px de haut : au-dessus des 44 recommandés, pour la seule action
-          que la page pousse. Texte noir sur la teinte du jeu : plus de 12:1. */}
+      {/* 48 px de haut, au-dessus des 44 recommandés. `mt-auto` aligne les
+          deux boutons quand les cartes sont côte à côte. Texte noir sur la
+          teinte du jeu : plus de 10:1 pour les deux. */}
       <span
-        className="relative mt-4 flex h-13 items-center justify-center gap-2 rounded-2xl text-[15px] font-black uppercase tracking-[0.08em] text-black shadow-[0_8px_30px_-8px_var(--halo)] transition-[filter] group-hover:brightness-110"
+        className="relative mt-auto flex h-12 items-center justify-center gap-2 rounded-2xl text-[14px] font-black uppercase tracking-[0.08em] text-black shadow-[0_8px_30px_-8px_var(--halo)] transition-[filter] group-hover:brightness-110"
         style={{ backgroundColor: jeu.couleur, ['--halo' as string]: `${jeu.couleur}80` }}
       >
         {jeu.action}
@@ -405,15 +420,16 @@ function CarteVedette({ jeu, onTap }: { jeu: Jeu; onTap: () => void }) {
 }
 
 /**
- * Un jeu secondaire. Toute la carte est la cible — sur un téléphone, c'est le
- * geste qu'on fait de toute façon.
+ * Un jeu d'appoint : une rangée, pas une carte. Moins haute, sans ligne de
+ * format, titre plus petit — elle doit se lire comme « il y a aussi ça », pas
+ * comme une troisième option de même rang. Toute la rangée est la cible.
  */
 function CarteJeu({ jeu, onTap }: { jeu: Jeu; onTap: () => void }) {
   return (
     <Link
       href={jeu.href}
       onClick={onTap}
-      className={`group relative flex h-full overflow-hidden rounded-2xl border border-(--border-subtle) bg-(--surface-1) py-4 pl-5 pr-4 transition-colors hover:bg-(--surface-2) motion-safe:active:scale-[0.985] ${FOCUS}`}
+      className={`group relative flex h-full items-center overflow-hidden rounded-2xl border border-(--border-subtle) bg-(--surface-1) py-3 pl-5 pr-4 transition-colors hover:bg-(--surface-2) motion-safe:active:scale-[0.985] ${FOCUS}`}
     >
       {/* Liseré de teinte : il identifie le jeu du coin de l'œil, au défilement. */}
       <span
@@ -423,26 +439,23 @@ function CarteJeu({ jeu, onTap }: { jeu: Jeu; onTap: () => void }) {
       />
 
       <div className="flex min-w-0 flex-1 items-start gap-3">
-        <span aria-hidden className="mt-0.5 text-2xl leading-none">
+        <span aria-hidden className="mt-0.5 text-xl leading-none">
           {jeu.emoji}
         </span>
 
         <div className="min-w-0 flex-1">
-          <h3 className="text-[19px] font-black uppercase leading-[1.1] tracking-[-0.02em] text-white">
+          <h3 className="text-[16px] font-black uppercase leading-[1.1] tracking-[-0.01em] text-white">
             {jeu.titre}
           </h3>
-          <p className="mt-1.5 text-[15px] font-semibold leading-snug text-(--text-2)">
+          <p className="mt-1 text-[14px] font-medium leading-snug text-(--text-2)">
             {jeu.promesse}
           </p>
+          {/* Le verbe, dans la teinte du jeu : c'est la seule ligne colorée
+              de la rangée, elle identifie le jeu au défilement. */}
           <p
-            className="mt-2 text-[12px] font-black uppercase tracking-[0.06em]"
+            className="mt-1.5 flex items-center gap-1.5 text-[12px] font-black uppercase tracking-[0.1em]"
             style={{ color: jeu.couleurTexte }}
           >
-            <Format texte={jeu.format} />
-          </p>
-          {/* Le verbe, en blanc et non dans la teinte du jeu : deux lignes de
-              la même couleur l'une sous l'autre se liraient comme une seule. */}
-          <p className="mt-2 flex items-center gap-1.5 text-[12px] font-black uppercase tracking-[0.1em] text-(--text-1)">
             {jeu.action}
             <ArrowRight
               size={14}

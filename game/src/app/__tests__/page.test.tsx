@@ -79,13 +79,20 @@ describe('Accueil', () => {
     }
   });
 
-  it('recommande un point de départ, sans masquer les autres jeux', async () => {
+  it('met en tête les deux jeux phares, chacun avec son bouton', async () => {
     render(await HomePage());
-    const depart = screen.getByRole('region', { name: 'Commence par là' });
-    expect(depart.querySelector('a')?.getAttribute('href')).toBe('/redflagtest');
-    // Les trois autres restent rendus en entier, pas derrière un onglet.
-    const autres = screen.getByRole('region', { name: 'Les autres jeux' });
-    expect(autres.querySelectorAll('a')).toHaveLength(3);
+    const phares = screen.getByRole('region', { name: 'Les deux jeux phares' });
+    const liens = Array.from(phares.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    expect(liens).toEqual(['/redflagtest', '/dixmais']);
+    expect(phares.textContent).toMatch(/Faire le test/);
+    expect(phares.textContent).toMatch(/Noter un profil/);
+  });
+
+  it("garde les jeux d'appoint visibles, sans onglet à ouvrir", async () => {
+    render(await HomePage());
+    const autres = screen.getByRole('region', { name: 'Et aussi' });
+    const liens = Array.from(autres.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    expect(liens).toEqual(['/flagornot', '/jeu']);
   });
 
   it('place Le pire des deux en dernier', async () => {
