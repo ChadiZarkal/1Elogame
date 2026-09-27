@@ -241,7 +241,7 @@ export function HubClient({ votes, comportementsClasses, pires }: DonneesHub) {
         </section>
 
         {/* ── 3. Il y a quoi d'autre ? ───────────────────────────────────── */}
-        <section className="mt-6" aria-labelledby="titre-jeux">
+        <section className="mt-5" aria-labelledby="titre-jeux">
           <TitreSection id="titre-jeux">Et aussi</TitreSection>
           <ul className="grid gap-2 sm:grid-cols-2">
             {AUTRES_JEUX.map((jeu) => (
@@ -364,16 +364,16 @@ export function HubClient({ votes, comportementsClasses, pires }: DonneesHub) {
  * la partie la plus visible — il dit où appuyer à qui hésite, sans être un
  * lien dans le lien.
  *
- * Plus compacte qu'une carte unique ne pourrait l'être : il faut que les deux
- * boutons tiennent dans le premier écran. Sur un 360 × 640, le second finit
- * au-dessus de la ligne de flottaison.
+ * Compacte à dessein : les deux boutons tiennent dans le premier écran, et le
+ * haut de la section suivante dépasse sous eux. Deux cartes qui remplissaient
+ * tout l'écran laissaient croire que la page s'arrêtait là.
  */
 function CartePhare({ jeu, onTap }: { jeu: Jeu; onTap: () => void }) {
   return (
     <Link
       href={jeu.href}
       onClick={onTap}
-      className={`group relative flex h-full flex-col overflow-hidden rounded-3xl border bg-(--surface-1) p-4 transition-colors hover:bg-(--surface-2) motion-safe:active:scale-[0.99] min-[390px]:p-5 ${FOCUS}`}
+      className={`group relative flex h-full flex-col overflow-hidden rounded-3xl border bg-(--surface-1) p-4 transition-colors hover:bg-(--surface-2) motion-safe:active:scale-[0.99] ${FOCUS}`}
       style={{ borderColor: `${jeu.couleur}40` }}
     >
       <span
@@ -382,33 +382,28 @@ function CartePhare({ jeu, onTap }: { jeu: Jeu; onTap: () => void }) {
         style={{ backgroundColor: jeu.couleur }}
       />
 
-      <div className="relative flex items-start gap-3">
-        <span aria-hidden className="text-3xl leading-none">
+      {/* Pas de ligne de format ici : ces deux cartes devaient laisser voir
+          la suite de la page dès le premier écran, pour qu'on comprenne qu'il
+          faut descendre. « Sans compte · anonyme » est déjà dit sous le logo. */}
+      <div className="relative flex items-center gap-2.5">
+        <span aria-hidden className="text-2xl leading-none">
           {jeu.emoji}
         </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-[21px] font-black uppercase leading-[1.05] tracking-[-0.02em] text-white">
-            {jeu.titre}
-          </h3>
-          <p
-            className="mt-2 text-[12px] font-black uppercase tracking-[0.08em]"
-            style={{ color: jeu.couleurTexte }}
-          >
-            <Format texte={jeu.format} />
-          </p>
-        </div>
+        <h3 className="min-w-0 flex-1 text-[20px] font-black uppercase leading-[1.05] tracking-[-0.02em] text-white">
+          {jeu.titre}
+        </h3>
       </div>
 
-      <p className="relative mt-2.5 text-[15px] font-semibold leading-snug text-(--text-1)">
+      <p className="relative mt-2 text-[15px] font-semibold leading-snug text-(--text-1)">
         {jeu.promesse}
       </p>
-      <span aria-hidden className="block h-3.5 shrink-0" />
+      <span aria-hidden className="block h-3 shrink-0" />
 
-      {/* 48 px de haut, au-dessus des 44 recommandés. `mt-auto` aligne les
-          deux boutons quand les cartes sont côte à côte. Texte noir sur la
-          teinte du jeu : plus de 10:1 pour les deux. */}
+      {/* 44 px : le minimum recommandé pour une cible tactile, pas en
+          dessous. `mt-auto` aligne les deux boutons quand les cartes sont
+          côte à côte. Texte noir sur la teinte du jeu : plus de 10:1. */}
       <span
-        className="relative mt-auto flex h-12 items-center justify-center gap-2 rounded-2xl text-[14px] font-black uppercase tracking-[0.08em] text-black shadow-[0_8px_30px_-8px_var(--halo)] transition-[filter] group-hover:brightness-110"
+        className="relative mt-auto flex h-11 items-center justify-center gap-2 rounded-xl text-[14px] font-black uppercase tracking-[0.08em] text-black shadow-[0_8px_30px_-8px_var(--halo)] transition-[filter] group-hover:brightness-110"
         style={{ backgroundColor: jeu.couleur, ['--halo' as string]: `${jeu.couleur}80` }}
       >
         {jeu.action}
