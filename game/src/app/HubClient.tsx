@@ -197,7 +197,11 @@ export function HubClient({ votes, comportementsClasses, pires }: DonneesHub) {
               height={86}
               priority
               draggable={false}
-              className="h-auto w-32 object-contain drop-shadow-[0_0_28px_rgba(255,59,48,0.3)] min-[390px]:w-40 sm:w-52"
+              /* La taille d'avant la refonte, rétablie : 62 % de la largeur
+                 sur téléphone, 88 % sur les écrans hauts, jamais plus de
+                 460 px. Le logo est la marque ; réduit à 128 px, il ne
+                 pesait plus rien au-dessus des cartes. */
+              className="h-auto w-[88vw] max-w-115 object-contain drop-shadow-[0_0_28px_rgba(255,59,48,0.3)] [@media(max-height:1000px)]:w-[62vw]"
             />
           </h1>
 
