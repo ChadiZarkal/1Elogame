@@ -127,6 +127,49 @@ describe('Accueil', () => {
     expect(screen.getByText(/128\s?394 votes/)).toBeDefined();
   });
 
+  it('fait défiler les deux bouts du classement, lus dans la base', async () => {
+    const rangs = (prefixe: string) =>
+      Array.from({ length: 8 }, (_, i) => ({ rank: i + 1, texte: `${prefixe} ${i + 1}`, nb_participations: 10 }));
+    getLeaderboardPage.mockImplementation(async ({ sort }: { sort: string }) => ({
+      rankings: sort === 'asc' ? rangs('Anodin') : rangs('Grave'),
+      totalElements: 412,
+    }));
+
+    render(await HomePage());
+
+    const rouges = screen.getByRole('list', { name: 'Jugés les plus graves' });
+    const verts = screen.getByRole('list', { name: 'Jugés les moins graves' });
+    expect(rouges.querySelectorAll('li')).toHaveLength(8);
+    expect(verts.textContent).toMatch(/Anodin 1/);
+    // La seconde copie, qui sert la boucle, n'est lue qu'une fois.
+    expect(document.querySelectorAll('ul[aria-hidden="true"]')).toHaveLength(2);
+    // Le podium ne garde que les trois premiers.
+    expect(screen.getByRole('heading', { level: 3, name: 'Les trois pires' })).toBeDefined();
+  });
+
+  it("n'affiche jamais un même comportement dans les deux rangées", async () => {
+    const memes = Array.from({ length: 5 }, (_, i) => ({
+      rank: i + 1, texte: `Comportement ${i + 1}`, nb_participations: 10,
+    }));
+    getLeaderboardPage.mockResolvedValue({ rankings: memes, totalElements: 5 });
+
+    render(await HomePage());
+
+    // Classement court : les deux bouts se rejoignent, la rangée verte se vide
+    // et disparaît plutôt que de répéter la rouge.
+    expect(screen.getByRole('list', { name: 'Jugés les plus graves' })).toBeDefined();
+    expect(screen.queryByRole('list', { name: 'Jugés les moins graves' })).toBeNull();
+  });
+
+  it('garde le podium quand seul le compteur de votes tombe', async () => {
+    getPublicStats.mockRejectedValue(new Error('compteur injoignable'));
+
+    render(await HomePage());
+
+    expect(screen.getByRole('heading', { level: 2, name: /Le verdict des joueurs/ })).toBeDefined();
+    expect(screen.queryByText(/votes ·/)).toBeNull();
+  });
+
   it('se rend entière quand la base ne répond pas', async () => {
     getPublicStats.mockRejectedValue(new Error('base injoignable'));
     getLeaderboardPage.mockRejectedValue(new Error('base injoignable'));
@@ -138,7 +181,7 @@ describe('Accueil', () => {
     expect(screen.getByRole('heading', { level: 2, name: HOME_NOTES.title })).toBeDefined();
     // Et rien n'affiche un zéro à la place d'un chiffre.
     expect(screen.queryByText(/0 votes/)).toBeNull();
-    expect(screen.queryByRole('heading', { name: /Les pires/i })).toBeNull();
+    expect(screen.queryByRole('heading', { name: /Le verdict des joueurs/i })).toBeNull();
   });
 
   it('rend la présentation du site sans interaction', async () => {

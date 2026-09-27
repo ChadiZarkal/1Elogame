@@ -58,6 +58,12 @@ type Jeu = {
   /** Le verbe. Un titre et une flèche disent qu'il se passe quelque chose, pas quoi. */
   action: string;
   href: string;
+  /**
+   * Pour les jeux phares : une miniature de la mécanique, à côté du bouton.
+   * Montrer vaut mieux que décrire — une jauge qui cherche sa place dit
+   * « score en % » sans un mot, une note qui chute dit « le 10 ne tiendra pas ».
+   */
+  apercu?: 'jauge' | 'note';
 };
 
 /**
@@ -74,6 +80,7 @@ const PHARES: Jeu[] = [
     promesse: 'Ce que les autres voient comme red flag chez toi.',
     action: 'Faire le test',
     href: '/redflagtest',
+    apercu: 'jauge',
   },
   {
     id: 'dixmais',
@@ -84,6 +91,7 @@ const PHARES: Jeu[] = [
     promesse: 'Il part de 10 sur 10. Cinq révélations le font chuter.',
     action: 'Noter un profil',
     href: '/dixmais',
+    apercu: 'note',
   },
 ];
 
@@ -134,6 +142,8 @@ export type DonneesHub = {
   votes: number | null;
   comportementsClasses: number | null;
   pires: { rang: number; texte: string; votes: number }[];
+  /** Les deux bouts du classement, pour le bandeau. Listes vides = pas de bandeau. */
+  bande: { rouges: string[]; verts: string[] };
 };
 
 /** Séparateur de milliers français, pour que 128394 se lise. */
@@ -158,7 +168,7 @@ function TitreSection({ id, children }: { id: string; children: React.ReactNode 
   );
 }
 
-export function HubClient({ votes, comportementsClasses, pires }: DonneesHub) {
+export function HubClient({ votes, comportementsClasses, pires, bande }: DonneesHub) {
   const { tap } = useHaptics();
 
   return (
@@ -226,8 +236,8 @@ export function HubClient({ votes, comportementsClasses, pires }: DonneesHub) {
               disent « l'un ou l'autre », là où deux cartes empilées se lisent
               comme un premier et un second. */}
           <ul className="grid gap-3 sm:grid-cols-2">
-            {PHARES.map((jeu) => (
-              <li key={jeu.id}>
+            {PHARES.map((jeu, i) => (
+              <li key={jeu.id} className="entree" style={{ ['--rang' as string]: i }}>
                 <CartePhare jeu={jeu} onTap={tap} />
               </li>
             ))}
@@ -248,14 +258,41 @@ export function HubClient({ votes, comportementsClasses, pires }: DonneesHub) {
 
         {/* ── 4. C'est sérieux ? ─────────────────────────────────────────── */}
         {/* Rendu seulement s'il y a de quoi le remplir : un podium vide, ou à
-            une ligne, dit moins que pas de podium du tout. */}
+            une ligne, dit moins que pas de podium du tout.
+
+            Le bandeau reprend l'idée de celui qu'avait l'accueil — des
+            comportements qui défilent — mais plus son contenu : l'ancien était
+            écrit à la main, décoratif, à 15 % d'opacité. Celui-ci est lu dans
+            le classement, régénéré toutes les cinq minutes : ce qui défile est
+            ce que les joueurs ont réellement tranché. */}
         {pires.length >= 3 && (
-          <section className="mt-10" aria-labelledby="titre-palmares">
+          <section className="revele mt-10" aria-labelledby="titre-palmares">
             <TitreSection id="titre-palmares">
               <Trophy size={13} aria-hidden className="text-[#F59E0B]" />
-              Les pires, d&apos;après les votes
+              Le verdict des joueurs
             </TitreSection>
 
+            {/* Pleine largeur : le bandeau déborde des marges de la page, ce
+                qui dit qu'il continue au-delà de l'écran. */}
+            <div className="-mx-4 flex flex-col gap-2 min-[360px]:-mx-5 sm:mx-0">
+              <Bandeau
+                textes={bande.rouges}
+                libelle="Jugés les plus graves"
+                puce="🚩"
+                teinte="#FF6B5E"
+              />
+              <Bandeau
+                textes={bande.verts}
+                libelle="Jugés les moins graves"
+                puce="🟢"
+                teinte="#5FE39B"
+                inverse
+              />
+            </div>
+
+            <h3 className="mt-5 mb-2 text-[12px] font-black uppercase tracking-[0.16em] text-(--text-3)">
+              Les trois pires
+            </h3>
             <ol className="overflow-hidden rounded-2xl border border-(--border-subtle) bg-(--surface-1)">
               {pires.map((pire) => (
                 <li
@@ -294,7 +331,7 @@ export function HubClient({ votes, comportementsClasses, pires }: DonneesHub) {
         )}
 
         {/* ── 5a. Comprendre ─────────────────────────────────────────────── */}
-        <section className="mt-10" aria-labelledby="titre-reperes">
+        <section className="revele mt-10" aria-labelledby="titre-reperes">
           <TitreSection id="titre-reperes">Comprendre</TitreSection>
           <ul className="grid grid-cols-2 gap-3">
             {REPERES.map((repere) => (
@@ -327,7 +364,7 @@ export function HubClient({ votes, comportementsClasses, pires }: DonneesHub) {
             bouclier pour le trouver. C'est le seul contenu de la page dont on
             peut avoir besoin dans l'urgence. */}
         <section
-          className="mt-10 rounded-3xl border border-[#10B981]/25 bg-[#08110C] p-5"
+          className="revele mt-10 rounded-3xl border border-[#10B981]/25 bg-[#08110C] p-5"
           aria-labelledby="titre-safe"
         >
           <div className="flex items-center gap-2 text-[12px] font-black uppercase tracking-[0.18em] text-[#34D399]">
@@ -367,48 +404,162 @@ function CartePhare({ jeu, onTap }: { jeu: Jeu; onTap: () => void }) {
     <Link
       href={jeu.href}
       onClick={onTap}
-      className={`group relative flex h-full flex-col overflow-hidden rounded-3xl border bg-(--surface-1) p-4 transition-colors hover:bg-(--surface-2) motion-safe:active:scale-[0.99] ${FOCUS}`}
-      style={{ borderColor: `${jeu.couleur}40` }}
+      /* La bordure n'est pas une `border` : c'est le fond de ce lien, visible
+         sur 1 px autour de la carte intérieure. Un trait de lumière y tourne
+         — l'effet « border beam » de Magic UI, refait en CSS : un dégradé
+         conique en rotation, masqué par la carte. Seule `rotate` est animée,
+         que le navigateur compose sans repeindre. */
+      className={`group relative block h-full overflow-hidden rounded-3xl p-px motion-safe:active:scale-[0.99] motion-safe:transition-transform ${FOCUS}`}
+      style={{ backgroundColor: `${jeu.couleur}38` }}
     >
       <span
         aria-hidden
-        className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full opacity-20 blur-3xl"
-        style={{ backgroundColor: jeu.couleur }}
+        className="bordure-tournante pointer-events-none absolute left-1/2 top-1/2 aspect-square w-[220%]"
+        style={{
+          background: `conic-gradient(from 0deg, transparent 0 68%, ${jeu.couleur} 86%, transparent 100%)`,
+        }}
       />
 
-      {/* Pas de ligne de format ici : ces deux cartes devaient laisser voir
-          la suite de la page dès le premier écran, pour qu'on comprenne qu'il
-          faut descendre. « Sans compte · anonyme » est déjà dit sous le logo. */}
-      <div className="relative flex items-center gap-2.5">
-        <span aria-hidden className="text-2xl leading-none">
-          {jeu.emoji}
-        </span>
-        <h3 className="min-w-0 flex-1 text-[20px] font-black uppercase leading-[1.05] tracking-[-0.02em] text-white">
-          {jeu.titre}
-        </h3>
-      </div>
-
-      <p className="relative mt-2 text-[15px] font-semibold leading-snug text-(--text-1)">
-        {jeu.promesse}
-      </p>
-      <span aria-hidden className="block h-3 shrink-0" />
-
-      {/* 44 px : le minimum recommandé pour une cible tactile, pas en
-          dessous. `mt-auto` aligne les deux boutons quand les cartes sont
-          côte à côte. Texte noir sur la teinte du jeu : plus de 10:1. */}
-      <span
-        className="relative mt-auto flex h-11 items-center justify-center gap-2 rounded-xl text-[14px] font-black uppercase tracking-[0.08em] text-black shadow-[0_8px_30px_-8px_var(--halo)] transition-[filter] group-hover:brightness-110"
-        style={{ backgroundColor: jeu.couleur, ['--halo' as string]: `${jeu.couleur}80` }}
-      >
-        {jeu.action}
-        <ArrowRight
-          size={18}
-          strokeWidth={2.75}
+      <div className="relative flex h-full flex-col overflow-hidden rounded-[calc(1.5rem-1px)] bg-(--surface-1) p-4 transition-colors group-hover:bg-(--surface-2)">
+        <span
           aria-hidden
-          className="transition-transform motion-safe:group-hover:translate-x-0.5"
+          className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full opacity-20 blur-3xl"
+          style={{ backgroundColor: jeu.couleur }}
         />
-      </span>
+
+        {/* Pas de ligne de format ici : ces deux cartes doivent laisser voir
+            la suite de la page dès le premier écran, pour qu'on comprenne
+            qu'il faut descendre. « Sans compte · anonyme » est dit sous le
+            logo. */}
+        <div className="relative flex items-center gap-2.5">
+          <span aria-hidden className="text-2xl leading-none">
+            {jeu.emoji}
+          </span>
+          <h3 className="min-w-0 flex-1 text-[20px] font-black uppercase leading-[1.05] tracking-[-0.02em] text-white">
+            {jeu.titre}
+          </h3>
+        </div>
+
+        <span className="relative mt-2 block text-[15px] font-semibold leading-snug text-(--text-1)">
+          {jeu.promesse}
+        </span>
+        <span aria-hidden className="block h-3 shrink-0" />
+
+        {/* Le bouton et, à sa droite, la miniature de la mécanique : la même
+            rangée, donc aucune hauteur de plus. 44 px, le minimum pour une
+            cible tactile. `mt-auto` aligne les rangées quand les cartes sont
+            côte à côte. Texte noir sur la teinte du jeu : plus de 10:1. */}
+        <span className="relative mt-auto flex items-center justify-between gap-3">
+          <span
+            className="flex h-11 items-center gap-2 rounded-xl px-4 text-[14px] font-black uppercase tracking-[0.06em] text-black shadow-[0_8px_30px_-8px_var(--halo)] transition-[filter] group-hover:brightness-110"
+            style={{ backgroundColor: jeu.couleur, ['--halo' as string]: `${jeu.couleur}80` }}
+          >
+            {jeu.action}
+            <ArrowRight
+              size={17}
+              strokeWidth={2.75}
+              aria-hidden
+              className="transition-transform motion-safe:group-hover:translate-x-0.5"
+            />
+          </span>
+          {jeu.apercu === 'jauge' && <ApercuJauge />}
+          {jeu.apercu === 'note' && <ApercuNote />}
+        </span>
+      </div>
     </Link>
+  );
+}
+
+/**
+ * La jauge du Red Flag Test, en miniature : du vert au rouge, un curseur qui
+ * cherche sa place. Elle ne montre aucun score — elle dit qu'il y en aura un,
+ * et qu'il se lit sur cette échelle.
+ */
+function ApercuJauge() {
+  return (
+    <span aria-hidden className="flex w-18 shrink-0 flex-col items-end gap-1.5">
+      <span className="text-[12px] font-black tabular-nums tracking-wide text-(--text-2)">?? %</span>
+      <span className="relative h-1.5 w-full rounded-full bg-[linear-gradient(90deg,#2ECC71,#F59E0B_55%,#FF3B30)]">
+        {/* La course occupe toute la piste : c'est elle qui glisse, en
+            pourcentage de sa propre largeur — donc de celle de la jauge. */}
+        <span className="jauge-course absolute inset-0">
+          <span className="absolute -left-0.75 top-1/2 h-3.5 w-1.5 -translate-y-1/2 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.7)]" />
+        </span>
+      </span>
+    </span>
+  );
+}
+
+/**
+ * La note de « C'est un 10 mais… », en miniature : elle part de 10 et chute,
+ * révélation après révélation. Un compteur à rouleau en CSS — la colonne de
+ * chiffres glisse derrière une fenêtre d'un chiffre de haut.
+ */
+function ApercuNote() {
+  return (
+    <span aria-hidden className="flex shrink-0 items-baseline gap-1">
+      <span className="note-fenetre relative block h-7 overflow-hidden text-[24px] font-black leading-7 tabular-nums">
+        <span className="note-rouleau flex flex-col items-end">
+          <span className="text-[#FFC04D]">10</span>
+          <span className="text-[#FFC04D]">8</span>
+          <span className="text-[#FF9F43]">6</span>
+          <span className="text-[#FF6B5E]">3</span>
+          <span className="text-[#FFC04D]">10</span>
+        </span>
+      </span>
+      <span className="text-[12px] font-black text-(--text-3)">/10</span>
+    </span>
+  );
+}
+
+/**
+ * Une rangée du bandeau. Deux copies identiques côte à côte, décalées de
+ * -50 % : la boucle ne se voit pas. La seconde est cachée aux lecteurs d'écran,
+ * qui lisent la liste une fois. Sous `prefers-reduced-motion`, rien ne bouge
+ * et la rangée se fait défiler au doigt.
+ */
+function Bandeau({
+  textes,
+  libelle,
+  puce,
+  teinte,
+  inverse = false,
+}: {
+  textes: string[];
+  libelle: string;
+  puce: string;
+  teinte: string;
+  inverse?: boolean;
+}) {
+  // Sous quatre, la boucle se remarque : mieux vaut pas de rangée.
+  if (textes.length < 4) return null;
+
+  return (
+    <div className="bandeau overflow-hidden">
+      <div className={`bandeau-piste ${inverse ? 'bandeau-piste--inverse' : ''}`}>
+        {[0, 1].map((copie) => (
+          <ul
+            key={copie}
+            aria-label={copie === 0 ? libelle : undefined}
+            aria-hidden={copie === 1 ? true : undefined}
+            className="flex shrink-0 gap-2 pr-2"
+          >
+            {textes.map((texte) => (
+              <li
+                key={texte}
+                /* La teinte de la rangée sur la bordure seule : le texte
+                   reste clair, lisible, et la rangée se reconnaît de loin. */
+                className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full border bg-(--surface-1) px-3.5 text-[13px] font-semibold text-(--text-1)"
+                style={{ borderColor: `${teinte}40` }}
+              >
+                <span aria-hidden>{puce}</span>
+                {texte}
+              </li>
+            ))}
+          </ul>
+        ))}
+      </div>
+    </div>
   );
 }
 

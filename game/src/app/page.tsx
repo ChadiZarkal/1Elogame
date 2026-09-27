@@ -2,9 +2,10 @@
  * @module app/page
  * Accueil.
  *
- * Composant serveur. Il lit deux choses dans la base et les passe à la
- * vitrine : le compte des votes, et les trois comportements les plus mal
- * jugés.
+ * Composant serveur. Il lit trois choses dans la base et les passe à la
+ * vitrine : le compte des votes, les comportements les plus mal jugés et les
+ * moins mal jugés — ces deux listes nourrissent le bandeau défilant et le
+ * podium.
  *
  * C'est le point qui manquait à cette page. Elle affirmait que « ce sont les
  * joueurs qui tranchent » sans jamais montrer ce qu'ils avaient tranché : le
@@ -31,33 +32,48 @@ import { withPrerenderTimeout } from '@/lib/prerenderTimeout';
 /** Cinq minutes, comme le classement : ces chiffres n'ont pas à être frais. */
 export const revalidate = 300;
 
-/** Combien de comportements on montre. Trois : la preuve, pas la liste. */
-const APERCU = 3;
+/** Le podium : trois, la preuve et non la liste. */
+const PODIUM = 3;
+/**
+ * Le bandeau défilant : assez de comportements pour qu'une boucle ne se lise
+ * pas comme une répétition, pas plus. Pris aux deux bouts du classement — ce
+ * que les joueurs jugent le plus grave, et le moins.
+ */
+const BANDE = 8;
+
+type Ligne = { rang: number; texte: string; votes: number };
 
 export default async function HomePage() {
-  let votes: number | null = null;
-  let classes: number | null = null;
-  let pires: { rang: number; texte: string; votes: number }[] = [];
+  // `allSettled` et non `all` : chaque bloc de la vitrine vit de sa propre
+  // requête. Un compteur de votes en panne ne doit pas emporter le classement.
+  const [stats, pires, moinsGraves] = await Promise.allSettled([
+    withPrerenderTimeout(getPublicStats()),
+    withPrerenderTimeout(getLeaderboardPage({ sort: 'desc', limit: BANDE, offset: 0 })),
+    withPrerenderTimeout(getLeaderboardPage({ sort: 'asc', limit: BANDE, offset: 0 })),
+  ]);
 
-  try {
-    const [stats, palmares] = await Promise.all([
-      withPrerenderTimeout(getPublicStats()),
-      withPrerenderTimeout(getLeaderboardPage({ sort: 'desc', limit: APERCU, offset: 0 })),
-    ]);
-    votes = stats.totalVotes;
-    classes = palmares.totalElements;
-    pires = palmares.rankings.map((r) => ({
-      rang: r.rank,
-      texte: r.texte,
-      votes: r.nb_participations,
-    }));
-  } catch {
-    /* Base indisponible : la vitrine se rend sans ces blocs. */
-  }
+  const votes = stats.status === 'fulfilled' ? stats.value.totalVotes : null;
+  const classes = pires.status === 'fulfilled' ? pires.value.totalElements : null;
+  const lignes: Ligne[] =
+    pires.status === 'fulfilled'
+      ? pires.value.rankings.map((r) => ({ rang: r.rank, texte: r.texte, votes: r.nb_participations }))
+      : [];
+  const verts =
+    moinsGraves.status === 'fulfilled' ? moinsGraves.value.rankings.map((r) => r.texte) : [];
 
   return (
     <>
-      <HubClient votes={votes} comportementsClasses={classes} pires={pires} />
+      <HubClient
+        votes={votes}
+        comportementsClasses={classes}
+        pires={lignes.slice(0, PODIUM)}
+        bande={{
+          rouges: lignes.map((l) => l.texte),
+          // Un comportement ne figure jamais dans les deux rangées : sur un
+          // classement court, les deux bouts se rejoignent.
+          verts: verts.filter((t) => !lignes.some((l) => l.texte === t)),
+        }}
+      />
       <PageNotes notes={HOME_NOTES} />
     </>
   );

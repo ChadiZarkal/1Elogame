@@ -94,6 +94,128 @@
   }
 }
 
+/* ========== Accueil : mouvements ==========
+   Tout ce qui bouge sur l'accueil vit ici, en CSS : aucune bibliothèque
+   d'animation n'est chargée sur la page la plus visitée du site. Seules
+   `rotate`, `translate` et `opacity` sont animées — le navigateur les compose
+   sans repeindre ni recalculer la mise en page, y compris sur un téléphone
+   d'entrée de gamme.
+
+   Chaque mouvement est coupé sous `prefers-reduced-motion` : la page reste
+   entière, immobile. */
+
+/* La bordure lumineuse des jeux phares (voir `CartePhare`). */
+.bordure-tournante {
+  translate: -50% -50%;
+}
+
+/* La jauge du Red Flag Test : le curseur cherche sa place. */
+.jauge-course {
+  translate: 70% 0;
+}
+
+/* Le bandeau : deux copies côte à côte, décalées de moitié. */
+.bandeau {
+  /* Les bords s'effacent : la rangée semble venir d'au-delà de l'écran. */
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+}
+.bandeau-piste {
+  display: flex;
+  width: max-content;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bordure-tournante {
+    animation: accueil-tour 7s linear infinite;
+  }
+  .jauge-course {
+    animation: accueil-jauge 5s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+  .note-rouleau {
+    animation: accueil-note 6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+  .bandeau-piste {
+    animation: accueil-defile 55s linear infinite;
+  }
+  .bandeau-piste--inverse {
+    animation-direction: reverse;
+    animation-duration: 62s;
+  }
+  /* Au doigt ou à la souris, la rangée s'arrête : on peut la lire. */
+  .bandeau:hover .bandeau-piste,
+  .bandeau:active .bandeau-piste {
+    animation-play-state: paused;
+  }
+
+  /* Les deux jeux phares arrivent l'un après l'autre. L'opacité ne part pas
+     de zéro : un élément invisible n'est pas encore « peint » pour la mesure
+     du LCP, et la carte ne doit pas retarder la page. */
+  .entree {
+    animation: accueil-entree 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: calc(var(--rang, 0) * 90ms + 80ms);
+  }
+}
+
+/* Sans animation, la rangée se fait défiler au doigt. */
+@media (prefers-reduced-motion: reduce) {
+  .bandeau {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+}
+
+/* Les blocs du bas se posent à mesure qu'ils entrent dans l'écran. Piloté par
+   le défilement lui-même, sans JavaScript ni observateur : le navigateur qui
+   ne connaît pas `view()` affiche simplement les blocs, déjà en place. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .revele {
+      animation: accueil-revele linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 45%;
+    }
+  }
+}
+
+@keyframes accueil-tour {
+  to {
+    rotate: 360deg;
+  }
+}
+@keyframes accueil-jauge {
+  0%   { translate: 12% 0; }
+  30%  { translate: 82% 0; }
+  55%  { translate: 38% 0; }
+  80%,
+  100% { translate: 70% 0; }
+}
+/* 28 px par chiffre : la hauteur de la fenêtre. 10, 8, 6, 3, puis un 10 qui
+   permet de reboucler sans saut. */
+@keyframes accueil-note {
+  0%,  14% { translate: 0 0; }
+  20%, 34% { translate: 0 -28px; }
+  40%, 54% { translate: 0 -56px; }
+  60%, 86% { translate: 0 -84px; }
+  94%, 100% { translate: 0 -112px; }
+}
+@keyframes accueil-defile {
+  to {
+    translate: -50% 0;
+  }
+}
+@keyframes accueil-entree {
+  from {
+    opacity: 0.35;
+    translate: 0 16px;
+  }
+}
+@keyframes accueil-revele {
+  from {
+    opacity: 0;
+    translate: 0 28px;
+  }
+}
+
 /* ========== Emplacements publicitaires ==========
    `AdBanner` posait cette classe sans qu'elle soit définie nulle part : le
    `<ins>` naissait donc à hauteur zéro et grandissait d'un coup à l'arrivée de
