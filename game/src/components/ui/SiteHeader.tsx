@@ -35,6 +35,21 @@ import { Menu } from 'lucide-react';
    feuille de l'autre. */
 const HIDDEN_PATHS = [/^\/$/, /^\/admin(\/|$)/, /^\/dixmais\/admin(\/|$)/, /^\/redflagtest(\/|$)/];
 
+/*
+ * Les jeux portent chacun leur propre barre — « ← Menu », « ← Accueil », la
+ * flèche de l'Oracle — avec son retour à l'accueil et ce qui est propre à la
+ * partie (progression, statistiques). Celle-ci s'affichait par-dessus : deux
+ * barres empilées en haut de l'écran, deux « Menu » l'un sous l'autre, et
+ * 52 px de moins pour le jeu sur un téléphone.
+ *
+ * Elle y cède donc sa place, mais laisse une cale à la hauteur de l'encoche :
+ * en `viewport-fit=cover`, et dans l'application installée, la barre du jeu
+ * passerait sinon sous l'heure et la batterie. La cale ramène `--header-h` à
+ * cette seule hauteur (voir `globals.css`), et les écrans de jeu, qui en
+ * soustraient la valeur, reprennent d'eux-mêmes toute la hauteur libérée.
+ */
+const GAME_PATHS = [/^\/jeu(\/|$)/, /^\/dixmais(\/|$)/, /^\/flagornot(\/|$)/];
+
 /** Groupée par thème, comme le demandent les consignes de qualité. */
 const NAV_SECTIONS: {
   title: string;
@@ -98,6 +113,9 @@ export function SiteHeader() {
   }, [pathname]);
 
   if (HIDDEN_PATHS.some((re) => re.test(pathname))) return null;
+  if (GAME_PATHS.some((re) => re.test(pathname))) {
+    return <div className="site-header-cale" aria-hidden />;
+  }
 
   const isCurrent = (href: string) =>
     href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/');
