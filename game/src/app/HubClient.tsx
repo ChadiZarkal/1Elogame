@@ -55,8 +55,6 @@ type Jeu = {
   titre: string;
   /** Une phrase : ce qu'on fait, pas ce que c'est. */
   promesse: string;
-  /** Format et durée. On choisit surtout là-dessus. */
-  format: string;
   /** Le verbe. Un titre et une flèche disent qu'il se passe quelque chose, pas quoi. */
   action: string;
   href: string;
@@ -74,7 +72,6 @@ const PHARES: Jeu[] = [
     emoji: '🧪',
     titre: 'RED FLAG TEST',
     promesse: 'Ce que les autres voient comme red flag chez toi.',
-    format: 'Solo · anonyme · score en %',
     action: 'Faire le test',
     href: '/redflagtest',
   },
@@ -85,7 +82,6 @@ const PHARES: Jeu[] = [
     emoji: '⭐',
     titre: "C'EST UN 10 MAIS…",
     promesse: 'Il part de 10 sur 10. Cinq révélations le font chuter.',
-    format: 'Solo · 3 min · le 0 élimine',
     action: 'Noter un profil',
     href: '/dixmais',
   },
@@ -100,7 +96,6 @@ const AUTRES_JEUX: Jeu[] = [
     emoji: '🔮',
     titre: "L'ORACLE",
     promesse: 'Tu racontes ta situation, l’IA tranche.',
-    format: 'Solo · 30 s · une amorce',
     action: 'Soumettre mon cas',
     href: '/flagornot',
   },
@@ -111,7 +106,6 @@ const AUTRES_JEUX: Jeu[] = [
     emoji: '🔥',
     titre: 'LE PIRE DES DEUX',
     promesse: 'Deux comportements, tu désignes le plus grave.',
-    format: 'Solo ou à plusieurs · 2 min',
     action: 'Lancer un duel',
     href: '/jeu',
   },
@@ -466,29 +460,6 @@ function CarteJeu({ jeu, onTap }: { jeu: Jeu; onTap: () => void }) {
         </div>
       </div>
     </Link>
-  );
-}
-
-/**
- * Une ligne de format ne se coupe qu'entre ses éléments, jamais au milieu
- * d'un : à 320 px, « SCORE EN % » laissait son « % » seul sur une ligne.
- */
-function Format({ texte }: { texte: string }) {
-  const parties = texte.split(' · ');
-  return (
-    <>
-      {parties.map((partie, i) => (
-        <span key={partie}>
-          {/* Le point reste collé à ce qui le précède : une ligne ne
-              commence jamais par « · ». */}
-          <span className="whitespace-nowrap">
-            {partie}
-            {i < parties.length - 1 && ' ·'}
-          </span>
-          {i < parties.length - 1 && ' '}
-        </span>
-      ))}
-    </>
   );
 }
 
