@@ -106,12 +106,15 @@ Le compteur de l'Observatoire est corrigé : il lit la table des votes.
 
 ## Ce qui reste, et qui ne peut pas être fait en code
 
+Le message de consentement (CMP) est activé dans le compte AdSense (confirmé
+le 29 septembre 2026).
+
 | Point | Pourquoi |
 |---|---|
 | **Désactiver ou reformuler** « Être homosexuel », « Être hétérosexuel », « Être bisexuel » depuis l'administration | Hors vitrine désormais, mais toujours soumis au vote dans le jeu. Décision de contenu. |
 | **« Être créateur de contenu sur MYM / OnlyFans »** est classé « Quotidien », au 10e rang | Il apparaît donc sur l'accueil et dans le baromètre. À reclasser en « Amour & Sexe » s'il est jugé explicite. |
 | **Rediriger `redflagtest.redorgreen.fr`** | Deux sites pour une marque : voir `game/docs/ANCIEN-TEST-REDIRECTION.md`. |
-| **Message de consentement (CMP)** | Toujours à activer dans le compte AdSense (voir plus bas). |
+| **`ads.txt` signalé « introuvable »** | Le fichier est servi correctement (200, `text/plain`, bon identifiant, vérifié avec l'agent `Mediapartners-Google`). Le statut dans AdSense est en retard sur le site : relancer la vérification, et contrôler que le domaine déclaré dans *Sites* est bien `redorgreen.fr`. |
 | **Attendre avant de redemander l'examen** | Le règlement demande « un intérêt sincère des utilisateurs » : il se lit dans le trafic. Attendre que `/red-flags` soit indexée et que la Search Console montre des impressions — trois à quatre semaines. Un dépôt prématuré coûte un cycle. |
 | **Authentification de l'administration** | Toujours neutralisée : `/admin` et `/admin/redflagtest` restent ouverts en écriture. |
 
