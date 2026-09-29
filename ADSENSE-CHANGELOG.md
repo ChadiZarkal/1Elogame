@@ -3,9 +3,117 @@
 Support de la demande de réexamen. Chaque entrée renvoie au problème identifié
 dans [ADSENSE-PLAN-CONFORMITE.md](ADSENSE-PLAN-CONFORMITE.md).
 
-**Statut : deux passes.** La première (juillet, § 1 à 10) est en production.
-Un second refus pour « contenu à faible valeur informative » est arrivé
-malgré elle — la seconde passe (§ 11 à 15) y répond.
+**Statut : quatre passes.** Les trois premières (juillet et août, § 1 à 18)
+sont en production. Un nouveau refus pour « contenu à faible valeur
+informative » est arrivé malgré une grille de contrôle entièrement verte — la
+quatrième passe (§ 19 à 23, branche `adsense-valeur-redflag`) change d'angle.
+
+---
+
+# Quatrième passe — septembre 2026 : ce que le site montre
+
+## Pourquoi trois passes n'ont pas suffi
+
+Les trois passes précédentes ont toutes traité **le rendu** : HTML vide au
+premier passage, texte caché, tiroirs fermés, barre de navigation, hiérarchie
+des titres. Leur grille finale était verte, mesurée en production — et le
+refus est revenu à l'identique. Le critère n'est donc pas le nombre de mots
+servis. C'est **ce que le site montre**, et aucune passe n'y avait touché :
+
+1. **Le classement public exposait la catégorie « Amour & Sexe ».** Des
+   propositions sexuellement explicites (nudes, sextapes, pratiques), et des
+   **orientations sexuelles soumises au vote comme des red flags** — « Être
+   homosexuel » au 146e rang, « Être bisexuel » au 199e. Dans un classement
+   indexable, filtrable, puis depuis septembre dans le bandeau de l'accueil.
+   Sur un site qui demande à porter de la publicité Google, c'est un signal
+   bien plus lourd qu'une page courte.
+2. **Une régie tierce diffusait déjà des encarts.** Le bandeau natif Adsterra
+   s'affichait sur l'accueil, le guide, l'Observatoire et sous chaque note de
+   présentation, sans demande d'accord (commit `7dfc5ef`) : des annonces dont
+   nous ne choisissons pas le contenu, sur les pages mêmes présentées comme
+   informatives.
+3. **La seule valeur unique du site était dispersée.** Les votes sont ce que
+   personne d'autre ne possède. Mais `/classement` est un outil de filtrage,
+   `/observatoire` ne traite que les écarts entre groupes, et aucune page ne
+   répondait à « liste de red flags » avec ces données. L'Observatoire
+   annonçait par ailleurs **le double du nombre réel de votes** : il
+   additionnait les participations, et chaque duel en compte deux.
+
+## 19. Catégorie hors vitrine
+
+`CATEGORIES_HORS_VITRINE` (`config/categories.ts`) écarte « Amour & Sexe » de
+toutes les surfaces publiques, **à la source** : l'exclusion est transmise à la
+requête par `getLeaderboardPage` et `getObservatoryData`, qui servent le
+classement, l'API publique, l'accueil, la méthodologie et l'Observatoire. Une
+demande explicite de la catégorie ne renvoie rien. Le filtre disparaît du
+classement, ainsi que trois filtres de thème vidés par l'exclusion.
+
+**Le jeu n'est pas touché** : ces propositions restent jouées entre adultes, et
+le serveur les écartait déjà pour la tranche 16-18 (§ 7).
+
+Il reste 222 comportements publiés, dont 185 au-dessus du seuil de 40 duels.
+
+## 20. Régie tierce éteinte
+
+`NATIVE_BANNER.enabled` passe à `false`. Plus aucune annonce tierce n'est
+chargée sur le site ; le script AdSense reste en place pour l'examen. Le
+rallumer après acceptation est une décision commerciale : l'interrupteur
+suffit.
+
+## 21. Le baromètre des red flags — `/red-flags`
+
+La page que le site était le seul à pouvoir écrire : **« Les pires red flags,
+d'après les votes »**. Rendue côté serveur, régénérée toutes les heures, datée.
+
+- Le top 20, avec pour chaque comportement sa gravité relative (« plus grave
+  que 95 % des comportements classés »), son nombre de duels, et son rang chez
+  les femmes et chez les hommes.
+- Ce que les femmes et les hommes placent en tête, et le désaccord le plus net.
+- Une section par thème assez fourni : travail, argent, numérique,
+  nourriture, sport.
+- Le bas du classement : ce que presque personne ne juge grave.
+- Ce que le classement mesure et ne mesure pas, renvoi aux outils
+  d'auto-évaluation pour les situations réelles, seuil de fiabilité, limites
+  de l'échantillon.
+
+Chaque phrase est calculée à partir des scores (`lib/barometre.ts`, fonction
+pure, testée) : la page n'affirme rien que les données ne portent pas.
+Environ 2 100 mots avec les données de production. Balisage `ItemList`.
+
+Le compteur de l'Observatoire est corrigé : il lit la table des votes.
+
+## 22. Pages de contenu reprises
+
+- **Guide** : trois questions de plus, reprises dans le balisage FAQ — exemples
+  de red flags, red flag chez un homme ou une femme, red flag en amour. Date de
+  dernière révision, liens vers les sources et la méthode.
+- **Red Flag Test** : deux questions sur l'anonymat et la visibilité du
+  résultat, vérifiées contre ce que le code enregistre. L'écran de question
+  tient désormais dans un 360 × 670 : il défilait à chaque question.
+- **Confidentialité** : le Red Flag Test n'y figurait pas. Ce qu'il enregistre,
+  combien de temps, et ce qui reste sur l'appareil y est décrit.
+- Images de partage propres au guide, au test et au baromètre.
+- `/redflag` redirige vers le guide, qui définit le terme.
+
+## 23. Écartés délibérément
+
+- **Une page par comportement.** Plus de 200 pages sur le même gabarit, chacune
+  quelques chiffres : c'est ce que les règles de Google appellent le contenu
+  produit à grande échelle, exactement le motif du refus. Les mêmes données
+  vivent, plus riches, dans le baromètre.
+- **Des pages « selon les femmes » et « selon les hommes ».** Elles doubleraient
+  l'Observatoire ; le baromètre en porte une section.
+
+## Ce qui reste, et qui ne peut pas être fait en code
+
+| Point | Pourquoi |
+|---|---|
+| **Désactiver ou reformuler** « Être homosexuel », « Être hétérosexuel », « Être bisexuel » depuis l'administration | Hors vitrine désormais, mais toujours soumis au vote dans le jeu. Décision de contenu. |
+| **« Être créateur de contenu sur MYM / OnlyFans »** est classé « Quotidien », au 10e rang | Il apparaît donc sur l'accueil et dans le baromètre. À reclasser en « Amour & Sexe » s'il est jugé explicite. |
+| **Rediriger `redflagtest.redorgreen.fr`** | Deux sites pour une marque : voir `game/docs/ANCIEN-TEST-REDIRECTION.md`. |
+| **Message de consentement (CMP)** | Toujours à activer dans le compte AdSense (voir plus bas). |
+| **Attendre avant de redemander l'examen** | Le règlement demande « un intérêt sincère des utilisateurs » : il se lit dans le trafic. Attendre que `/red-flags` soit indexée et que la Search Console montre des impressions — trois à quatre semaines. Un dépôt prématuré coûte un cycle. |
+| **Authentification de l'administration** | Toujours neutralisée : `/admin` et `/admin/redflagtest` restent ouverts en écriture. |
 
 ---
 
