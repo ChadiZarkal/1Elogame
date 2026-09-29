@@ -947,3 +947,23 @@ body:has(.main-container) {
   font-size: var(--font-size-s);
   line-height: var(--line-height);
 }
+
+/* ========== Écran de question sur téléphone peu haut ==========
+ * Sur un 360 × 670 — la hauteur utile d'un Android courant, barres déduites —
+ * une question à quatre réponses dont deux longues faisait 780 px : le logo
+ * gardait 96 px, et chaque ligne de réponse 30 px (20 px de corps, interligne
+ * 1,5). La page défilait à chaque question, mesureur compris.
+ *
+ * Pendant la partie seulement, et seulement sous 760 px de haut : le logo
+ * rétrécit, l'interligne et le rembourrage des réponses se resserrent. Les
+ * réponses gardent leur corps de 20 px — elles restent lisibles et faciles à
+ * toucher. La feuille de référence n'est pas modifiée. */
+@media (max-height: 760px) {
+  html body.switch-quiz-ongoing .logo-link {
+    max-height: 3.5rem;
+  }
+  html body.switch-quiz-ongoing .client-container .game-wrapper .question-block .button-container .button-answer {
+    padding: calc(var(--spacing) * 0.8) calc(var(--spacing) * 1.1);
+    line-height: 1.25;
+  }
+}

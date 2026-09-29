@@ -35,6 +35,21 @@ export const GUIDE_FAQ: FaqEntry[] = [
       "Le Red Flag Test de Red or Green pose des situations concrètes et donne un score de red flag en pourcentage, avec ta place parmi les autres joueurs. Gratuit, anonyme et sans inscription.",
   },
   {
+    question: 'Quels sont des exemples de red flags ?',
+    answer:
+      "Dans une relation : contrôler avec qui l'autre passe du temps, le faire se sentir coupable, minimiser ce qu'il ressent (« tu exagères »), le critiquer devant les autres, devenir agressif lors d'un désaccord. Au quotidien, les joueurs de Red or Green placent en tête des comportements plus ordinaires — hygiène, radinerie, manque de respect des autres — : leur classement, tenu à jour par les votes, est publié sur la page des pires red flags.",
+  },
+  {
+    question: "C'est quoi un red flag chez un homme, ou chez une femme ?",
+    answer:
+      "La définition ne change pas selon le sexe : un red flag est un comportement qui doit alerter, quelle que soit la personne. Ce qui change, c'est le regard. Dans les votes du site, femmes et hommes ne placent pas les mêmes comportements en tête, et l'écart atteint parfois plusieurs centaines de points sur un même comportement — l'Observatoire les détaille.",
+  },
+  {
+    question: "Qu'est-ce qu'un red flag en amour ?",
+    answer:
+      "C'est un signal d'alarme dans une relation amoureuse : jalousie qui s'installe tôt, surveillance du téléphone, isolement des amis, mensonges répétés, colère disproportionnée. Pris isolément, un signe appelle une conversation ; plusieurs qui s'accumulent décrivent une relation qui abîme. Le violentomètre aide à situer une situation réelle.",
+  },
+  {
     question: "Qu'est-ce qu'un Green Flag ?",
     answer:
       "Un Green Flag est un comportement sain et mature, signe d'une personne respectueuse, communicative et cohérente. Il indique que la relation repose sur des bases équilibrées.",

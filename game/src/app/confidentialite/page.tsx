@@ -14,7 +14,7 @@ export default function ConfidentialitePage() {
     <main id="main-content" className="legal-page">
       <div className="legal-page__container">
         <h1 className="legal-page__title">Politique de Confidentialité</h1>
-        <p className="legal-page__updated">Dernière mise à jour : 28 février 2026</p>
+        <p className="legal-page__updated">Dernière mise à jour : 29 septembre 2026</p>
 
         <section className="legal-page__section">
           <h2>1. Introduction</h2>
@@ -44,6 +44,7 @@ export default function ConfidentialitePage() {
           <h3>3.1 Données fournies volontairement</h3>
           <ul>
             <li><strong>Genre et tranche d&apos;âge</strong> — sélectionnés avant de jouer aux duels. Ces données sont utilisées uniquement pour afficher des statistiques segmentées (classements par genre/âge).</li>
+            <li><strong>Red Flag Test</strong> — sexe, tranche d&apos;âge et réponses au questionnaire, enregistrés avec le score, la durée de la partie et un code de partage aléatoire. Aucun nom, e-mail ni identifiant n&apos;est demandé. Un résultat n&apos;est consultable que par qui possède son lien ; les réponses n&apos;apparaissent ailleurs que mêlées à celles des autres, dans les statistiques publiques du test.</li>
             <li><strong>Texte libre</strong> — situations soumises à l&apos;Oracle. Ces textes sont envoyés à un service d&apos;IA (Google Gemini) pour analyse.</li>
             <li><strong>Voix</strong> — si vous utilisez le bouton de dictée de l&apos;Oracle. L&apos;enregistrement est traité par la reconnaissance vocale de votre navigateur, et non par nous : nous ne recevons que le texte obtenu. Sur Chrome et Edge, cette reconnaissance envoie l&apos;audio aux serveurs de Google ; sur Safari, elle peut être traitée sur l&apos;appareil. Nous ne conservons aucun enregistrement. La dictée est facultative : le clavier reste disponible.</li>
           </ul>
@@ -60,6 +61,7 @@ export default function ConfidentialitePage() {
             <li>Préférences de profil (genre, âge)</li>
             <li>Historique de session de jeu</li>
             <li>Résultats des tests d&apos;auto-évaluation</li>
+            <li>Partie du Red Flag Test en cours, pour pouvoir la reprendre — effacée dès qu&apos;elle a plus de sept jours</li>
           </ul>
           <p>
             Ces données restent sur votre appareil et ne sont jamais transmises à nos serveurs.
@@ -90,6 +92,7 @@ export default function ConfidentialitePage() {
           <h2>5. Durée de conservation</h2>
           <ul>
             <li><strong>Votes</strong> — conservés tant que le service est actif.</li>
+            <li><strong>Parties du Red Flag Test</strong> — conservées tant que le service est actif.</li>
             <li><strong>Sessions analytics</strong> — 12 mois maximum.</li>
             <li><strong>Situations soumises à l&apos;Oracle</strong> — 6 mois maximum.</li>
             <li><strong>Adresses IP</strong> — non stockées (utilisées en mémoire uniquement).</li>

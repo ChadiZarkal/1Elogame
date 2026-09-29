@@ -48,6 +48,24 @@ export function Presentation() {
         toute la question du test.{' '}
         <Link href="/guide">Définition et exemples dans le guide des flags</Link>.
       </p>
+
+      {/* Ce qui est enregistré, vérifié dans `lib/rft/repository.ts` : score,
+          sexe, tranche d'âge, durée, réponses et code de partage. Ni nom, ni
+          e-mail, ni adresse IP. */}
+      <h3>Le test est-il vraiment anonyme ?</h3>
+      <p>
+        Oui. Il ne demande ni nom, ni e-mail, ni compte : seulement ton sexe et ta
+        tranche d&apos;âge, pour te comparer aux joueurs qui te ressemblent. La
+        partie est enregistrée avec ces deux informations, ton score et tes
+        réponses, rien d&apos;autre.
+      </p>
+      <h3>Qui peut voir mon résultat ?</h3>
+      <p>
+        Personne, sauf si tu partages son lien. Tes réponses n&apos;apparaissent
+        ailleurs que mêlées à celles des autres, dans les statistiques publiées
+        pour chaque question. Le détail est dans la{' '}
+        <Link href="/confidentialite">politique de confidentialité</Link>.
+      </p>
     </section>
   );
 }

@@ -342,10 +342,19 @@ export default function GuidePage() {
             contrôle, manque de respect, manipulation. Le terme vient des drapeaux
             rouges qui signalent un danger, sur une plage ou un circuit.
           </p>
-          <p style={{ color: '#9CA3AF', fontSize: 15, margin: '0 0 28px', lineHeight: 1.65 }}>
+          <p style={{ color: '#9CA3AF', fontSize: 15, margin: '0 0 12px', lineHeight: 1.65 }}>
             Tout n&apos;est pas un red flag. Du green flag au black flag, voici les
             cinq signaux, avec des exemples concrets pour les reconnaître dans une
             relation.
+          </p>
+          {/* Date réelle de la dernière révision du texte — à changer quand le
+              texte change, pas à chaque déploiement. La source des outils et la
+              méthode du classement sont publiées : le guide y renvoie. */}
+          <p style={{ color: '#6B7280', fontSize: 12, margin: '0 0 28px', lineHeight: 1.6 }}>
+            Dernière révision : 29 septembre 2026 ·{' '}
+            <Link href="/sources" style={{ color: '#9CA3AF', textDecoration: 'underline' }}>Sources</Link>{' '}
+            ·{' '}
+            <Link href="/methodologie" style={{ color: '#9CA3AF', textDecoration: 'underline' }}>Méthode du classement</Link>
           </p>
 
           {/* Spectrum bar */}
@@ -406,6 +415,18 @@ export default function GuidePage() {
             Aller plus loin
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <Link
+              href="/red-flags"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: 'rgba(255,107,94,0.06)', border: '1px solid rgba(255,107,94,0.22)',
+                borderRadius: 12, padding: '13px 18px',
+                color: '#FF6B5E', textDecoration: 'none', fontSize: 13, fontWeight: 700,
+              }}
+            >
+              <span>🚩 Les pires red flags, d&apos;après les votes</span>
+              <ArrowRight size={14} style={{ opacity: 0.6, flexShrink: 0 }} />
+            </Link>
             <Link
               href="/redflagtest"
               style={{

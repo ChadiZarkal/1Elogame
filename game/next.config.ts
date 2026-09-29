@@ -71,8 +71,10 @@ const nextConfig: NextConfig = {
       // `/redflag` ne portait qu'un titre et un bouton menant à `/jeu` : une
       // page de porte, sans contenu propre, que les consignes qualité de Google
       // désignent explicitement. Redirigée en permanent plutôt que supprimée,
-      // pour conserver les liens entrants existants.
-      { source: '/redflag', destination: '/jeu', permanent: true },
+      // pour conserver les liens entrants existants. Elle mène au guide, qui
+      // définit le terme : quelqu'un qui tape « /redflag » cherche ce que le
+      // mot veut dire, pas un duel.
+      { source: '/redflag', destination: '/guide', permanent: true },
       // Flash Flag a été retiré : ses tables n'avaient jamais été créées en
       // production, le jeu ne pouvait donc pas fonctionner. Ses liens de
       // session étaient faits pour être envoyés — il en circule forcément.
