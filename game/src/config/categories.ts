@@ -41,6 +41,20 @@ export const CATEGORIES_CONFIG: Record<string, CategoryConfig> = {
   },
 };
 
+/**
+ * Catégories jouées, mais jamais exposées sur les pages publiques — classement,
+ * Observatoire, accueil, baromètre, API publique.
+ *
+ * « Amour & Sexe » mêle des propositions sexuellement explicites (nudes,
+ * sextapes, pratiques) et des orientations sexuelles soumises au vote comme
+ * des « red flags ». Dans le jeu, entre adultes, c'est une question posée ;
+ * publié en classement indexable, c'est une liste qui range l'homosexualité
+ * parmi les comportements problématiques, sur un site qui demande à porter de
+ * la publicité Google. Le jeu les garde : le serveur les écarte déjà pour la
+ * tranche 16-18 (voir `ADSENSE-CHANGELOG.md` § 7).
+ */
+export const CATEGORIES_HORS_VITRINE: readonly string[] = ['sexe'];
+
 /** Tags sémantiques — sous-catégorisation, filtre classement uniquement */
 export const TAGS_CONFIG: Record<string, TagConfig> = {
   metier: {

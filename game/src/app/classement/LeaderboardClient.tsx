@@ -70,22 +70,17 @@ const PROFILE_FILTERS: { value: ViewMode; label: string; emoji: string }[] = [
   { value: '27+', label: '27+', emoji: '🧠' },
 ];
 
-const CATEGORY_FILTERS = [
-  { value: '', label: 'Tout', emoji: '⚡' },
-  { value: 'sexe', label: 'Amour & Sexe', emoji: '❤️‍🔥' },
-  { value: 'quotidien', label: 'Quotidien', emoji: '🤷' },
-];
+// « Amour & Sexe » n'est pas publié (voir `CATEGORIES_HORS_VITRINE`) : il ne
+// reste qu'une catégorie, et un filtre à une seule valeur ne filtre rien.
+const CATEGORY_FILTERS: { value: string; label: string; emoji: string }[] = [];
 
 const TAG_FILTERS = [
   { value: 'metier', label: 'Travail', emoji: '💼' },
-  { value: 'couple', label: 'Couple', emoji: '❤️' },
   { value: 'hygiene', label: 'Hygiène', emoji: '🚿' },
   { value: 'argent', label: 'Argent', emoji: '💰' },
   { value: 'numerique', label: 'Numérique', emoji: '📱' },
   { value: 'sport', label: 'Sport', emoji: '🏋️' },
   { value: 'nourriture', label: 'Nourriture', emoji: '🍽️' },
-  { value: 'emotionnel', label: 'Émotionnel', emoji: '💔' },
-  { value: 'social', label: 'Social', emoji: '🌍' },
   { value: 'transport', label: 'Transport', emoji: '🚗' },
   { value: 'politique', label: 'Politique', emoji: '🏛️' },
 ];
@@ -506,6 +501,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
             </button>
           </form>
 
+          {CATEGORY_FILTERS.length > 0 && (
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
             {CATEGORY_FILTERS.map((cat) => (
               <button
@@ -523,6 +519,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
               </button>
             ))}
           </div>
+          )}
 
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
             {PROFILE_FILTERS.map((f) => (
@@ -659,6 +656,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                 </div>
               </div>
 
+              {CATEGORY_FILTERS.length > 0 && (
               <div className="space-y-2">
                 <label className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider">Catégorie</label>
                 <div className="space-y-1.5">
@@ -679,6 +677,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                   ))}
                 </div>
               </div>
+              )}
 
               <div className="space-y-2">
                 <label className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider">🏷️ Thème</label>

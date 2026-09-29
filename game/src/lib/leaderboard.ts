@@ -8,6 +8,7 @@
  */
 
 import { getLeaderboard } from '@/lib/repositories';
+import { CATEGORIES_HORS_VITRINE } from '@/config/categories';
 
 export const LEADERBOARD_VIEWS = [
   'global',
@@ -103,7 +104,9 @@ const MIN_VOTES_FOR_GAP = 40;
 
 /** Agrégats servant les pages éditoriales de l'Observatoire. */
 export async function getObservatoryData(topN = 12): Promise<ObservatoryData> {
-  const { elements, total } = await getLeaderboard({ sort: 'desc', limit: 1000, offset: 0 });
+  const { elements, total } = await getLeaderboard({
+    sort: 'desc', limit: 1000, offset: 0, excludeCategories: CATEGORIES_HORS_VITRINE,
+  });
 
   const totalVotes = elements.reduce((sum, e) => sum + (e.nb_participations || 0), 0);
   const reliable = elements.filter((e) => (e.nb_participations || 0) >= MIN_VOTES_FOR_GAP);
@@ -176,6 +179,12 @@ export async function getLeaderboardPage(
   const offset = Math.max(0, options.offset ?? 0);
   const view = options.view ?? 'global';
 
+  // Une catégorie hors vitrine demandée explicitement ne renvoie rien — pas
+  // même son décompte.
+  if (options.category && CATEGORIES_HORS_VITRINE.includes(options.category)) {
+    return { rankings: [], totalElements: 0, visibleElements: 0, visibleVotes: 0, limit, offset, hasMore: false };
+  }
+
   const { elements, total } = await getLeaderboard({
     sort,
     limit,
@@ -184,6 +193,7 @@ export async function getLeaderboardPage(
     tag: options.tag ?? null,
     view,
     search: options.search ?? null,
+    excludeCategories: CATEGORIES_HORS_VITRINE,
   });
 
   const rankings: RankEntry[] = elements.map((e, i) => ({

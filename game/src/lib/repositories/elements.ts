@@ -255,6 +255,8 @@ export type LeaderboardOptions = {
   search?: string | null;
   /** Filter by a single tag (array containment) */
   tag?: string | null;
+  /** Catégories écartées du résultat — voir `CATEGORIES_HORS_VITRINE`. */
+  excludeCategories?: readonly string[];
 };
 
 type LeaderboardRow = {
@@ -319,6 +321,11 @@ export async function getLeaderboard(options: LeaderboardOptions): Promise<Leade
       elements = elements.filter((e) => e.categorie === options.category);
     }
 
+    if (options.excludeCategories?.length) {
+      const exclues = options.excludeCategories;
+      elements = elements.filter((e) => !exclues.includes(e.categorie));
+    }
+
     if (options.tag) {
       const tag = options.tag;
       elements = elements.filter((e) => (e.tags || []).includes(tag));
@@ -373,6 +380,10 @@ export async function getLeaderboard(options: LeaderboardOptions): Promise<Leade
 
   if (options.category) {
     query = query.eq('categorie', options.category);
+  }
+
+  if (options.excludeCategories?.length) {
+    query = query.not('categorie', 'in', `(${options.excludeCategories.join(',')})`);
   }
 
   if (options.tag) {
