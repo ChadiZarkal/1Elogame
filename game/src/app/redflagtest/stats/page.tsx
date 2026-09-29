@@ -3,7 +3,9 @@ import Link from 'next/link';
 import { StatsClient } from './StatsClient';
 
 export const metadata: Metadata = {
-  title: 'Ce que les autres ont répondu',
+  // `absolute` : le layout de /redflagtest déclare son propre titre, ce qui
+  // coupe le gabarit « … | Red or Green » du layout racine pour ses enfants.
+  title: { absolute: 'Red Flag Test : les réponses des joueurs | Red or Green' },
   description:
     'Les réponses du Red Flag Test, question par question, et l’écart entre les hommes et les femmes.',
   // Sa propre adresse, sinon elle hériterait de celle du test et se
@@ -21,8 +23,16 @@ export default function PageStats() {
                 référence : `flac.css` dimensionne l'image via .logo-image. */}
             <img className="logo-image" src="/rft/img/logo-rog.svg" alt="Red or Green" />
           </Link>
-          <h1 className="site-tagline">Ce que les autres ont répondu</h1>
+          <h1 className="site-tagline">Red Flag Test : ce que les autres ont répondu</h1>
         </header>
+        {/* Rendu serveur : les chiffres sont chargés par le navigateur, et le
+            HTML de cette page se réduisait sans cela à dix-sept mots. */}
+        <p className="rft-stats-intro">
+          Pour chaque question du <Link href="/redflagtest">Red Flag Test</Link>,
+          ce que les joueurs ont répondu, et l&apos;écart entre les réponses des
+          hommes et celles des femmes. Les chiffres se mettent à jour à chaque
+          partie terminée.
+        </p>
         <StatsClient />
       </div>
     </main>

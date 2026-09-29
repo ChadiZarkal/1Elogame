@@ -329,12 +329,23 @@ export default function GuidePage() {
           }}>
             Guide · Espace de sécurité
           </p>
+          {/* Le titre ne contenait pas « red flag », sur la page qui définit
+              le terme. */}
           <h1 style={{ color: '#F5F5F5', fontSize: 28, fontWeight: 900, margin: '0 0 12px', lineHeight: 1.2 }}>
-            Les 5 types de signaux
+            Red flag : définition et exemples
           </h1>
+          {/* La définition tient dans le premier paragraphe, en une phrase
+              autonome : c'est ce que Google reprend en tête de résultats. */}
+          <p style={{ color: '#E5E7EB', fontSize: 16, margin: '0 0 12px', lineHeight: 1.6 }}>
+            Un <strong>red flag</strong> — « drapeau rouge », parfois écrit
+            « redflag » — est un comportement qui doit alerter sur quelqu&apos;un :
+            contrôle, manque de respect, manipulation. Le terme vient des drapeaux
+            rouges qui signalent un danger, sur une plage ou un circuit.
+          </p>
           <p style={{ color: '#9CA3AF', fontSize: 15, margin: '0 0 28px', lineHeight: 1.65 }}>
-            Du Green Flag au Black Flag — comprendre ce que les comportements signalent dans une relation,
-            avec des exemples concrets.
+            Tout n&apos;est pas un red flag. Du green flag au black flag, voici les
+            cinq signaux, avec des exemples concrets pour les reconnaître dans une
+            relation.
           </p>
 
           {/* Spectrum bar */}
@@ -395,6 +406,18 @@ export default function GuidePage() {
             Aller plus loin
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <Link
+              href="/redflagtest"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: 'rgba(255,180,170,0.06)', border: '1px solid rgba(255,180,170,0.22)',
+                borderRadius: 12, padding: '13px 18px',
+                color: '#FFB4AA', textDecoration: 'none', fontSize: 13, fontWeight: 700,
+              }}
+            >
+              <span>🧪 Faire le Red Flag Test : es-tu un red flag ?</span>
+              <ArrowRight size={14} style={{ opacity: 0.6, flexShrink: 0 }} />
+            </Link>
             <Link
               href="/flagornot"
               style={{

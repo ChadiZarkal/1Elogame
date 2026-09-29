@@ -905,3 +905,45 @@ body:has(.main-container) {
   font-style: italic;
   line-height: 1.2;
 }
+
+/* ========== Presentation du test (voir `Presentation.tsx`) ==========
+ * Rendue cote serveur, sous l'ecran de profil : c'est le texte que Google lit.
+ * Palette et angles de la reference — rien d'arrondi, rien de nouveau. */
+.rft-presentation {
+  max-width: 34rem;
+  margin: calc(var(--spacing, 1rem) * 2) auto 0;
+  padding: calc(var(--spacing, 1rem) * 1.25) var(--spacing, 1rem) calc(var(--spacing, 1rem) * 5.5);
+  border-top: 1px solid var(--blueish-grey);
+  color: var(--white);
+  font-size: var(--font-size-s);
+  line-height: var(--line-height);
+  text-align: left;
+}
+.rft-presentation h2 {
+  margin: 0 0 calc(var(--spacing, 1rem) * 0.6);
+  font-size: var(--font-size-l);
+  text-transform: uppercase;
+}
+.rft-presentation h3 {
+  margin: calc(var(--spacing, 1rem) * 1.2) 0 calc(var(--spacing, 1rem) * 0.4);
+  font-size: var(--font-size-m);
+  text-transform: uppercase;
+}
+.rft-presentation p {
+  margin: 0 0 calc(var(--spacing, 1rem) * 0.6);
+  color: var(--grey);
+}
+.rft-presentation a,
+.rft-stats-intro a {
+  color: var(--light-red);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.rft-stats-intro {
+  max-width: 34rem;
+  margin: 0 auto var(--spacing, 1rem);
+  padding: 0 var(--spacing, 1rem);
+  color: var(--grey);
+  font-size: var(--font-size-s);
+  line-height: var(--line-height);
+}

@@ -195,7 +195,9 @@ export function HubClient({ votes, comportementsClasses, pires, bande }: Donnees
           <h1>
             <Image
               src="/logo-rog-new.svg"
-              alt="Red or Green — repérer les toxicités ordinaires"
+              /* Le nom accessible du h1 : Google le lit comme le titre de la
+                 page. */
+              alt="Red or Green — le Red Flag Test et les jeux de red flags"
               /* 192 × 86 : les dimensions réelles du fichier. */
               width={192}
               height={86}

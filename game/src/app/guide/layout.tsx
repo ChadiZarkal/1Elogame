@@ -4,10 +4,13 @@ import { GUIDE_FAQ } from './faq';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
 
 export const metadata: Metadata = {
-  title: 'Guide des Flags — Définitions Red Flag, Green Flag, Black Flag...',
+  // « red flag » d'abord : c'est la requête la plus cherchée des cinq, et la
+  // définition est l'intention qui domine derrière. Les quatre autres flags
+  // restent dans le titre — le guide se classe aussi sur eux.
+  title: 'Red Flag : définition et exemples (Green, Orange, Black Flag)',
   description:
-    'Comprends la différence entre Green Flag, Orange Flag, Red Flag, Black Flag et White Flag. Définitions claires avec exemples concrets pour reconnaître les signaux relationnels.',
-  keywords: ['red flag', 'green flag', 'black flag', 'orange flag', 'white flag'],
+    'Red flag : définition, signification et exemples concrets. Et la différence avec le green flag, l’orange flag, le black flag et le white flag, pour reconnaître les signaux d’une relation.',
+  keywords: ['red flag', 'redflag', 'red flag définition', 'red flag signification', 'green flag', 'black flag', 'orange flag', 'white flag'],
   openGraph: {
     title: 'Guide des Flags — Red, Green, Black, Orange & White Flag',
     description: 'Comprends les 5 types de signaux relationnels avec définitions et exemples concrets.',
@@ -27,7 +30,7 @@ function GuideJsonLd() {
     '@graph': [
       {
         '@type': 'Article',
-        headline: 'Guide des Flags : Red Flag, Green Flag, Black Flag, Orange Flag et White Flag',
+        headline: 'Red flag : définition et exemples — et les autres flags',
         description:
           'Comprendre les 5 types de signaux relationnels avec définitions complètes et exemples concrets.',
         url: `${SITE_URL}/guide`,

@@ -18,9 +18,16 @@ import type { Metadata } from 'next';
  */
 
 export const metadata: Metadata = {
-  title: 'Red Flag Test',
+  // « red flag test » est la requête visée : en tête, tel qu'on le tape.
+  title: 'Red Flag Test gratuit : es-tu un red flag ?',
   description:
-    'Réponds au test et découvre ton pourcentage de red flag, ton profil par catégorie et ton classement.',
+    'Fais le Red Flag Test, gratuit et anonyme : découvre ton score de red flag en pourcentage, ton profil et ta place parmi les autres joueurs. Sans inscription.',
+  keywords: ['red flag test', 'redflag test', 'test red flag', 'es-tu un red flag', 'red flag'],
+  openGraph: {
+    title: 'Red Flag Test : es-tu un red flag ?',
+    description: 'Le test gratuit et anonyme : ton score de red flag en pourcentage, et ta place parmi les autres.',
+    url: '/redflagtest',
+  },
   /*
    * Ouvert aux moteurs : le questionnaire est écrit. Il était fermé tant que
    * la page n'aurait annoncé que « le test n'a pas encore de questions ».

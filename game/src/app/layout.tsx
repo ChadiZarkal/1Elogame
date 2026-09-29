@@ -19,7 +19,9 @@ const spaceGrotesk = Space_Grotesk({
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
 const SITE_NAME = 'Red or Green';
-const SITE_DESCRIPTION = 'Red or Green, Red Flag, Green Flag... Choisis ton jeu et amuse-toi entre amis ! Party games mobiles gratuits, sans inscription, jouables instantanément. Violentomètre, consentomètre et outils d\'auto-évaluation inclus.';
+/* Les deux jeux phares et le terme « red flag » en tête ; violentomètre et
+   consentomètre gardés : l'accueil se classe aussi sur eux. */
+const SITE_DESCRIPTION = 'Red flag ou green flag ? Fais le Red Flag Test, note des profils dans « C\'est un 10 mais… » et vote pour le pire des deux. Jeux gratuits, sans inscription. Violentomètre, consentomètre et outils d\'auto-évaluation inclus.';
 
 const rawGaId = process.env.NEXT_PUBLIC_GA_ID?.trim() || '';
 const rawAdSenseId = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ID?.trim() || '';
@@ -30,12 +32,14 @@ const adSenseClientId = rawAdSenseId
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `Red or Green — ${SITE_NAME} | Jeu de Red Flags gratuit en ligne`,
+    // Le nom figurait deux fois (« Red or Green — Red or Green | … ») et
+    // mangeait la moitié de ce que Google affiche.
+    default: `${SITE_NAME} — Red Flag Test et jeux de red flags gratuits`,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
   keywords: [
-    'red or green', 'red flag', 'green flag',
+    'red or green', 'red flag', 'redflag', 'red flag test', 'green flag',
     'classement red flag', 'violentomètre', 'consentomètre',
   ],
   authors: [{ name: SITE_NAME, url: SITE_URL }],
@@ -51,7 +55,7 @@ export const metadata: Metadata = {
     locale: 'fr_FR',
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: `Red or Green — ${SITE_NAME} | Jeu de Red Flags gratuit`,
+    title: `${SITE_NAME} — Red Flag Test et jeux de red flags gratuits`,
     description: SITE_DESCRIPTION,
     images: [{
       url: '/opengraph-image',
@@ -62,7 +66,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: `Red or Green — ${SITE_NAME} | Jeu de Red Flags gratuit`,
+    title: `${SITE_NAME} — Red Flag Test et jeux de red flags gratuits`,
     description: SITE_DESCRIPTION,
     images: ['/opengraph-image'],
   },

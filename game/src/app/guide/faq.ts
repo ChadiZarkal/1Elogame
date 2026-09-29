@@ -20,6 +20,21 @@ export const GUIDE_FAQ: FaqEntry[] = [
       "Un Red Flag est un comportement réellement problématique : contrôle, manque de respect, manipulation ou schéma toxique. Pris isolément, il peut parfois se travailler avec une vraie remise en question, mais l'accumulation de Red Flags est nocive.",
   },
   {
+    question: 'Red flag ou redflag : comment ça s’écrit ?',
+    answer:
+      "Les deux se rencontrent. L'expression anglaise s'écrit en deux mots, red flag, littéralement « drapeau rouge » ; la forme collée, redflag, est courante sur les réseaux sociaux. Le sens est le même : un signal d'alarme sur le comportement de quelqu'un.",
+  },
+  {
+    question: "D'où vient l'expression red flag ?",
+    answer:
+      "Des drapeaux rouges qui signalent un danger : baignade interdite sur une plage, course interrompue sur un circuit. Les réseaux sociaux l'ont popularisée pour désigner un comportement qui doit alerter, le plus souvent au début d'une relation.",
+  },
+  {
+    question: 'Comment savoir si je suis un red flag ?',
+    answer:
+      "Le Red Flag Test de Red or Green pose des situations concrètes et donne un score de red flag en pourcentage, avec ta place parmi les autres joueurs. Gratuit, anonyme et sans inscription.",
+  },
+  {
     question: "Qu'est-ce qu'un Green Flag ?",
     answer:
       "Un Green Flag est un comportement sain et mature, signe d'une personne respectueuse, communicative et cohérente. Il indique que la relation repose sur des bases équilibrées.",

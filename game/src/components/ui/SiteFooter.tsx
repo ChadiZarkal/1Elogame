@@ -33,10 +33,12 @@ const HIDDEN_PATHS = [
 const NAV_GROUPS: { title: string; links: { href: string; label: string }[] }[] = [
   {
     title: 'Les jeux',
+    // Les noms en usage partout ailleurs, et le Red Flag Test, absent jusque-là.
     links: [
-      { href: '/jeu', label: 'Red or Green Duel' },
-      { href: '/dixmais', label: "C'est un 10 mais..." },
-      { href: '/flagornot', label: 'Oracle IA' },
+      { href: '/redflagtest', label: 'Red Flag Test' },
+      { href: '/dixmais', label: "C'est un 10 mais…" },
+      { href: '/flagornot', label: "L'Oracle" },
+      { href: '/jeu', label: 'Le pire des deux' },
     ],
   },
   {

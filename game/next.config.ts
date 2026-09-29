@@ -59,6 +59,15 @@ const nextConfig: NextConfig = {
 
   async redirects() {
     return [
+      // www.redorgreen.fr servait le site en 200. Les pages y déclaraient bien
+      // redorgreen.fr comme adresse canonique, mais Google devait deviner ;
+      // une redirection permanente le lui dit, et regroupe les liens entrants.
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.redorgreen.fr' }],
+        destination: 'https://redorgreen.fr/:path*',
+        permanent: true,
+      },
       // `/redflag` ne portait qu'un titre et un bouton menant à `/jeu` : une
       // page de porte, sans contenu propre, que les consignes qualité de Google
       // désignent explicitement. Redirigée en permanent plutôt que supprimée,

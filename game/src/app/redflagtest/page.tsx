@@ -13,6 +13,45 @@
 
 import Link from 'next/link';
 import { Quiz } from './Quiz';
+import { Presentation } from './Presentation';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
+
+/**
+ * Le balisage `Quiz` que les autres jeux portent déjà. Il ne décrit que ce que
+ * la page affiche : `Presentation` est rendu dans le même HTML.
+ */
+function RedflagtestJsonLd() {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Quiz',
+        name: 'Red Flag Test',
+        about: { '@type': 'Thing', name: 'Red flag' },
+        description:
+          'Test gratuit et anonyme pour savoir à quel point tu es un red flag : score en pourcentage, profil et classement parmi les autres joueurs.',
+        url: `${SITE_URL}/redflagtest`,
+        inLanguage: 'fr-FR',
+        isAccessibleForFree: true,
+        publisher: { '@type': 'Organization', name: 'Red or Green', url: SITE_URL },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Accueil', item: SITE_URL },
+          { '@type': 'ListItem', position: 2, name: 'Red Flag Test', item: `${SITE_URL}/redflagtest` },
+        ],
+      },
+    ],
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
 
 export default function RedflagtestPage() {
   return (
@@ -32,7 +71,8 @@ export default function RedflagtestPage() {
               aussi — mais il quitte l'écran. */}
           <h1 className="visually-hidden">Red Flag Test</h1>
         </header>
-        <Quiz />
+        <Quiz presentation={<Presentation />} />
+        <RedflagtestJsonLd />
       </div>
     </main>
   );

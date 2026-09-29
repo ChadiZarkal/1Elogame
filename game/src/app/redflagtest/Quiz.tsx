@@ -79,7 +79,12 @@ function aiguillePour(questions: QuestionPublique[], choix: Choix[]): number {
   );
 }
 
-export function Quiz() {
+/**
+ * `presentation` : le texte rendu côté serveur par `page.tsx` (voir
+ * `Presentation`). Affiché tant que la partie n'a pas commencé — c'est lui que
+ * Google lit —, retiré dès la première question.
+ */
+export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) {
   const [phase, setPhase] = useState<Phase>('chargement');
   const [quiz, setQuiz] = useState<QuizCharge | null>(null);
   const [profil, setProfil] = useState<PlayerProfile | null>(null);
@@ -277,7 +282,12 @@ export function Quiz() {
   };
 
   if (phase === 'chargement') {
-    return <p className="loading-message">Chargement…</p>;
+    return (
+      <>
+        <p className="loading-message">Chargement…</p>
+        {presentation}
+      </>
+    );
   }
 
   if (phase === 'erreur') {
@@ -290,7 +300,12 @@ export function Quiz() {
   }
 
   if (phase === 'profil') {
-    return <ProfilStep onDemarrer={demarrer} />;
+    return (
+      <>
+        <ProfilStep onDemarrer={demarrer} />
+        {presentation}
+      </>
+    );
   }
 
   if (phase === 'reprise' && quiz && enAttente) {

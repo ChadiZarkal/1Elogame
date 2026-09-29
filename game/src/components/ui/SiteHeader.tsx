@@ -57,10 +57,13 @@ const NAV_SECTIONS: {
 }[] = [
   {
     title: 'Jouer',
+    // Les deux jeux phares d'abord. Le Red Flag Test n'était dans aucun menu :
+    // aucune page du site ne le liait, hors l'accueil.
     links: [
-      { href: '/jeu', label: 'Le pire des deux' },
+      { href: '/redflagtest', label: 'Red Flag Test' },
       { href: '/dixmais', label: "C'est un 10 mais…" },
       { href: '/flagornot', label: "L'Oracle" },
+      { href: '/jeu', label: 'Le pire des deux' },
     ],
   },
   {
