@@ -88,8 +88,7 @@ Le compteur de l'Observatoire est corrigé : il lit la table des votes.
   de red flags, red flag chez un homme ou une femme, red flag en amour. Date de
   dernière révision, liens vers les sources et la méthode.
 - **Red Flag Test** : deux questions sur l'anonymat et la visibilité du
-  résultat, vérifiées contre ce que le code enregistre. L'écran de question
-  tient désormais dans un 360 × 670 : il défilait à chaque question.
+  résultat, vérifiées contre ce que le code enregistre.
 - **Confidentialité** : le Red Flag Test n'y figurait pas. Ce qu'il enregistre,
   combien de temps, et ce qui reste sur l'appareil y est décrit.
 - Images de partage propres au guide, au test et au baromètre.
