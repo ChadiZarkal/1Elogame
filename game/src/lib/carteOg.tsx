@@ -49,7 +49,9 @@ export function carteOg({
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '28px', marginTop: '40px' }}>
           <span style={{ fontSize: '96px' }}>{emoji}</span>
-          <span style={{ color: '#F5F5F5', fontSize: '68px', fontWeight: 900, lineHeight: 1.05, maxWidth: '860px' }}>
+          {/* Un titre d'article dépasse souvent 60 signes : à 68 px il
+              sortirait du cadre. */}
+          <span style={{ color: '#F5F5F5', fontSize: titre.length > 60 ? '48px' : '68px', fontWeight: 900, lineHeight: 1.1, maxWidth: '900px' }}>
             {titre}
           </span>
         </div>

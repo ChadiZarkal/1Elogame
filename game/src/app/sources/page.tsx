@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { METERS } from '@/config/meters-data';
+import { EMERGENCY_LINES, SOURCES } from '@/config/sources-outils';
 
 export const metadata: Metadata = {
   title: 'Sources — sur quoi reposent nos outils',
@@ -8,45 +9,6 @@ export const metadata: Metadata = {
     "Les outils d'auto-évaluation de Red or Green s'appuient sur des barèmes produits par des institutions publiques et des associations spécialisées. Références et limites.",
   alternates: { canonical: '/sources' },
 };
-
-interface SourceEntry {
-  slug: string;
-  origin: string;
-  detail: string;
-}
-
-/**
- * Références des barèmes repris par nos outils.
- * Ces sources figuraient jusqu'ici en commentaire dans le code : les publier
- * est autant une question d'honnêteté que de crédibilité.
- */
-const SOURCES: SourceEntry[] = [
-  {
-    slug: 'violentometre',
-    origin: 'Département de Seine-Saint-Denis / Centre Hubertine Auclert',
-    detail:
-      "Le violentomètre est un outil de prévention diffusé par le Département de Seine-Saint-Denis avec l'Observatoire des violences envers les femmes, repris et diffusé par le Centre Hubertine Auclert.",
-  },
-  {
-    slug: 'consentometre',
-    origin: 'Université de Poitiers — mission égalité-diversité (CC BY-NC-ND)',
-    detail:
-      "Le consentomètre a été conçu par la mission égalité-diversité de l'Université de Poitiers et diffusé sous licence Creative Commons (attribution, pas d'utilisation commerciale, pas de modification).",
-  },
-  {
-    slug: 'incestometre',
-    origin: "Association Face à l'inceste / Mémoire Traumatique et Victimologie",
-    detail:
-      "Les repères utilisés s'appuient sur les travaux de sensibilisation de l'association Face à l'inceste et de l'association Mémoire Traumatique et Victimologie.",
-  },
-];
-
-const EMERGENCY_LINES = [
-  { number: '3919', label: 'Violences Femmes Info — écoute nationale, 24h/24 et 7j/7' },
-  { number: '119', label: 'Enfance en danger — 24h/24 et 7j/7' },
-  { number: '17', label: 'Police et gendarmerie — urgences' },
-  { number: '114', label: 'Urgences pour personnes sourdes ou malentendantes — par SMS' },
-];
 
 export default function SourcesPage() {
   return (

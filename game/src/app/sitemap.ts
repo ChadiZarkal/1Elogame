@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { ARTICLES } from '@/content/articles';
 import { METERS } from '@/config/meters-data';
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -49,6 +50,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
+    {
+      url: `${baseUrl}/articles`,
+      lastModified: new Date(ARTICLES[0].misAJour),
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
+    ...ARTICLES.map((a) => ({
+      url: `${baseUrl}/articles/${a.slug}`,
+      lastModified: new Date(a.misAJour),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
     {
       url: `${baseUrl}/red-flags`,
       lastModified: now,

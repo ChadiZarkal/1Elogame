@@ -228,7 +228,12 @@ export default async function ObservatoirePage() {
           <h2>Explorer par vous-même</h2>
           <p>
             Le <Link href="/classement">classement complet</Link> est filtrable par catégorie, par
-            sexe et par tranche d&apos;âge. Vous pouvez aussi{' '}
+            sexe et par tranche d&apos;âge. Deux{' '}
+            <Link href="/articles">articles</Link> analysent les écarts entre hommes et
+            femmes : <Link href="/articles/coucher-avec-son-boss-draguer-ses-collegues">au
+            travail</Link>, et{' '}
+            <Link href="/articles/red-flags-hommes-femmes-presque-d-accord">au
+            quotidien</Link>. Vous pouvez aussi{' '}
             <Link href="/jeu">contribuer aux votes</Link> — chaque duel tranché déplace les scores.
           </p>
         </section>

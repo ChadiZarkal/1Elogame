@@ -92,6 +92,18 @@ export default function RessourcesPage() {
           </div>
         </div>
 
+        {/* Lien vers l'article qui explique les outils : d'où ils viennent,
+            comment lire un résultat. L'article renvoie à chaque outil. */}
+        <div className="mt-3 max-w-md mx-auto w-full">
+          <Link
+            href="/articles/violentometre-consentometre-outils-auto-evaluation"
+            className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[13px] font-semibold text-[#D1D5DB] transition-colors hover:bg-white/[0.06]"
+          >
+            <span>🧭 À quoi servent ces outils, et comment lire un résultat</span>
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+
         {/* Disclaimer */}
         <p className="text-[10px] text-[#4B5563] text-center mt-4 max-w-sm mx-auto leading-relaxed">
           Ces outils ne remplacent pas un accompagnement professionnel.

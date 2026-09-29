@@ -71,6 +71,7 @@ const NAV_SECTIONS: {
     links: [
       { href: '/guide', label: 'Guide des flags' },
       { href: '/red-flags', label: 'Les pires red flags' },
+      { href: '/articles', label: 'Articles' },
       { href: '/classement', label: 'Classement' },
       { href: '/observatoire', label: 'Observatoire' },
       { href: '/methodologie', label: 'Méthodologie' },

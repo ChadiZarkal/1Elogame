@@ -46,6 +46,7 @@ const NAV_GROUPS: { title: string; links: { href: string; label: string }[] }[] 
     links: [
       { href: '/guide', label: 'Guide des flags' },
       { href: '/red-flags', label: 'Les pires red flags' },
+      { href: '/articles', label: 'Articles' },
       { href: '/classement', label: 'Classement des red flags' },
       { href: '/observatoire', label: "L'Observatoire" },
       { href: '/ressources', label: "Outils d'auto-évaluation" },

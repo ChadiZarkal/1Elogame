@@ -130,11 +130,21 @@ export default function MeterQuizPage() {
 
       {/* ═══ INTRO ═══ */}
       {phase === 'intro' && (
-        <IntroPhase
-          meter={meter}
-          totalQuestions={totalQuestions}
-          onStart={() => setPhase('quiz')}
-        />
+        <>
+          <IntroPhase
+            meter={meter}
+            totalQuestions={totalQuestions}
+            onStart={() => setPhase('quiz')}
+          />
+          {/* L'article qui présente les outils renvoie ici ; ce lien lui
+              répond. Seulement avant de commencer : pendant le questionnaire,
+              rien ne doit distraire. */}
+          <p className="mx-auto mt-2 max-w-md px-5 pb-6 text-center text-[12px] text-[#9CA3AF]">
+            <Link href="/articles/violentometre-consentometre-outils-auto-evaluation" className="underline underline-offset-2 hover:text-[#D1D5DB]">
+              D&apos;où vient cet outil, et comment lire son résultat
+            </Link>
+          </p>
+        </>
       )}
 
       {/* ═══ QUIZ ═══ (lazy-loaded) */}

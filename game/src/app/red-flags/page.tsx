@@ -293,7 +293,11 @@ export default async function RedFlagsPage() {
           <h2>Faire bouger le classement</h2>
           <p>
             Chaque duel tranché déplace les scores : <Link href="/jeu">jouer au pire
-            des deux</Link> contribue à cette page. Pour savoir où vous vous situez
+            des deux</Link> contribue à cette page. Les{' '}
+            <Link href="/articles">articles</Link> lisent ces chiffres de plus près —
+            dont ce que les hommes et les femmes{' '}
+            <Link href="/articles/coucher-avec-son-boss-draguer-ses-collegues">ne jugent
+            pas de la même façon au travail</Link>. Pour savoir où vous vous situez
             vous-même, il y a le <Link href="/redflagtest">Red Flag Test</Link>. Et le{' '}
             <Link href="/classement">classement complet</Link> se filtre par sexe, par
             âge et par thème.
