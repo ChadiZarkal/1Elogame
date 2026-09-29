@@ -1058,6 +1058,103 @@ button:focus-visible {
 .legal-page__section a:hover {
   color: #fb923c;
 }
+.legal-page__section h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e5e5e5;
+  margin: 1.25rem 0 0.5rem;
+}
+
+/* ========== Baromètre des red flags (/red-flags) ==========
+   Des lignes plutôt qu'un tableau : sur un téléphone, un tableau à cinq
+   colonnes se lit mal ou déborde. La barre donne la gravité d'un coup d'œil,
+   la ligne du dessous les chiffres. */
+.barometre-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.barometre-ligne {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  border-radius: 0.9rem;
+  background: var(--surface-1, #121216);
+}
+.barometre-rang {
+  flex-shrink: 0;
+  min-width: 1.75rem;
+  font-size: 1rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+.barometre-corps {
+  min-width: 0;
+  flex: 1;
+}
+.legal-page__section .barometre-texte {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #eeeef0;
+}
+.barometre-barre {
+  display: block;
+  height: 0.3rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+}
+.barometre-barre > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+.legal-page__section .barometre-meta {
+  margin: 0.4rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: #a0a0aa;
+}
+.barometre-deux {
+  display: grid;
+  gap: 0.5rem 1.5rem;
+}
+@media (min-width: 640px) {
+  .barometre-deux {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.barometre-court {
+  margin: 0 0 0 1.25rem;
+  list-style: decimal;
+}
+.barometre-court li {
+  margin-bottom: 0.4rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: #dcdce2;
+}
+.barometre-court li span {
+  display: block;
+  font-size: 0.75rem;
+  color: #a0a0aa;
+}
+.barometre-theme {
+  margin-top: 1.25rem;
+  scroll-margin-top: calc(var(--header-h, 3rem) + 1rem);
+}
+.barometre-theme-total {
+  font-weight: 500;
+  color: #a0a0aa;
+}
 /* Enveloppe défilante : `overflow-x: clip` sur le `body` rend tout débordement
    horizontal définitivement inatteignable. Ce tableau à deux colonnes dépasse
    390 px de large — ses dernières colonnes étaient purement rognées sur

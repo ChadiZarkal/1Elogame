@@ -70,6 +70,7 @@ const NAV_SECTIONS: {
     title: 'Comprendre',
     links: [
       { href: '/guide', label: 'Guide des flags' },
+      { href: '/red-flags', label: 'Les pires red flags' },
       { href: '/classement', label: 'Classement' },
       { href: '/observatoire', label: 'Observatoire' },
       { href: '/methodologie', label: 'Méthodologie' },

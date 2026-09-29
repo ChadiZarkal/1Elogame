@@ -324,6 +324,9 @@ export function HubClient({ votes, comportementsClasses, pires, bande }: Donnees
               ))}
             </ol>
 
+            <LienLigne href="/red-flags" onTap={tap} fleche="text-[#FFC04D]">
+              La liste des pires red flags, commentée
+            </LienLigne>
             <LienLigne href="/classement" onTap={tap} fleche="text-[#FFC04D]">
               {comportementsClasses !== null && comportementsClasses > 0
                 ? `Le classement complet — ${nombre.format(comportementsClasses)} comportements`

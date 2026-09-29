@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { NativeAd } from '@/components/ads/NativeAd';
 import { withPrerenderTimeout } from '@/lib/prerenderTimeout';
+import { getPublicStats } from '@/lib/repositories';
 import {
   getObservatoryData,
   type GapEntry,
@@ -102,11 +102,20 @@ function SpreadList({ entries, kind }: { entries: SpreadEntry[]; kind: 'conteste
 
 export default async function ObservatoirePage() {
   let data = EMPTY;
+  let votes: number | null = null;
 
   try {
     data = await withPrerenderTimeout(getObservatoryData(12));
   } catch {
     // Base indisponible : la page reste lisible, sans les tableaux.
+  }
+  try {
+    // Le nombre de votes vient de la table des votes. `data.totalVotes` est la
+    // somme des participations, qui compte chaque duel deux fois — une par
+    // comportement —, et la page annonçait donc le double du réel.
+    votes = (await withPrerenderTimeout(getPublicStats())).totalVotes;
+  } catch {
+    votes = null;
   }
 
   const hasData = data.genderGaps.length > 0 || data.ageGaps.length > 0;
@@ -127,10 +136,12 @@ export default async function ObservatoirePage() {
             <em> faudrait </em> penser, elle mesure ce que les gens jugent réellement, en les
             faisant arbitrer entre deux comportements, des milliers de fois.
           </p>
-          {data.totalVotes > 0 && (
+          {votes !== null && votes > 0 && data.totalElements > 0 && (
             <p>
-              À ce jour, <strong>{formatNumber(data.totalVotes)} votes</strong> ont été exprimés sur{' '}
-              <strong>{formatNumber(data.totalElements)} comportements</strong>.
+              À ce jour, <strong>{formatNumber(votes)} votes</strong> ont été exprimés ;{' '}
+              <strong>{formatNumber(data.totalElements)} comportements du quotidien</strong>{' '}
+              sont analysés ici. Les propositions de la catégorie « Amour &amp; Sexe »,
+              jouées entre adultes, ne sont pas publiées.
             </p>
           )}
           <p>
@@ -222,7 +233,6 @@ export default async function ObservatoirePage() {
           </p>
         </section>
 
-        <NativeAd />
       </div>
     </main>
   );

@@ -50,13 +50,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: `${baseUrl}/red-flags`,
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
       url: `${baseUrl}/classement`,
       lastModified: now,
       changeFrequency: 'daily',
       priority: 0.8,
     },
     // `/redflag` a été retirée : page de porte sans contenu propre, désormais
-    // redirigée en permanent vers `/jeu` (voir next.config.ts).
+    // redirigée en permanent vers `/guide` (voir next.config.ts).
     {
       url: `${baseUrl}/dixmais`,
       lastModified: now,
