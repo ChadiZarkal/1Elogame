@@ -24,6 +24,15 @@
  *
  * Passer l'un des deux à `true` suffit à l'activer : le composant et
  * l'exclusion des routes sont déjà en place.
+ *
+ * Le troisième, `NATIVE_BANNER`, est éteint à son tour tant que le site est
+ * en examen AdSense. Il s'affichait sur l'accueil, le guide, l'Observatoire
+ * et sous chaque note de présentation — presque toutes les pages que
+ * l'examinateur lit —, sans demande d'accord préalable. Des encarts « natifs »
+ * d'une régie tierce, dont nous ne choisissons pas le contenu, sur les pages
+ * mêmes que l'on présente comme informatives : c'est l'expérience que décrit
+ * le refus « contenu à faible valeur ». Le rallumer une fois AdSense accepté
+ * est une décision commerciale, pas technique : l'interrupteur suffit.
  */
 
 export interface AdUnit {
@@ -39,7 +48,7 @@ export interface NativeAdUnit extends AdUnit {
 
 /** Bandeau natif : s'insère dans le flux, à la place d'un bloc de contenu. */
 export const NATIVE_BANNER: NativeAdUnit = {
-  enabled: true,
+  enabled: false,
   src: 'https://pl31149603.profitableratecpmnetwork.com/8413c6c99c5cae8d29d9ac7c0cf1d2d6/invoke.js',
   containerId: 'container-8413c6c99c5cae8d29d9ac7c0cf1d2d6',
 };
