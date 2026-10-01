@@ -70,10 +70,9 @@ describe('ProfileForm', () => {
     expect(mockPush).toHaveBeenCalledWith('/jeu/jouer');
   });
 
-  it('navigue vers l\'accueil au clic sur le bouton retour', () => {
+  it("ne double pas la barre du site : le retour à l'accueil est son logo", () => {
     render(<ProfileForm />);
-    fireEvent.click(screen.getByText(/Accueil/));
-    expect(mockPush).toHaveBeenCalledWith('/');
+    expect(screen.queryByText(/Accueil/)).toBeNull();
   });
 
   it('affiche le CTA "C\'EST PARTI" quand sexe et âge sont sélectionnés', () => {

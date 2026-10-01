@@ -19,6 +19,7 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
 
@@ -36,19 +37,13 @@ import { Menu } from 'lucide-react';
 const HIDDEN_PATHS = [/^\/$/, /^\/admin(\/|$)/, /^\/dixmais\/admin(\/|$)/, /^\/redflagtest(\/|$)/];
 
 /*
- * Les jeux portent chacun leur propre barre — « ← Menu », « ← Accueil », la
- * flèche de l'Oracle — avec son retour à l'accueil et ce qui est propre à la
- * partie (progression, statistiques). Celle-ci s'affichait par-dessus : deux
- * barres empilées en haut de l'écran, deux « Menu » l'un sous l'autre, et
- * 52 px de moins pour le jeu sur un téléphone.
- *
- * Elle y cède donc sa place, mais laisse une cale à la hauteur de l'encoche :
- * en `viewport-fit=cover`, et dans l'application installée, la barre du jeu
- * passerait sinon sous l'heure et la batterie. La cale ramène `--header-h` à
- * cette seule hauteur (voir `globals.css`), et les écrans de jeu, qui en
- * soustraient la valeur, reprennent d'eux-mêmes toute la hauteur libérée.
+ * Les jeux, les outils et les pages de lecture portent tous cette même barre.
+ * Ils avaient chacun la leur — « ← Menu », « ← Accueil », une flèche seule —,
+ * tantôt empilée sous celle-ci, tantôt à sa place : un site qui changeait de
+ * navigation d'une page à l'autre. Les jeux ne gardent que ce qui leur est
+ * propre (progression, recommencer, statistiques) ; le retour à l'accueil est
+ * le logo, ici, partout.
  */
-const GAME_PATHS = [/^\/jeu(\/|$)/, /^\/dixmais(\/|$)/, /^\/flagornot(\/|$)/];
 
 /** Groupée par thème, comme le demandent les consignes de qualité. */
 const NAV_SECTIONS: {
@@ -118,9 +113,6 @@ export function SiteHeader() {
   }, [pathname]);
 
   if (HIDDEN_PATHS.some((re) => re.test(pathname))) return null;
-  if (GAME_PATHS.some((re) => re.test(pathname))) {
-    return <div className="site-header-cale" aria-hidden />;
-  }
 
   const isCurrent = (href: string) =>
     href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/');
@@ -128,8 +120,11 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="site-header__bar">
+        {/* Le logo plutôt que le nom en texte : c'est la marque telle qu'on la
+            voit partout ailleurs sur le site. Image décorative dans un lien
+            nommé — le nom accessible est porté par le lien. */}
         <Link href="/" className="site-header__brand" aria-label="Red or Green — accueil">
-          RED<span>OR</span>GREEN
+          <Image src="/logo-rog-new.svg" alt="" width={192} height={86} priority />
         </Link>
 
         <nav className="site-header__inline" aria-label="Navigation principale">

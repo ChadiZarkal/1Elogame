@@ -10,9 +10,8 @@
  */
 
 import { useEffect } from 'react';
-import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, RotateCcw } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { Ambient } from './Ambient';
 import { Intro } from './Intro';
 import { ProfileCard } from './ProfileCard';
@@ -71,14 +70,9 @@ export default function DixMaisPage() {
       <Ambient score={game.ambientScore} shock={game.shock} />
 
       <header className="relative z-10 flex shrink-0 items-center justify-between gap-3 px-5 pt-4 pb-2">
-        {/* Marges négatives : la cible passe à 44 px sans écarter la barre. */}
-        <Link
-          href="/"
-          className="-m-2.5 flex h-11 items-center gap-1.5 px-2.5 text-white/30 transition-colors hover:text-white/60"
-        >
-          <ArrowLeft size={17} />
-          <span className="text-[11px] font-black uppercase tracking-[0.22em]">Menu</span>
-        </Link>
+        {/* Le retour à l'accueil est le logo de la barre du site. Cette cale
+            garde la progression au centre et « recommencer » à droite. */}
+        <span aria-hidden className="w-6" />
 
         {phase === 'reveal' && round && (
           <div className="flex items-center gap-1.5">

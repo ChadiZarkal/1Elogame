@@ -695,18 +695,6 @@ button:focus-visible {
     --header-bar-h: 3rem;
   }
 }
-/* Dans les jeux, la barre cède sa place à celle du jeu (voir `SiteHeader`) et
-   ne laisse que la hauteur de l'encoche. `:has()` ramène `--header-h` à cette
-   seule hauteur : les écrans de jeu, dimensionnés en
-   `calc(100dvh - var(--header-h))`, retrouvent les 52 px libérés.
-   Un navigateur sans `:has()` garde l'ancienne valeur : la cale fait alors la
-   hauteur de la barre absente, et la page reste exactement comme avant. */
-:root:has(.site-header-cale) {
-  --header-h: env(safe-area-inset-top, 0px);
-}
-.site-header-cale {
-  height: var(--header-h, 3rem);
-}
 .site-header {
   position: relative;
   z-index: 60;
@@ -728,16 +716,16 @@ button:focus-visible {
   gap: 0.75rem;
 }
 .site-header__brand {
-  font-size: 0.78rem;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  color: #f0f0f0;
-  text-decoration: none;
-  white-space: nowrap;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  /* 44 px de haut : la cible tactile minimale, centrée dans la barre. */
+  height: 2.75rem;
 }
-.site-header__brand span {
-  color: #ef4444;
-  margin: 0 0.12em;
+.site-header__brand img {
+  display: block;
+  width: auto;
+  height: 2rem;
 }
 .site-header__inline {
   display: none;

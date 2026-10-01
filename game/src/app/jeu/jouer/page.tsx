@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useCallback, useRef, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
@@ -316,14 +315,6 @@ export default function JouerPage() {
             et touchait « rafraîchir » à 8 px près, sur des cibles de 40 px. */}
         <div className="absolute left-4 right-4 z-30 flex items-center justify-between" style={{ top: 12 }}>
           <div className="flex min-w-0 items-center gap-3">
-            {/* Home button */}
-            <Link
-              href="/"
-              className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-[#333] rounded-full w-11 h-11 shrink-0 flex items-center justify-center text-[#A3A3A3] hover:text-[#F5F5F5] transition-colors"
-              aria-label="Retour accueil"
-            >
-              ←
-            </Link>
             <button
               onClick={handleRefreshDuel}
               disabled={isLoadingDuel || isRefreshing}

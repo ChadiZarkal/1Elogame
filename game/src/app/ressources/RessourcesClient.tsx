@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, ArrowLeft, Shield } from 'lucide-react';
+import { ArrowRight, Shield } from 'lucide-react';
 import { METERS } from '@/config/meters-data';
 
 const METER_COLORS: Record<string, string> = {
@@ -18,16 +18,6 @@ export default function RessourcesPage() {
       {/* Subtle background gradient */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#EF4444]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-[#F97316]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-2">
-        <Link
-          href="/"
-          className="text-[#6B7280] hover:text-white transition-colors text-sm flex items-center gap-1 min-w-[48px] min-h-[48px] justify-start active:scale-95"
-          aria-label="Retour à l'accueil"
-        >
-          <ArrowLeft size={16} /> Retour
-        </Link>
-      </div>
 
       <main className="flex-1 flex flex-col px-5 pb-8 transition-opacity duration-500 opacity-100">
         {/* Header */}

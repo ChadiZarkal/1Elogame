@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown, ArrowLeft, ArrowRight } from 'lucide-react';
+import { ChevronDown, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { NativeAd } from '@/components/ads/NativeAd';
 import { GUIDE_FAQ } from './faq';
@@ -307,19 +307,6 @@ export default function GuidePage() {
   return (
     <main id="main-content" style={{ minHeight: '100dvh', background: '#0D0D0D', padding: '20px 16px 64px' }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
-
-        {/* Back nav */}
-        <Link
-          href="/"
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            color: '#6B7280', textDecoration: 'none', fontSize: 13,
-            marginBottom: 32, padding: '6px 0',
-          }}
-        >
-          <ArrowLeft size={15} />
-          <span>← Retour accueil</span>
-        </Link>
 
         {/* Hero */}
         <header style={{ marginBottom: 40 }}>

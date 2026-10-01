@@ -77,16 +77,9 @@ export default function FlagOrNotPage() {
           au-dessus de ce châssis et dégage déjà l'encoche. Le cumul ajoutait
           47 px de vide en haut du jeu sur iPhone. */}
       <div className="relative z-20 flex items-center justify-between px-4 pt-3.5 pb-2">
-        {/* Back */}
-        <Link
-          href="/"
-          className="text-[#4B5563] hover:text-white transition-colors flex items-center gap-1.5 min-w-11 min-h-11 justify-start active:scale-95"
-          aria-label="Retour à l'accueil"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 5l-7 7 7 7"/>
-          </svg>
-        </Link>
+        {/* Le retour à l'accueil est le logo de la barre du site. La cale
+            garde le titre centré. */}
+        <span aria-hidden className="min-w-11" />
 
         {/* Title */}
         <div className="flex items-center gap-2">

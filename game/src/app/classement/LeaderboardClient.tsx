@@ -382,12 +382,6 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
         id="main-content"
         className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-4"
       >
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-sm text-[#4B5563] hover:text-white transition-colors py-1.5"
-        >
-          ← Accueil
-        </Link>
 
         {/* HEADER */}
         <header className="mt-5 mb-6">
