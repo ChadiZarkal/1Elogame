@@ -104,6 +104,14 @@ describe('Accueil', () => {
     expect(jeux.at(-1)).toBe('LE PIRE DES DEUX');
   });
 
+  it('mène aux articles, que la barre de menu absente de l’accueil ne montre pas', async () => {
+    render(await HomePage());
+    const section = screen.getByRole('region', { name: 'À lire' });
+    const liens = Array.from(section.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    expect(liens).toContain('/articles');
+    expect(liens.filter((h) => h?.startsWith('/articles/')).length).toBeGreaterThan(0);
+  });
+
   it('ne promet pas « sans pub » : le site sert des annonces', async () => {
     render(await HomePage());
     expect(screen.queryByText(/sans pub/i)).toBeNull();

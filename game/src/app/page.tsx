@@ -28,6 +28,7 @@ import { HOME_NOTES } from '@/content/page-notes';
 import { getPublicStats } from '@/lib/repositories';
 import { getLeaderboardPage } from '@/lib/leaderboard';
 import { withPrerenderTimeout } from '@/lib/prerenderTimeout';
+import { ARTICLES } from '@/content/articles';
 
 /** Cinq minutes, comme le classement : ces chiffres n'ont pas à être frais. */
 export const revalidate = 300;
@@ -64,6 +65,9 @@ export default async function HomePage() {
   return (
     <>
       <HubClient
+        // Titres seulement : le corps des articles n'a rien à faire dans le
+        // JavaScript de l'accueil.
+        articles={ARTICLES.slice(0, 3).map(({ slug, titre, emoji }) => ({ slug, titre, emoji }))}
         votes={votes}
         comportementsClasses={classes}
         pires={lignes.slice(0, PODIUM)}

@@ -144,6 +144,8 @@ export type DonneesHub = {
   pires: { rang: number; texte: string; votes: number }[];
   /** Les deux bouts du classement, pour le bandeau. Listes vides = pas de bandeau. */
   bande: { rouges: string[]; verts: string[] };
+  /** Les derniers articles. */
+  articles: { slug: string; titre: string; emoji: string }[];
 };
 
 /** Séparateur de milliers français, pour que 128394 se lise. */
@@ -168,7 +170,7 @@ function TitreSection({ id, children }: { id: string; children: React.ReactNode 
   );
 }
 
-export function HubClient({ votes, comportementsClasses, pires, bande }: DonneesHub) {
+export function HubClient({ votes, comportementsClasses, pires, bande, articles }: DonneesHub) {
   const { tap } = useHaptics();
 
   return (
@@ -331,6 +333,41 @@ export function HubClient({ votes, comportementsClasses, pires, bande }: Donnees
               {comportementsClasses !== null && comportementsClasses > 0
                 ? `Le classement complet — ${nombre.format(comportementsClasses)} comportements`
                 : 'Le classement complet'}
+            </LienLigne>
+          </section>
+        )}
+
+        {/* ── 4b. À lire ─────────────────────────────────────────────────── */}
+        {/* L'accueil n'a pas de barre de menu (retirée pour laisser la place
+            aux jeux) : sans cette section, rien n'y menait aux articles. */}
+        {articles.length > 0 && (
+          <section className="revele mt-10" aria-labelledby="titre-articles">
+            <TitreSection id="titre-articles">À lire</TitreSection>
+            <ul className="flex flex-col gap-2">
+              {articles.map((a) => (
+                <li key={a.slug}>
+                  <Link
+                    href={`/articles/${a.slug}`}
+                    onClick={tap}
+                    className={`group flex min-h-12 items-start gap-3 rounded-2xl border border-(--border-subtle) bg-(--surface-1) p-4 transition-colors hover:bg-(--surface-2) motion-safe:active:scale-[0.99] ${FOCUS}`}
+                  >
+                    <span aria-hidden className="text-xl leading-none">
+                      {a.emoji}
+                    </span>
+                    <span className="min-w-0 flex-1 text-[15px] font-semibold leading-snug text-(--text-1)">
+                      {a.titre}
+                    </span>
+                    <ArrowRight
+                      size={16}
+                      aria-hidden
+                      className="mt-0.5 shrink-0 text-(--text-3) transition-transform motion-safe:group-hover:translate-x-0.5"
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <LienLigne href="/articles" onTap={tap} fleche="text-(--text-3)">
+              Tous les articles
             </LienLigne>
           </section>
         )}
