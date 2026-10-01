@@ -44,7 +44,9 @@ body:has(.main-container) {
  * enveloppes sans rien leur demander.
  */
 .main-container {
-  min-height: 100svh;
+  /* Moins la barre du site, rendue au-dessus : sans cette soustraction,
+     chaque écran du test défilait de la hauteur de la barre. */
+  min-height: calc(100svh - var(--header-h, 3rem));
 }
 
 /*

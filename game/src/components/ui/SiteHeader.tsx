@@ -30,11 +30,11 @@ import { Menu } from 'lucide-react';
  * de hauteur sur l'écran où chaque pixel se dispute au descriptif des jeux.
  * Le plan du site reste atteignable par le pied de page, replié juste dessous.
  */
-/* `/redflagtest` apporte son propre en-tête, celui du front-end de référence —
-   et, accessoirement, celui-ci porte lui aussi la classe `site-header`, que
-   `flac.css` stylise. Les deux barres se superposeraient, l'une habillée par la
-   feuille de l'autre. */
-const HIDDEN_PATHS = [/^\/$/, /^\/admin(\/|$)/, /^\/dixmais\/admin(\/|$)/, /^\/redflagtest(\/|$)/];
+/* Le Red Flag Test porte la barre comme les autres jeux. Il en était exclu
+   parce que les deux en-têtes s'appelaient `.site-header` — celui de la barre,
+   et celui du front-end de référence, que `flac.css` habille. Les classes de la
+   barre s'appellent désormais `barre-site` : plus aucun nom en commun. */
+const HIDDEN_PATHS = [/^\/$/, /^\/admin(\/|$)/, /^\/dixmais\/admin(\/|$)/];
 
 /*
  * Les jeux, les outils et les pages de lecture portent tous cette même barre.
@@ -118,16 +118,16 @@ export function SiteHeader() {
     href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/');
 
   return (
-    <header className="site-header">
-      <div className="site-header__bar">
+    <header className="barre-site">
+      <div className="barre-site__bar">
         {/* Le logo plutôt que le nom en texte : c'est la marque telle qu'on la
             voit partout ailleurs sur le site. Image décorative dans un lien
             nommé — le nom accessible est porté par le lien. */}
-        <Link href="/" className="site-header__brand" aria-label="Red or Green — accueil">
+        <Link href="/" className="barre-site__brand" aria-label="Red or Green — accueil">
           <Image src="/logo-rog-new.svg" alt="" width={192} height={86} priority />
         </Link>
 
-        <nav className="site-header__inline" aria-label="Navigation principale">
+        <nav className="barre-site__inline" aria-label="Navigation principale">
           {INLINE.map((l) => (
             <Link
               key={l.href}
@@ -139,12 +139,12 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <details className="site-header__menu" ref={panelRef}>
+        <details className="barre-site__menu" ref={panelRef}>
           <summary aria-label="Ouvrir le menu de navigation">
             <Menu size={16} aria-hidden />
             <span>Menu</span>
           </summary>
-          <div className="site-header__panel">
+          <div className="barre-site__panel">
             {NAV_SECTIONS.map((section) => (
               <div key={section.title}>
                 {/* `p` et non `h2` : ce panneau est present dans le DOM sur
