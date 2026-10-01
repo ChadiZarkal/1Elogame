@@ -129,11 +129,14 @@ const REPERES: { emoji: string; titre: string; sous: string; href: string; coule
     couleur: '#5FE39B',
   },
   {
-    emoji: '📊',
-    titre: "L'OBSERVATOIRE",
-    sous: 'Là où hommes, femmes et générations ne sont pas d’accord',
-    href: '/observatoire',
-    couleur: '#A8DBFF',
+    // Les outils d'auto-évaluation à côté du guide : l'un définit les signaux,
+    // l'autre aide à les reconnaître dans une situation réelle. L'Observatoire
+    // reste joignable par le baromètre, les articles et le pied de page.
+    emoji: '🧭',
+    titre: "TESTS D'AUTO-ÉVALUATION",
+    sous: 'Violentomètre, consentomètre : faire le point sur une situation réelle',
+    href: '/ressources',
+    couleur: '#C4B5FD',
   },
 ];
 
@@ -337,7 +340,36 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
           </section>
         )}
 
-        {/* ── 4b. À lire ─────────────────────────────────────────────────── */}
+        {/* ── 5a. Comprendre ─────────────────────────────────────────────── */}
+        <section className="revele mt-10" aria-labelledby="titre-reperes">
+          <TitreSection id="titre-reperes">Comprendre</TitreSection>
+          <ul className="grid grid-cols-2 gap-3">
+            {REPERES.map((repere) => (
+              <li key={repere.href}>
+                <Link
+                  href={repere.href}
+                  onClick={tap}
+                  className={`group flex h-full flex-col rounded-2xl border border-(--border-subtle) bg-(--surface-1) p-4 transition-colors hover:bg-(--surface-2) motion-safe:active:scale-[0.98] ${FOCUS}`}
+                >
+                  <span aria-hidden className="text-xl leading-none">
+                    {repere.emoji}
+                  </span>
+                  <span
+                    className="mt-2 text-[12px] font-black uppercase leading-tight tracking-wide"
+                    style={{ color: repere.couleur }}
+                  >
+                    {repere.titre}
+                  </span>
+                  <span className="mt-1 text-[13px] font-medium leading-snug text-(--text-2)">
+                    {repere.sous}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* ── 5b. À lire ─────────────────────────────────────────────────── */}
         {/* L'accueil n'a pas de barre de menu (retirée pour laisser la place
             aux jeux) : sans cette section, rien n'y menait aux articles. */}
         {articles.length > 0 && (
@@ -372,36 +404,7 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
           </section>
         )}
 
-        {/* ── 5a. Comprendre ─────────────────────────────────────────────── */}
-        <section className="revele mt-10" aria-labelledby="titre-reperes">
-          <TitreSection id="titre-reperes">Comprendre</TitreSection>
-          <ul className="grid grid-cols-2 gap-3">
-            {REPERES.map((repere) => (
-              <li key={repere.href}>
-                <Link
-                  href={repere.href}
-                  onClick={tap}
-                  className={`group flex h-full flex-col rounded-2xl border border-(--border-subtle) bg-(--surface-1) p-4 transition-colors hover:bg-(--surface-2) motion-safe:active:scale-[0.98] ${FOCUS}`}
-                >
-                  <span aria-hidden className="text-xl leading-none">
-                    {repere.emoji}
-                  </span>
-                  <span
-                    className="mt-2 text-[12px] font-black uppercase leading-tight tracking-wide"
-                    style={{ color: repere.couleur }}
-                  >
-                    {repere.titre}
-                  </span>
-                  <span className="mt-1 text-[13px] font-medium leading-snug text-(--text-2)">
-                    {repere.sous}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* ── 5b. Et si ça ne va pas ? ───────────────────────────────────── */}
+        {/* ── 5c. Et si ça ne va pas ? ───────────────────────────────────── */}
         {/* Ce bloc était un tiroir : il fallait avoir l'idée d'appuyer sur un
             bouclier pour le trouver. C'est le seul contenu de la page dont on
             peut avoir besoin dans l'urgence. */}

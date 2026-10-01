@@ -112,6 +112,15 @@ describe('Accueil', () => {
     expect(liens.filter((h) => h?.startsWith('/articles/')).length).toBeGreaterThan(0);
   });
 
+  it('place le guide et les outils d’auto-évaluation côte à côte, avant les articles', async () => {
+    render(await HomePage());
+    const comprendre = screen.getByRole('region', { name: 'Comprendre' });
+    const liens = Array.from(comprendre.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    expect(liens).toEqual(['/guide', '/ressources']);
+    const titres = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
+    expect(titres.indexOf('Comprendre')).toBeLessThan(titres.indexOf('À lire'));
+  });
+
   it('ne promet pas « sans pub » : le site sert des annonces', async () => {
     render(await HomePage());
     expect(screen.queryByText(/sans pub/i)).toBeNull();
@@ -122,7 +131,7 @@ describe('Accueil', () => {
     const liens = Array.from(document.querySelectorAll('a')).map((a) => a.getAttribute('href'));
     // `/ressources` vivait derrière la feuille « Safe zone » : il fallait
     // deviner qu'un bouclier cachait des liens pour l'atteindre.
-    for (const href of ['/classement', '/ressources', '/guide', '/observatoire']) {
+    for (const href of ['/classement', '/ressources', '/guide']) {
       expect(liens).toContain(href);
     }
   });
