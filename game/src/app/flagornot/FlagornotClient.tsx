@@ -66,12 +66,6 @@ export default function FlagOrNotPage() {
       {/* Cosmic dot grid */}
       <div className="absolute inset-0 pointer-events-none z-0 oracle-bg-dots opacity-[0.07]" />
 
-      {/* Subtle top ambient line */}
-      <div
-        className="absolute top-0 left-0 right-0 h-px pointer-events-none z-10"
-        style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(139,92,246,0.5) 50%, transparent 100%)' }}
-      />
-
       {/* ── Top bar ── */}
       {/* Plus de `env(safe-area-inset-top)` : l'en-tête du site est rendu
           au-dessus de ce châssis et dégage déjà l'encoche. Le cumul ajoutait
@@ -131,11 +125,9 @@ export default function FlagOrNotPage() {
         )}
       </div>
 
-      {/* Thin separator */}
-      <div
-        className="relative z-20 h-px mx-4"
-        style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(139,92,246,0.2) 50%, transparent 100%)' }}
-      />
+      {/* Plus de trait ici ni en haut du châssis : collés sous la bordure de la
+          barre du site, ils faisaient de cette rangée une seconde barre. Le
+          titre et les compteurs restent, posés sur le fond du jeu. */}
 
       {/* Main content */}
       <div className="relative z-10 flex-1 flex flex-col min-h-0">

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { useGameStore } from '@/stores/gameStore';
 import { SexeVotant, AgeVotant } from '@/types/database';
 import dynamic from 'next/dynamic';
@@ -77,18 +76,10 @@ export function ProfileForm() {
       />
 
       <div className={`relative z-10 flex flex-col items-center justify-center w-full p-6${mounted ? ' animate-fade-in' : ''}`}>
-      {/* Logo */}
+      {/* Plus de logo : la barre du site, juste au-dessus, porte déjà celui de
+          la marque. Les deux à 40 px d'écart se lisaient comme une barre en
+          double. */}
       <div className={`mb-6 text-center pt-10${mounted ? ' animate-pf-logo' : ''}`}>
-        <div className={`flex items-center justify-center mb-3${mounted ? ' animate-pf-logo-img' : ''}`}>
-          <Image
-            src="/logo-rog-new.svg"
-            alt="Red or Green"
-            className="w-[180px] sm:w-[220px]"
-            width={220}
-            height={48}
-            draggable={false}
-          />
-        </div>
         {/* La page n'avait aucun titre de niveau 1 : le logo est une image, et
             cette accroche était un simple paragraphe. */}
         <h1 className="text-sm font-bold" style={{ color: '#EF4444' }}>

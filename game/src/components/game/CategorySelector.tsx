@@ -129,6 +129,19 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
       className="flex flex-col items-center justify-center px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+96px)]"
       style={{ minHeight: 'calc(100dvh - var(--header-h,3rem))', background: '#0A0A0B' }}
     >
+      {/* Header */}
+      <div className="text-center mb-5">
+        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2">
+          🎮 Choisis ton mode
+        </h1>
+        <p className="text-sm text-[#6B7280]">
+          Sélectionne une ou plusieurs catégories
+        </p>
+      </div>
+
+      {/* Les commandes de l'écran passent sous le titre. Collées sous la barre
+          du site, « ← Retour · Tout · Reset » formaient une seconde barre de
+          navigation. */}
       <div className="w-full max-w-sm flex items-center justify-between mb-4">
         <Link
           href="/jeu"
@@ -151,16 +164,6 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
             Reset
           </button>
         </div>
-      </div>
-
-      {/* Header */}
-      <div className="text-center mb-5">
-        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2">
-          🎮 Choisis ton mode
-        </h1>
-        <p className="text-sm text-[#6B7280]">
-          Sélectionne une ou plusieurs catégories
-        </p>
       </div>
 
       {/* Category Cards */}

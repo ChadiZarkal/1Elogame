@@ -489,7 +489,6 @@ button:focus-visible {
 
 /* ProfileForm staggered entrance classes */
 .animate-pf-logo { animation: fade-slide-down 0.4s ease 0.1s both; }
-.animate-pf-logo-img { animation: fade-scale-in 0.6s ease-out both; }
 .animate-pf-form { animation: fade-slide-up 0.4s ease 0.2s both; }
 .animate-pf-howto { animation: fade-slide-up-sm 0.4s ease 0.4s both; }
 

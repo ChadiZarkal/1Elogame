@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { lireResultatParCode } from '@/lib/rft/repository';
 import { ResultatPartage } from './ResultatPartage';
@@ -47,11 +46,7 @@ export default async function PagePartage({ params }: { params: Promise<{ code: 
     <main className="main-container redflagtest" id="main-content">
       <div className="client-container">
         <header className="site-header">
-          <Link href="/redflagtest" className="logo-link">
-            {/* eslint-disable-next-line @next/next/no-img-element -- markup de
-                référence : `flac.css` dimensionne l'image via .logo-image. */}
-            <img className="logo-image" src="/rft/img/logo-rog.svg" alt="Red or Green" />
-          </Link>
+          {/* Pas de logo : la barre du site le porte déjà (voir page.tsx). */}
           <h1 className="site-tagline">Quelqu’un t’a envoyé son résultat.</h1>
         </header>
         <ResultatPartage resultat={resultat} />
