@@ -136,6 +136,12 @@ export interface Soumission {
   sexe: SexeVotant | null;
   age: AgeVotant | null;
   dureeMs: number | null;
+  /**
+   * Partie de test de l'administrateur : calculée comme les autres, jamais
+   * enregistrée. Elle n'entre ni dans les classements, ni dans les moyennes,
+   * ni dans les statistiques publiques, et n'a pas de lien de partage.
+   */
+  test?: boolean;
 }
 
 /**

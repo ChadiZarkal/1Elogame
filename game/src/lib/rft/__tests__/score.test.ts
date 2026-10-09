@@ -21,6 +21,7 @@ import {
   ARCHETYPE_MINIMUM,
   POINTS_DECISIFS,
   COMPARAISON_MIN,
+  ajouterPartie,
   legendeCohorte,
   legendeSexeCourte,
   POINT_NOIR_ECART,
@@ -338,6 +339,41 @@ describe('pointNoir', () => {
   it('ne désigne rien avec moins de deux axes', () => {
     expect(pointNoir([axe('seul', 95)])).toBeNull();
     expect(pointNoir([])).toBeNull();
+  });
+});
+
+describe('ajouterPartie', () => {
+  const co = (cohorte: NomCohorte, effectif: number, plusHauts: number, moyenne: number | null): CohorteBrute =>
+    ({ cohorte, effectif, plusHauts, moyenne });
+
+  // Une partie de test n'est pas en base : sans elle, elle serait comparée à
+  // une population qui ne la contient pas.
+  it('compte la partie dans chaque cohorte du joueur', () => {
+    const [tous, sexe, age, croisee] = ajouterPartie(
+      [co('tous', 9, 3, 40), co('sexe', 4, 1, 50), co('age', 3, 0, 30), co('sexe_age', 1, 0, 20)],
+      60,
+      { sexe: 'homme', age: '23-26' },
+    );
+    expect(tous).toEqual({ cohorte: 'tous', effectif: 10, plusHauts: 3, moyenne: 42 });
+    expect(sexe.effectif).toBe(5);
+    expect(sexe.moyenne).toBe(52);
+    expect(age.moyenne).toBe(37.5);
+    expect(croisee.moyenne).toBe(40);
+  });
+
+  it('laisse intactes les cohortes dont le joueur ne fait pas partie', () => {
+    const [, sexe, age] = ajouterPartie(
+      [co('tous', 9, 3, 40), co('sexe', 0, 0, null), co('age', 0, 0, null)],
+      60,
+      { sexe: null, age: null },
+    );
+    expect(sexe).toEqual(co('sexe', 0, 0, null));
+    expect(age).toEqual(co('age', 0, 0, null));
+  });
+
+  it('donne au premier joueur d’une cohorte vide son propre score pour moyenne', () => {
+    const [tous] = ajouterPartie([co('tous', 0, 0, null)], 33, { sexe: null, age: null });
+    expect(tous).toEqual({ cohorte: 'tous', effectif: 1, plusHauts: 0, moyenne: 33 });
   });
 });
 

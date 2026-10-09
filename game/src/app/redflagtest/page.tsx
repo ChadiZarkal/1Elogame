@@ -12,6 +12,7 @@
  */
 
 import { Quiz } from './Quiz';
+import { BadgeModeTest } from './BadgeModeTest';
 import { Presentation } from './Presentation';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
@@ -69,6 +70,7 @@ export default function RedflagtestPage() {
           <h1 className="visually-hidden">Red Flag Test</h1>
         </header>
         <Quiz presentation={<Presentation />} />
+        <BadgeModeTest />
         <RedflagtestJsonLd />
       </div>
     </main>

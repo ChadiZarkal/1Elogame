@@ -25,6 +25,7 @@
 import 'server-only';
 import { isMockMode } from '@/lib/apiHelpers';
 import {
+  ajouterPartie,
   calculerAxes,
   calculerScore,
   classement,
@@ -598,8 +599,17 @@ export async function enregistrerPartie(s: Soumission): Promise<Resultat> {
   const choix = resoudre(ctx.questions, s.choix);
   const score = calculerScore(choix);
 
+  const profil = { sexe: s.sexe, age: s.age };
+
   if (isMockMode()) {
-    return fictif.resultat({ ctx, choix, score, profil: { sexe: s.sexe, age: s.age } });
+    return fictif.resultat({ ctx, choix, score, profil, test: s.test === true });
+  }
+
+  // La partie de test de l'administrateur : rien n'est écrit, et elle est
+  // ajoutée aux cohortes pour être classée comme si elle l'avait été.
+  if (s.test) {
+    const { brutes, parts } = await agreger(score, s.sexe, s.age, choix);
+    return composer(ctx, choix, ajouterPartie(brutes, score, profil), parts, null, profil);
   }
 
   const supabase = await client();
@@ -623,7 +633,7 @@ export async function enregistrerPartie(s: Soumission): Promise<Resultat> {
   }
 
   const { brutes, parts } = await agreger(score, s.sexe, s.age, choix);
-  return composer(ctx, choix, brutes, parts, code, { sexe: s.sexe, age: s.age });
+  return composer(ctx, choix, brutes, parts, code, profil);
 }
 
 /**

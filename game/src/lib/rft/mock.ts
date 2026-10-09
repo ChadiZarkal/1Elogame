@@ -279,7 +279,10 @@ export function resultat(args: {
   choix: ChoixResolu[];
   score: number;
   profil: Profil;
+  /** Partie de test : pas de code, donc pas de lien de partage à relire. */
+  test?: boolean;
 }): Resultat {
+  if (args.test) return composer(args.ctx, args.choix, args.score, null, args.profil);
   const code = id('code');
   partiesLocales.set(code, { choix: args.choix, profil: args.profil });
   return composer(args.ctx, args.choix, args.score, code, args.profil);
@@ -296,7 +299,7 @@ function composer(
   ctx: ContexteFictif,
   choix: ChoixResolu[],
   score: number,
-  code: string,
+  code: string | null,
   profil: Profil,
 ): Resultat {
   const population = [...scoresFictifs, score];

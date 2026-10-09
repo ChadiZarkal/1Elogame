@@ -24,6 +24,7 @@
  */
 
 import { useState } from 'react';
+import { useGesteModeTest } from './modeTest';
 import type { AgeVotant, SexeVotant } from '@/types/database';
 import type { PlayerProfile } from '@/types/game';
 
@@ -41,9 +42,12 @@ export function ProfilStep({ onDemarrer }: { onDemarrer: (profil: PlayerProfile)
 
   const pret = sexe !== '' && age !== '';
 
+  // Le geste caché du mode test : cinq taps rapides sur le titre.
+  const taperTitre = useGesteModeTest();
+
   return (
     <section className="intro-wrapper">
-      <h2>Avant de commencer</h2>
+      <h2 onClick={taperTitre}>Avant de commencer</h2>
 
       <form
         className="intro-form"

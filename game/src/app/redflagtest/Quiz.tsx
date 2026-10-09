@@ -36,6 +36,7 @@ import type { PlayerProfile } from '@/types/game';
 import type { Indice, QuestionPublique, Resultat, Verdict } from '@/lib/rft/types';
 import { ProfilStep } from './ProfilStep';
 import { Recap } from './Recap';
+import { modeTestActif, useGesteModeTest } from './modeTest';
 import {
   enregistrer,
   oublier,
@@ -97,6 +98,8 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
   const [debut, setDebut] = useState<number | null>(null);
   /** La partie interrompue proposée à la reprise, le temps que le joueur tranche. */
   const [enAttente, setEnAttente] = useState<PartieEnCours | null>(null);
+  /** Cinq taps sur « Question X sur Y » : le mode test (voir `modeTest`). */
+  const gesteModeTest = useGesteModeTest();
 
   // Pousser un état dans le DOM est la seule chose pour laquelle un effet est
   // réellement fait.
@@ -201,6 +204,8 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
             sexe: qui?.sex ?? null,
             age: qui?.age ?? null,
             dureeMs: depuis ? Date.now() - depuis : null,
+            // Relu à l'envoi et non au début : le mode a pu changer en route.
+            test: modeTestActif(),
           }),
         });
         const json = await reponse.json();
@@ -331,7 +336,7 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
             dans la carte, ou il tient sur une ligne a cote du reste. */}
 
         {phase === 'jeu' && quiz && (
-          <p className="progress-count">
+          <p className="progress-count" onClick={gesteModeTest}>
             Question <strong>{index + 1}</strong> sur {quiz.questions.length}
           </p>
         )}

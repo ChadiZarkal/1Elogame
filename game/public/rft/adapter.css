@@ -1462,3 +1462,39 @@ body:has(.main-container) {
   font-size: var(--font-size-s);
   line-height: var(--line-height);
 }
+
+/* ---------------------------------------------------------------------------
+ * Le badge du mode test (voir `BadgeModeTest.tsx`).
+ *
+ * Jaune, comme l'avertissement d'une cohorte mince : un signal, pas une
+ * alarme. Au-dessus des stories (2000), pour qu'on le voie sur le résultat.
+ * ------------------------------------------------------------------------- */
+
+.rft-badge-test {
+  /* En haut, au centre : l'espace libre entre le logo et le compteur des
+     stories, et entre le logo et le menu de la barre du site. En bas, il
+     recouvrait le bouton « continuer ». */
+  position: fixed;
+  /* Centré sur la ligne du logo des stories, sous leurs segments. */
+  top: calc(max(0.4rem, env(safe-area-inset-top)) + 2.2rem);
+  left: 50%;
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 30px;
+  padding: 0 0.6rem;
+  border: none;
+  border-radius: 5px;
+  background-color: #f7c914;
+  color: #1d1c1c;
+  font-family: 'Agdasima', sans-serif;
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+  box-shadow: 0 0.3rem 1rem rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}

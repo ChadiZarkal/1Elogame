@@ -409,6 +409,38 @@ export interface CohorteBrute {
 }
 
 /**
+ * Ajoute aux cohortes une partie qui n'a pas été enregistrée.
+ *
+ * Une partie ordinaire est écrite en base AVANT qu'on interroge les cohortes :
+ * elle fait partie de la population à laquelle on la compare. Une partie de
+ * test n'est jamais écrite ; sans cette correction, elle serait comparée à une
+ * population qui ne la contient pas, et l'administrateur verrait un rang et
+ * des moyennes que personne d'autre ne verrait pour le même score.
+ *
+ * Seules les cohortes dont le joueur fait partie la reçoivent : un joueur sans
+ * âge déclaré n'ajoute rien à la cohorte d'âge. Les scores strictement plus
+ * hauts, eux, ne changent pas.
+ */
+export function ajouterPartie(
+  cohortes: CohorteBrute[],
+  score: number,
+  profil: { sexe: string | null; age: string | null },
+): CohorteBrute[] {
+  const enFait = (nom: NomCohorte) =>
+    nom === 'tous'
+    || (nom === 'sexe' && profil.sexe !== null)
+    || (nom === 'age' && profil.age !== null)
+    || (nom === 'sexe_age' && profil.sexe !== null && profil.age !== null);
+
+  return cohortes.map((c) => {
+    if (!enFait(c.cohorte)) return c;
+    const effectif = c.effectif + 1;
+    const moyenne = c.moyenne === null ? score : (c.moyenne * c.effectif + score) / effectif;
+    return { ...c, effectif, moyenne };
+  });
+}
+
+/**
  * En dessous de ce nombre de parties, une moyenne n'en est pas une.
  *
  * Plus bas que le seuil des rangs (vingt), parce qu'une moyenne est une

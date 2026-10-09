@@ -28,6 +28,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      // Next.js embarque `server-only` sans l'installer à part : hors de Next,
+      // l'import échouerait. Sa version vide suffit aux tests, qui tournent
+      // de toute façon côté serveur.
+      'server-only': path.resolve(__dirname, './node_modules/next/dist/compiled/server-only/empty.js'),
     },
   },
 });

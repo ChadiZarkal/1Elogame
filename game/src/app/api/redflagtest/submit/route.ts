@@ -21,6 +21,14 @@ const schema = z.object({
   sexe: z.enum(['homme', 'femme', 'autre']).nullable().default(null),
   age: z.enum(['16-18', '19-22', '23-26', '27+']).nullable().default(null),
   dureeMs: z.number().int().positive().max(86_400_000).nullable().default(null),
+  /*
+   * Le mode test, déclenché par un geste caché sur l'écran de profil. Il n'est
+   * pas réservé à l'administrateur, et n'a pas besoin de l'être : il ne donne
+   * rien de plus qu'une partie ordinaire — même calcul, même résultat — et
+   * retire seulement la partie des statistiques. Celui qui le découvrirait ne
+   * fausserait rien ; il se priverait juste d'être compté.
+   */
+  test: z.boolean().default(false),
 });
 
 export const POST = withApiHandler(async (req: NextRequest) => {
