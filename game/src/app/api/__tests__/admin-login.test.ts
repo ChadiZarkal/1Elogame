@@ -1,13 +1,12 @@
 /**
  * @file admin-login.test.ts
- * @description Tests for POST /api/admin/login
- * Covers: mock mode auth, production bcrypt auth, rate limiting, validation.
+ * @description POST /api/admin/login — le mot de passe d'`ADMIN_PASSWORD`,
+ * la porte fermée sans lui, la validation et la limite de débit.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { afterEach, describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
-// Mock rate limit to allow all requests by default
 vi.mock('@/lib/rateLimit', () => ({
   checkRateLimit: vi.fn().mockReturnValue(null),
   resetRateLimitStore: vi.fn(),
@@ -19,136 +18,81 @@ vi.mock('@/lib/rateLimit', () => ({
   },
 }));
 
-// Mock adminAuth
-vi.mock('@/lib/adminAuth', () => ({
-  generateAdminToken: vi.fn().mockReturnValue({
-    token: 'test-token-123',
-    expiresIn: 14400,
-  }),
-}));
+const requete = (body: Record<string, unknown>) =>
+  new NextRequest('http://localhost/api/admin/login', {
+    method: 'POST',
+    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json' },
+  });
 
-// Mock bcryptjs
-vi.mock('bcryptjs', () => ({
-  default: {
-    compare: vi.fn(),
-  },
-}));
+async function connexion(body: Record<string, unknown>) {
+  const { POST } = await import('@/app/api/admin/login/route');
+  const response = await POST(requete(body));
+  return { status: response.status, json: await response.json() };
+}
 
 describe('POST /api/admin/login', () => {
   beforeEach(() => {
     vi.resetModules();
-    vi.clearAllMocks();
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('NEXT_PUBLIC_MOCK_MODE', 'false');
+    vi.stubEnv('ADMIN_TOKEN_SECRET', '');
   });
 
-  const makeRequest = (body: Record<string, unknown>) =>
-    new NextRequest('http://localhost/api/admin/login', {
-      method: 'POST',
-      body: JSON.stringify(body),
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-  describe('mock mode', () => {
-    beforeEach(() => {
-      process.env.NEXT_PUBLIC_MOCK_MODE = 'true';
-    });
-
-    it('accepte "admin" comme mot de passe en mock mode', async () => {
-      const { POST } = await import('@/app/api/admin/login/route');
-      const response = await POST(makeRequest({ password: 'admin' }));
-      const json = await response.json();
-
-      expect(json.success).toBe(true);
-      expect(json.data.token).toBe('test-token-123');
-      expect(json.data.expiresIn).toBe(14400);
-    });
-
-    it('rejette un mauvais mot de passe en mock mode', async () => {
-      const { POST } = await import('@/app/api/admin/login/route');
-      const response = await POST(makeRequest({ password: 'wrong' }));
-      const json = await response.json();
-
-      expect(response.status).toBe(401);
-      expect(json.success).toBe(false);
-    });
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
-  describe('production mode', () => {
-    beforeEach(() => {
-      process.env.NEXT_PUBLIC_MOCK_MODE = 'false';
-    });
+  it('délivre un jeton valide avec le bon mot de passe', async () => {
+    vi.stubEnv('ADMIN_PASSWORD', 'cheval-agrafe-batterie');
+    const { status, json } = await connexion({ password: 'cheval-agrafe-batterie' });
 
-    it('authentifie avec bcrypt en production', async () => {
-      process.env.ADMIN_PASSWORD_HASH = '$2a$10$hashvalue';
-      const bcrypt = await import('bcryptjs');
-      (bcrypt.default.compare as ReturnType<typeof vi.fn>).mockResolvedValue(true);
-
-      const { POST } = await import('@/app/api/admin/login/route');
-      const response = await POST(makeRequest({ password: 'correct-password' }));
-      const json = await response.json();
-
-      expect(json.success).toBe(true);
-      expect(json.data.token).toBeDefined();
-    });
-
-    it('rejette un mot de passe incorrect en production', async () => {
-      process.env.ADMIN_PASSWORD_HASH = '$2a$10$hashvalue';
-      const bcrypt = await import('bcryptjs');
-      (bcrypt.default.compare as ReturnType<typeof vi.fn>).mockResolvedValue(false);
-
-      const { POST } = await import('@/app/api/admin/login/route');
-      const response = await POST(makeRequest({ password: 'wrong' }));
-
-      expect(response.status).toBe(401);
-    });
-
-    it('retourne 500 si ADMIN_PASSWORD_HASH non configuré', async () => {
-      delete process.env.ADMIN_PASSWORD_HASH;
-
-      const { POST } = await import('@/app/api/admin/login/route');
-      const response = await POST(makeRequest({ password: 'test' }));
-
-      expect(response.status).toBe(500);
-    });
+    expect(status).toBe(200);
+    const { validateAdminToken } = await import('@/lib/adminAuth');
+    expect(validateAdminToken(json.data.token)).toBe(true);
   });
 
-  describe('validation', () => {
-    beforeEach(() => {
-      process.env.NEXT_PUBLIC_MOCK_MODE = 'true';
-    });
+  it('refuse un mauvais mot de passe', async () => {
+    vi.stubEnv('ADMIN_PASSWORD', 'cheval-agrafe-batterie');
+    const { status, json } = await connexion({ password: 'admin' });
 
-    it('rejette un body sans mot de passe', async () => {
-      const { POST } = await import('@/app/api/admin/login/route');
-      const response = await POST(makeRequest({}));
-
-      expect(response.status).toBe(400);
-    });
-
-    it('rejette un body vide', async () => {
-      const { POST } = await import('@/app/api/admin/login/route');
-      const req = new NextRequest('http://localhost/api/admin/login', {
-        method: 'POST',
-        body: JSON.stringify({}),
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const response = await POST(req);
-
-      expect(response.status).toBe(400);
-    });
+    expect(status).toBe(401);
+    expect(json.success).toBe(false);
   });
 
-  describe('rate limiting', () => {
-    it('retourne 429 quand rate limited', async () => {
-      process.env.NEXT_PUBLIC_MOCK_MODE = 'true';
-      const { checkRateLimit } = await import('@/lib/rateLimit');
-      const { NextResponse } = await import('next/server');
-      (checkRateLimit as ReturnType<typeof vi.fn>).mockReturnValueOnce(
-        NextResponse.json({ error: 'Rate limited' }, { status: 429 })
-      );
+  it('reste fermé, et le dit, sans ADMIN_PASSWORD', async () => {
+    vi.stubEnv('ADMIN_PASSWORD', '');
+    const { status, json } = await connexion({ password: 'nimporte' });
 
-      const { POST } = await import('@/app/api/admin/login/route');
-      const response = await POST(makeRequest({ password: 'admin' }));
+    expect(status).toBe(503);
+    expect(json.error.message).toMatch(/ADMIN_PASSWORD/);
+  });
 
-      expect(response.status).toBe(429);
-    });
+  it('accepte « admin » en développement local, en mode démo', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('NEXT_PUBLIC_MOCK_MODE', 'true');
+    vi.stubEnv('ADMIN_PASSWORD', '');
+    const { status } = await connexion({ password: 'admin' });
+
+    expect(status).toBe(200);
+  });
+
+  it('rejette un corps sans mot de passe', async () => {
+    vi.stubEnv('ADMIN_PASSWORD', 'secret');
+    const { status } = await connexion({});
+
+    expect(status).toBe(400);
+  });
+
+  it('retourne 429 quand la limite de débit est atteinte', async () => {
+    vi.stubEnv('ADMIN_PASSWORD', 'secret');
+    const { checkRateLimit } = await import('@/lib/rateLimit');
+    const { NextResponse } = await import('next/server');
+    (checkRateLimit as ReturnType<typeof vi.fn>).mockReturnValueOnce(
+      NextResponse.json({ error: 'Rate limited' }, { status: 429 }),
+    );
+
+    const { status } = await connexion({ password: 'secret' });
+    expect(status).toBe(429);
   });
 });

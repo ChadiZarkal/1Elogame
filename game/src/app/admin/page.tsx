@@ -30,7 +30,10 @@ export default function AdminLoginPage() {
       if (data.success) {
         // Store admin token in sessionStorage
         sessionStorage.setItem('adminToken', data.data.token);
-        router.push('/admin/dashboard');
+        // Retour à la page qui a demandé la connexion, si elle est de ce site :
+        // « //ailleurs.com » ou « /\ailleurs.com » mèneraient hors du site.
+        const retour = new URLSearchParams(window.location.search).get('retour');
+        router.push(retour && /^\/(?![/\\])/.test(retour) ? retour : '/admin/dashboard');
       } else {
         setError(data.error?.message || 'Mot de passe incorrect');
       }

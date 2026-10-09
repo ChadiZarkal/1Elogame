@@ -13,10 +13,16 @@ interface AdminStatement extends DixMaisStatement {
   elimination_rate: number;
 }
 
-// ─── Auth helpers (kept for localStorage compat) ──────────────────────────────
-const TOKEN_KEY = 'dixmais_admin_token';
-function getToken() { return typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) ?? 'open' : 'open'; }
-function setToken(t: string) { if (typeof window !== 'undefined') localStorage.setItem(TOKEN_KEY, t); }
+// ─── Connexion ────────────────────────────────────────────────────────────────
+// Le même jeton que le reste de l'administration : on se connecte une fois sur
+// /admin, qui ramène ici. Sans jeton, ou quand le serveur le refuse, retour à
+// la connexion.
+const TOKEN_KEY = 'adminToken';
+function getToken() { return typeof window !== 'undefined' ? sessionStorage.getItem(TOKEN_KEY) : null; }
+function allerALaConnexion() {
+  sessionStorage.removeItem(TOKEN_KEY);
+  window.location.href = '/admin?retour=/dixmais/admin';
+}
 
 /** Message d'erreur réel renvoyé par l'API, plutôt qu'un texte générique :
  *  les échecs d'écriture viennent de la base ou de la configuration Supabase,
@@ -32,10 +38,12 @@ async function readApiError(res: Response): Promise<string> {
 
 async function adminFetch(url: string, opts: RequestInit = {}) {
   const token = getToken();
-  return fetch(url, {
+  const res = await fetch(url, {
     ...opts,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...(opts.headers ?? {}) },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}`, ...(opts.headers ?? {}) },
   });
+  if (res.status === 401) allerALaConnexion();
+  return res;
 }
 
 // ─── Toast notification ────────────────────────────────────────────────────────
@@ -63,8 +71,7 @@ export default function AdminPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Auto-login with open token
-    setToken('open');
+    if (!getToken()) { allerALaConnexion(); return; }
     setReady(true);
   }, []);
 

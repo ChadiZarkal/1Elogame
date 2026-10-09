@@ -27,15 +27,9 @@ export function validateEnv(): void {
 
   const errors: string[] = [];
 
-  if (!process.env.ADMIN_TOKEN_SECRET) {
+  if (!process.env.ADMIN_PASSWORD) {
     errors.push(
-      'ADMIN_TOKEN_SECRET is not set. Admin tokens would use a fallback key — this is a critical security vulnerability.',
-    );
-  }
-
-  if (!process.env.ADMIN_PASSWORD_HASH) {
-    errors.push(
-      'ADMIN_PASSWORD_HASH is not set. Admin login will not work in production.',
+      'ADMIN_PASSWORD is not set. The admin is locked: nobody can log in until it is set.',
     );
   }
 
@@ -73,15 +67,6 @@ export function validateEnv(): void {
 
 /** Whether the app is running in mock/dev mode (no Supabase). */
 export const IS_MOCK_MODE = process.env.NEXT_PUBLIC_MOCK_MODE === 'true';
-
-/** The admin token signing secret. */
-export const ADMIN_TOKEN_SECRET =
-  process.env.ADMIN_TOKEN_SECRET ||
-  process.env.ADMIN_PASSWORD_HASH ||
-  'dev-admin-secret-k3y-do-not-use-in-prod';
-
-/** The bcrypt hash of the admin password. */
-export const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
 
 /** Supabase URL. */
 export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;

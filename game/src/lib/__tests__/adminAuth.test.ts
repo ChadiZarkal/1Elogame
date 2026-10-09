@@ -1,79 +1,123 @@
 /**
  * @file adminAuth.test.ts
- * @description Unit tests for the HMAC-based stateless admin auth system.
+ * @description L'accès à l'administration : fermé sans mot de passe, ouvert
+ * avec le bon, et des jetons qui ne survivent pas à un changement de mot de
+ * passe.
  */
 
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
+import { NextRequest } from 'next/server';
 import {
+  adminConfigure,
+  authenticateAdmin,
   generateAdminToken,
   validateAdminToken,
-  revokeAdminToken,
+  verifierMotDePasse,
 } from '@/lib/adminAuth';
 
-describe('generateAdminToken', () => {
-  it('generates a token in <expiresAt>.<hmac> format', () => {
-    const { token } = generateAdminToken();
-    expect(token).toContain('.');
-    const [expiresStr, sig] = token.split('.');
-    expect(Number(expiresStr)).toBeGreaterThan(Date.now());
-    expect(sig.length).toBeGreaterThan(0);
+function production(motDePasse?: string) {
+  vi.stubEnv('NODE_ENV', 'production');
+  vi.stubEnv('NEXT_PUBLIC_MOCK_MODE', 'false');
+  vi.stubEnv('ADMIN_TOKEN_SECRET', '');
+  vi.stubEnv('ADMIN_PASSWORD', motDePasse ?? '');
+}
+
+const requete = (token?: string) =>
+  new NextRequest('http://localhost/api/admin/stats', {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
-  it('generates unique tokens across time ticks', async () => {
-    const { token: t1 } = generateAdminToken();
-    // Ensure at least 1ms passes so Date.now() differs
-    await new Promise(r => setTimeout(r, 2));
-    const { token: t2 } = generateAdminToken();
-    expect(t1).not.toBe(t2);
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+describe('sans mot de passe configuré, en production', () => {
+  it('reste fermé', () => {
+    production();
+    expect(adminConfigure()).toBe(false);
+    expect(verifierMotDePasse('')).toBe(false);
+    expect(verifierMotDePasse('admin')).toBe(false);
   });
 
-  it('returns expiresIn in seconds (4h)', () => {
-    const { expiresIn } = generateAdminToken();
+  it('ne fabrique ni n’accepte aucun jeton', () => {
+    production();
+    expect(() => generateAdminToken()).toThrow();
+    expect(validateAdminToken(`${Date.now() + 60_000}.abc`)).toBe(false);
+    expect(validateAdminToken('open')).toBe(false);
+  });
+
+  it('ignore le mode démo en production', () => {
+    production();
+    vi.stubEnv('NEXT_PUBLIC_MOCK_MODE', 'true');
+    expect(verifierMotDePasse('admin')).toBe(false);
+  });
+});
+
+describe('avec ADMIN_PASSWORD', () => {
+  it('accepte le bon mot de passe et lui seul', () => {
+    production('cheval-agrafe-batterie');
+    expect(verifierMotDePasse('cheval-agrafe-batterie')).toBe(true);
+    expect(verifierMotDePasse('cheval-agrafe')).toBe(false);
+    expect(verifierMotDePasse('Cheval-agrafe-batterie')).toBe(false);
+    expect(verifierMotDePasse('')).toBe(false);
+  });
+
+  it('ignore les espaces autour de la valeur collée dans Vercel', () => {
+    production('  cheval-agrafe-batterie \n');
+    expect(verifierMotDePasse('cheval-agrafe-batterie')).toBe(true);
+  });
+
+  it('délivre un jeton valable quatre heures', () => {
+    production('secret');
+    const { token, expiresIn } = generateAdminToken();
     expect(expiresIn).toBe(4 * 3600);
+    expect(validateAdminToken(token)).toBe(true);
   });
 
-  it('produces a valid token', () => {
+  it('refuse un jeton falsifié ou expiré', () => {
+    production('secret');
     const { token } = generateAdminToken();
-    expect(validateAdminToken(token)).toBe(true);
+    const [echeance, signature] = token.split('.');
+    expect(validateAdminToken(`${echeance}.${'0'.repeat(signature.length)}`)).toBe(false);
+    expect(validateAdminToken(`${Number(echeance) + 1}.${signature}`)).toBe(false);
+    expect(validateAdminToken(`${Date.now() - 1000}.${signature}`)).toBe(false);
+    expect(validateAdminToken('sans-point')).toBe(false);
+  });
+
+  // Après une fuite, changer le mot de passe doit suffire à fermer toutes les
+  // sessions ouvertes.
+  it('invalide les jetons quand le mot de passe change', () => {
+    production('ancien');
+    const { token } = generateAdminToken();
+    production('nouveau');
+    expect(validateAdminToken(token)).toBe(false);
   });
 });
 
-describe('validateAdminToken', () => {
-  it('validates a freshly generated token', () => {
+describe('authenticateAdmin', () => {
+  it('refuse une requête sans jeton', () => {
+    production('secret');
+    expect(authenticateAdmin(requete())?.status).toBe(401);
+  });
+
+  it('refuse l’ancien jeton « open »', () => {
+    production('secret');
+    expect(authenticateAdmin(requete('open'))?.status).toBe(401);
+  });
+
+  it('laisse passer un jeton valide', () => {
+    production('secret');
     const { token } = generateAdminToken();
-    expect(validateAdminToken(token)).toBe(true);
-  });
-
-  it('rejects an empty token', () => {
-    expect(validateAdminToken('')).toBe(false);
-  });
-
-  it('rejects a token without a dot separator', () => {
-    expect(validateAdminToken('noseparator')).toBe(false);
-  });
-
-  it('rejects a token with invalid HMAC', () => {
-    const { token } = generateAdminToken();
-    const [expiresStr] = token.split('.');
-    expect(validateAdminToken(`${expiresStr}.fakesig`)).toBe(false);
-  });
-
-  it('rejects an expired token', () => {
-    const pastExpiry = Date.now() - 1000;
-    const fakeToken = `${pastExpiry}.anysig`;
-    expect(validateAdminToken(fakeToken)).toBe(false);
+    expect(authenticateAdmin(requete(token))).toBeNull();
   });
 });
 
-describe('revokeAdminToken', () => {
-  it('is a no-op and does not throw', () => {
-    const { token } = generateAdminToken();
-    expect(() => revokeAdminToken(token)).not.toThrow();
-  });
-
-  it('token remains valid after revoke (stateless design)', () => {
-    const { token } = generateAdminToken();
-    revokeAdminToken(token);
-    expect(validateAdminToken(token)).toBe(true);
+describe('en développement local, mode démo', () => {
+  it('accepte « admin » quand aucun mot de passe n’est posé', () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('NEXT_PUBLIC_MOCK_MODE', 'true');
+    vi.stubEnv('ADMIN_PASSWORD', '');
+    expect(verifierMotDePasse('admin')).toBe(true);
+    expect(verifierMotDePasse('autre')).toBe(false);
   });
 });
