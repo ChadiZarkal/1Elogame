@@ -226,29 +226,6 @@ body:has(.main-container) {
  * ------------------------------------------------------------------------- */
 
 
-/* Une seule réponse qui porte le cinquième du score. */
-.stats-decisive {
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--spacing) * 0.2);
-  margin: var(--spacing) 0 0;
-  padding: var(--spacing-text-y) var(--spacing);
-  border-left: 3px solid var(--red);
-  text-align: left;
-  font-size: var(--font-size-s);
-}
-
-.stats-decisive-quote {
-  color: var(--light-green);
-  font-size: var(--font-size-m);
-  font-weight: bold;
-}
-
-.stats-decisive-question {
-  color: var(--grey);
-  font-size: calc(var(--font-size-s) * 0.9);
-}
-
 /*
  * Le moment où le test cesse de faire de l'humour. Encadré d'orange et non de
  * rouge : le rouge est la couleur du score, et cette boîte ne doit pas se lire
@@ -513,158 +490,864 @@ body:has(.main-container) {
 .stats-sexe-f { color: #f9a8d4; }
 
 /* ===========================================================================
- * LA CARTE — le bloc conçu pour être capturé.
+ * LES STORIES — le résultat plein écran, un écran à la fois (voir
+ * `Stories.tsx`).
  *
- * LE PROBLÈME QU'ELLE RÉSOUT
- *   Le récap faisait 2 607 px de haut pour un écran de 812. Les six
- *   informations qui comptent — nom du profil, score, écart, point noir,
- *   classements — étaient réparties sur trois écrans, chacune dans son propre
- *   bloc avec sa propre marge. Une capture d'écran de téléphone n'attrapait
- *   qu'un morceau, et le morceau ne voulait rien dire : le verdict sans le
- *   score, ou le score sans le nom.
+ * LE PROBLÈME QU'ELLES RÉSOLVENT
+ *   La carte qui les a précédées réunissait verdict, score, jauge, trois
+ *   drapeaux, écart à la moyenne et point noir dans trois cents pixels. Rien
+ *   n'y manquait et rien ne s'y lisait. Chaque écran pose désormais UNE question
+ *   et y répond en très gros caractères.
  *
- *   Pire, deux titres de trois centimètres se suivaient — le verdict à
- *   `font-size-xxl`, puis l'archétype à `font-size-xl` — ce qui mangeait un
- *   tiers du premier écran pour dire deux fois la même chose.
+ * PLEIN ÉCRAN
+ *   Fixées sur toute la fenêtre, barre du site comprise : une capture d'écran
+ *   de téléphone attrape exactement un écran, logo en tête et adresse au pied.
+ *   `100dvh` et non `100vh` : sur iOS, `vh` compte la barre d'adresse repliée,
+ *   et le pied de la story passerait dessous.
  *
- * CE QU'ELLE GARANTIT
- *   Tout tient dans un cadre unique d'environ 300 px, place en haut, juste sous
- *   la jauge. Une capture prise sans reflechir attrape le logo, la jauge et la
- *   carte entiere — soit le resultat complet, signe.
- *
- * LA SIGNATURE N'EST PAS UNE DECORATION
- *   Une capture d'ecran sans adresse est un rectangle anonyme : celui qui la
- *   recoit ne sait ni d'ou elle vient ni ou aller faire la meme chose. C'est la
- *   seule ligne de la carte dont la fonction est entierement tournee vers
- *   quelqu'un qui n'a pas joue.
+ * LES TAILLES SUIVENT LA HAUTEUR DE L'ÉCRAN
+ *   En `svh` plutôt qu'en `vw` : c'est la hauteur qui manque sur un petit
+ *   téléphone, et la largeur qui abonde sur un grand. Les bornes de `clamp`
+ *   tiennent les extrêmes.
  * ======================================================================== */
 
-.carte {
+/* Les enveloppes du portail : leurs classes, sans leurs boîtes. */
+.rft-portail.main-container,
+.rft-portail.main-container > .client-container,
+.rft-portail.main-container > .client-container > .game-wrapper,
+.rft-portail.main-container > .client-container > .game-wrapper > .finish-block {
+  display: contents;
+}
+
+.stories {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: calc(var(--spacing) * 0.35);
-  padding: var(--spacing);
-  border: 1px solid var(--blueish-grey);
-  border-radius: var(--border-radius);
-  /* Un fond legerement distinct du conteneur : sur une capture, c'est lui qui
-     dit ou la carte commence et ou elle finit. */
-  background-color: rgba(43, 41, 48, 0.35);
-  text-align: center;
-}
-
-
-.carte-verdict {
-  margin: 0;
-  color: var(--white);
-  font-size: calc(var(--font-size-s) * 0.9);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.75;
-}
-
-.carte-nom {
-  margin: 0;
+  justify-content: center;
+  height: 100dvh;
+  background-color: #0d0c0c;
+  overscroll-behavior: contain;
 }
 
 /*
- * Le titre de la carte. `clamp` plutot qu'une taille fixe : « LE DONNEUR DE
- * LECONS » fait deux fois la longueur de « LE CROISE », et une taille unique
- * obligeait le plus long a passer sur trois lignes pendant que le plus court
- * flottait au milieu du vide.
+ * Le fond change d'un écran à l'autre : une lueur de la teinte de l'écran,
+ * posée sur le gris de la référence. Au premier écran, c'est la couleur du
+ * score elle-même — vert, orange ou rouge — que le joueur voit avant de lire
+ * le nombre.
  */
-.client-container .game-wrapper .finish-block .carte-nom h3 {
+.stories-cadre {
+  --fond: 187, 32, 64;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 30rem;
+  height: 100%;
+  box-sizing: border-box;
+  padding:
+    max(0.4rem, env(safe-area-inset-top))
+    1.25rem
+    max(0.5rem, env(safe-area-inset-bottom));
+  background:
+    radial-gradient(130% 65% at 50% 32%, rgba(var(--fond), 0.34) 0%, transparent 72%),
+    linear-gradient(180deg, var(--dark-grey) 0%, #121111 100%);
+  overflow: hidden;
+  outline: none;
+  /* Un tap rapide sur le titre le sélectionnerait au lieu d'avancer. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.stories-cadre[data-ecran="verdict"] { --fond: var(--teinte); }
+.stories-cadre[data-ecran="moyennes"] { --fond: 187, 32, 64; }
+.stories-cadre[data-ecran="classement"] { --fond: 139, 58, 159; }
+.stories-cadre[data-ecran="axes"] { --fond: 187, 32, 64; }
+.stories-cadre[data-ecran="reponse"] { --fond: 139, 58, 159; }
+.stories-cadre[data-ecran="ressource"] { --fond: 226, 124, 33; }
+.stories-cadre[data-ecran="fin"] { --fond: 187, 32, 64; }
+
+/*
+ * Les segments sont de vrais boutons, qui sautent à leur écran. Le trait ne
+ * fait que trois pixels ; la zone de tap, elle, en fait vingt-huit de haut.
+ */
+.stories-segments {
+  display: flex;
+  gap: 4px;
+}
+
+.stories-segment {
+  position: relative;
+  flex: 1;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.stories-segment::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 2px;
+  background-color: rgba(255, 255, 255, 0.22);
+  transition: background-color 400ms cubic-bezier(0.86, 0, 0.07, 1);
+}
+
+.stories-segment.is-vu::before {
+  background-color: var(--white);
+}
+
+.stories-tete {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.stories-logo {
+  height: 2rem;
+  width: auto;
+  margin-right: auto;
+}
+
+.stories-compte {
+  color: var(--grey);
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+}
+
+.stories-fermer {
+  width: 44px;
+  height: 44px;
+  margin-right: -0.6rem;
+  border: none;
+  background: none;
+  color: var(--white);
+  font-family: 'Agdasima', sans-serif;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+.stories-fermer:hover { opacity: 1; }
+
+.stories-scene {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  cursor: pointer;
+}
+
+/*
+ * Centré verticalement par des marges automatiques et non par
+ * `justify-content: center` : un écran plus haut que sa scène — un petit
+ * téléphone, une longue réponse — doit défiler depuis son haut, alors qu'un
+ * centrage flex en couperait le début.
+ */
+.story {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.3rem, 1.1svh, 0.7rem);
+  min-width: 0;
+  padding: 0.5rem 0;
+  overflow-y: auto;
+  text-align: center;
+}
+
+.story > :first-child { margin-top: auto; }
+.story > :last-child { margin-bottom: auto; }
+
+.story p {
   margin: 0;
-  font-size: clamp(1.35rem, 7vw, 1.9rem);
+}
+
+.vient-de-droite { animation: story-depuis-droite 400ms cubic-bezier(0.86, 0, 0.07, 1); }
+.vient-de-gauche { animation: story-depuis-gauche 400ms cubic-bezier(0.86, 0, 0.07, 1); }
+
+@keyframes story-depuis-droite {
+  from { opacity: 0; transform: translateX(1.5rem); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes story-depuis-gauche {
+  from { opacity: 0; transform: translateX(-1.5rem); }
+  to { opacity: 1; transform: none; }
+}
+
+/* --- Typographie commune ------------------------------------------------ */
+
+.story-surtitre {
+  color: var(--grey);
+  font-size: clamp(0.95rem, 2.1svh, 1.2rem);
   font-weight: bold;
-  line-height: 1.05;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  /* Deux lignes de longueurs voisines plutot qu'une longue et un mot orphelin.
-     Non supporte partout, et sans consequence la ou il ne l'est pas. */
   text-wrap: balance;
 }
 
-.carte-emoji {
-  margin-right: 0.3em;
+.story-emoji {
+  font-size: clamp(3.5rem, 11svh, 6.5rem);
+  line-height: 1.1;
 }
 
-.carte-nom p {
-  margin: calc(var(--spacing) * 0.25) 0 0;
+/* `clamp` : « LE DONNEUR DE LEÇONS » fait deux fois « LE CROISÉ ». */
+.story-titre {
+  font-size: clamp(2.1rem, min(11vw, 6.5svh), 3.6rem);
+  font-weight: bold;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.story-texte {
+  max-width: 24rem;
   color: var(--grey);
-  font-size: calc(var(--font-size-s) * 0.92);
+  font-size: clamp(1.15rem, 2.6svh, 1.5rem);
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.story-texte-fort {
+  font-size: clamp(1.15rem, 2.6svh, 1.5rem);
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+/* La phrase qui dit ce que montre l'écran, avant le visuel. */
+.story-phrase {
+  max-width: 26rem;
+  font-size: clamp(1.35rem, 3.3svh, 2rem);
+  font-weight: bold;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+.story-phrase strong {
+  font-size: 1.3em;
+}
+
+.story-geant {
+  font-size: clamp(5rem, 15svh, 9rem);
+  font-weight: bold;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+
+.story-geant span,
+.story-score strong span {
+  font-size: 0.5em;
+  margin-left: 0.05em;
+}
+
+.story-majuscules { text-transform: uppercase; }
+
+.story .rouge { color: var(--light-red); }
+.story .vert { color: var(--light-green); }
+.story .jaune { color: var(--yellow); }
+
+.story-note {
+  max-width: 24rem;
+  color: var(--grey);
+  font-size: clamp(0.85rem, 1.9svh, 1rem);
   line-height: 1.25;
   text-wrap: balance;
 }
 
-/*
- * Le score, en ligne de base commune avec son unite : un nombre de trois
- * chiffres et un nombre d'un seul doivent poser leur « % red flag » au meme
- * endroit, sinon la carte danse d'un joueur a l'autre.
- */
-.carte-score {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 0.3em;
-  margin: calc(var(--spacing) * 0.15) 0 0;
-  line-height: 1;
+.story-encart {
+  width: 100%;
+  margin-top: 0.5rem;
+  box-sizing: border-box;
+  padding: 0.75rem 0.9rem;
+  border-left: 3px solid var(--purple);
+  border-radius: var(--border-radius);
+  background-color: rgba(43, 41, 48, 0.85);
+  font-size: clamp(1rem, 2.2svh, 1.2rem);
+  line-height: 1.3;
+  text-align: left;
 }
 
-.carte-score strong {
+.story-encart strong { font-weight: bold; }
+
+.story-encart-titre {
+  color: var(--grey);
+  font-size: 0.8em;
+  font-weight: bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.story-encart-pique {
+  margin-top: 0.2rem !important;
+  color: var(--grey);
+  font-style: italic;
+}
+
+/* --- Écran 1 : le verdict ----------------------------------------------- */
+
+.story-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: clamp(0.6rem, 2.5svh, 1.6rem) !important;
+  line-height: 0.88;
+}
+
+.story-score strong {
+  color: rgb(var(--teinte));
+  font-size: clamp(5rem, 15svh, 9rem);
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 2.5rem rgba(var(--teinte), 0.45);
+}
+
+.story-score-unite {
+  color: var(--white);
+  font-size: clamp(1.1rem, 2.4svh, 1.45rem);
+  font-weight: bold;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/*
+ * La jauge : une échelle, pas un remplissage. Le dégradé situe le curseur
+ * avant même qu'on lise le nombre ; le curseur est celui de la référence, avec
+ * la même seconde et demie de course.
+ */
+.story-jauge {
+  position: relative;
+  width: 100%;
+  height: 1.1rem;
+  margin: clamp(1rem, 3svh, 1.8rem) 0 1.6rem;
+  border-radius: 1000px;
+  background: linear-gradient(
+    90deg,
+    var(--light-green) 0%,
+    var(--yellow) 48%,
+    var(--orange) 66%,
+    var(--light-red) 100%
+  );
+}
+
+.story-jauge-curseur {
+  position: absolute;
+  top: -0.75rem;
+  bottom: 0.35rem;
+  width: 24px;
+  background-image: url("./img/score-cursor.svg");
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  transform: translateX(-50%);
+  transition: left 1500ms cubic-bezier(0.86, 0, 0.07, 1);
+  filter: drop-shadow(0 0 0.3rem var(--dark-grey));
+}
+
+.story-jauge-gauche,
+.story-jauge-droite {
+  position: absolute;
+  top: 100%;
+  margin-top: 5px;
+  color: var(--grey);
+  font-size: 0.95rem;
+}
+
+.story-jauge-gauche { left: 0; }
+.story-jauge-droite { right: 0; }
+
+/*
+ * --- Écran 2 : toi face aux autres --------------------------------------
+ * Une échelle verticale : le tube à gauche, les étiquettes à droite, reliées
+ * à leur vraie valeur par un trait quand il a fallu les écarter.
+ */
+.story-echelle {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 14rem;
+  margin: clamp(0.8rem, 2.5svh, 1.6rem) 0 0.6rem;
+}
+
+.story-tube {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2.6rem;
+  width: 1rem;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: linear-gradient(
+    0deg,
+    var(--light-green) 0%,
+    var(--yellow) 45%,
+    var(--orange) 65%,
+    var(--light-red) 100%
+  );
+}
+
+/* Au-delà de 100 : hors barème, hachuré. */
+.story-tube-hors {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: repeating-linear-gradient(135deg, #5b0f22 0 5px, #3b0a17 5px 10px);
+}
+
+.story-graduation {
+  position: absolute;
+  left: 0;
+  width: 2rem;
+  color: var(--grey);
+  font-size: 0.85rem;
+  text-align: right;
+  transform: translateY(-50%);
+}
+
+.story-liens {
+  position: absolute;
+  top: 0;
+  left: 3.6rem;
+  width: 1.6rem;
+  height: 100%;
+  overflow: visible;
+}
+
+.story-liens .lien { stroke: rgba(255, 255, 255, 0.45); stroke-width: 1.5; }
+.story-liens .lien-moi { stroke: var(--white); stroke-width: 2.5; }
+
+.story-marque {
+  position: absolute;
+  left: 2.35rem;
+  width: 1.5rem;
+  height: 3px;
+  background-color: var(--white);
+  transform: translateY(-50%);
+}
+
+.story-marque.is-moi {
+  left: 3.1rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  box-sizing: border-box;
+  border: 3px solid var(--white);
+  border-radius: 50%;
+  background-color: var(--light-red);
+  box-shadow: 0 0 1rem rgba(219, 50, 84, 0.8);
+  transform: translate(-50%, -50%);
+}
+
+.story-etiquette {
+  position: absolute;
+  left: 5.4rem;
+  right: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  line-height: 1.05;
+  text-align: left;
+  transform: translateY(-50%);
+}
+
+.story-etiquette strong {
+  font-size: clamp(1.45rem, 3.4svh, 2rem);
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.story-etiquette span {
+  color: var(--grey);
+  font-size: clamp(0.95rem, 2svh, 1.15rem);
+}
+
+.story-etiquette.is-moi {
+  right: auto;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--border-radius);
+  background-color: var(--red);
+  box-shadow: 0 0.3rem 1.2rem rgba(187, 32, 64, 0.55);
+}
+
+.story-etiquette.is-moi strong {
+  color: var(--white);
+  font-size: clamp(1.7rem, 4svh, 2.4rem);
+}
+
+.story-etiquette.is-moi span {
+  color: #ffd6de;
+  font-weight: bold;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* --- Écran 3 : le classement -------------------------------------------- */
+
+.story-place {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 0.9;
+}
+
+.story-place strong {
   color: var(--light-red);
-  font-size: var(--font-size-xxl);
+  font-size: clamp(3.6rem, 11svh, 7rem);
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 2.5rem rgba(219, 50, 84, 0.4);
+}
+
+.story-place span {
+  margin-top: 0.3rem;
+  font-size: clamp(1.25rem, 2.9svh, 1.65rem);
+  font-weight: bold;
+}
+
+.story-onglets {
+  display: flex;
+  gap: 0.4rem;
+  width: 100%;
+  margin: clamp(0.3rem, 1.5svh, 0.9rem) 0;
+}
+
+.story-onglet {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid #45414b;
+  border-radius: var(--border-radius);
+  background: none;
+  color: var(--grey);
+  font-family: 'Agdasima', sans-serif;
+  font-size: 1.05rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.story-onglet img {
+  width: 1.45rem;
+  height: auto;
+}
+
+.story-onglet.is-actif {
+  border-color: var(--white);
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--white);
+  font-weight: bold;
+}
+
+/* Cent joueurs, le joueur en jaune. Bornée par la hauteur sur petit écran. */
+.story-foule {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+  width: min(100%, 31svh);
+  margin: clamp(0.3rem, 1.2svh, 0.8rem) auto 0.3rem;
+}
+
+.story-foule i {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  animation: story-case 350ms cubic-bezier(0.86, 0, 0.07, 1) backwards;
+}
+
+.story-foule .is-devant { background-color: var(--red); }
+.story-foule .is-derriere { background-color: #24493c; }
+
+.story-foule .is-moi {
+  position: relative;
+  z-index: 1;
+  background-color: var(--yellow);
+  box-shadow: 0 0 0 2px var(--dark-grey), 0 0 0 4px var(--white), 0 0 1rem rgba(247, 201, 20, 0.8);
+}
+
+@keyframes story-case {
+  from { opacity: 0; transform: scale(0.3); }
+}
+
+.story-legende {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem 1rem;
+  color: var(--grey);
+  font-size: 0.95rem;
+}
+
+.story-legende span::before {
+  content: '';
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-right: 0.35rem;
+  border-radius: 2px;
+  vertical-align: -0.05rem;
+}
+
+.story-legende .l-devant::before { background-color: var(--red); }
+.story-legende .l-moi::before { background-color: var(--yellow); }
+.story-legende .l-derriere::before { background-color: #24493c; }
+
+/* --- Écran 4 : les catégories ------------------------------------------- */
+
+.story-axes {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 1.6svh, 0.95rem);
+  width: 100%;
+  margin: clamp(0.6rem, 2.5svh, 1.5rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.story-axes li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  text-align: left;
+}
+
+.story-axe-tete {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: clamp(1.1rem, 2.5svh, 1.35rem);
+}
+
+.story-axe-tete strong {
   font-weight: bold;
   font-variant-numeric: tabular-nums;
 }
 
-.carte-score span {
+.story-axe-piste {
+  position: relative;
+  height: 0.8rem;
+  border-radius: 1000px;
+  background-color: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.story-axe-barre {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 1000px;
+  transform-origin: left;
+  animation: story-barre 900ms cubic-bezier(0.86, 0, 0.07, 1);
+}
+
+@keyframes story-barre {
+  from { transform: scaleX(0); }
+}
+
+/* --- Écran 5 : la réponse ----------------------------------------------- */
+
+.story-question {
+  max-width: 24rem;
   color: var(--grey);
-  font-size: var(--font-size-m);
-  text-transform: uppercase;
-}
-
-/* Les trois lignes de contexte : une information par ligne, jamais deux. */
-.carte-lignes {
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--spacing) * 0.15);
-  width: 100%;
-  margin-top: calc(var(--spacing) * 0.35);
-  padding-top: calc(var(--spacing) * 0.5);
-  border-top: 1px solid var(--blueish-grey);
-}
-
-.carte-lignes p {
-  margin: 0;
-  color: var(--white);
-  font-size: calc(var(--font-size-s) * 0.92);
-  line-height: 1.3;
+  font-size: clamp(1rem, 2.3svh, 1.25rem);
+  line-height: 1.25;
   text-wrap: balance;
 }
 
-.carte-lignes strong {
+.story-citation {
+  margin: clamp(0.2rem, 1svh, 0.6rem) 0 !important;
+  font-size: clamp(1.8rem, 5svh, 2.9rem);
+  font-style: italic;
   font-weight: bold;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+/* Une réponse de trois lignes à la taille d'une réponse d'un mot pousserait
+   le coût hors de l'écran. */
+.story-citation.is-longue {
+  font-size: clamp(1.35rem, 3.6svh, 2rem);
+}
+
+.story-cout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 0.9;
+}
+
+.story-cout strong {
+  color: var(--light-red);
+  font-size: clamp(4rem, 12svh, 7rem);
+  font-weight: bold;
+}
+
+.story-cout span {
+  margin-top: 0.2rem;
+  font-size: clamp(1.15rem, 2.6svh, 1.45rem);
+  font-weight: bold;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.carte-valeur {
-  color: var(--grey);
+/*
+ * --- Écran des ressources -----------------------------------------------
+ * Encadré d'orange et non de rouge, comme dans le détail : le rouge est la
+ * couleur du score, et cet écran ne doit pas se lire comme une sanction de
+ * plus.
+ */
+.story-ressource {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1rem 1.1rem;
+  border-left: 3px solid var(--orange);
+  border-radius: var(--border-radius);
+  background-color: rgba(43, 41, 48, 0.9);
+  font-size: clamp(1.15rem, 2.6svh, 1.4rem);
+  line-height: 1.3;
+  text-align: left;
 }
 
-.carte-sep {
-  color: var(--grey);
-}
-
-.carte-signature {
-  margin: calc(var(--spacing) * 0.35) 0 0;
-  color: var(--grey);
-  font-size: calc(var(--font-size-s) * 0.78);
+.story-ressource-cat {
+  margin-bottom: 0.35rem !important;
+  color: var(--orange);
+  font-size: 1rem;
+  font-weight: bold;
   letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.story-ressource-lien {
+  display: inline-block;
+  padding: 0.7rem 0 0.1rem;
+  color: var(--white);
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+/* --- Dernier écran : le partage ----------------------------------------- */
+
+.story-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.story-lien {
+  padding: 0.65rem 1rem;
+  border: none;
+  background: none;
+  color: var(--white);
+  font-family: 'Agdasima', sans-serif;
+  font-size: 1.05rem;
+  text-decoration: underline;
+  cursor: pointer;
   opacity: 0.8;
 }
 
+.story-lien:hover { opacity: 1; }
+
+/* --- Le pied ------------------------------------------------------------ */
+
+.stories-pied {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stories-continuer {
+  min-height: 44px;
+  padding: 0.4rem 1rem;
+  border: none;
+  background: none;
+  color: var(--white);
+  font-family: 'Agdasima', sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.stories-continuer:hover { opacity: 1; }
+
+.stories-signature {
+  margin: 0;
+  color: var(--grey);
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  opacity: 0.8;
+}
+
+/* --- Le bouton qui rouvre les stories, en tête du détail ---------------- */
+
+.stories-rouvrir {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 3.25rem;
+  margin-top: var(--spacing);
+  border: none;
+  border-radius: var(--border-radius);
+  background-color: var(--red);
+  color: var(--white);
+  font-family: 'Agdasima', sans-serif;
+  font-size: var(--font-size-l);
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.stories-rouvrir span {
+  font-size: 0.8em;
+}
+
+/*
+ * Les petits écrans — moins de 680 px de haut. L'écran du classement porte
+ * une place, des onglets, une phrase et cent cases : tout se resserre d'un
+ * cran plutôt que de défiler à l'intérieur de la story.
+ */
+/* Sous 760 px de haut, le classement perd sa note : « 1er » se lit seul. */
+@media (max-height: 760px) {
+  .story-note-place { display: none; }
+  .story-phrase { font-size: clamp(1.2rem, 3svh, 1.6rem); }
+  .story-onglets { margin: 0.25rem 0; }
+}
+
+@media (max-height: 680px) {
+  .stories-segment { height: 1.4rem; }
+  .stories-logo { height: 1.6rem; }
+  .story-emoji { font-size: 3rem; }
+  .story-jauge { margin-bottom: 1.4rem; }
+  .story-echelle { min-height: 11rem; }
+  .story-legende { font-size: 0.85rem; }
+  .story { gap: 0.3rem; padding: 0.25rem 0; }
+  .story-place span { font-size: 1.15rem; }
+  .story .share-btn { margin-top: calc(var(--spacing) * 0.5); }
+}
+
+@media (max-height: 600px) {
+  .story-foule { width: min(100%, 27svh); }
+  .story-cout strong { font-size: 3.4rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vient-de-droite,
+  .vient-de-gauche,
+  .story-axe-barre,
+  .story-foule i { animation: none; }
+  .story-jauge-curseur { transition-duration: 1ms; }
+}
+
 /* ---------------------------------------------------------------------------
- * Sous la carte : le detail.
+ * Sous les stories : le detail.
  * ------------------------------------------------------------------------- */
 
 .detail-titre {
@@ -707,9 +1390,8 @@ body:has(.main-container) {
 
 /*
  * Uniquement les titres de section du detail. Ecrite en fourre-tout sur `h3`,
- * cette regle rattrapait aussi le titre de la carte et le ramenait de 26 a
- * 20 px — a specificite egale, la derniere feuille chargee l'emporte, et c'est
- * celle-ci.
+ * cette regle rattraperait n'importe quel titre du recap — a specificite egale,
+ * la derniere feuille chargee l'emporte, et c'est celle-ci.
  */
 .switch-quiz-end .client-container .game-wrapper .finish-block .stats-rare-section h3 {
   margin-bottom: calc(var(--spacing) * 0.35);
@@ -719,17 +1401,6 @@ body:has(.main-container) {
 .switch-quiz-end .client-container .game-wrapper .finish-block .stats-rare-section .subtitle {
   margin-bottom: calc(var(--spacing) * 0.5);
   font-size: calc(var(--font-size-s) * 0.85);
-}
-
-/* La reponse decisive : un filet, pas un pave. */
-.stats-decisive {
-  margin-top: calc(var(--spacing) * 0.5);
-  padding: calc(var(--spacing-text-y) * 0.75) var(--spacing);
-  font-size: calc(var(--font-size-s) * 0.9);
-}
-
-.stats-decisive-quote {
-  font-size: var(--font-size-s);
 }
 
 .stats-ressource {
@@ -744,168 +1415,10 @@ body:has(.main-container) {
 
 /*
  * Le bouton de partage de la reference reserve deux fois `--spacing` au-dessus
- * de lui. Sous une carte deja delimitee, c'est un trou.
+ * de lui. Sous le titre du dernier ecran des stories, c'est un trou.
  */
 .client-container .game-wrapper .finish-block .share-btn {
   margin-top: var(--spacing);
-}
-
-/* ===========================================================================
- * LA JAUGE DE LA CARTE : UNE ECHELLE, PAS UN REMPLISSAGE
- *
- * Elle vivait dans la barre de progression, qui restait ENTIEREMENT ROUGE au
- * recap — toutes les questions etant repondues, toutes les cellules etaient
- * actives. Une echelle uniformement rouge ne situe rien : le curseur pouvait
- * aussi bien marquer 4 que 96, l'oeil n'avait aucun repere.
- *
- * Le degrade rend la position lisible avant meme qu'on lise le nombre. Les
- * trois teintes sont celles de la palette de reference ; le jaune est pose au
- * milieu pour que le centre de l'echelle soit le centre de la barre.
- *
- * Elle est dans la carte et non au-dessus parce que la page d'un resultat
- * partage n'affiche pas la barre de progression du jeu : sans ce demenagement,
- * l'ecran que le plus de monde voit n'avait aucune jauge.
- * ======================================================================== */
-
-.carte-jauge {
-  position: relative;
-  width: 100%;
-  height: 1.2rem;
-  margin-top: calc(var(--spacing) * 0.45);
-  border-radius: 1000px;
-  background: linear-gradient(
-    90deg,
-    var(--light-green) 0%,
-    var(--yellow) 48%,
-    var(--orange) 66%,
-    var(--light-red) 100%
-  );
-}
-
-/*
- * Le curseur de la reference, repris tel quel — meme image, meme duree. Il
- * deborde volontairement au-dessus de la piste : c'est ce qui le fait lire
- * comme un marqueur pose dessus et non comme une part remplie.
- */
-.carte-jauge-curseur {
-  position: absolute;
-  top: -0.45rem;
-  bottom: 0.3rem;
-  width: 26px;
-  background-image: url("./img/score-cursor.svg");
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  transform: translateX(-50%);
-  transition: left 1500ms cubic-bezier(0.86, 0, 0.07, 1);
-  filter: drop-shadow(0 0 0.3rem var(--dark-grey));
-}
-
-.carte-jauge-gauche,
-.carte-jauge-droite {
-  position: absolute;
-  top: 100%;
-  margin-top: 2px;
-  color: var(--grey);
-  font-size: calc(var(--font-size-s) * 0.72);
-  opacity: 0.8;
-}
-
-.carte-jauge-gauche { left: 0; }
-.carte-jauge-droite { right: 0; }
-
-@media (prefers-reduced-motion: reduce) {
-  .carte-jauge-curseur { transition-duration: 1ms; }
-}
-
-/* ---------------------------------------------------------------------------
- * LES TROIS DRAPEAUX, DANS LA CARTE
- *
- * Ils avaient ete remplaces par une ligne de texte pour gagner cent pixels.
- * C'etait une mauvaise affaire : « Top 77 % des hommes » se lit, mais ne se
- * VOIT pas, et une carte destinee a la capture doit se comprendre avant d'etre
- * lue. La couleur du drapeau donne la reponse au premier coup d'oeil.
- *
- * La reference les stylise sous `.finish-block .stats-flags`, ce que la carte
- * ne peut pas reutiliser : ses drapeaux sont plus petits, et son texte plus
- * serre. Les regles sont donc reecrites ici, dans le meme idiome.
- * ------------------------------------------------------------------------- */
-
-.carte-flags {
-  display: flex;
-  justify-content: space-around;
-  gap: calc(var(--spacing) * 0.4);
-  width: 100%;
-  /* Large en haut : les legendes de la jauge debordent sous sa piste. */
-  margin: calc(var(--spacing) * 0.9) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.carte-flags li {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-/*
- * 2.6rem et non 3.5 comme la reference : trois drapeaux a sa taille d'origine
- * font a eux seuls la moitie de la hauteur de la carte.
- */
-.carte-flags .img-flag {
-  width: 2.6rem;
-  height: auto;
-}
-
-.carte-flags .flag-rang {
-  margin: calc(var(--spacing) * 0.15) 0 0;
-  font-size: calc(var(--font-size-s) * 0.95);
-  line-height: 1.1;
-}
-
-.carte-flags .flag-rang strong {
-  font-weight: bold;
-}
-
-/*
- * La legende tient sur UNE ligne, dans n'importe quelle police.
- *
- * La colonne fait quatre-vingts pixels sur un petit telephone. Avec les anciens
- * libelles — « de tout le monde », « des 27 ans et plus » — deux colonnes sur
- * trois passaient a deux lignes pendant que la troisieme restait a une, des que
- * la police condensee de la reference n'etait pas encore chargee. Elle arrive
- * en `font-display: swap` : le premier affichage se fait donc toujours avec le
- * repli du systeme, beaucoup plus large.
- *
- * Les libelles sont desormais courts — « femmes », « 19-22 ans » — et la taille
- * suit la largeur de l'ecran. Le contexte est donne par le drapeau et par le
- * « Top X % » juste au-dessus : il n'y a rien a repeter.
- */
-.carte-flags .flag-legende {
-  margin: 0;
-  color: var(--grey);
-  font-size: clamp(0.6rem, 2.6vw, 0.78rem);
-  line-height: 1.15;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.carte-flags .flag-rang {
-  white-space: nowrap;
-}
-
-/* Le rang repose sur une cohorte mince : la note est sous la rangee. */
-.flag-etoile {
-  color: var(--yellow);
-}
-
-.carte-minces {
-  margin: calc(var(--spacing) * 0.3) 0 0;
-  color: var(--grey);
-  font-size: calc(var(--font-size-s) * 0.72);
-  font-style: italic;
-  line-height: 1.2;
 }
 
 /* ========== Presentation du test (voir `Presentation.tsx`) ==========

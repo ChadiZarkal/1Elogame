@@ -21,6 +21,8 @@ import {
   ARCHETYPE_MINIMUM,
   POINTS_DECISIFS,
   COMPARAISON_MIN,
+  legendeCohorte,
+  legendeSexeCourte,
   POINT_NOIR_ECART,
   POINT_NOIR_MINIMUM,
   type CohorteBrute,
@@ -168,6 +170,16 @@ describe('calculerAxes', () => {
   });
 });
 
+describe('les cohortes en toutes lettres', () => {
+  // « des joueurs » annonçait tout le monde pour ne mesurer que la cohorte
+  // « autre ».
+  it('garde son nom à la cohorte « autre »', () => {
+    expect(legendeSexeCourte('autre')).toBe('autre');
+    expect(legendeCohorte('sexe', { sexe: 'autre', age: null })).toBe('des joueurs « autre »');
+    expect(legendeCohorte('sexe_age', { sexe: 'autre', age: '19-22' })).toBe('des joueurs « autre » de 19-22 ans');
+  });
+});
+
 describe('classement', () => {
   const rang = (effectif: number, plusHauts: number) =>
     classement(effectif, plusHauts, 'de tout le monde');
@@ -200,6 +212,19 @@ describe('classement', () => {
 
     expect(rang(1, 0)?.avertissement).toBe('seulement 1 participant');
     expect(rang(COHORTE_MINCE, 5)?.avertissement).toBeNull();
+  });
+
+  it('donne la place exacte, le plus red flag étant premier', () => {
+    expect(rang(512, 46)?.position).toBe(47);
+    expect(rang(200, 0)?.position).toBe(1);
+  });
+
+  // La moyenne est le repère qu'on cherche d'abord ; sur trois joueurs, elle
+  // n'en est pas un.
+  it('ne transporte la moyenne que d’une cohorte assez fournie', () => {
+    expect(classement(50, 10, 'tous', 41.6)?.moyenne).toBe(42);
+    expect(classement(COMPARAISON_MIN - 1, 1, 'tous', 41.6)?.moyenne).toBeNull();
+    expect(classement(50, 10, 'tous')?.moyenne).toBeNull();
   });
 
   it('ne rend rien sur une cohorte vide', () => {

@@ -156,6 +156,8 @@ export function classement(
   plusHauts: number,
   /** « de tout le monde », « des hommes », « des 23-26 ans ». */
   legende: string,
+  /** La moyenne brute de la cohorte, telle que la base la rend. */
+  moyenne: number | null = null,
 ): Classement | null {
   if (effectif <= 0) return null;
 
@@ -165,6 +167,8 @@ export function classement(
     legende,
     couleur: couleurDuRang(top),
     effectif,
+    position: plusHauts + 1,
+    moyenne: moyenne !== null && effectif >= COMPARAISON_MIN ? Math.round(moyenne) : null,
     avertissement:
       effectif < COHORTE_MINCE ? `seulement ${effectif} participant${effectif > 1 ? 's' : ''}` : null,
   };
@@ -196,10 +200,16 @@ export function couleurDuRang(top: number): CouleurDrapeau {
  * la maquette annonçait « des hommes » à une joueuse.
  */
 
+/*
+ * « Autre » garde son nom. Le traduire par « des joueurs » faisait lire
+ * « 12 points au-dessus de la moyenne des joueurs » à quelqu'un comparé à sa
+ * seule cohorte — la phrase annonçait tout le monde et en mesurait une
+ * fraction.
+ */
 const SEXES: Record<string, string> = {
   homme: 'des hommes',
   femme: 'des femmes',
-  autre: 'des joueurs',
+  autre: 'des joueurs « autre »',
 };
 
 export function legendeSexe(sexe: string | null): string {
@@ -229,7 +239,7 @@ export function legendeAge(age: string | null): string {
 const SEXES_COURTS: Record<string, string> = {
   homme: 'hommes',
   femme: 'femmes',
-  autre: 'joueurs',
+  autre: 'autre',
 };
 
 export function legendeSexeCourte(sexe: string | null): string {

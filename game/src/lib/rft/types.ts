@@ -158,6 +158,17 @@ export interface Classement {
   legende: string;
   couleur: CouleurDrapeau;
   effectif: number;
+  /**
+   * La place exacte, 1 étant le plus red flag : « 47e sur 512 ». Un
+   * pourcentage se décode, une place dans une file se comprend.
+   */
+  position: number;
+  /**
+   * Le score moyen de la cohorte, arrondi. `null` quand elle est trop mince
+   * pour qu'une moyenne en soit une : c'est le repère que le joueur cherche
+   * d'abord, et il ne doit pas mentir.
+   */
+  moyenne: number | null;
   /** Renseigné quand la cohorte est trop mince pour que le rang veuille dire quelque chose. */
   avertissement: string | null;
 }
