@@ -202,6 +202,19 @@ describe('classement', () => {
     expect(rang(COHORTE_MINCE, 5)?.avertissement).toBeNull();
   });
 
+  it('donne la place exacte, le plus red flag étant premier', () => {
+    expect(rang(512, 46)?.position).toBe(47);
+    expect(rang(200, 0)?.position).toBe(1);
+  });
+
+  // La moyenne est le repère qu'on cherche d'abord ; sur trois joueurs, elle
+  // n'en est pas un.
+  it('ne transporte la moyenne que d’une cohorte assez fournie', () => {
+    expect(classement(50, 10, 'tous', 41.6)?.moyenne).toBe(42);
+    expect(classement(COMPARAISON_MIN - 1, 1, 'tous', 41.6)?.moyenne).toBeNull();
+    expect(classement(50, 10, 'tous')?.moyenne).toBeNull();
+  });
+
   it('ne rend rien sur une cohorte vide', () => {
     expect(rang(0, 0)).toBeNull();
   });

@@ -549,7 +549,7 @@ function composer(
   const cohorte = (nom: NomCohorte) => brutes.find((c) => c.cohorte === nom);
   const rang = (nom: NomCohorte, legende: string) => {
     const c = cohorte(nom);
-    return c ? classement(c.effectif, c.plusHauts, legende) : null;
+    return c ? classement(c.effectif, c.plusHauts, legende, c.moyenne) : null;
   };
 
   const chere = reponseLaPlusChere(choix, score);

@@ -156,6 +156,8 @@ export function classement(
   plusHauts: number,
   /** « de tout le monde », « des hommes », « des 23-26 ans ». */
   legende: string,
+  /** La moyenne brute de la cohorte, telle que la base la rend. */
+  moyenne: number | null = null,
 ): Classement | null {
   if (effectif <= 0) return null;
 
@@ -165,6 +167,8 @@ export function classement(
     legende,
     couleur: couleurDuRang(top),
     effectif,
+    position: plusHauts + 1,
+    moyenne: moyenne !== null && effectif >= COMPARAISON_MIN ? Math.round(moyenne) : null,
     avertissement:
       effectif < COHORTE_MINCE ? `seulement ${effectif} participant${effectif > 1 ? 's' : ''}` : null,
   };

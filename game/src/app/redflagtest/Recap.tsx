@@ -9,18 +9,16 @@
  *   section.stats-subscores    → div.spider-chart-container
  *   section.stats-rare-section → ul.stats-rare avec p.rarity-pct
  *
- * Les stories disent l'essentiel, chacune en un écran qui se capture. Le
- * détail, dessous, garde ce qui se lit sans se raconter : le radar complet et
- * toutes les réponses qui distinguent le joueur. On y arrive en faisant
- * défiler la page, ou par le lien du dernier écran.
+ * Les stories disent l'essentiel, en plein écran, chacune en un écran qui se
+ * capture. Elles s'ouvrent seules à la fin de la partie ; la croix les referme
+ * sur le détail, qui garde ce qui se lit sans se raconter : le radar complet et
+ * toutes les réponses qui distinguent le joueur. Un bouton les rouvre.
  */
 
+import { useState } from 'react';
 import Link from 'next/link';
 import type { Resultat } from '@/lib/rft/types';
 import { Stories } from './Stories';
-
-/** L'ancre du détail, visée par le dernier écran des stories. */
-const ID_DETAIL = 'rft-detail';
 
 /*
  * LE RÉCAP N'A PAS BESOIN DU PROFIL DU JOUEUR.
@@ -36,12 +34,25 @@ export function Recap({
   /** Absent sur un résultat partagé : on ne « refait » pas la partie d'un autre. */
   onRecommencer?: () => void;
 }) {
+  const [ouvert, setOuvert] = useState(true);
+
+  const fermer = () => {
+    setOuvert(false);
+    // Le détail commence en haut de la page, pas là où le défilement s'était
+    // arrêté avant l'ouverture.
+    window.scrollTo(0, 0);
+  };
+
   return (
     <>
-      <Stories resultat={resultat} onRecommencer={onRecommencer} idDetail={ID_DETAIL} />
+      {ouvert && <Stories resultat={resultat} onRecommencer={onRecommencer} onFermer={fermer} />}
+
+      <button type="button" className="stories-rouvrir" onClick={() => setOuvert(true)}>
+        <span>▶</span> Revoir le résultat en stories
+      </button>
 
       {/* Sous les stories : tout ce qui se lit mais ne se raconte pas. */}
-      <p className="detail-titre" id={ID_DETAIL}>Le détail</p>
+      <p className="detail-titre">Le détail</p>
 
       {resultat.axes.length >= 3 && (
         <section className="stats-subscores">

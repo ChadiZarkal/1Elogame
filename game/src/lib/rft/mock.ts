@@ -321,15 +321,18 @@ function composer(
     score,
     verdict: verdictPour(score, ctx.verdicts),
     classements: {
-      tous: classement(population.length, plusHauts, 'tous'),
+      tous: classement(population.length, plusHauts, 'tous', moyenne),
+      // Des moyennes décalées de quelques points : sans elles, les trois repères
+      // de l'écran « toi face aux autres » se superposeraient en local.
       sexe: profil.sexe
-        ? classement(population.length, plusHauts, legendeSexeCourte(profil.sexe))
+        ? classement(population.length, plusHauts, legendeSexeCourte(profil.sexe), moyenne + 5)
         : null,
       age: profil.age
         ? classement(
             Math.round(population.length / 2),
             Math.round(plusHauts / 2),
             legendeAgeCourte(profil.age),
+            moyenne - 6,
           )
         : null,
     },

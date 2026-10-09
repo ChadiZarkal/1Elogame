@@ -490,61 +490,86 @@ body:has(.main-container) {
 .stats-sexe-f { color: #f9a8d4; }
 
 /* ===========================================================================
- * LES STORIES — le résultat, un écran à la fois (voir `Stories.tsx`).
+ * LES STORIES — le résultat plein écran, un écran à la fois (voir
+ * `Stories.tsx`).
  *
  * LE PROBLÈME QU'ELLES RÉSOLVENT
  *   La carte qui les a précédées réunissait verdict, score, jauge, trois
  *   drapeaux, écart à la moyenne et point noir dans trois cents pixels. Rien
- *   n'y manquait et rien ne s'y lisait : sept chiffres de même taille, sans
- *   ordre de lecture. Chaque écran pose désormais UNE question et y répond en
- *   gros caractères.
+ *   n'y manquait et rien ne s'y lisait. Chaque écran pose désormais UNE question
+ *   et y répond en très gros caractères.
  *
- * LA HAUTEUR EST CELLE DE L'ÉCRAN
- *   Moins la barre du site et la marge du conteneur : une story déborde-t-elle
- *   de la fenêtre, le joueur fait défiler au lieu de taper, et le format perd
- *   son intérêt. Les bornes protègent les extrêmes — un téléphone couché, un
- *   écran de bureau de 1 400 px de haut où une story de cette taille serait un
- *   poster.
+ * PLEIN ÉCRAN
+ *   Fixées sur toute la fenêtre, barre du site comprise : une capture d'écran
+ *   de téléphone attrape exactement un écran, logo en tête et adresse au pied.
+ *   `100dvh` et non `100vh` : sur iOS, `vh` compte la barre d'adresse repliée,
+ *   et le pied de la story passerait dessous.
  *
- * CHAQUE ÉCRAN SE CAPTURE SEUL
- *   Logo en tête, adresse au pied : une capture prise à n'importe quel moment
- *   dit d'où elle vient et où aller faire le test.
+ * LES TAILLES SUIVENT LA HAUTEUR DE L'ÉCRAN
+ *   En `svh` plutôt qu'en `vw` : c'est la hauteur qui manque sur un petit
+ *   téléphone, et la largeur qui abonde sur un grand. Les bornes de `clamp`
+ *   tiennent les extrêmes.
  * ======================================================================== */
 
+/* Les enveloppes du portail : leurs classes, sans leurs boîtes. */
+.rft-portail.main-container,
+.rft-portail.main-container > .client-container,
+.rft-portail.main-container > .client-container > .game-wrapper,
+.rft-portail.main-container > .client-container > .game-wrapper > .finish-block {
+  display: contents;
+}
+
 .stories {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  height: 100dvh;
+  background-color: #0d0c0c;
+  overscroll-behavior: contain;
+}
+
+/*
+ * Le fond change d'un écran à l'autre : une lueur de la teinte de l'écran,
+ * posée sur le gris de la référence. Au premier écran, c'est la couleur du
+ * score elle-même — vert, orange ou rouge — que le joueur voit avant de lire
+ * le nombre.
+ */
+.stories-cadre {
+  --fond: 187, 32, 64;
+  position: relative;
   display: flex;
   flex-direction: column;
-  align-self: center;
   width: 100%;
   max-width: 30rem;
-  height: calc(100svh - var(--header-h, 3rem) - 4rem);
-  min-height: 28rem;
-  max-height: 50rem;
+  height: 100%;
   box-sizing: border-box;
-  padding: calc(var(--spacing) * 0.4) var(--spacing) calc(var(--spacing) * 0.4);
-  border: 1px solid var(--blueish-grey);
-  border-radius: var(--border-radius);
+  padding:
+    max(0.4rem, env(safe-area-inset-top))
+    1.25rem
+    max(0.5rem, env(safe-area-inset-bottom));
   background:
-    radial-gradient(circle at 50% 40%, rgba(187, 32, 64, 0.2) 0%, transparent 62%),
-    var(--dark-grey);
+    radial-gradient(130% 65% at 50% 32%, rgba(var(--fond), 0.34) 0%, transparent 72%),
+    linear-gradient(180deg, var(--dark-grey) 0%, #121111 100%);
   overflow: hidden;
+  outline: none;
   /* Un tap rapide sur le titre le sélectionnerait au lieu d'avancer. */
   user-select: none;
   -webkit-user-select: none;
 }
 
-/*
- * La page d'un résultat partagé pose une phrase au-dessus — « Quelqu'un t'a
- * envoyé son résultat. » — qui poussait le pied de la story, et son adresse,
- * sous le bord de l'écran.
- */
-.client-container:has(.site-tagline) .stories {
-  height: calc(100svh - var(--header-h, 3rem) - 6.75rem);
-}
+.stories-cadre[data-ecran="verdict"] { --fond: var(--teinte); }
+.stories-cadre[data-ecran="moyennes"] { --fond: 187, 32, 64; }
+.stories-cadre[data-ecran="classement"] { --fond: 139, 58, 159; }
+.stories-cadre[data-ecran="axes"] { --fond: 187, 32, 64; }
+.stories-cadre[data-ecran="reponse"] { --fond: 139, 58, 159; }
+.stories-cadre[data-ecran="ressource"] { --fond: 226, 124, 33; }
+.stories-cadre[data-ecran="fin"] { --fond: 187, 32, 64; }
 
 /*
  * Les segments sont de vrais boutons, qui sautent à leur écran. Le trait ne
- * fait que trois pixels ; la zone de tap, elle, en fait trente-deux de haut.
+ * fait que trois pixels ; la zone de tap, elle, en fait vingt-huit de haut.
  */
 .stories-segments {
   display: flex;
@@ -554,7 +579,7 @@ body:has(.main-container) {
 .stories-segment {
   position: relative;
   flex: 1;
-  height: 2rem;
+  height: 1.75rem;
   padding: 0;
   border: none;
   background: none;
@@ -569,7 +594,7 @@ body:has(.main-container) {
   right: 0;
   height: 3px;
   border-radius: 2px;
-  background-color: #4a4650;
+  background-color: rgba(255, 255, 255, 0.22);
   transition: background-color 400ms cubic-bezier(0.86, 0, 0.07, 1);
 }
 
@@ -580,17 +605,36 @@ body:has(.main-container) {
 .stories-tete {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-top: calc(var(--spacing) * -0.15);
-  color: var(--grey);
-  font-size: calc(var(--font-size-s) * 0.9);
-  letter-spacing: 0.1em;
+  gap: 0.75rem;
 }
 
 .stories-logo {
-  height: 1.9rem;
+  height: 2rem;
   width: auto;
+  margin-right: auto;
 }
+
+.stories-compte {
+  color: var(--grey);
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+}
+
+.stories-fermer {
+  width: 44px;
+  height: 44px;
+  margin-right: -0.6rem;
+  border: none;
+  background: none;
+  color: var(--white);
+  font-family: 'Agdasima', sans-serif;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+.stories-fermer:hover { opacity: 1; }
 
 .stories-scene {
   display: flex;
@@ -610,8 +654,9 @@ body:has(.main-container) {
   flex: 1;
   flex-direction: column;
   align-items: center;
-  gap: calc(var(--spacing) * 0.35);
-  padding: calc(var(--spacing) * 0.5) 0;
+  gap: clamp(0.3rem, 1.1svh, 0.7rem);
+  min-width: 0;
+  padding: 0.5rem 0;
   overflow-y: auto;
   text-align: center;
 }
@@ -640,45 +685,64 @@ body:has(.main-container) {
 
 .story-surtitre {
   color: var(--grey);
-  font-size: var(--font-size-s);
+  font-size: clamp(0.95rem, 2.1svh, 1.2rem);
   font-weight: bold;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   text-wrap: balance;
 }
 
 .story-emoji {
-  font-size: clamp(4rem, 20vw, 5.5rem);
-  line-height: 1.15;
+  font-size: clamp(3.5rem, 11svh, 6.5rem);
+  line-height: 1.1;
 }
 
 /* `clamp` : « LE DONNEUR DE LEÇONS » fait deux fois « LE CROISÉ ». */
 .story-titre {
-  font-size: clamp(2rem, 10.5vw, 3rem);
+  font-size: clamp(2.1rem, min(11vw, 6.5svh), 3.6rem);
   font-weight: bold;
-  line-height: 1;
+  line-height: 0.98;
   text-wrap: balance;
 }
 
 .story-texte {
-  max-width: 22rem;
+  max-width: 24rem;
   color: var(--grey);
-  font-size: var(--font-size-m);
-  line-height: 1.25;
+  font-size: clamp(1.15rem, 2.6svh, 1.5rem);
+  line-height: 1.2;
   text-wrap: balance;
 }
 
 .story-texte-fort {
-  font-size: var(--font-size-m);
-  line-height: 1.25;
+  font-size: clamp(1.15rem, 2.6svh, 1.5rem);
+  line-height: 1.2;
   text-wrap: balance;
 }
 
-.story-geant {
-  font-size: clamp(4.5rem, 24vw, 7rem);
+/* La phrase qui dit ce que montre l'écran, avant le visuel. */
+.story-phrase {
+  max-width: 26rem;
+  font-size: clamp(1.35rem, 3.3svh, 2rem);
   font-weight: bold;
-  line-height: 0.95;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+.story-phrase strong {
+  font-size: 1.3em;
+}
+
+.story-geant {
+  font-size: clamp(5rem, 15svh, 9rem);
+  font-weight: bold;
+  line-height: 0.9;
   font-variant-numeric: tabular-nums;
+}
+
+.story-geant span,
+.story-score strong span {
+  font-size: 0.5em;
+  margin-left: 0.05em;
 }
 
 .story-majuscules { text-transform: uppercase; }
@@ -690,20 +754,20 @@ body:has(.main-container) {
 .story-note {
   max-width: 24rem;
   color: var(--grey);
-  font-size: calc(var(--font-size-s) * 0.85);
+  font-size: clamp(0.85rem, 1.9svh, 1rem);
   line-height: 1.25;
   text-wrap: balance;
 }
 
 .story-encart {
   width: 100%;
-  margin-top: calc(var(--spacing) * 0.4);
+  margin-top: 0.5rem;
   box-sizing: border-box;
-  padding: calc(var(--spacing) * 0.65) calc(var(--spacing) * 0.85);
-  border-left: 3px solid var(--red);
+  padding: 0.75rem 0.9rem;
+  border-left: 3px solid var(--purple);
   border-radius: var(--border-radius);
-  background-color: var(--blueish-grey);
-  font-size: var(--font-size-s);
+  background-color: rgba(43, 41, 48, 0.85);
+  font-size: clamp(1rem, 2.2svh, 1.2rem);
   line-height: 1.3;
   text-align: left;
 }
@@ -712,19 +776,43 @@ body:has(.main-container) {
 
 .story-encart-titre {
   color: var(--grey);
-  font-size: calc(var(--font-size-s) * 0.8);
+  font-size: 0.8em;
   font-weight: bold;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .story-encart-pique {
-  margin-top: calc(var(--spacing) * 0.2) !important;
+  margin-top: 0.2rem !important;
   color: var(--grey);
   font-style: italic;
 }
 
 /* --- Écran 1 : le verdict ----------------------------------------------- */
+
+.story-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: clamp(0.6rem, 2.5svh, 1.6rem) !important;
+  line-height: 0.88;
+}
+
+.story-score strong {
+  color: rgb(var(--teinte));
+  font-size: clamp(5rem, 15svh, 9rem);
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 2.5rem rgba(var(--teinte), 0.45);
+}
+
+.story-score-unite {
+  color: var(--white);
+  font-size: clamp(1.1rem, 2.4svh, 1.45rem);
+  font-weight: bold;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
 
 /*
  * La jauge : une échelle, pas un remplissage. Le dégradé situe le curseur
@@ -734,8 +822,8 @@ body:has(.main-container) {
 .story-jauge {
   position: relative;
   width: 100%;
-  height: 1rem;
-  margin-top: calc(var(--spacing) * 1.6);
+  height: 1.1rem;
+  margin: clamp(1rem, 3svh, 1.8rem) 0 1.6rem;
   border-radius: 1000px;
   background: linear-gradient(
     90deg,
@@ -748,9 +836,9 @@ body:has(.main-container) {
 
 .story-jauge-curseur {
   position: absolute;
-  top: -0.6rem;
-  bottom: 0.3rem;
-  width: 22px;
+  top: -0.75rem;
+  bottom: 0.35rem;
+  width: 24px;
   background-image: url("./img/score-cursor.svg");
   background-repeat: no-repeat;
   background-size: 100% 100%;
@@ -763,98 +851,287 @@ body:has(.main-container) {
 .story-jauge-droite {
   position: absolute;
   top: 100%;
-  margin-top: 4px;
+  margin-top: 5px;
   color: var(--grey);
-  font-size: calc(var(--font-size-s) * 0.85);
+  font-size: 0.95rem;
 }
 
 .story-jauge-gauche { left: 0; }
 .story-jauge-droite { right: 0; }
 
-.story-score {
-  margin-top: calc(var(--spacing) * 1.5) !important;
-  color: var(--light-red);
-  font-size: var(--font-size-l);
-  font-weight: bold;
-}
-
-.story-score strong {
-  font-size: var(--font-size-xl);
-  font-variant-numeric: tabular-nums;
-}
-
-/* --- Écran 2 : le rang -------------------------------------------------- */
-
-.story-rangs {
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--spacing) * 0.5);
+/*
+ * --- Écran 2 : toi face aux autres --------------------------------------
+ * Une échelle verticale : le tube à gauche, les étiquettes à droite, reliées
+ * à leur vraie valeur par un trait quand il a fallu les écarter.
+ */
+.story-echelle {
+  position: relative;
+  flex: 1 1 auto;
   width: 100%;
-  margin: var(--spacing) 0 calc(var(--spacing) * 0.2);
-  padding: 0;
-  list-style: none;
+  min-height: 14rem;
+  margin: clamp(0.8rem, 2.5svh, 1.6rem) 0 0.6rem;
 }
 
-.story-rang {
-  display: grid;
-  grid-template-columns: 2.2rem 1fr auto;
-  align-items: center;
-  gap: calc(var(--spacing) * 0.6);
-  padding: calc(var(--spacing) * 0.5) calc(var(--spacing) * 0.8);
-  border-radius: var(--border-radius);
-  background-color: var(--blueish-grey);
-  font-size: var(--font-size-m);
+.story-tube {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2.6rem;
+  width: 1rem;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: linear-gradient(
+    0deg,
+    var(--light-green) 0%,
+    var(--yellow) 45%,
+    var(--orange) 65%,
+    var(--light-red) 100%
+  );
+}
+
+/* Au-delà de 100 : hors barème, hachuré. */
+.story-tube-hors {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: repeating-linear-gradient(135deg, #5b0f22 0 5px, #3b0a17 5px 10px);
+}
+
+.story-graduation {
+  position: absolute;
+  left: 0;
+  width: 2rem;
+  color: var(--grey);
+  font-size: 0.85rem;
+  text-align: right;
+  transform: translateY(-50%);
+}
+
+.story-liens {
+  position: absolute;
+  top: 0;
+  left: 3.6rem;
+  width: 1.6rem;
+  height: 100%;
+  overflow: visible;
+}
+
+.story-liens .lien { stroke: rgba(255, 255, 255, 0.45); stroke-width: 1.5; }
+.story-liens .lien-moi { stroke: var(--white); stroke-width: 2.5; }
+
+.story-marque {
+  position: absolute;
+  left: 2.35rem;
+  width: 1.5rem;
+  height: 3px;
+  background-color: var(--white);
+  transform: translateY(-50%);
+}
+
+.story-marque.is-moi {
+  left: 3.1rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  box-sizing: border-box;
+  border: 3px solid var(--white);
+  border-radius: 50%;
+  background-color: var(--light-red);
+  box-shadow: 0 0 1rem rgba(219, 50, 84, 0.8);
+  transform: translate(-50%, -50%);
+}
+
+.story-etiquette {
+  position: absolute;
+  left: 5.4rem;
+  right: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  line-height: 1.05;
   text-align: left;
+  transform: translateY(-50%);
 }
 
-.story-rang img {
-  width: 2.2rem;
-  height: auto;
-}
-
-.story-rang strong {
+.story-etiquette strong {
+  font-size: clamp(1.45rem, 3.4svh, 2rem);
   font-weight: bold;
   white-space: nowrap;
 }
 
-.story .rang-red { color: var(--light-red); }
-.story .rang-orange { color: var(--orange); }
-.story .rang-green { color: var(--light-green); }
+.story-etiquette span {
+  color: var(--grey);
+  font-size: clamp(0.95rem, 2svh, 1.15rem);
+}
 
-.story-etoile { color: var(--yellow); }
+.story-etiquette.is-moi {
+  right: auto;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--border-radius);
+  background-color: var(--red);
+  box-shadow: 0 0.3rem 1.2rem rgba(187, 32, 64, 0.55);
+}
 
-/* --- Écran 3 : les catégories ------------------------------------------- */
+.story-etiquette.is-moi strong {
+  color: var(--white);
+  font-size: clamp(1.7rem, 4svh, 2.4rem);
+}
+
+.story-etiquette.is-moi span {
+  color: #ffd6de;
+  font-weight: bold;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* --- Écran 3 : le classement -------------------------------------------- */
+
+.story-place {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 0.9;
+}
+
+.story-place strong {
+  color: var(--light-red);
+  font-size: clamp(3.6rem, 11svh, 7rem);
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 2.5rem rgba(219, 50, 84, 0.4);
+}
+
+.story-place span {
+  margin-top: 0.3rem;
+  font-size: clamp(1.25rem, 2.9svh, 1.65rem);
+  font-weight: bold;
+}
+
+.story-onglets {
+  display: flex;
+  gap: 0.4rem;
+  width: 100%;
+  margin: clamp(0.3rem, 1.5svh, 0.9rem) 0;
+}
+
+.story-onglet {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid #45414b;
+  border-radius: var(--border-radius);
+  background: none;
+  color: var(--grey);
+  font-family: 'Agdasima', sans-serif;
+  font-size: 1.05rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.story-onglet img {
+  width: 1.45rem;
+  height: auto;
+}
+
+.story-onglet.is-actif {
+  border-color: var(--white);
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--white);
+  font-weight: bold;
+}
+
+/* Cent joueurs, le joueur en jaune. Bornée par la hauteur sur petit écran. */
+.story-foule {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+  width: min(100%, 31svh);
+  margin: clamp(0.3rem, 1.2svh, 0.8rem) auto 0.3rem;
+}
+
+.story-foule i {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  animation: story-case 350ms cubic-bezier(0.86, 0, 0.07, 1) backwards;
+}
+
+.story-foule .is-devant { background-color: var(--red); }
+.story-foule .is-derriere { background-color: #24493c; }
+
+.story-foule .is-moi {
+  position: relative;
+  z-index: 1;
+  background-color: var(--yellow);
+  box-shadow: 0 0 0 2px var(--dark-grey), 0 0 0 4px var(--white), 0 0 1rem rgba(247, 201, 20, 0.8);
+}
+
+@keyframes story-case {
+  from { opacity: 0; transform: scale(0.3); }
+}
+
+.story-legende {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem 1rem;
+  color: var(--grey);
+  font-size: 0.95rem;
+}
+
+.story-legende span::before {
+  content: '';
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-right: 0.35rem;
+  border-radius: 2px;
+  vertical-align: -0.05rem;
+}
+
+.story-legende .l-devant::before { background-color: var(--red); }
+.story-legende .l-moi::before { background-color: var(--yellow); }
+.story-legende .l-derriere::before { background-color: #24493c; }
+
+/* --- Écran 4 : les catégories ------------------------------------------- */
 
 .story-axes {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--spacing) * 0.6);
+  gap: clamp(0.5rem, 1.6svh, 0.95rem);
   width: 100%;
-  margin: calc(var(--spacing) * 1.1) 0 calc(var(--spacing) * 0.2);
+  margin: clamp(0.6rem, 2.5svh, 1.5rem) 0 0;
   padding: 0;
   list-style: none;
 }
 
 .story-axes li {
-  display: grid;
-  grid-template-columns: 7.2rem 1fr 2rem;
-  align-items: center;
-  gap: calc(var(--spacing) * 0.6);
-  font-size: var(--font-size-s);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
   text-align: left;
 }
 
-.story-axes strong {
+.story-axe-tete {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: clamp(1.1rem, 2.5svh, 1.35rem);
+}
+
+.story-axe-tete strong {
   font-weight: bold;
-  text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
 .story-axe-piste {
   position: relative;
-  height: 0.6rem;
-  border-radius: 2px;
-  background-color: var(--blueish-grey);
+  height: 0.8rem;
+  border-radius: 1000px;
+  background-color: rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
 
@@ -863,7 +1140,7 @@ body:has(.main-container) {
   top: 0;
   bottom: 0;
   left: 0;
-  border-radius: 2px;
+  border-radius: 1000px;
   transform-origin: left;
   animation: story-barre 900ms cubic-bezier(0.86, 0, 0.07, 1);
 }
@@ -872,14 +1149,50 @@ body:has(.main-container) {
   from { transform: scaleX(0); }
 }
 
-/* --- Écran 4 : la réponse ----------------------------------------------- */
+/* --- Écran 5 : la réponse ----------------------------------------------- */
+
+.story-question {
+  max-width: 24rem;
+  color: var(--grey);
+  font-size: clamp(1rem, 2.3svh, 1.25rem);
+  line-height: 1.25;
+  text-wrap: balance;
+}
 
 .story-citation {
-  margin: calc(var(--spacing) * 0.4) 0 !important;
-  font-size: clamp(1.6rem, 8vw, 2.2rem);
+  margin: clamp(0.2rem, 1svh, 0.6rem) 0 !important;
+  font-size: clamp(1.8rem, 5svh, 2.9rem);
   font-style: italic;
-  line-height: 1.1;
+  font-weight: bold;
+  line-height: 1.05;
   text-wrap: balance;
+}
+
+/* Une réponse de trois lignes à la taille d'une réponse d'un mot pousserait
+   le coût hors de l'écran. */
+.story-citation.is-longue {
+  font-size: clamp(1.35rem, 3.6svh, 2rem);
+}
+
+.story-cout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 0.9;
+}
+
+.story-cout strong {
+  color: var(--light-red);
+  font-size: clamp(4rem, 12svh, 7rem);
+  font-weight: bold;
+}
+
+.story-cout span {
+  margin-top: 0.2rem;
+  font-size: clamp(1.15rem, 2.6svh, 1.45rem);
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 /*
@@ -891,19 +1204,19 @@ body:has(.main-container) {
 .story-ressource {
   width: 100%;
   box-sizing: border-box;
-  padding: calc(var(--spacing) * 0.85) var(--spacing);
+  padding: 1rem 1.1rem;
   border-left: 3px solid var(--orange);
   border-radius: var(--border-radius);
-  background-color: var(--blueish-grey);
-  font-size: var(--font-size-m);
+  background-color: rgba(43, 41, 48, 0.9);
+  font-size: clamp(1.15rem, 2.6svh, 1.4rem);
   line-height: 1.3;
   text-align: left;
 }
 
 .story-ressource-cat {
-  margin-bottom: calc(var(--spacing) * 0.3) !important;
+  margin-bottom: 0.35rem !important;
   color: var(--orange);
-  font-size: var(--font-size-s);
+  font-size: 1rem;
   font-weight: bold;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -911,7 +1224,7 @@ body:has(.main-container) {
 
 .story-ressource-lien {
   display: inline-block;
-  padding: calc(var(--spacing) * 0.6) 0 0;
+  padding: 0.7rem 0 0.1rem;
   color: var(--white);
   font-weight: bold;
   text-decoration: underline;
@@ -927,11 +1240,15 @@ body:has(.main-container) {
 }
 
 .story-lien {
-  padding: calc(var(--spacing) * 0.6) var(--spacing);
+  padding: 0.65rem 1rem;
+  border: none;
+  background: none;
   color: var(--white);
-  font-size: var(--font-size-s);
+  font-family: 'Agdasima', sans-serif;
+  font-size: 1.05rem;
   text-decoration: underline;
-  opacity: 0.75;
+  cursor: pointer;
+  opacity: 0.8;
 }
 
 .story-lien:hover { opacity: 1; }
@@ -946,54 +1263,86 @@ body:has(.main-container) {
 
 .stories-continuer {
   min-height: 44px;
-  padding: calc(var(--spacing) * 0.5) var(--spacing);
+  padding: 0.4rem 1rem;
   border: none;
   background: none;
-  color: var(--grey);
+  color: var(--white);
   font-family: 'Agdasima', sans-serif;
-  font-size: var(--font-size-s);
-  letter-spacing: 0.12em;
+  font-size: 1.05rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   cursor: pointer;
+  opacity: 0.7;
 }
 
-.stories-continuer:hover { color: var(--white); }
+.stories-continuer:hover { opacity: 1; }
 
 .stories-signature {
   margin: 0;
   color: var(--grey);
-  font-size: calc(var(--font-size-s) * 0.78);
-  letter-spacing: 0.12em;
-  opacity: 0.75;
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  opacity: 0.8;
+}
+
+/* --- Le bouton qui rouvre les stories, en tête du détail ---------------- */
+
+.stories-rouvrir {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 3.25rem;
+  margin-top: var(--spacing);
+  border: none;
+  border-radius: var(--border-radius);
+  background-color: var(--red);
+  color: var(--white);
+  font-family: 'Agdasima', sans-serif;
+  font-size: var(--font-size-l);
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.stories-rouvrir span {
+  font-size: 0.8em;
 }
 
 /*
- * Les petits écrans — 568 à 700 px de haut. Le classement, l'écran le plus
- * chargé, débordait de cinquante pixels et se mettait à défiler à l'intérieur
- * de la story : précisément ce que le format doit éviter. Tout se resserre
- * d'un cran, et la seule ligne retirée est une redite.
+ * Les petits écrans — moins de 680 px de haut. L'écran du classement porte
+ * une place, des onglets, une phrase et cent cases : tout se resserre d'un
+ * cran plutôt que de défiler à l'intérieur de la story.
  */
-@media (max-height: 700px) {
-  .story { gap: calc(var(--spacing) * 0.25); }
-  .story-emoji { font-size: 3.5rem; }
-  .story-geant { font-size: clamp(3.5rem, 18vw, 5rem); }
-  .story-rangs { gap: calc(var(--spacing) * 0.35); margin-top: calc(var(--spacing) * 0.6); }
-  .story-rang { padding: calc(var(--spacing) * 0.3) calc(var(--spacing) * 0.7); }
-  .story-rang img { width: 1.8rem; }
-  .story-encart { padding: calc(var(--spacing) * 0.5) calc(var(--spacing) * 0.75); }
-  .story-jauge { margin-top: var(--spacing); }
-  .story-score { margin-top: var(--spacing) !important; }
-  .story-citation { font-size: clamp(1.35rem, 7vw, 1.8rem); }
-  .stories-segment { height: 1.6rem; }
-  /* La phrase géante dit déjà ce que « Top » veut dire. */
-  .story-explication { display: none; }
+/* Sous 760 px de haut, le classement perd sa note : « 1er » se lit seul. */
+@media (max-height: 760px) {
+  .story-note-place { display: none; }
+  .story-phrase { font-size: clamp(1.2rem, 3svh, 1.6rem); }
+  .story-onglets { margin: 0.25rem 0; }
+}
+
+@media (max-height: 680px) {
+  .stories-segment { height: 1.4rem; }
+  .stories-logo { height: 1.6rem; }
+  .story-emoji { font-size: 3rem; }
+  .story-jauge { margin-bottom: 1.4rem; }
+  .story-echelle { min-height: 11rem; }
+  .story-legende { font-size: 0.85rem; }
+  .story { gap: 0.3rem; padding: 0.25rem 0; }
+  .story-place span { font-size: 1.15rem; }
   .story .share-btn { margin-top: calc(var(--spacing) * 0.5); }
+}
+
+@media (max-height: 600px) {
+  .story-foule { width: min(100%, 27svh); }
+  .story-cout strong { font-size: 3.4rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .vient-de-droite,
   .vient-de-gauche,
-  .story-axe-barre { animation: none; }
+  .story-axe-barre,
+  .story-foule i { animation: none; }
   .story-jauge-curseur { transition-duration: 1ms; }
 }
 
