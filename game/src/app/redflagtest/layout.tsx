@@ -15,7 +15,22 @@ import type { Metadata } from 'next';
  * vivent dans ce layout, la feuille ne s'applique qu'aux routes
  * `/redflagtest` — ses règles `:root` et `html body` n'atteignent jamais le
  * reste du site.
+ *
+ * LEUR ADRESSE PORTE LA VERSION DU DÉPLOIEMENT
+ *   Contrairement aux fichiers de Next, ces feuilles n'ont pas d'empreinte dans
+ *   leur nom, et le service worker sert ce genre de fichier depuis son cache
+ *   avant de le rafraîchir (`public/sw.js`). Après la mise en ligne des
+ *   stories, un navigateur qui avait déjà visité le test recevait le nouveau
+ *   HTML avec l'ANCIENNE `adapter.css` : les stories s'affichaient sans mise en
+ *   forme, sous la page, et leur grand logo passait pour une seconde barre du
+ *   site. L'adresse porte désormais l'empreinte de leur contenu : elle change
+ *   dès qu'une feuille change, et un cache périmé ne peut plus la servir.
  */
+
+/** L'empreinte du contenu des trois feuilles, calculée au build (`next.config.ts`). */
+const VERSION_FEUILLES = process.env.RFT_VERSION_FEUILLES ?? 'dev';
+
+const feuille = (chemin: string) => `${chemin}?v=${VERSION_FEUILLES}`;
 
 export const metadata: Metadata = {
   // « red flag test » est la requête visée : en tête, tel qu'on le tape.
@@ -47,15 +62,14 @@ export const metadata: Metadata = {
 export default function RedflagtestLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      {/* eslint-disable @next/next/no-css-tags -- délibéré : un import ferait
+      {/* Des <link> et non des imports, délibérément : un import ferait
           réécrire les URL d'assets par Next, or tout l'intérêt est que la
           feuille de référence reste identique à l'octet près. */}
-      <link rel="stylesheet" href="/rft/css/reset.css" />
-      <link rel="stylesheet" href="/rft/css/flac.css" />
+      <link rel="stylesheet" href={feuille('/rft/css/reset.css')} />
+      <link rel="stylesheet" href={feuille('/rft/css/flac.css')} />
       {/* La nôtre : elle répare ce que l'application hôte casse. Voir l'en-tête
           du fichier. */}
-      <link rel="stylesheet" href="/rft/adapter.css" />
-      {/* eslint-enable @next/next/no-css-tags */}
+      <link rel="stylesheet" href={feuille('/rft/adapter.css')} />
       {children}
     </>
   );
