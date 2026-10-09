@@ -301,7 +301,12 @@ function cohortes(r: Resultat): Cohorte[] {
   const { tous, sexe, age } = r.classements;
   const liste: Cohorte[] = [];
   if (tous) liste.push({ cle: 'tous', nom: 'joueurs', court: 'Tous', c: tous });
-  if (sexe) liste.push({ cle: 'sexe', nom: sexe.legende, court: majuscule(sexe.legende), c: sexe });
+  // « Sur 100 autre » ne se lit pas non plus : la cohorte « autre » garde son
+  // nom, entre guillemets, derrière « joueurs ».
+  if (sexe) {
+    const nom = sexe.legende === 'autre' ? 'joueurs « autre »' : sexe.legende;
+    liste.push({ cle: 'sexe', nom, court: majuscule(sexe.legende), c: sexe });
+  }
   // « Sur 100 23-26 ans » ne se lit pas : la tranche d'âge a besoin d'un nom.
   if (age) liste.push({ cle: 'age', nom: `joueurs de ${age.legende}`, court: majuscule(age.legende), c: age });
   return liste;

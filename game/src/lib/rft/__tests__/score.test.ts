@@ -21,6 +21,8 @@ import {
   ARCHETYPE_MINIMUM,
   POINTS_DECISIFS,
   COMPARAISON_MIN,
+  legendeCohorte,
+  legendeSexeCourte,
   POINT_NOIR_ECART,
   POINT_NOIR_MINIMUM,
   type CohorteBrute,
@@ -165,6 +167,16 @@ describe('calculerAxes', () => {
     // Ne peut pas arriver par le jeu, mais une saisie admin incohérente le peut.
     const axes = calculerAxes([choix(50, ['controle'], 'q1')], maxima, tags);
     expect(axes[0].valeur).toBe(100);
+  });
+});
+
+describe('les cohortes en toutes lettres', () => {
+  // « des joueurs » annonçait tout le monde pour ne mesurer que la cohorte
+  // « autre ».
+  it('garde son nom à la cohorte « autre »', () => {
+    expect(legendeSexeCourte('autre')).toBe('autre');
+    expect(legendeCohorte('sexe', { sexe: 'autre', age: null })).toBe('des joueurs « autre »');
+    expect(legendeCohorte('sexe_age', { sexe: 'autre', age: '19-22' })).toBe('des joueurs « autre » de 19-22 ans');
   });
 });
 

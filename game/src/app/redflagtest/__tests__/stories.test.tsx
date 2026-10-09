@@ -147,3 +147,22 @@ describe('placerEtiquettes', () => {
     expect(pos[1] - pos[0]).toBeCloseTo(10);
   });
 });
+
+describe('la cohorte « autre »', () => {
+  it('garde son nom sur l’onglet et dans les phrases', () => {
+    render(
+      <Stories
+        onFermer={() => {}}
+        resultat={resultat({
+          classements: { tous: rang(47, 512, 'tous', 42), sexe: rang(3, 30, 'autre', 39), age: null },
+        })}
+      />,
+    );
+    aller(/Ton classement/);
+    fireEvent.click(screen.getByRole('tab', { name: /Autre/ }));
+    expect(screen.getByText(/sur 30 joueurs « autre »/)).toBeDefined();
+
+    aller(/Toi face aux autres/);
+    expect(screen.getByText('Moyenne des joueurs « autre » : 39 %')).toBeDefined();
+  });
+});
