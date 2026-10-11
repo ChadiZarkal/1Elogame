@@ -4,6 +4,7 @@ import { judgeWithGemini } from '@/lib/gemini';
 import { sanitizeText } from '@/lib/sanitize';
 import { saveSubmission } from '@/lib/repositories';
 import { MAX_FLAGORNOT_TEXT_LENGTH } from '@/config/constants';
+import { consommerQuota } from '@/lib/oracleQuota';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -208,11 +209,26 @@ export const POST = withApiHandler(async (request: NextRequest) => {
     return apiError('VALIDATION_ERROR', `Texte trop long (max ${MAX_FLAGORNOT_TEXT_LENGTH} caracteres).`, 400);
   }
 
-  // Try providers in order: Gemini → OpenAI → local fallback
-  const providers: Array<{ name: string; fn: () => Promise<JudgeResult> }> = [
-    { name: 'gemini', fn: () => tryGemini(text) },
-    { name: 'openai', fn: () => tryOpenAI(text) },
-  ];
+  // Les quotas, AVANT tout appel payant (voir `oracleQuota`). Une demande
+  // invalide a déjà été écartée au-dessus : elle ne coûtait rien et ne
+  // consomme pas de quota.
+  const decision = await consommerQuota(request);
+  if (decision === 'refuse') {
+    return apiError(
+      'RATE_LIMITED',
+      "Doucement : l'Oracle a besoin de souffler. Réessaie dans une minute.",
+      429,
+    );
+  }
+
+  // Try providers in order: Gemini → OpenAI → local fallback. Plafond du jour
+  // atteint : directement le juge local, qui ne coûte rien.
+  const providers: Array<{ name: string; fn: () => Promise<JudgeResult> }> = decision === 'ia'
+    ? [
+        { name: 'gemini', fn: () => tryGemini(text) },
+        { name: 'openai', fn: () => tryOpenAI(text) },
+      ]
+    : [];
 
   for (const { name, fn } of providers) {
     try {
@@ -246,4 +262,6 @@ export const POST = withApiHandler(async (request: NextRequest) => {
           ...(persistence.persistenceWarning ? { persistenceWarning: persistence.persistenceWarning } : {}),
         }),
   });
-}, { rateLimit: true });
+  // Premier filet, en mémoire et par instance : il écarte une rafale avant
+  // même d'interroger la base.
+}, { rateLimit: 'ai' });

@@ -201,7 +201,14 @@ export function useFlagOrNot() {
         body: JSON.stringify({ text, private: privateMode, gender, age }),
         signal: controller.signal,
       });
-      if (!res.ok) throw new Error('API error');
+      if (!res.ok) {
+        // Trop de demandes : le serveur dit pourquoi, et c'est ce message-là
+        // qu'il faut afficher, pas « injoignable ».
+        const motif = res.status === 429
+          ? ((await res.json().catch(() => null)) as { error?: { message?: string } } | null)?.error?.message
+          : undefined;
+        throw new Error(motif ?? 'API error');
+      }
       const data: JudgmentResult = await res.json();
 
       await ensureMinDelay();
@@ -217,14 +224,17 @@ export function useFlagOrNot() {
       }
       fetchCommunitySubmissions();
       fetchGlobalCounts();
-    } catch {
+    } catch (erreur) {
       /* Le repli tirait un verdict au hasard et le présentait comme un vrai
        * jugement — enregistré dans l'historique, partageable, indiscernable.
        * Il est désormais marqué comme dégradé pour que l'écran de révélation
        * le dise et propose de réessayer, et il n'entre plus dans l'historique. */
       const fallback: JudgmentResult = {
         verdict: 'red',
-        justification: "L'Oracle est injoignable. Rien n'a été analysé — réessaie dans un instant.",
+        justification:
+          erreur instanceof Error && erreur.message !== 'API error' && erreur.name !== 'AbortError'
+            ? erreur.message
+            : "L'Oracle est injoignable. Rien n'a été analysé — réessaie dans un instant.",
         degraded: true,
       };
       await ensureMinDelay();
