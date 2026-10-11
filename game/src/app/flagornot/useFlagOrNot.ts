@@ -5,6 +5,9 @@ import { trackAIRequest } from '@/lib/analytics';
 import type { GamePhase, JudgmentResult, HistoryItem, CommunitySubmission, FlagOrNotGender, FlagOrNotAge } from './constants';
 import { LOADING_PHRASES, PLACEHOLDERS, MIN_LOADING_MS } from './constants';
 
+/** Le serveur a refusé la demande (trop de demandes) : son message s'affiche tel quel. */
+class OracleRefus extends Error {}
+
 /**
  * Custom hook encapsulating all Flag or Not game logic.
  * Keeps the page component purely presentational.
@@ -204,10 +207,11 @@ export function useFlagOrNot() {
       if (!res.ok) {
         // Trop de demandes : le serveur dit pourquoi, et c'est ce message-là
         // qu'il faut afficher, pas « injoignable ».
-        const motif = res.status === 429
-          ? ((await res.json().catch(() => null)) as { error?: { message?: string } } | null)?.error?.message
-          : undefined;
-        throw new Error(motif ?? 'API error');
+        if (res.status === 429) {
+          const json = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+          throw new OracleRefus(json?.error?.message ?? "Doucement : l'Oracle a besoin de souffler. Réessaie dans une minute.");
+        }
+        throw new Error('API error');
       }
       const data: JudgmentResult = await res.json();
 
@@ -232,7 +236,7 @@ export function useFlagOrNot() {
       const fallback: JudgmentResult = {
         verdict: 'red',
         justification:
-          erreur instanceof Error && erreur.message !== 'API error' && erreur.name !== 'AbortError'
+          erreur instanceof OracleRefus
             ? erreur.message
             : "L'Oracle est injoignable. Rien n'a été analysé — réessaie dans un instant.",
         degraded: true,

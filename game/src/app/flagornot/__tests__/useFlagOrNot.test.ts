@@ -185,6 +185,36 @@ describe('useFlagOrNot', () => {
     expect(result.current.result).toBeNull();
   });
 
+  // Trop de demandes : l'écran dit pourquoi, au lieu de « injoignable ».
+  it('affiche le message du serveur quand il refuse par excès de demandes', async () => {
+    global.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/flagornot/judge')) {
+        return Promise.resolve({
+          ok: false,
+          status: 429,
+          json: () => Promise.resolve({ success: false, error: { message: "Doucement : l'Oracle a besoin de souffler." } }),
+        }) as Promise<Response>;
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ success: true, data: { submissions: [] } }),
+      }) as Promise<Response>;
+    }) as unknown as typeof fetch;
+
+    const { result } = renderHook(() => useFlagOrNot());
+    act(() => { result.current.setInput('test'); });
+
+    await act(async () => {
+      const p = result.current.handleSubmit();
+      vi.advanceTimersByTime(1000);
+      await p;
+    });
+
+    expect(result.current.result!.degraded).toBe(true);
+    expect(result.current.result!.justification).toContain('souffler');
+  });
+
   it('utilise un fallback en cas d\'erreur API', async () => {
     global.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = String(input);
