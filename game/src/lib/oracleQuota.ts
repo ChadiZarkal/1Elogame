@@ -39,7 +39,7 @@ function entier(nom: string, defaut: number): number {
  */
 export function limites() {
   return {
-    parMinute: entier('ORACLE_LIMITE_PAR_MINUTE', 5),
+    parMinute: entier('ORACLE_LIMITE_PAR_MINUTE', 12),
     parJour: entier('ORACLE_LIMITE_PAR_JOUR', 40),
     plafondIA: entier('ORACLE_PLAFOND_IA_JOUR', 500),
   };

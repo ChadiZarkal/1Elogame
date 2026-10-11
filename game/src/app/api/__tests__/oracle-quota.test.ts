@@ -49,16 +49,16 @@ describe('Oracle — quotas en mémoire (mode démo, ou base injoignable)', () =
     vi.unstubAllEnvs();
   });
 
-  it('refuse la sixième demande d’une même adresse dans la minute', async () => {
-    for (let i = 0; i < 5; i++) expect((await juger()).status).toBe(200);
+  it('refuse la treizième demande d’une même adresse dans la minute', async () => {
+    for (let i = 0; i < 12; i++) expect((await juger()).status).toBe(200);
     const refus = await juger();
     expect(refus.status).toBe(429);
     expect(refus.json.error.message).toMatch(/souffler/);
-    expect(judgeWithGemini).toHaveBeenCalledTimes(5);
+    expect(judgeWithGemini).toHaveBeenCalledTimes(12);
   });
 
   it('ne pénalise pas une autre adresse', async () => {
-    for (let i = 0; i < 5; i++) await juger('198.51.100.1');
+    for (let i = 0; i < 12; i++) await juger('198.51.100.1');
     expect((await juger('198.51.100.2')).status).toBe(200);
   });
 
@@ -120,7 +120,7 @@ describe('Oracle — décision rendue par la base', () => {
   it('retombe sur la mémoire quand la base échoue, sans s’ouvrir', async () => {
     rpc.mockResolvedValue({ data: null, error: { message: 'function does not exist' } });
     const erreurs = vi.spyOn(console, 'error').mockImplementation(() => {});
-    for (let i = 0; i < 5; i++) expect((await juger()).status).toBe(200);
+    for (let i = 0; i < 12; i++) expect((await juger()).status).toBe(200);
     expect((await juger()).status).toBe(429);
     expect(erreurs).toHaveBeenCalled();
     erreurs.mockRestore();
