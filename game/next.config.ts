@@ -1,6 +1,33 @@
 import type { NextConfig } from "next";
+import { createHash } from "crypto";
+import { readFileSync } from "fs";
+import path from "path";
+
+/*
+ * L'empreinte des trois feuilles du Red Flag Test, calculée au build.
+ *
+ * Elles sont servies depuis `public/rft/` sous une adresse fixe, et le service
+ * worker sert ce genre de fichier depuis son cache avant de le rafraîchir : un
+ * navigateur qui avait déjà visité le test recevait le nouveau HTML avec
+ * l'ancienne feuille. Le layout du test ajoute cette empreinte à leur adresse
+ * (`?v=…`) : elle change quand une feuille change, et seulement alors.
+ *
+ * Calculée ici plutôt qu'au rendu : les fonctions serverless de Vercel n'ont
+ * pas `public/` dans leur système de fichiers, le build si.
+ */
+const empreinteFeuillesRft = (() => {
+  const hash = createHash("sha256");
+  for (const fichier of ["rft/css/reset.css", "rft/css/flac.css", "rft/adapter.css"]) {
+    hash.update(readFileSync(path.join(process.cwd(), "public", fichier)));
+  }
+  return hash.digest("hex").slice(0, 12);
+})();
 
 const nextConfig: NextConfig = {
+  env: {
+    RFT_VERSION_FEUILLES: empreinteFeuillesRft,
+  },
+
   // Performance
   compress: true,
   poweredByHeader: false,
