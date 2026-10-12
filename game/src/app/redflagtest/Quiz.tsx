@@ -326,7 +326,7 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
   if (phase === 'pari' && quiz) {
     return (
       <>
-        <Pari verdicts={quiz.verdicts} onParier={parier} onPasser={() => parier(null)} />
+        <Pari onParier={parier} onPasser={() => parier(null)} />
         {presentation}
       </>
     );
