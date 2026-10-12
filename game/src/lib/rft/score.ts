@@ -17,9 +17,7 @@
  *   prendre. Les points bruts restent transportés à côté.
  */
 
-import type {
-  Archetype, Axe, Classement, CouleurDrapeau, Indice, Ressource, Tag, Verdict,
-} from './types';
+import type { Archetype, Axe, Classement, CouleurDrapeau, Indice, Ressource, Tag, Verdict, PariMoyen, ParisMoyens } from './types';
 
 /** Une réponse choisie, telle que le serveur la relit en base. */
 export interface ChoixResolu {
@@ -574,4 +572,33 @@ function borne(valeur: number, min: number, max: number): number {
 export function part(numerateur: number, denominateur: number): number {
   if (denominateur <= 0) return 0;
   return Math.round((numerateur / denominateur) * 100);
+}
+
+// ---------------------------------------------------------------------------
+// Les paris moyens
+// ---------------------------------------------------------------------------
+
+/** Une ligne de `rft_paris_moyens`, telle que la base la rend. */
+export interface PariBrut {
+  sexe: string;
+  effectif: number;
+  pariMoyen: number;
+  scoreMoyen: number;
+}
+
+/**
+ * Les paris moyens des hommes et des femmes.
+ *
+ * Un groupe de moins de `COMPARAISON_MIN` parieurs n'a pas de moyenne : trois
+ * paris ne disent rien de « ce que parient les femmes ».
+ */
+export function parisMoyens(lignes: PariBrut[]): ParisMoyens | null {
+  const pour = (sexe: string): PariMoyen | null => {
+    const l = lignes.find((x) => x.sexe === sexe);
+    if (!l || l.effectif < COMPARAISON_MIN) return null;
+    return { effectif: l.effectif, pari: Math.round(l.pariMoyen), score: Math.round(l.scoreMoyen) };
+  };
+  const homme = pour('homme');
+  const femme = pour('femme');
+  return homme || femme ? { homme, femme } : null;
 }

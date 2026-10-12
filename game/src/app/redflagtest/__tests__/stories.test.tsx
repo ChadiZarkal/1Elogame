@@ -197,3 +197,19 @@ describe('le pari', () => {
     expect(commentairePari(40, 52)).toMatch(/Plus green flag/);
   });
 });
+
+describe('les paris des autres', () => {
+  it('s’affichent sur l’écran du pari', () => {
+    render(
+      <Stories
+        onFermer={() => {}}
+        pari={30}
+        resultat={resultat({ paris: { homme: { effectif: 80, pari: 41, score: 48 }, femme: { effectif: 70, pari: 33, score: 39 } } })}
+      />,
+    );
+    aller(/Ton pari/);
+    expect(screen.getByText('Ce que les autres parient')).toBeDefined();
+    expect(screen.getByText('41 %')).toBeDefined();
+    expect(screen.getByText('et finissent à 39 %')).toBeDefined();
+  });
+});

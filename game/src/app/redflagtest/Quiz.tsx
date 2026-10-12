@@ -216,6 +216,7 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
             dureeMs: depuis ? Date.now() - depuis : null,
             // Relu à l'envoi et non au début : le mode a pu changer en route.
             test: modeTestActif(),
+            pari,
           }),
         });
         const json = await reponse.json();
@@ -231,7 +232,7 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
         setPhase('erreur');
       }
     },
-    [],
+    [pari],
   );
 
   const repondre = useCallback(

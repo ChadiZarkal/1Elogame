@@ -29,6 +29,8 @@ const schema = z.object({
    * fausserait rien ; il se priverait juste d'être compté.
    */
   test: z.boolean().default(false),
+  /** Le score deviné avant la partie (voir `Pari`) ; `null` si le joueur a passé. */
+  pari: z.number().int().min(0).max(120).nullable().default(null),
 });
 
 export const POST = withApiHandler(async (req: NextRequest) => {

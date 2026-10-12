@@ -35,6 +35,19 @@ describe('POST /api/redflagtest/submit', () => {
     expect(enregistrerPartie).toHaveBeenCalledWith(expect.objectContaining({ test: true }));
   });
 
+  it('transmet le pari à l’enregistrement', async () => {
+    const { POST } = await import('@/app/api/redflagtest/submit/route');
+    await POST(requete({ choix, sexe: 'femme', age: '19-22', pari: 42 }));
+    expect(enregistrerPartie).toHaveBeenCalledWith(expect.objectContaining({ pari: 42 }));
+  });
+
+  it('refuse un pari hors de l’échelle', async () => {
+    const { POST } = await import('@/app/api/redflagtest/submit/route');
+    const reponse = await POST(requete({ choix, sexe: 'femme', age: '19-22', pari: 500 }));
+    expect(reponse.status).toBe(400);
+    expect(enregistrerPartie).not.toHaveBeenCalled();
+  });
+
   it('compte une partie quand le client ne dit rien', async () => {
     const { POST } = await import('@/app/api/redflagtest/submit/route');
     await POST(requete({ choix, sexe: 'homme', age: '23-26' }));

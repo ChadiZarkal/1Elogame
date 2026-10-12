@@ -26,6 +26,7 @@ import 'server-only';
 import { isMockMode } from '@/lib/apiHelpers';
 import {
   ajouterPartie,
+  parisMoyens,
   calculerAxes,
   calculerScore,
   classement,
@@ -45,18 +46,9 @@ import {
   type CohorteBrute,
   type MaximumQuestion,
   type NomCohorte,
+  type PariBrut,
 } from './score';
-import type {
-  Archetype,
-  Highlight,
-  QuestionAdmin,
-  QuizPublic,
-  Resultat,
-  Soumission,
-  StatQuestion,
-  Tag,
-  Verdict,
-} from './types';
+import type { Archetype, Highlight, QuestionAdmin, QuizPublic, Resultat, Soumission, StatQuestion, Tag, Verdict, ParisMoyens } from './types';
 import * as fictif from './mock';
 
 // ---------------------------------------------------------------------------
@@ -608,18 +600,25 @@ export async function enregistrerPartie(s: Soumission): Promise<Resultat> {
   // La partie de test de l'administrateur : rien n'est écrit, et elle est
   // ajoutée aux cohortes pour être classée comme si elle l'avait été.
   if (s.test) {
-    const { brutes, parts } = await agreger(score, s.sexe, s.age, choix);
-    return composer(ctx, choix, ajouterPartie(brutes, score, profil), parts, null, profil);
+    const { brutes, parts, paris } = await agreger(score, s.sexe, s.age, choix);
+    return { ...composer(ctx, choix, ajouterPartie(brutes, score, profil), parts, null, profil), paris };
   }
 
   const supabase = await client();
   const code = codePartage();
 
-  const { data: run, error: erreurRun } = await supabase
+  const ligne = { score, sex: s.sexe, age: s.age, duration_ms: s.dureeMs, share_code: code };
+  let { data: run, error: erreurRun } = await supabase
     .from('rft_runs')
-    .insert({ score, sex: s.sexe, age: s.age, duration_ms: s.dureeMs, share_code: code })
+    .insert({ ...ligne, pari: s.pari ?? null })
     .select('id')
     .single();
+  // Sans la colonne `pari` (migration 029 pas encore jouée), la partie compte
+  // quand même : on l'enregistre sans son pari plutôt que de la perdre.
+  if (erreurRun && /pari/.test(erreurRun.message)) {
+    console.error('[RFT] Colonne pari absente, partie enregistrée sans pari :', erreurRun.message);
+    ({ data: run, error: erreurRun } = await supabase.from('rft_runs').insert(ligne).select('id').single());
+  }
   verifier(erreurRun, 'Enregistrement de la partie');
   const runId = (run as { id: string }).id;
 
@@ -632,8 +631,8 @@ export async function enregistrerPartie(s: Soumission): Promise<Resultat> {
     if (error) console.error('[RFT] Réponses de partie non enregistrées :', error.message);
   }
 
-  const { brutes, parts } = await agreger(score, s.sexe, s.age, choix);
-  return composer(ctx, choix, brutes, parts, code, profil);
+  const { brutes, parts, paris } = await agreger(score, s.sexe, s.age, choix);
+  return { ...composer(ctx, choix, brutes, parts, code, profil), paris };
 }
 
 /**
@@ -675,13 +674,13 @@ export async function lireResultatParCode(code: string): Promise<Resultat | null
 
   // Le score relu, et non recalculé : une question dont le barème a changé
   // depuis ne doit pas réécrire après coup le résultat de quelqu'un.
-  const { brutes, parts } = await agreger(partie.score, partie.sex, partie.age, choix);
+  const { brutes, parts, paris } = await agreger(partie.score, partie.sex, partie.age, choix);
   const resultat = composer(ctx, choix, brutes, parts, code, {
     sexe: partie.sex,
     age: partie.age,
   });
 
-  return { ...resultat, score: partie.score };
+  return { ...resultat, score: partie.score, paris };
 }
 
 /** Les deux agrégats dont dépend le récap : cohortes et parts de réponses. */
@@ -690,17 +689,23 @@ async function agreger(
   sexe: string | null,
   age: string | null,
   choix: ChoixResolu[],
-): Promise<{ brutes: CohorteBrute[]; parts: Map<string, number> }> {
+): Promise<{ brutes: CohorteBrute[]; parts: Map<string, number>; paris: ParisMoyens | null }> {
   const supabase = await client();
 
-  const [cohortes, parts] = await Promise.all([
+  const [cohortes, parts, paris] = await Promise.all([
     supabase.rpc('rft_cohortes', { p_score: score, p_sex: sexe, p_age: age }),
     choix.length > 0
       ? supabase.rpc('rft_parts_reponses', { p_answer_ids: choix.map((c) => c.answerId) })
       : Promise.resolve({ data: [], error: null }),
+    supabase.rpc('rft_paris_moyens', {}),
   ]);
   verifier(cohortes.error, 'Lecture des classements');
   verifier(parts.error, 'Lecture des parts de réponses');
+  // Les paris moyens sont un à-côté : leur absence (migration 029 pas encore
+  // jouée, panne passagère) ne doit pas priver le joueur de son résultat.
+  if (paris.error) console.error('[RFT] Paris moyens indisponibles :', paris.error.message);
+
+  type LignePari = { sexe: string; effectif: number; pari_moyen: string | number; score_moyen: string | number };
 
   type LigneCohorte = {
     cohorte: NomCohorte;
@@ -725,6 +730,14 @@ async function agreger(
         part(Number(p.choix), Number(p.total_question)),
       ]),
     ),
+    paris: paris.error
+      ? null
+      : parisMoyens(((paris.data as LignePari[] | null) ?? []).map((l): PariBrut => ({
+          sexe: l.sexe,
+          effectif: Number(l.effectif),
+          pariMoyen: Number(l.pari_moyen),
+          scoreMoyen: Number(l.score_moyen),
+        }))),
   };
 }
 

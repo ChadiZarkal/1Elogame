@@ -1402,6 +1402,11 @@ body:has(.main-container) {
 }
 
 @media (max-height: 600px) {
+  /* L'écran du pari, avec les paris des autres, est le plus long. */
+  [data-ecran="pari"] .story-geant { font-size: 3.6rem; }
+  .story-duel { margin: 1.9rem 0; }
+  .story-paris { padding: 0.5rem 0.75rem; }
+  .story-paris .paris-ligne { margin-top: 0.2rem !important; }
   .story-foule { width: min(100%, 27svh); }
   .story-cout strong { font-size: 3.4rem; }
 }
@@ -1753,4 +1758,58 @@ body:has(.main-container) {
 
 @media (prefers-reduced-motion: reduce) {
   .pari-drapeau { animation: none; }
+}
+
+/* ---------------------------------------------------------------------------
+ * Ce que les autres parient (voir `ParisDesAutres` dans `Stories.tsx`) : dans
+ * la story « Ton pari », et dans le détail sous les stories.
+ * ------------------------------------------------------------------------- */
+
+.paris-ligne {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "nom pari" "fin fin";
+  align-items: baseline;
+  column-gap: 0.6rem;
+  margin: 0.45rem 0 0 !important;
+}
+
+.paris-ligne span { grid-area: nom; }
+
+.paris-ligne strong {
+  grid-area: pari;
+  color: var(--yellow);
+  font-size: 1.35em;
+  font-weight: bold;
+}
+
+.paris-ligne em {
+  grid-area: fin;
+  color: var(--grey);
+  font-size: 0.9em;
+  font-style: normal;
+}
+
+.story-paris {
+  border-left-color: var(--yellow);
+}
+
+.detail-paris {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: var(--spacing);
+  padding: calc(var(--spacing) * 0.85) var(--spacing);
+  border-left: 3px solid var(--yellow);
+  border-radius: var(--border-radius);
+  background-color: var(--blueish-grey);
+  text-align: left;
+}
+
+.detail-paris .story-encart-titre {
+  margin: 0;
+  color: var(--grey);
+  font-size: calc(var(--font-size-s) * 0.85);
+  font-weight: bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }

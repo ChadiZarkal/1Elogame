@@ -18,7 +18,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { Resultat } from '@/lib/rft/types';
-import { Stories } from './Stories';
+import { ParisDesAutres, Stories } from './Stories';
 
 /*
  * LE RÉCAP N'A PAS BESOIN DU PROFIL DU JOUEUR.
@@ -111,6 +111,10 @@ export function Recap({
           </p>
         </section>
       )}
+
+      {/* Les paris moyens, ici aussi : celui qui a passé son pari, ou qui
+          regarde le résultat d'un autre, n'a pas l'écran « Ton pari ». */}
+      {resultat.paris && <ParisDesAutres paris={resultat.paris} className="detail-paris" />}
 
       {/* Les ressources ont leur écran dans les stories. Elles sont redites ici
           parce que celui qui fait défiler la page sans taper ne doit pas pouvoir

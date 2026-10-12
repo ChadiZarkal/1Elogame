@@ -373,6 +373,12 @@ function composer(
       .sort((a, b) => a.part - b.part)
       .slice(0, 3),
     participants: population.length,
+    // Des moyennes inventées mais plausibles : en local, aucune partie n'est
+    // enregistrée, et l'écran des paris doit pouvoir s'éprouver.
+    paris: {
+      homme: { effectif: 24, pari: 41, score: 48 },
+      femme: { effectif: 21, pari: 33, score: 39 },
+    },
     codePartage: code,
   };
 }

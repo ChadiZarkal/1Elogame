@@ -142,6 +142,8 @@ export interface Soumission {
    * ni dans les statistiques publiques, et n'a pas de lien de partage.
    */
   test?: boolean;
+  /** Le score deviné avant la partie (0 à 120), ou `null` si le joueur a passé. */
+  pari?: number | null;
 }
 
 /**
@@ -211,6 +213,21 @@ export interface Highlight {
   part: number;
 }
 
+/** Ce que les joueurs d'un sexe ont parié, en moyenne, et où ils ont fini. */
+export interface PariMoyen {
+  /** Nombre de parties avec un pari. */
+  effectif: number;
+  /** Pari moyen, arrondi. */
+  pari: number;
+  /** Score moyen réellement obtenu par ces mêmes joueurs, arrondi. */
+  score: number;
+}
+
+export interface ParisMoyens {
+  homme: PariMoyen | null;
+  femme: PariMoyen | null;
+}
+
 export interface Resultat {
   /** Somme des points. Peut dépasser 100 — c'est voulu. */
   score: number;
@@ -256,6 +273,12 @@ export interface Resultat {
   participants: number;
   /** L'adresse publique de cette partie, pour la partager. */
   codePartage: string | null;
+  /**
+   * Ce que les hommes et les femmes parient en moyenne avant de jouer. `null`
+   * quand la statistique n'est pas disponible ; un sexe trop peu représenté
+   * est `null` à son tour, plutôt qu'une moyenne de trois joueurs.
+   */
+  paris?: ParisMoyens | null;
 }
 
 // ---------------------------------------------------------------------------

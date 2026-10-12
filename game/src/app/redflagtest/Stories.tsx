@@ -40,7 +40,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import type { Axe, Classement, Resultat } from '@/lib/rft/types';
+import type { Axe, Classement, ParisMoyens, Resultat } from '@/lib/rft/types';
 import { PartageBar } from './PartageBar';
 
 /**
@@ -325,7 +325,7 @@ function construireEcrans(
   // Juste après le verdict : c'est la première question qu'on se pose en
   // découvrant son score quand on avait parié.
   if (actions.pari !== null) {
-    ecrans.push({ cle: 'pari', titre: 'Ton pari', contenu: <EcranPari score={r.score} pari={actions.pari} /> });
+    ecrans.push({ cle: 'pari', titre: 'Ton pari', contenu: <EcranPari score={r.score} pari={actions.pari} paris={r.paris ?? null} /> });
   }
 
   const groupes = cohortes(r);
@@ -419,7 +419,7 @@ export function commentairePari(score: number, pari: number): string {
  * Leurs étiquettes passent l'une au-dessus, l'autre en dessous de la piste,
  * pour ne jamais se chevaucher même quand les deux valeurs se touchent.
  */
-function EcranPari({ score, pari }: { score: number; pari: number }) {
+function EcranPari({ score, pari, paris }: { score: number; pari: number; paris: ParisMoyens | null }) {
   const ecart = score - pari;
   const reussi = Math.abs(ecart) <= PARI_REUSSI;
   const plafond = Math.max(100, score, pari);
@@ -451,7 +451,35 @@ function EcranPari({ score, pari }: { score: number; pari: number }) {
       </div>
 
       <p className="story-texte">{commentairePari(score, pari)}</p>
+
+      {paris && <ParisDesAutres paris={paris} />}
     </>
+  );
+}
+
+/**
+ * Ce que les autres parient, par sexe — et où ils finissent vraiment.
+ *
+ * Le pari moyen seul ne dit pas grand-chose ; à côté du score moyen des mêmes
+ * joueurs, il dit si l'on se sous-estime, et qui le fait le plus.
+ */
+export function ParisDesAutres({ paris, className = 'story-encart story-paris' }: { paris: ParisMoyens; className?: string }) {
+  const lignes = [
+    { nom: 'Les hommes', p: paris.homme },
+    { nom: 'Les femmes', p: paris.femme },
+  ].filter((l): l is { nom: string; p: NonNullable<typeof l.p> } => l.p !== null);
+
+  return (
+    <div className={className}>
+      <p className="story-encart-titre">Ce que les autres parient</p>
+      {lignes.map(({ nom, p }) => (
+        <p key={nom} className="paris-ligne">
+          <span>{nom} parient</span>
+          <strong>{p.pari} %</strong>
+          <em>et finissent à {p.score} %</em>
+        </p>
+      ))}
+    </div>
   );
 }
 

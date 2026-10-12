@@ -22,6 +22,7 @@ import {
   POINTS_DECISIFS,
   COMPARAISON_MIN,
   ajouterPartie,
+  parisMoyens,
   legendeCohorte,
   legendeSexeCourte,
   POINT_NOIR_ECART,
@@ -572,5 +573,29 @@ describe('ressourcesPour', () => {
 
   it('ignore un seuil sans texte à afficher', () => {
     expect(ressourcesPour([axe('colere', 90)], [tag('colere', 55, null)])).toEqual([]);
+  });
+});
+
+describe('parisMoyens', () => {
+  const ligne = (sexe: string, effectif: number, pariMoyen: number, scoreMoyen: number) =>
+    ({ sexe, effectif, pariMoyen, scoreMoyen });
+
+  it('arrondit le pari et le score moyens, par sexe', () => {
+    expect(parisMoyens([ligne('homme', 120, 40.6, 51.2), ligne('femme', 90, 33.4, 44.5)])).toEqual({
+      homme: { effectif: 120, pari: 41, score: 51 },
+      femme: { effectif: 90, pari: 33, score: 45 },
+    });
+  });
+
+  // Trois paris ne disent rien de « ce que parient les femmes ».
+  it('tait un sexe trop peu représenté', () => {
+    const r = parisMoyens([ligne('homme', 50, 40, 50), ligne('femme', COMPARAISON_MIN - 1, 30, 40)]);
+    expect(r?.homme).not.toBeNull();
+    expect(r?.femme).toBeNull();
+  });
+
+  it('ne rend rien quand personne n’a parié', () => {
+    expect(parisMoyens([])).toBeNull();
+    expect(parisMoyens([ligne('autre', 40, 50, 50)])).toBeNull();
   });
 });
