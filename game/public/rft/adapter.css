@@ -1654,13 +1654,13 @@ body:has(.main-container) {
 .pari-curseur::-webkit-slider-runnable-track {
   height: 14px;
   border-radius: 1000px;
-  background: linear-gradient(90deg, #2aa048 0%, #f7c914 40%, #e27c21 55%, #db3254 83%, #bb2040 100%);
+  background: linear-gradient(90deg, #2aa048 0%, #f7c914 40%, #e27c21 55%, #db3254 83.3%, #8b3a9f 90%, #4a145a 95.8%, #18081e 100%);
 }
 
 .pari-curseur::-moz-range-track {
   height: 14px;
   border-radius: 1000px;
-  background: linear-gradient(90deg, #2aa048 0%, #f7c914 40%, #e27c21 55%, #db3254 83%, #bb2040 100%);
+  background: linear-gradient(90deg, #2aa048 0%, #f7c914 40%, #e27c21 55%, #db3254 83.3%, #8b3a9f 90%, #4a145a 95.8%, #18081e 100%);
 }
 
 .pari-curseur::-webkit-slider-thumb {
@@ -1718,6 +1718,28 @@ body:has(.main-container) {
 
 .pari-note {
   margin-top: calc(var(--spacing) * 0.4);
+}
+
+/*
+ * Hors barème (au-delà de 100) : la couleur vire au violet puis au presque
+ * noir, qui disparaîtrait sur le fond sombre. Un halo violet et un fin
+ * contour clair gardent le chiffre et le drapeau lisibles.
+ */
+.pari.is-hors-bareme .pari-valeur {
+  -webkit-text-stroke: 1px rgba(214, 170, 255, 0.55);
+  text-shadow: 0 0 1.4rem rgba(160, 80, 220, 0.75), 0 0 0.3rem rgba(160, 80, 220, 0.6);
+}
+
+.pari.is-hors-bareme .pari-drapeau {
+  filter: drop-shadow(0 0 0.15rem rgba(214, 170, 255, 0.9)) drop-shadow(0 0 1.2rem rgba(160, 80, 220, 0.8));
+}
+
+.pari.is-hors-bareme .pari-curseur::-webkit-slider-thumb {
+  box-shadow: 0 0 1rem rgba(160, 80, 220, 0.9), 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.pari.is-hors-bareme .pari-curseur::-moz-range-thumb {
+  box-shadow: 0 0 1rem rgba(160, 80, 220, 0.9), 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 /* Les petits écrans : « Passer » doit rester visible sans défiler. */

@@ -27,14 +27,23 @@ import { useGesteModeTest } from './modeTest';
 /** Le curseur va au-delà de 100, comme le score. */
 export const PARI_MAX = 120;
 
-/** Les couleurs de la jauge du test, du vert au rouge, et leurs positions. */
+/**
+ * Les couleurs de la jauge du test et leurs positions : du vert au rouge
+ * jusqu'à 100, puis, hors barème, le violet du test qui s'assombrit jusqu'au
+ * presque noir. Au-delà de 100, on ne parle plus de rouge.
+ */
 const PALETTE: Array<[number, [number, number, number]]> = [
   [0, [42, 160, 72]],     // --light-green
   [48, [247, 201, 20]],   // --yellow
   [66, [226, 124, 33]],   // --orange
   [100, [219, 50, 84]],   // --light-red
-  [PARI_MAX, [187, 32, 64]], // --red, hors barème
+  [108, [139, 58, 159]],  // --purple
+  [115, [74, 20, 90]],    // violet sombre
+  [PARI_MAX, [24, 8, 30]], // presque noir
 ];
+
+/** Au-delà de 100 : le hors-barème, qui a son propre traitement visuel. */
+export const SEUIL_HORS_BAREME = 100;
 
 /** La couleur de la jauge à cette valeur, interpolée entre ses repères. */
 export function couleurPari(valeur: number): string {
@@ -67,7 +76,10 @@ export function Pari({
   const couleur = couleurPari(pari);
 
   return (
-    <section className="intro-wrapper pari" style={{ '--pari-couleur': couleur } as React.CSSProperties}>
+    <section
+      className={`intro-wrapper pari${pari > SEUIL_HORS_BAREME ? ' is-hors-bareme' : ''}`}
+      style={{ '--pari-couleur': couleur } as React.CSSProperties}
+    >
       <h2 onClick={taperTitre}>Devine ton score</h2>
 
       <p className="pari-question">
