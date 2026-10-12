@@ -28,11 +28,13 @@ import { Stories } from './Stories';
  * sexe ni l'âge de celui qui a joué, affiche ainsi exactement la même chose.
  */
 export function Recap({
-  resultat, onRecommencer,
+  resultat, onRecommencer, pari = null,
 }: {
   resultat: Resultat;
   /** Absent sur un résultat partagé : on ne « refait » pas la partie d'un autre. */
   onRecommencer?: () => void;
+  /** Le score parié avant la partie ; absent sur un résultat partagé ou si le joueur a passé. */
+  pari?: number | null;
 }) {
   const [ouvert, setOuvert] = useState(true);
 
@@ -45,7 +47,7 @@ export function Recap({
 
   return (
     <>
-      {ouvert && <Stories resultat={resultat} onRecommencer={onRecommencer} onFermer={fermer} />}
+      {ouvert && <Stories resultat={resultat} onRecommencer={onRecommencer} onFermer={fermer} pari={pari} />}
 
       <button type="button" className="stories-rouvrir" onClick={() => setOuvert(true)}>
         <span>▶</span> Revoir le résultat en stories

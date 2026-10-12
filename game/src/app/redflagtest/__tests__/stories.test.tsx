@@ -11,7 +11,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { Classement, Resultat } from '@/lib/rft/types';
-import { Stories, placerEtiquettes } from '@/app/redflagtest/Stories';
+import { Stories, placerEtiquettes, commentairePari } from '@/app/redflagtest/Stories';
 
 function rang(position: number, effectif: number, legende: string, moyenne: number | null = 40): Classement {
   const top = Math.ceil((position / effectif) * 100);
@@ -164,5 +164,36 @@ describe('la cohorte « autre »', () => {
 
     aller(/Toi face aux autres/);
     expect(screen.getByText('Moyenne des joueurs « autre » : 39 %')).toBeDefined();
+  });
+});
+
+describe('le pari', () => {
+  it('a son écran juste après le verdict, quand le joueur a parié', () => {
+    render(<Stories onFermer={() => {}} resultat={resultat()} pari={30} />);
+    const noms = segments().map((s) => s.getAttribute('aria-label'));
+    expect(noms[1]).toMatch(/Ton pari/);
+
+    aller(/Ton pari/);
+    expect(screen.getByText('30 %')).toBeDefined();
+    expect(screen.getByText(/Tu es à 68 %, au-dessus de ton pari/)).toBeDefined();
+  });
+
+  it('n’a pas d’écran quand le joueur a passé, ni sur un résultat partagé', () => {
+    render(<Stories onFermer={() => {}} resultat={resultat()} />);
+    expect(segments().map((s) => s.getAttribute('aria-label')).join(' ')).not.toMatch(/Ton pari/);
+  });
+
+  it('salue un pari à cinq points près', () => {
+    render(<Stories onFermer={() => {}} resultat={resultat()} pari={64} />);
+    aller(/Ton pari/);
+    expect(screen.getByText('Bingo')).toBeDefined();
+  });
+
+  it('commente l’écart dans les deux sens', () => {
+    expect(commentairePari(50, 48)).toMatch(/Dans le mille/);
+    expect(commentairePari(80, 30)).toMatch(/sous-estimé/);
+    expect(commentairePari(45, 35)).toMatch(/Un peu plus red flag/);
+    expect(commentairePari(20, 70)).toMatch(/accablé/);
+    expect(commentairePari(40, 52)).toMatch(/Plus green flag/);
   });
 });

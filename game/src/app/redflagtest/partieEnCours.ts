@@ -54,6 +54,11 @@ export interface PartieEnCours {
   debut: number;
   /** Horodatage du dernier clic, pour la péremption. */
   maj: number;
+  /**
+   * Le score que le joueur a parié avant de commencer, ou `null` s'il a passé.
+   * Absent des sauvegardes antérieures à la fonctionnalité.
+   */
+  pari?: number | null;
 }
 
 /* --------------------------------------------------------------------------

@@ -45,6 +45,23 @@ describe('reprendre', () => {
     expect(reprendre(QUESTIONS, MAINTENANT)).toBeNull();
   });
 
+  // Le pari est pris au début de la partie : une reprise ne doit pas le
+  // reposer, ni le perdre.
+  it('garde le pari avec la partie', () => {
+    enregistrer({
+      choix: [['q1', 'a1'], ['q2', 'b2'], ['q3', 'c1']].map(([questionId, answerId]) => ({ questionId, answerId })),
+      debut: MAINTENANT - 60_000,
+      maj: MAINTENANT,
+      pari: 42,
+    });
+    expect(reprendre(QUESTIONS, MAINTENANT)?.pari).toBe(42);
+  });
+
+  it('reprend une sauvegarde antérieure au pari, sans pari', () => {
+    partie([['q1', 'a1'], ['q2', 'b2'], ['q3', 'c1']]);
+    expect(reprendre(QUESTIONS, MAINTENANT)?.pari ?? null).toBeNull();
+  });
+
   it('rend les réponses enregistrées', () => {
     partie([['q1', 'a1'], ['q2', 'b2'], ['q3', 'c1']]);
     expect(reprendre(QUESTIONS, MAINTENANT)?.choix).toHaveLength(3);

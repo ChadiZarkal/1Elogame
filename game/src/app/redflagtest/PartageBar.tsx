@@ -26,11 +26,14 @@ export function PartageBar({
   code,
   score,
   archetype,
+  pari = null,
 }: {
   code: string;
   score: number;
   /** Le titre de l'archétype, s'il y en a un — c'est lui qui donne envie de cliquer. */
   archetype: string | null;
+  /** Le score parié avant la partie : « j'avais parié 30 %, je suis à 68 % » se raconte. */
+  pari?: number | null;
 }) {
   const [copie, setCopie] = useState(false);
 
@@ -39,9 +42,12 @@ export function PartageBar({
   // enverrait les liens de la préversion vers la production.
   const lien = () => `${window.location.origin}/redflagtest/r/${code}`;
 
+  const constat = pari !== null
+    ? `J’avais parié ${pari} %, je suis à ${score} % red flag`
+    : `Je suis ${score} % red flag`;
   const texte = archetype
-    ? `Je suis ${score} % red flag — ${archetype}. Devine ton score.`
-    : `Je suis ${score} % red flag. Devine ton score.`;
+    ? `${constat} — ${archetype}. Devine ton score.`
+    : `${constat}. Devine ton score.`;
 
   const copier = async () => {
     try {

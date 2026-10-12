@@ -35,6 +35,7 @@ import { avancerAiguille } from '@/lib/rft/score';
 import type { PlayerProfile } from '@/types/game';
 import type { Indice, QuestionPublique, Resultat, Verdict } from '@/lib/rft/types';
 import { ProfilStep } from './ProfilStep';
+import { Pari } from './Pari';
 import { Recap } from './Recap';
 import { modeTestActif, useGesteModeTest } from './modeTest';
 import {
@@ -46,7 +47,7 @@ import {
   type PartieEnCours,
 } from './partieEnCours';
 
-type Phase = 'chargement' | 'profil' | 'reprise' | 'jeu' | 'calcul' | 'recap' | 'erreur';
+type Phase = 'chargement' | 'profil' | 'pari' | 'reprise' | 'jeu' | 'calcul' | 'recap' | 'erreur';
 
 /** La classe que `flac.css` attend sur <body> pour chaque phase. */
 const CLASSE_BODY: Partial<Record<Phase, string>> = {
@@ -98,6 +99,8 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
   const [debut, setDebut] = useState<number | null>(null);
   /** La partie interrompue proposée à la reprise, le temps que le joueur tranche. */
   const [enAttente, setEnAttente] = useState<PartieEnCours | null>(null);
+  /** Le score parié avant la partie ; `null` quand le joueur a passé. */
+  const [pari, setPari] = useState<number | null>(null);
   /** Cinq taps sur « Question X sur Y » : le mode test (voir `modeTest`). */
   const gesteModeTest = useGesteModeTest();
 
@@ -118,9 +121,15 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
       setPhase('reprise');
       return;
     }
+    setPhase('pari');
+  }, []);
+
+  /** Le pari est pris (ou passé) : la partie commence. */
+  const parier = (valeur: number | null) => {
+    setPari(valeur);
     setDebut(Date.now());
     setPhase('jeu');
-  }, []);
+  };
 
   useEffect(() => {
     let vivant = true;
@@ -175,6 +184,8 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
     setIndex(reprendreA(quiz.questions, enAttente.choix));
     setAiguille(aiguillePour(quiz.questions, enAttente.choix));
     setDebut(enAttente.debut);
+    // Le pari a été pris au début de cette partie : on ne le redemande pas.
+    setPari(enAttente.pari ?? null);
     setEnAttente(null);
     setPhase('jeu');
   };
@@ -185,8 +196,7 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
     setChoix([]);
     setIndex(0);
     setAiguille(50);
-    setDebut(Date.now());
-    setPhase('jeu');
+    setPhase('pari');
   };
 
   const envoyer = useCallback(
@@ -240,7 +250,7 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
       if (debut === null) setDebut(depuis);
       // Sauvegardé à chaque réponse : c'est la seule façon de ne rien perdre
       // d'une interruption qui, par définition, ne prévient pas.
-      enregistrer({ choix: suivants, debut: depuis, maj: Date.now() });
+      enregistrer({ choix: suivants, debut: depuis, maj: Date.now(), pari });
 
       setTimeout(() => {
         setClique(null);
@@ -248,7 +258,7 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
         else setIndex(reprendreA(quiz.questions, suivants));
       }, 220);
     },
-    [quiz, clique, choix, debut, profil, envoyer],
+    [quiz, clique, choix, debut, profil, envoyer, pari],
   );
 
   /**
@@ -272,8 +282,8 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
     setAiguille(aiguillePour(quiz.questions, restants));
 
     if (restants.length === 0) oublier();
-    else enregistrer({ choix: restants, debut: debut ?? Date.now(), maj: Date.now() });
-  }, [quiz, clique, index, choix, debut]);
+    else enregistrer({ choix: restants, debut: debut ?? Date.now(), maj: Date.now(), pari });
+  }, [quiz, clique, index, choix, debut, pari]);
 
   const recommencer = () => {
     oublier();
@@ -282,8 +292,8 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
     setClique(null);
     setAiguille(50);
     setResultat(null);
-    setDebut(Date.now());
-    setPhase('jeu');
+    setPari(null);
+    setPhase('pari');
   };
 
   if (phase === 'chargement') {
@@ -308,6 +318,15 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
     return (
       <>
         <ProfilStep onDemarrer={demarrer} />
+        {presentation}
+      </>
+    );
+  }
+
+  if (phase === 'pari' && quiz) {
+    return (
+      <>
+        <Pari verdicts={quiz.verdicts} onParier={parier} onPasser={() => parier(null)} />
         {presentation}
       </>
     );
@@ -354,7 +373,7 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
         <div className="finish-block">
           {phase === 'calcul' && <p className="loading-message">On compte les dégâts…</p>}
           {phase === 'recap' && resultat && (
-            <Recap resultat={resultat} onRecommencer={recommencer} />
+            <Recap resultat={resultat} onRecommencer={recommencer} pari={pari} />
           )}
         </div>
 

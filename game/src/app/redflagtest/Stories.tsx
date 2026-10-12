@@ -99,20 +99,22 @@ function teinteScore(score: number): string {
 }
 
 export function Stories({
-  resultat, onRecommencer, onFermer,
+  resultat, onRecommencer, onFermer, pari = null,
 }: {
   resultat: Resultat;
   /** Absent sur un résultat partagé : on ne « refait » pas la partie d'un autre. */
   onRecommencer?: () => void;
   /** Referme les stories sur le détail. */
   onFermer: () => void;
+  /** Le score parié avant la partie, s'il y en a un (voir `Pari`). */
+  pari?: number | null;
 }) {
   const [index, setIndex] = useState(0);
   const [sens, setSens] = useState<1 | -1>(1);
   const depart = useRef<{ x: number; y: number } | null>(null);
   const cadre = useRef<HTMLDivElement>(null);
 
-  const ecrans = construireEcrans(resultat, { onRecommencer, onFermer });
+  const ecrans = construireEcrans(resultat, { onRecommencer, onFermer, pari });
   const total = ecrans.length;
   const dernier = index === total - 1;
 
@@ -314,11 +316,17 @@ function cohortes(r: Resultat): Cohorte[] {
 
 function construireEcrans(
   r: Resultat,
-  actions: { onRecommencer?: () => void; onFermer: () => void },
+  actions: { onRecommencer?: () => void; onFermer: () => void; pari: number | null },
 ): Ecran[] {
   const ecrans: Ecran[] = [
     { cle: 'verdict', titre: 'Ton verdict', contenu: <EcranVerdict resultat={r} /> },
   ];
+
+  // Juste après le verdict : c'est la première question qu'on se pose en
+  // découvrant son score quand on avait parié.
+  if (actions.pari !== null) {
+    ecrans.push({ cle: 'pari', titre: 'Ton pari', contenu: <EcranPari score={r.score} pari={actions.pari} /> });
+  }
 
   const groupes = cohortes(r);
 
@@ -385,6 +393,64 @@ function EcranVerdict({ resultat }: { resultat: Resultat }) {
         <span className="story-jauge-gauche">Green flag</span>
         <span className="story-jauge-droite">Red flag</span>
       </div>
+    </>
+  );
+}
+
+// --- Ton pari ----------------------------------------------------------------
+
+/** À moins de cet écart, le pari est réussi. */
+export const PARI_REUSSI = 5;
+
+/** La phrase qui commente l'écart entre le score et le pari. */
+export function commentairePari(score: number, pari: number): string {
+  const ecart = score - pari;
+  if (Math.abs(ecart) <= PARI_REUSSI) return 'Dans le mille. Tu te connais par cœur — c’est presque inquiétant.';
+  if (ecart > 20) return 'Tu t’es largement sous-estimé·e. Les autres, eux, s’en doutaient.';
+  if (ecart > 0) return 'Un peu plus red flag que tu ne le pensais. Rien qu’un peu.';
+  if (ecart < -20) return 'Tu t’es beaucoup trop accablé·e. Tu es bien plus fréquentable que tu ne le crois.';
+  return 'Plus green flag que tu ne le croyais. Bonne nouvelle, non ?';
+}
+
+/**
+ * Le pari face au score, sur une même échelle.
+ *
+ * Deux repères sur la jauge du verdict : le pari en contour, le score plein.
+ * Leurs étiquettes passent l'une au-dessus, l'autre en dessous de la piste,
+ * pour ne jamais se chevaucher même quand les deux valeurs se touchent.
+ */
+function EcranPari({ score, pari }: { score: number; pari: number }) {
+  const ecart = score - pari;
+  const reussi = Math.abs(ecart) <= PARI_REUSSI;
+  const plafond = Math.max(100, score, pari);
+  const ratio = (v: number) => (Math.min(v, plafond) / plafond) * 100;
+  // Près d'un bord, l'étiquette centrée déborderait de l'écran.
+  const cale = (v: number) => (ratio(v) < 15 ? ' cale-gauche' : ratio(v) > 85 ? ' cale-droite' : '');
+  // Le repère reste à un demi-repère des bords : posé sur l'extrémité, il
+  // était coupé en deux, et son étiquette avec lui.
+  const gauche = (v: number) => `calc(0.75rem + (100% - 1.5rem) * ${ratio(v) / 100})`;
+
+  return (
+    <>
+      <p className="story-surtitre">Ton pari</p>
+      <p className="story-texte-fort">Tu pensais être à <strong>{pari} %</strong></p>
+      <p className={`story-geant ${reussi ? 'jaune' : ecart > 0 ? 'rouge' : 'vert'}`}>
+        {reussi ? 'Bingo' : <>{ecart > 0 ? '+' : '−'}{Math.abs(ecart)}<span> pts</span></>}
+      </p>
+      <p className="story-texte-fort">
+        {reussi ? `Tu es à ${score} %.` : `Tu es à ${score} %, ${ecart > 0 ? 'au-dessus' : 'en dessous'} de ton pari.`}
+      </p>
+
+      <div className="story-duel" aria-hidden="true">
+        <span className={`story-duel-marque is-score${cale(score)}`} style={{ left: gauche(score) }}>
+          <em>Ton score · {score} %</em>
+        </span>
+        <span className={`story-duel-marque is-pari${cale(pari)}`} style={{ left: gauche(pari) }}>
+          <em>Ton pari · {pari} %</em>
+        </span>
+      </div>
+
+      <p className="story-texte">{commentairePari(score, pari)}</p>
     </>
   );
 }
@@ -741,11 +807,12 @@ function EcranRessources({ resultat }: { resultat: Resultat }) {
 }
 
 function EcranFin({
-  resultat, onRecommencer, onFermer,
+  resultat, onRecommencer, onFermer, pari,
 }: {
   resultat: Resultat;
   onRecommencer?: () => void;
   onFermer: () => void;
+  pari: number | null;
 }) {
   return (
     <>
@@ -759,6 +826,7 @@ function EcranFin({
           code={resultat.codePartage}
           score={resultat.score}
           archetype={resultat.archetype?.titre ?? null}
+          pari={pari}
         />
       )}
 

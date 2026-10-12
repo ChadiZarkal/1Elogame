@@ -560,6 +560,7 @@ body:has(.main-container) {
 }
 
 .stories-cadre[data-ecran="verdict"] { --fond: var(--teinte); }
+.stories-cadre[data-ecran="pari"] { --fond: 247, 201, 20; }
 .stories-cadre[data-ecran="moyennes"] { --fond: 187, 32, 64; }
 .stories-cadre[data-ecran="classement"] { --fond: 139, 58, 159; }
 .stories-cadre[data-ecran="axes"] { --fond: 187, 32, 64; }
@@ -858,6 +859,73 @@ body:has(.main-container) {
 
 .story-jauge-gauche { left: 0; }
 .story-jauge-droite { right: 0; }
+
+/*
+ * --- L'écran du pari ----------------------------------------------------
+ * La jauge du verdict, avec deux repères : le score plein, étiqueté
+ * au-dessus ; le pari en contour, étiqueté en dessous. Deux valeurs voisines
+ * ne se chevauchent donc jamais.
+ */
+.story-duel {
+  position: relative;
+  width: 100%;
+  height: 1.1rem;
+  margin: clamp(2.6rem, 6svh, 3.4rem) 0 clamp(2.6rem, 6svh, 3.4rem);
+  border-radius: 1000px;
+  background: linear-gradient(
+    90deg,
+    var(--light-green) 0%,
+    var(--yellow) 48%,
+    var(--orange) 66%,
+    var(--light-red) 100%
+  );
+}
+
+.story-duel-marque {
+  position: absolute;
+  top: 50%;
+  width: 1.5rem;
+  height: 1.5rem;
+  box-sizing: border-box;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.story-duel-marque em {
+  position: absolute;
+  left: 50%;
+  font-size: clamp(0.95rem, 2.2svh, 1.15rem);
+  font-style: normal;
+  font-weight: bold;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.story-duel-marque.is-score {
+  z-index: 1;
+  border: 3px solid var(--white);
+  background-color: var(--light-red);
+  box-shadow: 0 0 1rem rgba(219, 50, 84, 0.8);
+}
+
+.story-duel-marque.is-score em {
+  bottom: calc(100% + 0.4rem);
+  color: var(--white);
+}
+
+.story-duel-marque.is-pari {
+  border: 3px dashed var(--yellow);
+  background-color: var(--dark-grey);
+}
+
+.story-duel-marque.is-pari em {
+  top: calc(100% + 0.4rem);
+  color: var(--yellow);
+}
+
+/* Aux extrémités, l'étiquette se cale sur le bord plutôt que de déborder. */
+.story-duel-marque.cale-gauche em { left: 0; transform: none; }
+.story-duel-marque.cale-droite em { left: auto; right: 0; transform: none; }
 
 /*
  * --- Écran 2 : toi face aux autres --------------------------------------
@@ -1497,4 +1565,47 @@ body:has(.main-container) {
   transform: translateX(-50%);
   box-shadow: 0 0.3rem 1rem rgba(0, 0, 0, 0.5);
   cursor: pointer;
+}
+
+/* ---------------------------------------------------------------------------
+ * L'écran du pari, avant la première question (voir `Pari.tsx`).
+ * Les styles du curseur sont ceux de la devinette d'un résultat partagé.
+ * ------------------------------------------------------------------------- */
+
+.pari {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.pari-question {
+  margin-bottom: var(--spacing);
+  font-size: var(--font-size-m);
+}
+
+.pari-palier {
+  margin: calc(var(--spacing) * 0.3) 0 0;
+  color: var(--white);
+  font-size: var(--font-size-m);
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* 44 px de haut : le pouce doit attraper le curseur du premier coup. */
+.pari-curseur {
+  height: 44px;
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.pari-bornes {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 22rem;
+  margin-bottom: var(--spacing);
+  color: var(--grey);
+  font-size: calc(var(--font-size-s) * 0.85);
 }
