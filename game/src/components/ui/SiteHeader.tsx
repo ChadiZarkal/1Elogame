@@ -102,8 +102,24 @@ const INLINE = [
   { href: '/ressources', label: 'Outils' },
 ];
 
+/**
+ * L'adresse de la page, l'accueil ramené à « / ».
+ *
+ * L'accueil est régénéré en arrière-plan toutes les cinq minutes
+ * (`revalidate = 300`), et pendant cette régénération Next le rend sous
+ * `/index`. La barre, qui ne reconnaissait que « / », s'y affichait côté
+ * serveur alors que le navigateur, qui lit « / », la masquait : React laissait
+ * la copie du serveur orpheline dans la page, et en ajoutait une seconde au
+ * premier clic vers un jeu. Deux barres empilées, sur tous les ordinateurs,
+ * dès qu'on venait de l'accueil.
+ */
+export function normaliserChemin(pathname: string | null): string {
+  if (!pathname || pathname === '/index') return pathname ? '/' : '';
+  return pathname;
+}
+
 export function SiteHeader() {
-  const pathname = usePathname() ?? '';
+  const pathname = normaliserChemin(usePathname());
   const panelRef = useRef<HTMLDetailsElement>(null);
 
   // Le composant vit dans la mise en page racine : il n'est jamais remonté au
