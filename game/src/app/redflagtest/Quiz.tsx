@@ -36,6 +36,7 @@ import type { PlayerProfile } from '@/types/game';
 import type { Indice, QuestionPublique, Resultat, Verdict } from '@/lib/rft/types';
 import { ProfilStep } from './ProfilStep';
 import { Pari } from './Pari';
+import { Interstitiel } from './Interstitiel';
 import { Recap } from './Recap';
 import { modeTestActif, useGesteModeTest } from './modeTest';
 import {
@@ -47,12 +48,11 @@ import {
   type PartieEnCours,
 } from './partieEnCours';
 
-type Phase = 'chargement' | 'profil' | 'pari' | 'reprise' | 'jeu' | 'calcul' | 'recap' | 'erreur';
+type Phase = 'chargement' | 'profil' | 'pari' | 'reprise' | 'jeu' | 'pub' | 'recap' | 'erreur';
 
 /** La classe que `flac.css` attend sur <body> pour chaque phase. */
 const CLASSE_BODY: Partial<Record<Phase, string>> = {
   jeu: 'switch-quiz-ongoing',
-  calcul: 'switch-loading',
   recap: 'switch-quiz-end',
   chargement: 'switch-loading',
 };
@@ -201,7 +201,9 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
 
   const envoyer = useCallback(
     async (finaux: Choix[], qui: PlayerProfile | null, depuis: number | null) => {
-      setPhase('calcul');
+      // La pause publicitaire s'ouvre tout de suite, et le résultat se calcule
+      // derrière elle (voir `Interstitiel`).
+      setPhase('pub');
       // La partie est allée au bout : la sauvegarde n'a plus lieu d'être, et la
       // garder ferait proposer une reprise à quelqu'un qui a déjà son résultat.
       oublier();
@@ -225,8 +227,9 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
           setPhase('erreur');
           return;
         }
+        // Pas de passage au récap ici : c'est le joueur qui le déclenche, depuis
+        // la pause, une fois le compte à rebours écoulé.
         setResultat(json.data);
-        setPhase('recap');
       } catch {
         setMessage('Connexion perdue. Ton résultat n’a pas pu être calculé.');
         setPhase('erreur');
@@ -324,6 +327,10 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
     );
   }
 
+  if (phase === 'pub') {
+    return <Interstitiel pret={resultat !== null} onContinuer={() => setPhase('recap')} />;
+  }
+
   if (phase === 'pari' && quiz) {
     return (
       <>
@@ -372,7 +379,6 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
             porte la mise en forme de tout le récap : sortir le contenu d'ici,
             c'est perdre les drapeaux, les highlights et la pastille du score. */}
         <div className="finish-block">
-          {phase === 'calcul' && <p className="loading-message">On compte les dégâts…</p>}
           {phase === 'recap' && resultat && (
             <Recap resultat={resultat} onRecommencer={recommencer} pari={pari} />
           )}

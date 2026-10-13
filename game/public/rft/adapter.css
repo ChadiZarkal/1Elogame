@@ -1813,3 +1813,71 @@ body:has(.main-container) {
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+
+/* ---------------------------------------------------------------------------
+ * La pause publicitaire avant le résultat (voir `Interstitiel.tsx`).
+ *
+ * L'encart a une hauteur réservée : sur cet écran dédié, un emplacement qui se
+ * remplirait après coup ferait sauter le bouton sous le pouce du joueur.
+ * ------------------------------------------------------------------------- */
+
+.interstitiel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.interstitiel-texte {
+  margin: 0;
+  color: var(--grey);
+  font-size: var(--font-size-m);
+  animation: interstitiel-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes interstitiel-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.interstitiel-pub {
+  width: 100%;
+  max-width: 24rem;
+  min-height: 16rem;
+  margin-top: calc(var(--spacing) * 1.2);
+  box-sizing: border-box;
+  padding: calc(var(--spacing) * 0.5);
+  border: 1px dashed #45414b;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.interstitiel-etiquette {
+  margin: 0 0 calc(var(--spacing) * 0.4);
+  color: var(--grey);
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.interstitiel-actions {
+  width: 100%;
+  margin-top: calc(var(--spacing) * 1.2);
+}
+
+.interstitiel-actions .button-start:disabled {
+  cursor: default;
+  filter: grayscale(0.6) brightness(0.75);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interstitiel-texte { animation: none; }
+}
+
+/* Le libellé change avec le compte à rebours : une largeur fixe évite que le
+   bouton se redimensionne à chaque seconde, et qu'il passe sur deux lignes. */
+.interstitiel-actions .button-start {
+  min-width: min(100%, 17rem);
+  white-space: nowrap;
+}

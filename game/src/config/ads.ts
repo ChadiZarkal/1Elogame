@@ -64,6 +64,36 @@ export const POPUNDER: AdUnit = {
 };
 
 /**
+ * La pause publicitaire du Red Flag Test, entre la dernière réponse et le
+ * résultat (voir `redflagtest/Interstitiel`). Demandée et assumée côté
+ * produit le 2026-10-13, en connaissance des réserves ci-dessus.
+ *
+ * - L'encart reprend l'emplacement natif : c'est le seul format qui s'affiche
+ *   *dans* l'écran, et c'est ce qui permet « la pub, puis le résultat ».
+ * - Le pop-under s'arme sur cet écran et s'ouvre au clic sur « Voir mon
+ *   résultat ». Il n'est chargé que si AdSense est absent de la page : le
+ *   règlement AdSense interdit les annonces Google à côté d'un pop-under, et
+ *   AdSense n'est plus chargé sur `/redflagtest` (voir `AdSenseScript`). Un
+ *   joueur arrivé d'une autre page du site, où AdSense s'est déjà chargé, n'a
+ *   donc pas de pop-under — c'est voulu.
+ *
+ * Éteindre l'un ou l'autre : passer son `enabled` à `false`.
+ */
+export const RFT_INTERSTITIEL: NativeAdUnit = {
+  enabled: true,
+  src: NATIVE_BANNER.src,
+  containerId: NATIVE_BANNER.containerId,
+};
+
+export const RFT_POPUNDER: AdUnit = {
+  enabled: true,
+  src: POPUNDER.src,
+};
+
+/** Durée minimale de la pause publicitaire, avant que le résultat soit accessible. */
+export const RFT_INTERSTITIEL_DUREE_S = 5;
+
+/**
  * Routes sans aucune publicité, ni bandeau de consentement.
  *
  * La liste reprend celle d'AdSense et l'étend : le règlement « valeur de

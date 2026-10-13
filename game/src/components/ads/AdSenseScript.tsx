@@ -15,6 +15,10 @@ const BLOCKED_PATHS = [
   /^\/admin(\/|$)/,
   /^\/dixmais\/admin(\/|$)/,
   /^\/jeu\/recap(\/|$)/,
+  // Le Red Flag Test porte un pop-under à la fin de la partie (voir
+  // `config/ads.ts`, RFT_POPUNDER) : le règlement AdSense interdit les annonces
+  // Google sur une page qui en porte un.
+  /^\/redflagtest(\/|$)/,
 ];
 
 interface AdSenseScriptProps {
