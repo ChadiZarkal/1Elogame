@@ -75,15 +75,16 @@ describe('useDixMais — enchaînement du départ', () => {
     expect(result.current.round?.statements).toHaveLength(5);
   });
 
-  it('ne demande que des red flags', async () => {
+  it('demande deux green flags par profil', async () => {
     await enPartie();
     const requete = appels.find((a) => a.url.startsWith('/api/dixmais/statements'));
-    expect(requete?.url).toContain('types=negative');
+    expect(requete?.url).toContain('verts=2');
+    expect(requete?.url).not.toContain('types=negative');
   });
 });
 
-describe('useDixMais — chaque red flag se note seul', () => {
-  it('repart de 10 à chaque red flag', async () => {
+describe('useDixMais — chaque révélation se note seule', () => {
+  it('repart de 10 à chaque révélation', async () => {
     const { result } = await enPartie();
     vi.useFakeTimers();
 
@@ -115,6 +116,19 @@ describe('useDixMais — chaque red flag se note seul', () => {
     expect(juge.communaute).toEqual([8, 8, 8, 8, 8]);
     expect(juge.moyenneCommunaute).toBe(8);
     expect(juge.fin.key).toBeTruthy();
+  });
+
+  it('accepte une note au-delà de 10, jusqu’à 15', async () => {
+    const { result } = await enPartie();
+    vi.useFakeTimers();
+
+    act(() => result.current.setDraft(14));
+    expect(result.current.draft).toBe(14);
+    act(() => result.current.setDraft(22));
+    expect(result.current.draft).toBe(15);
+
+    [15, 14, 10, 12, 9].forEach((n) => noter(result, n));
+    expect(result.current.history[0].moyenne).toBe(12);
   });
 
   it('teinte le fond de la moyenne au verdict', async () => {

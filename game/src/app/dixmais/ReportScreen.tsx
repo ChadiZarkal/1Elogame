@@ -12,9 +12,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Share2, Check, Users, Crown, Ban } from 'lucide-react';
+import { ArrowLeft, Share2, Check, Users, Crown, Ban, Heart, Scale } from 'lucide-react';
 import type { PlayerProfile } from '@/types/game';
-import { scoreColor, withAlpha } from './scale';
+import { MAX_SCORE, scoreColor, withAlpha } from './scale';
 import {
   construireBilan,
   formatNote,
@@ -74,7 +74,7 @@ export function ReportScreen({ rounds, profile, onBack, onNext }: Props) {
 
   const share = async () => {
     const top = premier ? ` Mon préféré : ${premier.nom}, ${formatNote(premier.moyenne)}/10.` : '';
-    const text = `${bilan.profils} profils jugés, ${formatNote(bilan.noteMoyenne)}/10 en moyenne par red flag. Verdict : ${bilan.archetype.title} ${bilan.archetype.emoji}.${top} Et toi, tu vaux quoi comme juré ?`;
+    const text = `${bilan.profils} profils jugés, ${formatNote(bilan.noteMoyenne)}/10 en moyenne par révélation. Verdict : ${bilan.archetype.title} ${bilan.archetype.emoji}.${top} Et toi, tu vaux quoi comme juré ?`;
     try {
       if (navigator.share) {
         await navigator.share({ title: "C'est un 10 mais…", text, url: SHARE_URL });
@@ -97,7 +97,7 @@ export function ReportScreen({ rounds, profile, onBack, onNext }: Props) {
     >
       <div className="pt-1 text-center">
         <p className="text-[11px] font-black uppercase tracking-[0.24em] text-white/40">
-          Ta soirée · {plural(bilan.profils, 'profil')} · {plural(bilan.jugements, 'red flag')}
+          Ta soirée · {plural(bilan.profils, 'profil')} · {plural(bilan.jugements, 'révélation')}
         </p>
       </div>
 
@@ -128,7 +128,7 @@ export function ReportScreen({ rounds, profile, onBack, onNext }: Props) {
       <div className="mt-4 grid grid-cols-3 gap-2">
         <Figure label="Profils" value={String(bilan.profils)} tint="#FFD700" />
         <Figure
-          label="Par red flag"
+          label="Par info"
           value={formatNote(bilan.noteMoyenne)}
           tint={scoreColor(bilan.noteMoyenne)}
         />
@@ -157,7 +157,7 @@ export function ReportScreen({ rounds, profile, onBack, onNext }: Props) {
                   <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
                     <motion.div
                       initial={{ width: 0 }}
-                      animate={{ width: `${p.moyenne * 10}%` }}
+                      animate={{ width: `${(p.moyenne / MAX_SCORE) * 100}%` }}
                       transition={{ duration: 0.5, ease: 'easeOut', delay: 0.05 * rang }}
                       className="h-full rounded-full"
                       style={{ background: couleur }}
@@ -179,7 +179,7 @@ export function ReportScreen({ rounds, profile, onBack, onNext }: Props) {
           <Versus mine={bilan.severite.moi} theirs={bilan.severite.autres} theirsLabel="Les autres" />
           <p className="mt-3 text-[13px] font-semibold leading-snug text-white/75">{severite}</p>
           <p className="mt-1.5 text-[10px] font-bold uppercase tracking-wider text-white/30">
-            Note moyenne d&apos;un red flag · {plural(bilan.severite.echantillon, 'red flag')} assez votés
+            Note moyenne d&apos;une révélation · {plural(bilan.severite.echantillon, 'révélation')} assez votées
           </p>
         </Block>
       )}
@@ -192,7 +192,7 @@ export function ReportScreen({ rounds, profile, onBack, onNext }: Props) {
             {cohortSentence(cohort, profile)}
           </p>
           <p className="mt-1.5 text-[10px] font-bold uppercase tracking-wider text-white/30">
-            {plural(cohort.votes, 'vote')} de ta cohorte sur {plural(cohort.sample, 'red flag')}
+            {plural(cohort.votes, 'vote')} de ta cohorte sur {plural(cohort.sample, 'révélation')}
           </p>
         </Block>
       )}
@@ -216,6 +216,40 @@ export function ReportScreen({ rounds, profile, onBack, onNext }: Props) {
         </Block>
       )}
 
+      {/* ── Ce que valent les qualités ───────────────────────────────────── */}
+      {bilan.moyenneVerte !== null && bilan.moyenneRouge !== null && (
+        <Block title="Red flags contre green flags" icon={<Scale size={12} />}>
+          <div className="flex flex-col gap-2">
+            <Barre label="🚩 Red" valeur={bilan.moyenneRouge} teinte={scoreColor(bilan.moyenneRouge)} fort />
+            <Barre label="🟢 Green" valeur={bilan.moyenneVerte} teinte={scoreColor(bilan.moyenneVerte)} fort />
+          </div>
+          <p className="mt-3 text-[13px] font-semibold leading-snug text-white/75">
+            {bilan.moyenneVerte <= 10.3
+              ? 'Une qualité ne lui rapporte presque rien : chez toi, être bien, c’est le minimum.'
+              : `Une qualité lui rapporte ${formatNote(bilan.moyenneVerte - 10)} point${bilan.moyenneVerte - 10 >= 2 ? 's' : ''} au-dessus du 10 ; un défaut lui en coûte ${formatNote(10 - bilan.moyenneRouge)}.`}
+          </p>
+        </Block>
+      )}
+
+      {/* ── Coups de cœur ────────────────────────────────────────────────── */}
+      {bilan.coupsDeCoeur.length > 0 && (
+        <Block title="Tes coups de cœur" icon={<Heart size={12} />}>
+          <ul className="flex flex-col gap-1.5">
+            {bilan.coupsDeCoeur.slice(0, 5).map((j, i) => (
+              <li key={`${j.text}-${i}`} className="flex items-start gap-2.5">
+                <span
+                  className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-md px-1 text-[12px] font-black tabular-nums"
+                  style={{ background: withAlpha(scoreColor(j.note), 0.18), color: scoreColor(j.note) }}
+                >
+                  {j.note}
+                </span>
+                <p className="min-w-0 flex-1 text-[13px] font-semibold leading-snug text-white/75">{j.text}</p>
+              </li>
+            ))}
+          </ul>
+        </Block>
+      )}
+
       {/* ── Par catégorie ────────────────────────────────────────────────── */}
       {bilan.categories.length >= 2 && (
         <Block title="Ce qui te fait décrocher">
@@ -225,7 +259,7 @@ export function ReportScreen({ rounds, profile, onBack, onNext }: Props) {
                 <div className="mb-1 flex items-baseline justify-between gap-2">
                   <span className="truncate text-[12px] font-bold text-white/70">{libelleCategorie(c.category)}</span>
                   <span className="shrink-0 text-[10px] font-bold text-white/30">
-                    {plural(c.nombre, 'red flag')}
+                    {plural(c.nombre, 'révélation')}
                     {c.autres !== null && ` · les autres ${formatNote(c.autres)}`}
                   </span>
                 </div>
@@ -233,7 +267,7 @@ export function ReportScreen({ rounds, profile, onBack, onNext }: Props) {
                   <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
                     <motion.div
                       initial={{ width: 0 }}
-                      animate={{ width: `${c.moi * 10}%` }}
+                      animate={{ width: `${(c.moi / MAX_SCORE) * 100}%` }}
                       transition={{ duration: 0.5, ease: 'easeOut' }}
                       className="h-full rounded-full"
                       style={{ background: scoreColor(c.moi) }}
@@ -348,7 +382,7 @@ function Block({ title, icon, children }: { title: string; icon?: React.ReactNod
   );
 }
 
-/** Deux notes sur 10, deux barres sur la même échelle. */
+/** Deux notes, deux barres sur la même échelle (0 à 15). */
 function Versus({ mine, theirs, theirsLabel }: { mine: number; theirs: number; theirsLabel: string }) {
   const plusDur = mine < theirs;
   return (
@@ -368,7 +402,7 @@ function Barre({ label, valeur, teinte, fort }: { label: string; valeur: number;
       <div className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
         <motion.div
           initial={{ width: 0 }}
-          animate={{ width: `${Math.min(100, valeur * 10)}%` }}
+          animate={{ width: `${Math.min(100, (valeur / MAX_SCORE) * 100)}%` }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
           className="h-full rounded-full"
           style={{ background: teinte }}

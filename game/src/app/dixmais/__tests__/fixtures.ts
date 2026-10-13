@@ -12,6 +12,8 @@ export function profilJuge(
     ids?: string[];
     communaute?: (number | null)[];
     categories?: string[];
+    /** Indices des green flags parmi les révélations. */
+    verts?: number[];
     fin?: Fin;
   } = {},
 ): ProfilJuge {
@@ -19,7 +21,7 @@ export function profilJuge(
   const propositions = notes.map((_, i) => ({
     id: options.ids?.[i] ?? `${nom}-${i}`,
     text: `Red flag numéro ${i + 1} de ${nom}`,
-    type: 'negative' as const,
+    type: options.verts?.includes(i) ? ('positive' as const) : ('negative' as const),
     category: options.categories?.[i] ?? 'politique',
   }));
   const communaute = options.communaute ?? notes.map(() => null);

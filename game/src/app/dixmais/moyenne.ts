@@ -1,7 +1,11 @@
 /**
  * @module dixmais/moyenne
- * La règle du jeu : chaque red flag se note seul, et la note du profil est la
- * moyenne des cinq.
+ * La règle du jeu : chaque révélation se note seule, et la note du profil est
+ * la moyenne des cinq.
+ *
+ * Un red flag fait descendre sous 10 ; un green flag peut faire monter
+ * au-dessus, jusqu'à 15. Une moyenne peut donc dépasser 10 : c'est le
+ * « 12/10 » d'un profil dont les qualités ont racheté les défauts.
  *
  * L'ancienne version empilait les révélations et faisait réajuster une note
  * unique, qui ne remontait presque jamais. Ici, chaque phrase est jugée pour
@@ -16,9 +20,13 @@
 import type { DixMaisStatement } from '@/types/database';
 import { MAX_SCORE, MIN_SCORE, START_SCORE } from './scale';
 
-/** Cinq red flags par profil : assez pour qu'une moyenne veuille dire quelque
- * chose, assez peu pour qu'on enchaîne les profils. */
+/** Cinq révélations par profil : assez pour qu'une moyenne veuille dire
+ * quelque chose, assez peu pour qu'on enchaîne les profils. */
 export const PROPOSITIONS_PAR_PROFIL = 5;
+
+/** Dont deux green flags : de quoi faire remonter un profil, sans que les
+ * qualités l'emportent sur les défauts, qui restent le cœur du jeu. */
+export const GREEN_FLAGS_PAR_PROFIL = 2;
 
 /** Sous ce nombre de votes, la note des autres sur une phrase est trop
  * bruitée pour être opposée au joueur. */
@@ -59,9 +67,9 @@ export interface ProfilJuge {
   initiale: string;
   teinte: number;
   propositions: Proposition[];
-  /** La note donnée à chaque red flag, seul. */
+  /** La note donnée à chaque révélation, seule (0 à 15). */
   notes: number[];
-  /** La note que les autres donnent à ce red flag, `null` si trop peu votée. */
+  /** La note que les autres donnent à cette révélation, `null` si trop peu votée. */
   communaute: (number | null)[];
   /** La note de la personne : la moyenne exacte des cinq. */
   moyenne: number;
@@ -102,9 +110,14 @@ export function formatEcart(n: number): string {
  * La note que les autres joueurs donnent à cette phrase, seule.
  *
  * Les votes en base viennent de l'ancienne mécanique : ils mesurent combien
- * chaque révélation retirait à la note en cours. Ce coût moyen est l'estimation
- * la plus proche d'une note isolée — 10 moins ce que la phrase coûte — tant
- * que la nouvelle mécanique n'enregistre pas ses propres votes.
+ * chaque révélation retirait (ou rendait) à la note en cours. Ce delta moyen
+ * est l'estimation la plus proche d'une note isolée — 10 plus ce que la phrase
+ * fait gagner ou perdre — tant que la nouvelle mécanique n'enregistre pas ses
+ * propres votes.
+ *
+ * @remarks Pour un green flag, l'estimation est basse : l'ancienne note était
+ * plafonnée à 10, si bien qu'une qualité ne pouvait que rattraper des points
+ * perdus, jamais en ajouter.
  */
 export function noteDesAutres(stmt: Pick<DixMaisStatement, 'votes_count' | 'total_delta'> & { avg_delta?: number }): number | null {
   const votes = stmt.votes_count ?? 0;
@@ -165,13 +178,53 @@ const il = (c: ContexteFin) => c.pronom;
 const CANDIDATES: Candidate[] = [
   // ── Palier 3 : ce que les cinq notes racontent précisément ───────────────
   {
+    key: 'hors-bareme',
+    tier: 3,
+    when: (c) => c.moyenne >= 12.5,
+    build: (c) => ({
+      title: 'HORS BARÈME',
+      subtitle: `${formatNote(c.moyenne)}/10. Le 10 du départ, ${il(c)} l'a pulvérisé.`,
+      tone: 'triumphant',
+    }),
+  },
+  {
     key: 'sans-faute',
     tier: 3,
-    when: (c) => c.notes.every((n) => n === MAX_SCORE),
+    when: (c) => c.notes.every((n) => n >= START_SCORE) && c.moyenne < 12.5,
     build: (c) => ({
       title: 'SANS FAUTE',
-      subtitle: `Cinq red flags, pas un point de perdu. Soit ${il(c)} est parfait${c.pronom === 'elle' ? 'e' : ''}, soit tu es déjà amoureux.`,
+      subtitle: `Pas un point de perdu, même sur les red flags. Soit ${il(c)} est parfait${c.pronom === 'elle' ? 'e' : ''}, soit tu es déjà amoureux.`,
       tone: 'triumphant',
+    }),
+  },
+  {
+    key: 'sauve-par-ses-qualites',
+    tier: 3,
+    when: (c) => {
+      const reds = c.notes.filter((_, i) => c.propositions[i]?.type === 'negative');
+      const greens = c.notes.filter((_, i) => c.propositions[i]?.type === 'positive');
+      return reds.length > 0 && greens.length > 0 && moyenneDe(reds) < 5 && c.moyenne >= 6;
+    },
+    build: (c) => {
+      const i = indexMax(c.notes);
+      return {
+        title: 'SAUVÉ PAR SES QUALITÉS',
+        subtitle: `Ses red flags le coulaient. « ${court(c.propositions[i]?.text ?? '')} » l'a repêché.`,
+        tone: 'neutral',
+      };
+    },
+  },
+  {
+    key: 'qualites-ignorees',
+    tier: 3,
+    when: (c) => {
+      const greens = c.notes.filter((_, i) => c.propositions[i]?.type === 'positive');
+      return greens.length >= 2 && greens.every((n) => n <= START_SCORE) && c.moyenne < 8;
+    },
+    build: () => ({
+      title: 'SES QUALITÉS ? LE MINIMUM',
+      subtitle: 'Pas un point de bonus pour ses green flags. Chez toi, le bien ne se récompense pas.',
+      tone: 'neutral',
     }),
   },
   {
@@ -216,7 +269,7 @@ const CANDIDATES: Candidate[] = [
     when: (c) => {
       const bas = c.notes.filter((n) => n <= 3).length;
       const hauts = c.notes.filter((n) => n >= 8).length;
-      return bas === 1 && hauts === c.notes.length - 1;
+      return bas === 1 && hauts === c.notes.length - 1 && c.moyenne < 10;
     },
     build: (c) => {
       const i = indexMin(c.notes);
@@ -252,7 +305,7 @@ const CANDIDATES: Candidate[] = [
   {
     key: 'grand-ecart',
     tier: 2,
-    when: (c) => Math.max(...c.notes) - Math.min(...c.notes) >= 7,
+    when: (c) => Math.max(...c.notes) - Math.min(...c.notes) >= 9,
     build: (c) => {
       const haut = indexMax(c.notes);
       const bas = indexMin(c.notes);
@@ -269,16 +322,26 @@ const CANDIDATES: Candidate[] = [
     when: (c) => c.notes.length >= 4 && Math.max(...c.notes) - Math.min(...c.notes) <= 1,
     build: () => ({
       title: 'LE BARÈME',
-      subtitle: 'Cinq red flags, cinq notes à un point près. Tu as une règle, et tu t’y tiens.',
+      subtitle: 'Cinq révélations, cinq notes à un point près. Tu as une règle, et tu t’y tiens.',
       tone: 'neutral',
     }),
   },
 
   // ── Palier 1 : la moyenne seule ───────────────────────────────────────────
   {
+    key: 'mieux-qu-un-10',
+    tier: 1,
+    when: (c) => c.moyenne > 10.25,
+    build: (c) => ({
+      title: "MIEUX QU'UN 10",
+      subtitle: `Les qualités ont plus que compensé. ${Il(c)} repart avec ${formatNote(c.moyenne)}/10.`,
+      tone: 'triumphant',
+    }),
+  },
+  {
     key: 'un-vrai-10',
     tier: 1,
-    when: (c) => c.moyenne >= 9,
+    when: (c) => c.moyenne >= 9 && c.moyenne <= 10.25,
     build: (c) => ({
       title: 'UN VRAI 10',
       subtitle: `Des red flags, oui. Mais ${il(c)} reste un 10, et tu le sais.`,
@@ -378,6 +441,7 @@ export const NOMBRE_DE_FINS = CANDIDATES.length;
 
 export interface Jugement {
   text: string;
+  type: 'positive' | 'negative';
   category: string;
   note: number;
   /** Note des autres, `null` si la phrase est trop peu votée. */
@@ -390,7 +454,7 @@ export interface Jugement {
 export interface Categorie {
   category: string;
   nombre: number;
-  /** Note moyenne donnée par le joueur aux red flags de cette catégorie. */
+  /** Note moyenne donnée par le joueur aux révélations de cette catégorie. */
   moi: number;
   autres: number | null;
 }
@@ -413,16 +477,23 @@ export interface Archetype {
 export interface Bilan {
   profils: number;
   jugements: number;
-  /** Moyenne de toutes les notes données : ce que vaut un red flag pour toi. */
+  /** Moyenne de toutes les notes données : ce que vaut une révélation pour toi. */
   noteMoyenne: number;
   /** Les profils, du mieux noté au moins bien noté. */
   classement: { numero: number; nom: string; age: number; moyenne: number; fin: string }[];
   severite: Severite | null;
-  /** Part des red flags notés 0, et 10. */
+  /** Part des révélations notées 0. */
   zeros: number;
-  dix: number;
+  /** Part des notes aux extrêmes (0-1 ou 13-15). */
+  extremes: number;
+  /** Note moyenne d'un red flag, et d'un green flag (`null` s'il n'en est
+   * sorti aucun). */
+  moyenneRouge: number | null;
+  moyenneVerte: number | null;
   /** Les phrases que le joueur juge rédhibitoires (0 ou 1). */
   redhibitoires: Jugement[];
+  /** Les qualités qui le font fondre (13 et plus). */
+  coupsDeCoeur: Jugement[];
   categories: Categorie[];
   /** Là où le joueur est le plus dur par rapport aux autres. */
   intransigeance: Jugement | null;
@@ -439,6 +510,7 @@ export function deplier(profils: ProfilJuge[]): Jugement[] {
       const note = p.notes[i];
       return {
         text: prop.text,
+        type: prop.type,
         category: prop.category,
         note,
         autres,
@@ -465,6 +537,10 @@ function categoriesDe(jugements: Jugement[]): Categorie[] {
       };
     })
     .sort((a, b) => a.moi - b.moi);
+}
+
+function moyenneOuNull(valeurs: number[]): number | null {
+  return valeurs.length ? moyenneDe(valeurs) : null;
 }
 
 export function construireBilan(profils: ProfilJuge[]): Bilan {
@@ -495,8 +571,11 @@ export function construireBilan(profils: ProfilJuge[]): Bilan {
       .sort((a, b) => b.moyenne - a.moyenne || a.numero - b.numero),
     severite,
     zeros: notes.length ? (notes.filter((n) => n === MIN_SCORE).length / notes.length) * 100 : 0,
-    dix: notes.length ? (notes.filter((n) => n === MAX_SCORE).length / notes.length) * 100 : 0,
+    extremes: notes.length ? (notes.filter((n) => n <= 1 || n >= 13).length / notes.length) * 100 : 0,
+    moyenneRouge: moyenneOuNull(jugements.filter((j) => j.type === 'negative').map((j) => j.note)),
+    moyenneVerte: moyenneOuNull(jugements.filter((j) => j.type === 'positive').map((j) => j.note)),
     redhibitoires: jugements.filter((j) => j.note <= 1).sort((a, b) => a.note - b.note),
+    coupsDeCoeur: jugements.filter((j) => j.note >= 13).sort((a, b) => b.note - a.note),
     categories: categoriesDe(jugements),
     intransigeance: plusDur && (plusDur.ecart as number) <= -2 ? plusDur : null,
     angleMort: plusDoux && (plusDoux.ecart as number) >= 2 ? plusDoux : null,
@@ -522,14 +601,28 @@ const ARCHETYPES: ArchetypeCandidat[] = [
   {
     key: 'binaire',
     title: 'LE BINAIRE',
-    tagline: 'Zéro ou dix, jamais six. Un red flag est grave ou il ne l’est pas.',
+    tagline: 'Zéro ou quinze, jamais six. Pour toi, une info compte énormément ou pas du tout.',
     emoji: '🎚️',
-    when: (b) => b.zeros + b.dix >= 60 && b.jugements >= 10,
+    when: (b) => b.extremes >= 60 && b.jugements >= 10,
+  },
+  {
+    key: 'coeur-d-artichaut',
+    title: "LE CŒUR D'ARTICHAUT",
+    tagline: 'Une qualité, et tu t’envoles. Un mec qui cuisine bien, et c’est 14/10.',
+    emoji: '💘',
+    when: (b) => (b.moyenneVerte ?? 0) >= 13,
+  },
+  {
+    key: 'insensible-au-vert',
+    title: 'INSENSIBLE AU VERT',
+    tagline: 'Les qualités glissent sur toi. Être bien, chez toi, c’est le minimum.',
+    emoji: '🧊',
+    when: (b) => b.moyenneVerte !== null && b.moyenneVerte <= 10.3 && b.coupsDeCoeur.length === 0 && b.jugements >= 10,
   },
   {
     key: 'procureur',
     title: 'LE PROCUREUR',
-    tagline: 'Tu notes chaque red flag bien plus bas que tout le monde. Rien ne t’échappe.',
+    tagline: 'Tu notes chaque révélation bien plus bas que tout le monde. Rien ne t’échappe.',
     emoji: '⚖️',
     when: (b) => (b.severite?.ecart ?? 0) <= -1.5,
   },
@@ -545,7 +638,7 @@ const ARCHETYPES: ArchetypeCandidat[] = [
     title: 'LE GRAND TIÈDE',
     tagline: 'Jamais de zéro, jamais de dix. Tu ne t’engages sur rien.',
     emoji: '🫤',
-    when: (b) => b.zeros === 0 && b.dix === 0 && b.dispersion < 1.5 && b.jugements >= 10,
+    when: (b) => b.zeros === 0 && b.extremes === 0 && b.dispersion < 1.5 && b.jugements >= 10,
   },
   {
     key: 'romantique',
@@ -573,7 +666,7 @@ const ARCHETYPES: ArchetypeCandidat[] = [
   {
     key: 'jure',
     title: 'LE JURÉ',
-    tagline: 'Tu pèses chaque red flag, un par un, et tu tranches. Sans état d’âme apparent.',
+    tagline: 'Tu pèses chaque info, une par une, et tu tranches. Sans état d’âme apparent.',
     emoji: '🧑‍⚖️',
     when: () => true,
   },
@@ -591,12 +684,12 @@ export function phraseSeverite(s: Severite | null): string | null {
   if (!s) return null;
   const e = Math.abs(s.ecart).toFixed(1).replace('.', ',');
   const pts = Math.abs(s.ecart) >= 2 ? 'points' : 'point';
-  if (s.ecart <= -2) return `Tu mets ${e} ${pts} de moins que les autres à chaque red flag. Tu es extrêmement sévère.`;
-  if (s.ecart <= -0.8) return `Tu es plus sévère que la moyenne : ${e} ${pts} de moins à chaque red flag.`;
+  if (s.ecart <= -2) return `Tu mets ${e} ${pts} de moins que les autres à chaque révélation. Tu es extrêmement sévère.`;
+  if (s.ecart <= -0.8) return `Tu es plus sévère que la moyenne : ${e} ${pts} de moins à chaque révélation.`;
   if (s.ecart < -0.3) return 'Tu es un peu plus dur que la moyenne, sans excès.';
   if (s.ecart <= 0.3) return 'Tu notes comme la moyenne des joueurs, à un cheveu près.';
-  if (s.ecart < 1.5) return `Tu es plus indulgent que la moyenne : ${e} ${pts} de plus à chaque red flag.`;
-  return `Tu donnes ${e} points de plus que tout le monde à chaque red flag. Personne n'est aussi gentil que toi.`;
+  if (s.ecart < 1.5) return `Tu es plus indulgent que la moyenne : ${e} ${pts} de plus à chaque révélation.`;
+  return `Tu donnes ${e} points de plus que tout le monde à chaque révélation. Personne n'est aussi gentil que toi.`;
 }
 
 /** Libellés lisibles des catégories du catalogue. */

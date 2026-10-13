@@ -2,7 +2,7 @@
 
 /**
  * @module dixmais/ProfileCard
- * La personne notée, et le red flag du moment.
+ * La personne notée, et la révélation du moment.
  *
  * Une seule phrase à l'écran, en grand : elle se juge seule. Ce qui relie les
  * cinq jugements, c'est la personne — son prénom, son visage, et sur sa tête
@@ -35,6 +35,8 @@ export function ProfileCard({ identity, statements, notes, index, draft, moyenne
   const moyenneAffichee = flash ? flash.moyenne : moyenne;
   const teinteMoyenne = moyenneAffichee === null ? 'rgba(255,255,255,0.35)' : scoreColor(moyenneAffichee);
   const tint = scoreColor(draft);
+  const vert = current?.type === 'positive';
+  const accent = vert ? '#22C55E' : '#F59E0B';
 
   return (
     <div
@@ -50,7 +52,7 @@ export function ProfileCard({ identity, statements, notes, index, draft, moyenne
       {/* ── Identité et moyenne ─────────────────────────────────────────── */}
       <div className="flex shrink-0 items-center gap-3 px-4 pt-3 pb-2">
         <div
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-black"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-black [@media(max-height:620px)]:h-9 [@media(max-height:620px)]:w-9 [@media(max-height:620px)]:text-base"
           style={{
             background: `linear-gradient(145deg, hsl(${identity.hue} 62% 46%), hsl(${identity.hue + 26} 58% 32%))`,
             boxShadow: `0 0 0 2px ${withAlpha(teinteMoyenne, 0.85)}, 0 0 20px ${withAlpha(teinteMoyenne, 0.35)}`,
@@ -65,7 +67,7 @@ export function ProfileCard({ identity, statements, notes, index, draft, moyenne
             {identity.name}, {identity.age}
           </p>
           <p className="mt-1 text-[11px] font-bold leading-none text-white/45">
-            Red flag {Math.min(index + 1, statements.length)} sur {statements.length}
+            Révélation {Math.min(index + 1, statements.length)} sur {statements.length}
           </p>
         </div>
 
@@ -103,7 +105,7 @@ export function ProfileCard({ identity, statements, notes, index, draft, moyenne
           return (
             <div
               key={s.id}
-              className="flex h-8 flex-1 items-center justify-center rounded-lg text-[13px] font-black tabular-nums"
+              className="flex h-8 flex-1 items-center justify-center rounded-lg text-[13px] font-black tabular-nums [@media(max-height:620px)]:h-6"
               style={{
                 background: juge ? withAlpha(couleur, 0.16) : enCours ? 'rgba(255,215,0,0.08)' : 'rgba(255,255,255,0.03)',
                 border: `1.5px solid ${juge ? withAlpha(couleur, 0.55) : enCours ? withAlpha('#FFD700', 0.6) : 'rgba(255,255,255,0.08)'}`,
@@ -116,16 +118,19 @@ export function ProfileCard({ identity, statements, notes, index, draft, moyenne
         })}
       </div>
 
-      {/* ── Le red flag du moment ───────────────────────────────────────── */}
+      {/* ── La révélation du moment ─────────────────────────────────────── */}
+      {/* Un green flag se lit « c'est un 10, et en plus… » : la jauge peut
+          alors monter au-delà de 10. La couleur suit : ambre pour un red flag,
+          vert pour une qualité. */}
       {/* Défilante et centrée « safe » : sur un 320 × 568, la phrase longue ne
           tient pas toujours ; elle doit alors défiler, pas être rognée par le
           haut comme le ferait un centrage simple. */}
-      <div className="scrollbar-hide flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pt-2 pb-3 [justify-content:safe_center]">
+      <div className="scrollbar-hide flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pt-2 pb-3 [justify-content:safe_center] [@media(max-height:620px)]:pt-1 [@media(max-height:620px)]:pb-2">
         <p
           className="mb-1.5 shrink-0 text-center font-black uppercase tracking-tight"
-          style={{ color: '#FBBF24', fontSize: 'clamp(0.95rem, 4.6vw, 1.2rem)' }}
+          style={{ color: vert ? '#4ADE80' : '#FBBF24', fontSize: 'clamp(0.95rem, 4.6vw, 1.2rem)' }}
         >
-          C&apos;est un 10, mais…
+          {vert ? 'C’est un 10, et en plus…' : 'C’est un 10, mais…'}
         </p>
 
         {current && (
@@ -136,16 +141,13 @@ export function ProfileCard({ identity, statements, notes, index, draft, moyenne
             transition={{ type: 'spring', stiffness: 300, damping: 26 }}
             className="relative shrink-0 overflow-hidden rounded-2xl px-4 py-4 [@media(max-height:620px)]:py-3"
             style={{
-              background: withAlpha('#F59E0B', 0.1),
-              border: `1px solid ${withAlpha('#F59E0B', 0.3)}`,
+              background: withAlpha(accent, 0.1),
+              border: `1px solid ${withAlpha(accent, 0.3)}`,
             }}
           >
             <div className="flex items-start justify-center gap-2.5">
-              <span className="shrink-0 text-lg leading-tight">🚩</span>
-              <p
-                className="min-w-0 text-center font-black leading-snug text-white [overflow-wrap:anywhere]"
-                style={{ fontSize: 'clamp(1.2rem, 6vw, 1.7rem)' }}
-              >
+              <span className="shrink-0 text-lg leading-tight">{vert ? '🟢' : '🚩'}</span>
+              <p className="min-w-0 text-center text-[clamp(1.2rem,6vw,1.7rem)] font-black leading-snug text-white [overflow-wrap:anywhere] [@media(max-height:620px)]:text-[1.05rem]">
                 {current.text}
               </p>
             </div>

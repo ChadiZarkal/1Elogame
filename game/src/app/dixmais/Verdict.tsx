@@ -9,14 +9,14 @@
  * vient se poser sur la personne. C'est la règle du jeu, montrée.
  *
  * Viennent ensuite la fin retenue, ce que les autres joueurs lui auraient mis,
- * et le détail red flag par red flag.
+ * et le détail révélation par révélation.
  */
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Trophy, Share2, Check, BarChart3 } from 'lucide-react';
-import { scoreColor, scoreLabel, withAlpha } from './scale';
+import { MAX_SCORE, START_SCORE, scoreColor, scoreLabel, withAlpha } from './scale';
 import { formatNote, poidsDansLaMoyenne, type ProfilJuge } from './moyenne';
 
 const SHARE_URL = 'https://redorgreen.fr/dixmais';
@@ -38,9 +38,12 @@ export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: 
   const [copied, setCopied] = useState(false);
   const { notes, propositions, communaute, moyenne, moyenneCommunaute, fin } = profil;
   const tint = scoreColor(moyenne);
-  // Le red flag qui a le plus coûté à la moyenne, pour le signaler dans le détail.
+  // Ce qui a le plus coûté à la moyenne, et ce qui lui a le plus rapporté :
+  // signalés dans le détail. Le second n'existe que si une note dépasse 10.
   const plusLourd = notes.reduce((best, n, i) => (n < notes[best] ? i : best), 0);
   const poids = poidsDansLaMoyenne(notes, plusLourd);
+  const plusPorteur = notes.reduce((best, n, i) => (n > notes[best] ? i : best), 0);
+  const apport = notes[plusPorteur] > START_SCORE ? -poidsDansLaMoyenne(notes, plusPorteur) : 0;
 
   useEffect(() => {
     if (fin.tone !== 'triumphant') return;
@@ -69,7 +72,7 @@ export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: 
   }, [copied]);
 
   const share = async () => {
-    const text = `${profil.nom}, ${profil.age} : 5 red flags, ${formatNote(moyenne)}/10 de moyenne — « ${fin.title} ». Et toi, tu lui mets combien ?`;
+    const text = `${profil.nom}, ${profil.age} : 5 révélations, ${formatNote(moyenne)}/10 de moyenne — « ${fin.title} ». Et toi, tu lui mets combien ?`;
     try {
       if (navigator.share) {
         await navigator.share({ title: "C'est un 10 mais…", text, url: SHARE_URL });
@@ -207,7 +210,7 @@ export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: 
         </motion.div>
       )}
 
-      {/* ── Détail par red flag ──────────────────────────────────────────── */}
+      {/* ── Détail par révélation ────────────────────────────────────────── */}
       <p className="mt-6 mb-2 text-center text-[11px] font-black uppercase tracking-[0.18em] text-white/45">
         Tes 5 notes
       </p>
@@ -222,7 +225,7 @@ export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: 
               style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.07)' }}
             >
               <div className="flex items-start gap-2.5">
-                <span className="mt-px shrink-0 text-xs">🚩</span>
+                <span className="mt-px shrink-0 text-xs">{p.type === 'positive' ? '🟢' : '🚩'}</span>
                 <p className="min-w-0 flex-1 text-[13px] font-semibold leading-snug text-white/75">
                   {p.text}
                 </p>
@@ -234,10 +237,13 @@ export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: 
                 </span>
               </div>
 
-              {(autres !== null || (i === plusLourd && poids >= 0.5)) && (
+              {(autres !== null || (i === plusLourd && poids >= 0.5) || (i === plusPorteur && apport >= 0.5)) && (
                 <p className="mt-1.5 pl-6 text-[12px] font-bold text-white/50">
                   {autres !== null && <>Les autres : {formatNote(autres)}</>}
-                  {autres !== null && i === plusLourd && poids >= 0.5 && ' · '}
+                  {autres !== null && ((i === plusLourd && poids >= 0.5) || (i === plusPorteur && apport >= 0.5)) && ' · '}
+                  {i === plusPorteur && apport >= 0.5 && (
+                    <span className="text-emerald-400/90">lui rapporte {formatNote(apport)} point{apport >= 2 ? 's' : ''} de moyenne</span>
+                  )}
                   {i === plusLourd && poids >= 0.5 && (
                     <span className="text-red-400/80">lui coûte {formatNote(poids)} point{poids >= 2 ? 's' : ''} de moyenne</span>
                   )}
@@ -330,7 +336,7 @@ function Echelle({ label, valeur, fort = false }: { label: string; valeur: numbe
       <div className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
         <motion.div
           initial={{ width: 0 }}
-          animate={{ width: `${(valeur / 10) * 100}%` }}
+          animate={{ width: `${(valeur / MAX_SCORE) * 100}%` }}
           transition={{ duration: 0.5, ease: 'easeOut', delay: DELAI_MOYENNE + 0.4 }}
           className="h-full rounded-full"
           style={{ background: couleur }}

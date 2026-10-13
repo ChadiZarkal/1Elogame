@@ -151,9 +151,11 @@ function selectFromPools(
   negPool: DixMaisStatement[],
   posPool: DixMaisStatement[],
   count: number,
+  /** Nombre de green flags voulu ; par défaut, 30 % du profil. */
+  verts?: number,
 ): DixMaisStatement[] {
-  const negCount = Math.ceil(count * 0.7);
-  const posCount = count - negCount;
+  const posCount = verts === undefined ? count - Math.ceil(count * 0.7) : Math.min(count, Math.max(0, verts));
+  const negCount = count - posCount;
 
   const neg = pickRandom(negPool, negCount);
   const pos = pickRandom(posPool, posCount);
@@ -172,12 +174,18 @@ function selectFromPools(
 // ---------------------------------------------------------------------------
 // Public: fetch random statements for a game round
 // ---------------------------------------------------------------------------
+export interface StatementMix {
+  /** Que des red flags. */
+  redFlagsSeulement?: boolean;
+  /** Nombre exact de green flags par profil (mécanique à la moyenne, où une
+   * qualité peut faire dépasser 10). */
+  verts?: number;
+}
+
 export async function getRandomStatements(
   count = 7,
   excludeIds: string[] = [],
-  /** `true` : que des red flags. La mécanique de la moyenne note chaque phrase
-   * seule, et une qualité notée seule vaudrait 10 à tout coup. */
-  redFlagsSeulement = false,
+  { redFlagsSeulement = false, verts }: StatementMix = {},
 ): Promise<DixMaisStatement[]> {
   const exclude = new Set(excludeIds);
 
@@ -187,6 +195,7 @@ export async function getRandomStatements(
       all.filter(s => s.type === 'negative'),
       redFlagsSeulement ? [] : all.filter(s => s.type === 'positive'),
       count,
+      verts,
     );
   }
 
@@ -225,6 +234,7 @@ export async function getRandomStatements(
       seed.filter(s => s.type === 'negative'),
       redFlagsSeulement ? [] : seed.filter(s => s.type === 'positive'),
       count,
+      verts,
     );
   }
 
@@ -232,6 +242,7 @@ export async function getRandomStatements(
     negAll.filter(s => !exclude.has(s.id)),
     redFlagsSeulement ? [] : posAll.filter(s => !exclude.has(s.id)),
     count,
+    verts,
   );
 
   // Moins de trois énoncés ne fait pas un profil jouable. Liste vide plutôt

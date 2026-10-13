@@ -4,8 +4,9 @@
  * @module dixmais/Intro
  * Écran d'accueil.
  *
- * Une liste de règles ne se lit pas en soirée. La règle — chaque red flag se
- * note seul, et la personne reçoit la moyenne — est donc *montrée* : une
+ * Une liste de règles ne se lit pas en soirée. La règle — chaque révélation
+ * se note seule, jusqu'à 15 pour une qualité, et la personne reçoit la
+ * moyenne — est donc *montrée* : une
  * démonstration tourne en boucle, où chaque phrase reçoit sa note puis où les
  * notes se fondent en une moyenne.
  *
@@ -22,11 +23,11 @@ import { Trophy } from 'lucide-react';
 import { scoreColor, withAlpha } from './scale';
 import { formatNote, moyenneDe } from './moyenne';
 
-/** Trois red flags, trois notes, une moyenne. */
+/** Deux red flags, un green flag qui dépasse le 10, une moyenne. */
 const DEMO = [
-  { text: 'Il est jaloux maladif', score: 2 },
-  { text: 'Il parle de son ex non-stop', score: 5 },
-  { text: 'Il ne fait jamais la vaisselle', score: 8 },
+  { text: 'Il est jaloux maladif', score: 3, vert: false },
+  { text: 'Il cuisine comme un chef', score: 14, vert: true },
+  { text: 'Il parle de son ex non-stop', score: 7, vert: false },
 ] as const;
 
 const DEMO_MOYENNE = moyenneDe(DEMO.map((d) => d.score));
@@ -80,8 +81,9 @@ export function Intro({ onStart, failed }: { onStart: () => void; failed: boolea
           <MechanicDemo />
 
           <p className="mt-4 max-w-xs text-sm font-semibold leading-snug text-white/55">
-            5 red flags, notés <span className="text-white">un par un</span>, de 0 à 10. Sa note
-            finale, <span style={{ color: '#FBBF24' }}>c&apos;est ta moyenne</span>.
+            5 infos, notées <span className="text-white">une par une</span>. Les red flags font
+            descendre, les <span style={{ color: '#4ADE80' }}>green flags montent jusqu&apos;à 15</span>.
+            Sa note finale, <span style={{ color: '#FBBF24' }}>c&apos;est ta moyenne</span>.
           </p>
           <p className="mt-1.5 text-xs font-bold text-white/35">
             Un 0 pèse lourd, mais ne met pas fin à la partie.
@@ -166,10 +168,15 @@ function MechanicDemo() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <p className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: '#F59E0B' }}>
-                C&apos;est un 10, mais…
+              <p
+                className="text-[10px] font-black uppercase tracking-[0.14em]"
+                style={{ color: courant.vert ? '#4ADE80' : '#F59E0B' }}
+              >
+                {courant.vert ? 'C’est un 10, et en plus…' : 'C’est un 10, mais…'}
               </p>
-              <p className="text-[13px] font-semibold leading-tight text-white">🚩 {courant.text}</p>
+              <p className="text-[13px] font-semibold leading-tight text-white">
+                {courant.vert ? '🟢' : '🚩'} {courant.text}
+              </p>
             </motion.div>
           ) : (
             <motion.p

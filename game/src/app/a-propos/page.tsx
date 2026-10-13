@@ -37,8 +37,8 @@ export default function AProposPage() {
           <p>
             <strong>Des jeux.</strong> Le <Link href="/jeu">duel Red or Green</Link> oppose deux
             comportements et demande de trancher.{' '}
-            <Link href="/dixmais">« C&apos;est un 10 mais... »</Link> fait noter cinq red flags un
-            par un, et donne au profil la moyenne. L&apos;<Link href="/flagornot">Oracle</Link> rend un avis sur une
+            <Link href="/dixmais">« C&apos;est un 10 mais... »</Link> fait noter red flags et green
+            flags un par un, jusqu&apos;à 15/10, et donne au profil la moyenne. L&apos;<Link href="/flagornot">Oracle</Link> rend un avis sur une
             situation décrite librement. Tous se jouent sans compte, gratuitement.
           </p>
           <p>

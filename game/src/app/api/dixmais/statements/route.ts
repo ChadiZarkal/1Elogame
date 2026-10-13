@@ -11,9 +11,12 @@ export const GET = withApiHandler(async (req) => {
     .map(id => id.trim())
     .filter(Boolean);
 
-  // `types=negative` : que des red flags (mécanique de la moyenne).
+  // `types=negative` : que des red flags. `verts=N` : exactement N green
+  // flags par profil (mécanique à la moyenne, où une qualité peut dépasser 10).
   const redFlagsSeulement = searchParams.get('types') === 'negative';
+  const vertsBrut = searchParams.get('verts');
+  const verts = vertsBrut === null ? undefined : Math.min(Math.max(parseInt(vertsBrut, 10) || 0, 0), count);
 
-  const statements = await getRandomStatements(count, excludeIds, redFlagsSeulement);
+  const statements = await getRandomStatements(count, excludeIds, { redFlagsSeulement, verts });
   return apiSuccess(statements);
 }, { rateLimit: 'public' });

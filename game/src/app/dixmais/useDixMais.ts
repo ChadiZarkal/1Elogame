@@ -4,8 +4,9 @@
  * @module dixmais/useDixMais
  * Machine à états de la manche.
  *
- * La règle tient en deux lignes : chaque red flag se note **seul**, de 0 à 10,
- * en repartant de 10 ; et au cinquième, la personne reçoit la moyenne des
+ * La règle tient en deux lignes : chaque révélation se note **seule**, de 0 à
+ * 15, en repartant de 10 — un red flag fait descendre, un green flag peut
+ * faire dépasser 10 ; et à la cinquième, la personne reçoit la moyenne des
  * cinq. Le calcul est dans `moyenne.ts`, l'affichage dans les écrans — ce
  * fichier ne fait qu'enchaîner.
  */
@@ -16,6 +17,7 @@ import { useHaptics } from '@/lib/hooks';
 import { START_SCORE, clampScore } from './scale';
 import { generateIdentity, type ProfileIdentity } from './profile';
 import {
+  GREEN_FLAGS_PAR_PROFIL,
   PROPOSITIONS_PAR_PROFIL,
   choisirFin,
   moyenneDe,
@@ -48,7 +50,7 @@ export type Phase = 'intro' | 'profile' | 'loading' | 'error' | 'reveal' | 'verd
 export interface Round {
   statements: DixMaisStatement[];
   identity: ProfileIdentity;
-  /** La note de chaque red flag déjà jugé. */
+  /** La note de chaque révélation déjà jugée. */
   notes: number[];
   index: number;
 }
@@ -60,9 +62,9 @@ export interface Flash {
 }
 
 async function fetchStatements(count: number, excludeIds: string[]): Promise<DixMaisStatement[]> {
-  // Que des red flags : une qualité notée seule vaut 10 à tout coup, elle ne
-  // ferait que gonfler la moyenne sans rien demander au joueur.
-  const params = new URLSearchParams({ count: String(count), types: 'negative' });
+  // Trois red flags, deux green flags : la jauge va jusqu'à 15, une qualité
+  // peut donc rapporter plus que le 10 de départ.
+  const params = new URLSearchParams({ count: String(count), verts: String(GREEN_FLAGS_PAR_PROFIL) });
   if (excludeIds.length) params.set('exclude', excludeIds.join(','));
   const res = await fetch(`/api/dixmais/statements?${params.toString()}`, { cache: 'no-store' });
   if (!res.ok) throw new Error('fetch failed');
@@ -290,7 +292,7 @@ export function useDixMais() {
         setPhase('verdict');
       } else {
         setRound((r) => (r ? { ...r, notes, index: r.index + 1 } : r));
-        // Chaque red flag se juge seul : la jauge repart de 10.
+        // Chaque révélation se juge seule : la jauge repart de 10.
         applyDraft(START_SCORE);
       }
     }, COMMIT_MS);

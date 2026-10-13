@@ -2,12 +2,16 @@
 
 /**
  * @module dixmais/ScoreDial
- * Jauge de notation d'un red flag.
+ * Jauge de notation d'une révélation, de 0 à 15.
  *
- * Elle part de 10 à chaque phrase : « c'est un 10, mais… » — le joueur dit
- * combien la phrase lui coûte, et l'écart avec 10 s'affiche en direct pendant
- * qu'il glisse. Un 0 n'arrête plus rien : c'est une note comme une autre, qui
- * pèsera lourd dans la moyenne.
+ * Elle part de 10 à chaque phrase : « c'est un 10, mais… » — le joueur dit ce
+ * que la phrase lui coûte, ou, pour un green flag, ce qu'elle lui rapporte au
+ * delà du 10. L'écart avec 10 s'affiche en direct pendant qu'il glisse. Un 0
+ * n'arrête plus rien : c'est une note comme une autre, qui pèsera lourd dans
+ * la moyenne.
+ *
+ * La zone 11-15 est marquée à part — pointillés dorés, séparateur après le
+ * 10 — pour qu'on comprenne d'un coup d'œil qu'au-delà, c'est du bonus.
  *
  * Les tailles sont bornées en `vh` autant qu'en `vw` : sur un iPhone SE avec
  * les barres de Safari (553 px utiles), un dimensionnement purement horizontal
@@ -16,7 +20,7 @@
 
 import { useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { MAX_SCORE, formatDelta, scoreColor, scoreLabel, withAlpha } from './scale';
+import { MAX_SCORE, START_SCORE, formatDelta, isBonus, scoreColor, scoreLabel, withAlpha } from './scale';
 
 const STEPS = Array.from({ length: MAX_SCORE + 1 }, (_, i) => i);
 
@@ -36,7 +40,7 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled }: Pro
   const delta = value - previous;
   const untouched = delta === 0;
 
-  /** 11 cellules de largeur égale : l'index est une division directe.
+  /** 16 cellules de largeur égale : l'index est une division directe.
    *
    * Sortir de la piste par la gauche n'est volontairement **pas** ramené à 0 :
    * un doigt qui dérape ne doit pas poser la note la plus lourde du jeu. */
@@ -87,7 +91,7 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled }: Pro
             transition={{ type: 'spring', stiffness: 520, damping: 26 }}
             className="font-black leading-none tabular-nums"
             style={{
-              fontSize: 'min(4.6rem, 16vw, 8.5vh)',
+              fontSize: 'min(4.6rem, 16vw, 7.5vh)',
               color: tint,
               letterSpacing: '-0.05em',
               textShadow: `0 0 44px ${withAlpha(tint, 0.45)}`,
@@ -115,15 +119,28 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled }: Pro
         )}
       </div>
 
-      {/* 12 px, pas 9 : ce libellé est le seul retour en mots pendant le geste
-          de notation, et 9 px avec un interlettrage de 0,28em sur fond sombre
-          n'était plus lisible à bout de bras. */}
-      <p
-        className="mt-0.5 mb-2 text-center text-[12px] font-black uppercase tracking-[0.18em]"
-        style={{ color: withAlpha(tint, 0.75) }}
-      >
-        {scoreLabel(value)}
-      </p>
+      {/* Libellé de la note au centre, légende des deux zones de part et
+          d'autre : sur la même ligne, pour ne pas voler de hauteur à la phrase
+          notée sur un écran de 568 px. 12 px pour le libellé : c'est le seul
+          retour en mots pendant le geste. */}
+      <div className="mt-0.5 mb-1 flex items-baseline justify-between gap-2">
+        <span className="w-14 shrink-0 text-left text-[10px] font-black uppercase tracking-wider text-white/30" aria-hidden>
+          ← coûte
+        </span>
+        <p
+          className="min-w-0 truncate text-center text-[12px] font-black uppercase tracking-[0.16em]"
+          style={{ color: withAlpha(tint, 0.75) }}
+        >
+          {scoreLabel(value)}
+        </p>
+        <span
+          className="w-14 shrink-0 text-right text-[10px] font-black uppercase tracking-wider"
+          style={{ color: withAlpha('#FFD700', 0.6) }}
+          aria-hidden
+        >
+          bonus ✨
+        </span>
+      </div>
 
       {/* Escalier : la hauteur des barres encode la valeur, le remplissage
           encode la note choisie. Glissable et tapable — la zone sensible est
@@ -132,7 +149,7 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled }: Pro
         ref={trackRef}
         role="slider"
         tabIndex={disabled ? -1 : 0}
-        aria-label="Note de ce red flag sur 10"
+        aria-label="Note de cette révélation, de 0 à 15"
         aria-valuemin={0}
         aria-valuemax={MAX_SCORE}
         aria-valuenow={value}
@@ -143,7 +160,7 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled }: Pro
         onPointerCancel={stopDragging}
         onLostPointerCapture={stopDragging}
         onKeyDown={onKeyDown}
-        className="flex w-full items-end gap-[3px] rounded-2xl px-1 py-1.5"
+        className="relative flex w-full items-end gap-[2px] rounded-2xl px-1 py-1.5"
         style={{
           touchAction: 'none',
           opacity: disabled ? 0.45 : 1,
@@ -151,31 +168,51 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled }: Pro
           transition: 'opacity 200ms ease',
         }}
       >
+        {/* Séparateur entre le 10 et la zone bonus. Positionné en absolu
+            plutôt qu'en marge : une marge décalerait les cellules et fausserait
+            la division qui traduit le doigt en note. */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute top-0 bottom-0 w-px"
+          style={{
+            left: `calc(0.25rem + (100% - 0.5rem) * ${(START_SCORE + 1) / (MAX_SCORE + 1)})`,
+            background: withAlpha('#FFD700', 0.45),
+          }}
+        />
         {STEPS.map((step) => {
           const filled = step <= value;
           const isCurrent = step === value;
+          const bonus = isBonus(step);
           return (
             <div
               key={step}
-              className="relative flex-1 rounded-md"
+              className="relative flex-1 rounded-[5px]"
               style={{
-                height: 20 + step * 3,
-                background: filled ? tint : 'rgba(255,255,255,0.055)',
-                border: `1px solid ${
-                  isCurrent ? '#FFFFFF' : filled ? withAlpha(tint, 0.9) : 'rgba(255,255,255,0.09)'
+                height: 16 + step * 2.1,
+                background: filled ? tint : bonus ? 'rgba(255,215,0,0.05)' : 'rgba(255,255,255,0.055)',
+                border: `1px ${bonus && !filled ? 'dashed' : 'solid'} ${
+                  isCurrent
+                    ? '#FFFFFF'
+                    : filled
+                      ? withAlpha(tint, 0.9)
+                      : bonus
+                        ? 'rgba(255,215,0,0.3)'
+                        : 'rgba(255,255,255,0.09)'
                 }`,
                 boxShadow: isCurrent ? `0 0 18px ${withAlpha(tint, 0.7)}` : 'none',
                 transition: 'background-color 140ms ease, box-shadow 140ms ease',
               }}
             >
               <span
-                className="absolute inset-x-0 bottom-0.5 text-center text-[11px] font-black tabular-nums"
+                className="absolute inset-x-0 bottom-0.5 text-center text-[10px] font-black tracking-tighter tabular-nums"
                 style={{
                   color: filled
                     ? 'rgba(0,0,0,0.55)'
                     : step === 0
                       ? '#EF4444'
-                      : 'rgba(255,255,255,0.3)',
+                      : bonus
+                        ? 'rgba(255,215,0,0.55)'
+                        : 'rgba(255,255,255,0.3)',
                 }}
               >
                 {step}
@@ -200,9 +237,11 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled }: Pro
         {value === 0
           ? '🚫 0 · Rédhibitoire'
           : untouched
-            // Garder 10 est un choix valide : ce red flag ne lui coûte rien.
+            // Garder 10 est un choix valide : l'info ne change rien.
             ? 'Toujours un 10'
-            : `Valider ${value}`}
+            : isBonus(value)
+              ? `✨ ${value}/10`
+              : `Valider ${value}`}
       </motion.button>
     </div>
   );

@@ -50,7 +50,7 @@ describe('ReportScreen', () => {
   it('affiche le portrait, les compteurs et le classement de la soirée', () => {
     render(<ReportScreen rounds={soiree} profile={null} onBack={vi.fn()} onNext={vi.fn()} />);
 
-    expect(screen.getByText(/3 profils · 15 red flags/)).toBeInTheDocument();
+    expect(screen.getByText(/3 profils · 15 révélations/)).toBeInTheDocument();
     expect(screen.getByText('Ton classement')).toBeInTheDocument();
     const lignes = screen.getAllByRole('listitem').map((li) => li.textContent ?? '');
     expect(lignes[0]).toContain('Emma');

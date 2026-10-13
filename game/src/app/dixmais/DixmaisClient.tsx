@@ -69,7 +69,9 @@ export default function DixMaisPage() {
     <div className="relative flex h-[calc(100dvh-var(--header-h,3rem))] min-h-[500px] flex-col overflow-hidden text-white select-none">
       <Ambient score={game.ambientScore} shock={game.shock} />
 
-      <header className="relative z-10 flex shrink-0 items-center justify-between gap-3 px-5 pt-4 pb-2">
+      {/* Resserré sous 620 px de haut : chaque pixel rendu ici revient à la
+          phrase notée, qui sinon déborde de sa carte sur un 320 × 568. */}
+      <header className="relative z-10 flex shrink-0 items-center justify-between gap-3 px-5 pt-4 pb-2 [@media(max-height:620px)]:pt-2 [@media(max-height:620px)]:pb-1">
         {/* Le retour à l'accueil est le logo de la barre du site. Cette cale
             garde la progression au centre et « recommencer » à droite. */}
         <span aria-hidden className="w-6" />
@@ -152,12 +154,12 @@ export default function DixMaisPage() {
                     L'aide de premier lancement occupe cet emplacement plutôt
                     que d'en ajouter un — hauteur réservée pour deux lignes, la
                     jauge ne bouge donc jamais sous le pouce. */}
-                <div className="mb-2 flex min-h-[34px] items-center justify-center">
+                <div className="mb-2 flex min-h-[34px] items-center justify-center [@media(max-height:620px)]:mb-1">
                   <p className="text-center text-[13px] font-bold leading-tight text-white/75">
                     {game.showCoach && round.index === 0 ? (
                       <>
-                        Note ce red flag <span style={{ color: '#FBBF24' }}>tout seul</span>. Au
-                        bout de 5, sa note sera <span style={{ color: '#FBBF24' }}>ta moyenne</span>.
+                        Note cette info <span style={{ color: '#FBBF24' }}>toute seule</span>. Un
+                        green flag peut <span style={{ color: '#4ADE80' }}>dépasser 10</span>.
                       </>
                     ) : (
                       <>
