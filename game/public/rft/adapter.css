@@ -1817,8 +1817,9 @@ body:has(.main-container) {
 /* ---------------------------------------------------------------------------
  * La pause publicitaire avant le résultat (voir `Interstitiel.tsx`).
  *
- * L'encart a une hauteur réservée : sur cet écran dédié, un emplacement qui se
- * remplirait après coup ferait sauter le bouton sous le pouce du joueur.
+ * Le bouton est au-dessus de l'encart : il reste à sa place quand la publicité
+ * se charge, et le joueur le voit sans faire défiler. L'encart garde une
+ * hauteur réservée pour que l'écran ne saute pas quand elle arrive.
  * ------------------------------------------------------------------------- */
 
 .interstitiel {
@@ -1861,7 +1862,10 @@ body:has(.main-container) {
   text-transform: uppercase;
 }
 
-.interstitiel-actions {
+.intro-wrapper .intro-form.interstitiel-actions {
+  /* `.intro-wrapper .intro-form` s'étire dans la référence : ici, il pousserait
+     l'encart en bas de l'écran, loin du bouton. */
+  flex-grow: 0;
   width: 100%;
   margin-top: calc(var(--spacing) * 1.2);
 }

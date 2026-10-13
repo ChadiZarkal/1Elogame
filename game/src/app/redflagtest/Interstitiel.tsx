@@ -64,12 +64,6 @@ export function Interstitiel({
       <h2>Ton résultat arrive</h2>
       <p className="interstitiel-texte">On compte les dégâts…</p>
 
-      <aside className="interstitiel-pub" aria-label="Publicité" ref={encart}>
-        <p className="interstitiel-etiquette" aria-hidden="true">Publicité</p>
-        {/* Le script de la régie retrouve ce conteneur par son identifiant. */}
-        <div id={RFT_INTERSTITIEL.containerId} />
-      </aside>
-
       <div className="intro-form interstitiel-actions">
         <button
           type="button"
@@ -81,6 +75,12 @@ export function Interstitiel({
           {reste > 0 ? `Ton résultat dans ${reste}…` : pret ? 'Voir mon résultat' : 'Encore un instant…'}
         </button>
       </div>
+
+      <aside className="interstitiel-pub" aria-label="Publicité" ref={encart}>
+        <p className="interstitiel-etiquette" aria-hidden="true">Publicité</p>
+        {/* Le script de la régie retrouve ce conteneur par son identifiant. */}
+        <div id={RFT_INTERSTITIEL.containerId} />
+      </aside>
     </section>
   );
 }
