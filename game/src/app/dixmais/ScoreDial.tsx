@@ -2,16 +2,12 @@
 
 /**
  * @module dixmais/ScoreDial
- * Jauge de notation.
+ * Jauge de notation d'un red flag.
  *
- * Remplace la grille de boutons 1-10 de l'ancienne version. Une grille se lit
- * comme « réponds à cette question » : chaque appui semblait indépendant du
- * précédent, ce qui est exactement le contresens que faisaient les joueurs.
- *
- * La jauge, elle, **démarre sur la note précédente**. Le geste est un
- * ajustement, pas une saisie. Le joueur voit sa note actuelle avant de toucher
- * quoi que ce soit, et l'écart avec elle s'affiche en direct pendant qu'il
- * glisse.
+ * Elle part de 10 à chaque phrase : « c'est un 10, mais… » — le joueur dit
+ * combien la phrase lui coûte, et l'écart avec 10 s'affiche en direct pendant
+ * qu'il glisse. Un 0 n'arrête plus rien : c'est une note comme une autre, qui
+ * pèsera lourd dans la moyenne.
  *
  * Les tailles sont bornées en `vh` autant qu'en `vw` : sur un iPhone SE avec
  * les barres de Safari (553 px utiles), un dimensionnement purement horizontal
@@ -43,8 +39,7 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled }: Pro
   /** 11 cellules de largeur égale : l'index est une division directe.
    *
    * Sortir de la piste par la gauche n'est volontairement **pas** ramené à 0 :
-   * 0 est éliminatoire, et un doigt qui dérape hors de la piste ne doit pas
-   * atterrir sur la seule valeur qui met fin à la manche. */
+   * un doigt qui dérape ne doit pas poser la note la plus lourde du jeu. */
   const pickFrom = useCallback((clientX: number) => {
     const el = trackRef.current;
     if (!el) return;
@@ -82,7 +77,7 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled }: Pro
 
   return (
     <div className="w-full">
-      {/* Lecture en direct : la note, et surtout l'écart avec la précédente. */}
+      {/* Lecture en direct : la note, et ce qu'elle retire au 10 de départ. */}
       <div className="flex items-center justify-center gap-3">
         <div className="flex items-baseline">
           <motion.span
@@ -137,7 +132,7 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled }: Pro
         ref={trackRef}
         role="slider"
         tabIndex={disabled ? -1 : 0}
-        aria-label="Note du profil sur 10"
+        aria-label="Note de ce red flag sur 10"
         aria-valuemin={0}
         aria-valuemax={MAX_SCORE}
         aria-valuenow={value}
@@ -203,11 +198,10 @@ export function ScoreDial({ value, previous, onChange, onCommit, disabled }: Pro
         }}
       >
         {value === 0
-          ? '🚫 Éliminer'
+          ? '🚫 0 · Rédhibitoire'
           : untouched
-            // Formulation volontaire : garder la même note est un choix valide,
-            // et le dire à voix haute enseigne que la note se reporte.
-            ? `Je garde ${value}`
+            // Garder 10 est un choix valide : ce red flag ne lui coûte rien.
+            ? 'Toujours un 10'
             : `Valider ${value}`}
       </motion.button>
     </div>

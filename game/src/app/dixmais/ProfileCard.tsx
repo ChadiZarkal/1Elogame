@@ -2,72 +2,58 @@
 
 /**
  * @module dixmais/ProfileCard
- * La personne notée, et tout ce qu'on sait d'elle.
+ * La personne notée, et le red flag du moment.
  *
- * C'est ici que se joue la compréhension du jeu. L'ancienne version empilait
- * les révélations dans une zone défilante coincée entre l'en-tête et le clavier
- * de notation : passé la troisième, les premières sortaient de l'écran. Ce qui
- * disparaît de l'écran disparaît du raisonnement — d'où des joueurs qui notaient
- * la dernière phrase au lieu de noter la personne.
- *
- * Désormais : une seule carte, toutes les révélations dedans, reliées par ET /
- * MAIS pour se lire comme une phrase unique, et la note en cours affichée sur
- * la tête du profil pour qu'elle lui reste attachée.
+ * Une seule phrase à l'écran, en grand : elle se juge seule. Ce qui relie les
+ * cinq jugements, c'est la personne — son prénom, son visage, et sur sa tête
+ * la moyenne qui se construit à chaque note. Les cinq cases sous l'en-tête
+ * montrent où l'on en est et ce qu'on a déjà mis.
  */
 
-import { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { DixMaisStatement } from '@/types/database';
-import { connectorFor, type ProfileIdentity } from './profile';
-import { formatDelta, scoreColor, withAlpha } from './scale';
+import type { ProfileIdentity } from './profile';
+import { scoreColor, withAlpha } from './scale';
+import { formatNote } from './moyenne';
 import type { Flash } from './useDixMais';
 
 interface Props {
   identity: ProfileIdentity;
   statements: DixMaisStatement[];
-  ratings: number[];
+  notes: number[];
   index: number;
   draft: number;
+  /** Moyenne des notes déjà posées, `null` avant la première. */
+  moyenne: number | null;
   flash: Flash | null;
 }
 
-export function ProfileCard({ identity, statements, ratings, index, draft, flash }: Props) {
-  const endRef = useRef<HTMLDivElement>(null);
-  const tint = scoreColor(draft);
-  const past = statements.slice(0, index);
+export function ProfileCard({ identity, statements, notes, index, draft, moyenne, flash }: Props) {
   const current = statements[index];
-
-  // `scrollIntoView` remonte tous les ancêtres défilables, `documentElement`
-  // compris : à partir de la troisième révélation, chaque validation faisait
-  // glisser toute la page vers le bas, en pleine partie. On pilote donc
-  // directement la liste, qui est le seul conteneur concerné. Rien à faire au
-  // montage d'un profil, où la liste est déjà en haut.
-  useEffect(() => {
-    if (index === 0) return;
-    const list = endRef.current?.parentElement;
-    if (!list) return;
-    list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
-  }, [index]);
+  // La pastille de la personne porte la moyenne, pas la note en cours : c'est
+  // elle qui « remonte » au profil.
+  const moyenneAffichee = flash ? flash.moyenne : moyenne;
+  const teinteMoyenne = moyenneAffichee === null ? 'rgba(255,255,255,0.35)' : scoreColor(moyenneAffichee);
+  const tint = scoreColor(draft);
 
   return (
     <div
-      // `min-h` : sans plancher, la carte est le seul élément élastique de la
-      // colonne et absorbe toute la réduction de hauteur. Sur un écran court
-      // elle tombait à quelques pixels, masquant la phrase à noter.
-      className="flex min-h-[150px] flex-1 flex-col overflow-hidden rounded-3xl"
+      // `min-h` : sur un écran court, la carte est le seul élément élastique
+      // de la colonne ; sans plancher elle tombait à quelques pixels.
+      className="flex min-h-[200px] flex-1 flex-col overflow-hidden rounded-3xl"
       style={{
         background: 'rgba(255,255,255,0.035)',
         border: '1px solid rgba(255,255,255,0.09)',
         boxShadow: `inset 0 1px 0 rgba(255,255,255,0.06), 0 18px 50px -30px ${withAlpha(tint, 0.9)}`,
       }}
     >
-      {/* ── Identité ─────────────────────────────────────────────────────── */}
-      <div className="flex shrink-0 items-center gap-3 px-4 pt-4 pb-3">
+      {/* ── Identité et moyenne ─────────────────────────────────────────── */}
+      <div className="flex shrink-0 items-center gap-3 px-4 pt-3 pb-2">
         <div
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-black"
           style={{
             background: `linear-gradient(145deg, hsl(${identity.hue} 62% 46%), hsl(${identity.hue + 26} 58% 32%))`,
-            boxShadow: `0 0 0 2px ${withAlpha(tint, 0.85)}, 0 0 20px ${withAlpha(tint, 0.35)}`,
+            boxShadow: `0 0 0 2px ${withAlpha(teinteMoyenne, 0.85)}, 0 0 20px ${withAlpha(teinteMoyenne, 0.35)}`,
             transition: 'box-shadow 400ms ease',
           }}
         >
@@ -78,159 +64,132 @@ export function ProfileCard({ identity, statements, ratings, index, draft, flash
           <p className="truncate text-base font-black uppercase leading-none tracking-tight">
             {identity.name}, {identity.age}
           </p>
-          <p className="mt-1 text-[11px] font-bold leading-none" style={{ color: '#FBBF24' }}>
-            C&apos;est un 10, mais…
+          <p className="mt-1 text-[11px] font-bold leading-none text-white/45">
+            Red flag {Math.min(index + 1, statements.length)} sur {statements.length}
           </p>
         </div>
 
-        {/* La note vit sur la personne, pas dans un coin de l'écran. */}
         <div
           className="shrink-0 rounded-xl px-2.5 py-1.5 text-center"
           style={{
-            background: withAlpha(tint, 0.15),
-            border: `1.5px solid ${withAlpha(tint, 0.5)}`,
+            background: withAlpha(moyenneAffichee === null ? '#FFFFFF' : teinteMoyenne, 0.1),
+            border: `1.5px solid ${moyenneAffichee === null ? 'rgba(255,255,255,0.14)' : withAlpha(teinteMoyenne, 0.5)}`,
             transition: 'background-color 200ms ease, border-color 200ms ease',
           }}
+          aria-label={moyenneAffichee === null ? 'Pas encore de moyenne' : `Moyenne ${formatNote(moyenneAffichee)} sur 10`}
         >
-          <span className="text-lg font-black leading-none tabular-nums" style={{ color: tint }}>
-            {draft}
-          </span>
-          <span className="text-[11px] font-black text-white/45">/10</span>
+          <p className="text-[9px] font-black uppercase leading-none tracking-wider text-white/40">
+            Moyenne
+          </p>
+          <motion.p
+            key={moyenneAffichee === null ? 'vide' : formatNote(moyenneAffichee)}
+            initial={{ scale: 0.7, opacity: 0.4 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="mt-0.5 text-lg font-black leading-none tabular-nums"
+            style={{ color: teinteMoyenne }}
+          >
+            {moyenneAffichee === null ? '—' : formatNote(moyenneAffichee)}
+          </motion.p>
         </div>
       </div>
 
-      {/* ── Révélations ──────────────────────────────────────────────────── */}
-      {/* `overscroll-contain` : arrivé en butée, le glissement partait au
-          document — donc vers les notes éditoriales et le pied de page, en
-          pleine partie. Le châssis parent est `overflow-hidden`, il n'absorbe
-          rien : c'est ici que la chaîne doit s'arrêter. */}
-      <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
-        {past.map((stmt, i) => (
-          <div key={stmt.id}>
-            {i > 0 && <Connector word={connectorFor(past[i - 1].type, stmt.type)} muted />}
-            <PastTrait stmt={stmt} score={ratings[i]} />
-          </div>
-        ))}
-
-        {current && (
-          <>
-            {past.length > 0 && (
-              <Connector word={connectorFor(past[past.length - 1].type, current.type)} />
-            )}
-            {/* Pas d'AnimatePresence ici : elle maintiendrait l'ancienne
-                révélation montée le temps de sa sortie, alors que `past` la rend
-                déjà juste au-dessus — la même phrase apparaissait deux fois
-                pendant une demi-seconde. Le changement de clé suffit à rejouer
-                l'animation d'entrée, sans fantôme. */}
-            <motion.div
-              key={current.id}
-              initial={{ opacity: 0, y: 22, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 26 }}
-            >
-              <CurrentTrait stmt={current} flash={flash} />
-            </motion.div>
-          </>
-        )}
-
-        <div ref={endRef} />
-      </div>
-    </div>
-  );
-}
-
-/** « ET » / « MAIS » sur un rail vertical : la liste se lit comme une phrase. */
-function Connector({ word, muted = false }: { word: 'ET' | 'MAIS'; muted?: boolean }) {
-  return (
-    <div className="flex items-center gap-2 py-1.5 pl-3">
-      <span className="h-4 w-px" style={{ background: 'rgba(245,158,11,0.3)' }} />
-      <span
-        className="text-[11px] font-black uppercase tracking-[0.16em]"
-        style={{ color: muted ? 'rgba(245,158,11,0.42)' : '#F59E0B' }}
-      >
-        {word}
-      </span>
-    </div>
-  );
-}
-
-function PastTrait({ stmt, score }: { stmt: DixMaisStatement; score: number }) {
-  return (
-    <div className="flex items-start gap-2.5 py-1">
-      <span className="mt-px shrink-0 text-xs">{stmt.type === 'positive' ? '🟢' : '🚩'}</span>
-      <p className="min-w-0 flex-1 text-[13px] font-semibold leading-snug text-white/45">
-        {stmt.text}
-      </p>
-      <span
-        className="mt-px shrink-0 text-[11px] font-black tabular-nums"
-        style={{ color: withAlpha(scoreColor(score), 0.75) }}
-      >
-        {score}
-      </span>
-    </div>
-  );
-}
-
-function CurrentTrait({ stmt, flash }: { stmt: DixMaisStatement; flash: Flash | null }) {
-  const positive = stmt.type === 'positive';
-  const accent = positive ? '#22C55E' : '#F59E0B';
-
-  return (
-    <div
-      className="relative overflow-hidden rounded-2xl px-4 py-3.5"
-      style={{
-        background: withAlpha(accent, 0.1),
-        borderLeft: `3px solid ${accent}`,
-      }}
-    >
-      <div className="flex items-start gap-2.5">
-        <span className="shrink-0 text-base leading-tight">{positive ? '🟢' : '🚩'}</span>
-        <p
-          className="min-w-0 flex-1 font-black leading-snug text-white"
-          style={{ fontSize: 'clamp(1.05rem, 5.2vw, 1.4rem)' }}
-        >
-          {stmt.text}
-        </p>
-      </div>
-
-      {/* Bilan du coup : ancienne note → nouvelle, avec l'écart. */}
-      <AnimatePresence>
-        {flash && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            className="absolute inset-0 flex items-center justify-center gap-3"
-            style={{ background: 'rgba(7,7,10,0.93)' }}
-          >
-            <span className="text-3xl font-black tabular-nums text-white/25 line-through">
-              {flash.from}
-            </span>
-            <span className="text-xl text-white/25">→</span>
-            <motion.span
-              initial={{ scale: 0.5 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 18 }}
-              className="text-5xl font-black leading-none tabular-nums"
+      {/* ── Les cinq cases ──────────────────────────────────────────────── */}
+      <div className="flex shrink-0 items-center gap-1.5 px-4 pb-1" aria-hidden>
+        {statements.map((s, i) => {
+          const note = notes[i];
+          const juge = note !== undefined;
+          const enCours = i === index && !juge;
+          const couleur = juge ? scoreColor(note) : enCours ? '#FFD700' : 'rgba(255,255,255,0.14)';
+          return (
+            <div
+              key={s.id}
+              className="flex h-8 flex-1 items-center justify-center rounded-lg text-[13px] font-black tabular-nums"
               style={{
-                color: scoreColor(flash.to),
-                textShadow: `0 0 34px ${withAlpha(scoreColor(flash.to), 0.6)}`,
+                background: juge ? withAlpha(couleur, 0.16) : enCours ? 'rgba(255,215,0,0.08)' : 'rgba(255,255,255,0.03)',
+                border: `1.5px solid ${juge ? withAlpha(couleur, 0.55) : enCours ? withAlpha('#FFD700', 0.6) : 'rgba(255,255,255,0.08)'}`,
+                color: juge ? couleur : enCours ? '#FFD700' : 'rgba(255,255,255,0.2)',
               }}
             >
-              {flash.to}
-            </motion.span>
-            {flash.delta !== 0 && (
-              <span
-                className="text-base font-black tabular-nums"
-                style={{ color: scoreColor(flash.to) }}
+              {juge ? note : enCours ? '?' : ''}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Le red flag du moment ───────────────────────────────────────── */}
+      {/* Défilante et centrée « safe » : sur un 320 × 568, la phrase longue ne
+          tient pas toujours ; elle doit alors défiler, pas être rognée par le
+          haut comme le ferait un centrage simple. */}
+      <div className="scrollbar-hide flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pt-2 pb-3 [justify-content:safe_center]">
+        <p
+          className="mb-1.5 shrink-0 text-center font-black uppercase tracking-tight"
+          style={{ color: '#FBBF24', fontSize: 'clamp(0.95rem, 4.6vw, 1.2rem)' }}
+        >
+          C&apos;est un 10, mais…
+        </p>
+
+        {current && (
+          <motion.div
+            key={current.id}
+            initial={{ opacity: 0, y: 22, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+            className="relative shrink-0 overflow-hidden rounded-2xl px-4 py-4 [@media(max-height:620px)]:py-3"
+            style={{
+              background: withAlpha('#F59E0B', 0.1),
+              border: `1px solid ${withAlpha('#F59E0B', 0.3)}`,
+            }}
+          >
+            <div className="flex items-start justify-center gap-2.5">
+              <span className="shrink-0 text-lg leading-tight">🚩</span>
+              <p
+                className="min-w-0 text-center font-black leading-snug text-white [overflow-wrap:anywhere]"
+                style={{ fontSize: 'clamp(1.2rem, 6vw, 1.7rem)' }}
               >
-                {formatDelta(flash.delta)}
-              </span>
-            )}
+                {current.text}
+              </p>
+            </div>
+
+            {/* Bilan du coup : la note posée, et ce qu'elle fait à la moyenne. */}
+            <AnimatePresence>
+              {flash && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.18 }}
+                  className="absolute inset-0 flex items-center justify-center gap-4"
+                  style={{ background: 'rgba(7,7,10,0.94)' }}
+                >
+                  <motion.span
+                    initial={{ scale: 0.5 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 18 }}
+                    className="text-5xl font-black leading-none tabular-nums"
+                    style={{
+                      color: scoreColor(flash.note),
+                      textShadow: `0 0 34px ${withAlpha(scoreColor(flash.note), 0.6)}`,
+                    }}
+                  >
+                    {flash.note}
+                  </motion.span>
+                  <span className="text-left">
+                    <span className="block text-[10px] font-black uppercase tracking-wider text-white/35">
+                      Moyenne
+                    </span>
+                    <span
+                      className="block text-2xl font-black leading-none tabular-nums"
+                      style={{ color: scoreColor(flash.moyenne) }}
+                    >
+                      {formatNote(flash.moyenne)}
+                    </span>
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
-      </AnimatePresence>
+      </div>
     </div>
   );
 }

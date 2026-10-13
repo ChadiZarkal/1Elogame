@@ -1,6 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import type { Ending } from '../endings';
-import type { PlayedRound } from '../report';
 import {
   cohortDative,
   cohortLabel,
@@ -9,31 +7,10 @@ import {
   statementIdsOf,
   type CohortStat,
 } from '../cohort';
+import { profilJuge } from './fixtures';
 
-const FIN: Ending = { key: 'couperet', title: 'LE COUPERET', subtitle: '…', tone: 'brutal' };
-
-function manche(ratings: number[], ids: string[]): PlayedRound {
-  const played = ids.map((id) => ({
-    id,
-    text: `Phrase ${id}`,
-    type: 'negative' as const,
-    category: 'caractere',
-  }));
-
-  return {
-    profileNumber: 1,
-    name: 'Lucas',
-    age: 24,
-    played,
-    ratings,
-    deltas: ratings.map((r, i) => r - (i === 0 ? 10 : ratings[i - 1])),
-    community: played.map(() => null),
-    communityElim: played.map(() => null),
-    final: ratings.at(-1) ?? 10,
-    eliminated: ratings.at(-1) === 0,
-    ending: FIN,
-  };
-}
+/** Un profil jugé sur les phrases `ids`. */
+const manche = (notes: number[], ids: string[]) => profilJuge(notes, { ids });
 
 function stat(id: string, avg: number, votes = 20): CohortStat {
   return { statement_id: id, votes, avg_delta: avg, elimination_rate: 10 };
@@ -70,9 +47,10 @@ describe('compareToCohort', () => {
     // Cinq révélations jouées, la sixième statistique ne concerne rien de vu.
     expect(comparaison!.sample).toBe(5);
     expect(comparaison!.votes).toBe(100);
-    expect(comparaison!.mine).toBe(-2);
-    expect(comparaison!.theirs).toBe(-1);
-    expect(comparaison!.gap).toBe(-1);
+    // Le joueur met 4 en moyenne ; la cohorte retire 1 point, soit 9.
+    expect(comparaison!.mine).toBe(4);
+    expect(comparaison!.theirs).toBe(9);
+    expect(comparaison!.gap).toBe(-5);
   });
 
   // Ce que l'ancien seuil rendait impossible : sur les données réelles, aucun
@@ -96,6 +74,7 @@ describe('compareToCohort', () => {
   it('rend un écart positif quand le joueur est plus tendre', () => {
     const ids = ['a', 'b', 'c', 'd', 'e'];
     const rounds = [manche([10, 10, 9, 9, 9], ids)];
+    // La cohorte retire 3 points : elle met 7.
     const comparaison = compareToCohort(rounds, ids.map((id) => stat(id, -3, 20)));
     expect(comparaison!.gap).toBeGreaterThan(2);
   });
@@ -112,7 +91,7 @@ describe('cohortLabel', () => {
 describe('cohortSentence', () => {
   const profil = { sex: 'femme', age: '19-22' } as const;
   const dire = (gap: number) =>
-    cohortSentence({ gap, mine: -3, theirs: -3 - gap, sample: 10 }, profil);
+    cohortSentence({ gap, mine: 5, theirs: 5 - gap, sample: 10, votes: 80 }, profil);
 
   it('nomme la cohorte dans chaque palier', () => {
     expect(dire(-2.5)).toContain('extrêmement sévère par rapport aux femmes de 19-22 ans');

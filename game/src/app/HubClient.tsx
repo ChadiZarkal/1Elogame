@@ -88,7 +88,7 @@ const PHARES: Jeu[] = [
     couleurTexte: '#FFC04D',
     emoji: '⭐',
     titre: "C'EST UN 10 MAIS…",
-    promesse: 'Il part de 10 sur 10. Cinq révélations le font chuter.',
+    promesse: 'Cinq red flags, notés un par un. Sa note, c’est ta moyenne.',
     action: 'Noter un profil',
     href: '/dixmais',
     apercu: 'note',

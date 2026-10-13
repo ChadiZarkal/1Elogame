@@ -67,7 +67,7 @@ export const HOME_NOTES: PageNotes = {
       heading: 'Quel jeu pour quoi',
       bullets: [
         'Le pire des deux — deux comportements, tu désignes le plus grave. C\'est ce jeu qui alimente le classement.',
-        "C'est un 10 mais… — un profil part de 10 sur 10 et cinq révélations tombent. La note se réajuste à chaque fois : le jeu montre où tu décroches.",
+        "C'est un 10 mais… — un profil, cinq red flags notés un par un de 0 à 10. Sa note finale est la moyenne des cinq : le jeu montre ce qu'un seul défaut peut coûter.",
         "L'Oracle — tu écris une situation, un modèle génératif rend un verdict tranché. À prendre pour ce que c'est : une amorce de discussion, pas un avis autorisé.",
       ],
     },
@@ -229,27 +229,27 @@ export const JEU_NOTES: PageNotes = {
 export const DIXMAIS_NOTES: PageNotes = {
   title: 'Comprendre ce jeu',
   lede:
-    "Un profil démarre à 10 sur 10. Cinq révélations s'enchaînent, et tu réajustes la note après chacune. Le jeu ne demande pas si un comportement est grave dans l'absolu, mais ce qu'il te coûte.",
+    "Un profil, cinq red flags. Tu notes chacun d'eux seul, de 0 à 10, et la personne reçoit la moyenne des cinq. Le jeu ne demande pas si un comportement est grave dans l'absolu, mais ce qu'il te coûte.",
   blocks: [
     {
       heading: 'La règle',
       body: [
-        "Chaque profil commence parfait : 10 sur 10. Une révélation tombe, tu déplaces la note. Une deuxième tombe, tu la déplaces encore — en partant de là où tu l'avais laissée, jamais de zéro. Cinq révélations plus tard, la note finale est ton verdict.",
-        "Zéro est éliminatoire : c'est le point de non-retour, celui où plus aucune qualité ne rattrape le reste. Tu peux aussi remonter la note, puisque certaines révélations sont des qualités.",
+        "Chaque red flag se présente comme une phrase : « C'est un 10, mais… ». Tu dis combien la personne vaut encore, rien qu'avec ça, en partant de 10. Puis le red flag suivant arrive, et la jauge repart de 10.",
+        "Au cinquième, les cinq notes se fondent en une seule : la moyenne, qui devient la note de la personne. Un 0 pèse lourd, mais il n'arrête plus la partie : c'est une note comme une autre.",
       ],
     },
     {
-      heading: 'Pourquoi une note qui se cumule',
+      heading: 'Pourquoi noter chaque red flag seul',
       body: [
-        "Personne ne se résume à un défaut. Dans la vie, on n'arbitre presque jamais un comportement isolé : on arbitre un empilement, où chaque élément nouveau se lit à la lumière des précédents. Un même détail ne pèse pas pareil selon ce qu'on sait déjà.",
-        "Le format cumulatif reproduit cette mécanique. Il rend visible quelque chose qu'une note unique masque : le moment précis où tu décroches, et ce qu'il a fallu pour t'y amener.",
+        "Juger un défaut isolé est plus simple et plus honnête : on ne se demande pas ce que valent les quatre autres, on se demande ce que vaut celui-là. Chaque note devient comparable d'un joueur à l'autre.",
+        "La moyenne fait le reste. Elle montre ce qu'une seule phrase peut faire à un profil — et ce qu'il faut de pardons ailleurs pour la compenser.",
       ],
     },
     {
       heading: 'Ce que dit ta note finale',
       body: [
-        "Deux joueurs peuvent terminer sur le même chiffre par des chemins opposés : l'un a tout encaissé puis s'est effondré d'un coup, l'autre a retiré un point à chaque fois. Le score final ne les distingue pas — la trajectoire, oui.",
-        "C'est pour cela que le jeu affiche l'enchaînement plutôt que le seul résultat. La question intéressante n'est pas « combien », c'est « à partir de quoi ».",
+        "Deux joueurs peuvent finir sur la même moyenne par des chemins opposés : l'un a mis 6 partout, l'autre a mis quatre 9 et un 0. Le chiffre ne les distingue pas — les cinq notes, oui.",
+        "C'est pour cela que le jeu montre le calcul plutôt que le seul résultat, et qu'il signale le red flag qui a le plus coûté à la moyenne.",
       ],
     },
     {
@@ -270,14 +270,14 @@ export const DIXMAIS_NOTES: PageNotes = {
   ],
   faq: [
     {
-      question: 'Combien de révélations par profil ?',
+      question: 'Combien de red flags par profil ?',
       answer:
-        'Cinq. Le nombre est fixe pour que la carte de profil puisse toutes les afficher à l’écran sans en repousser aucune hors du cadre.',
+        'Cinq. Assez pour que la moyenne veuille dire quelque chose, assez peu pour enchaîner les profils.',
     },
     {
-      question: 'Est-ce que je peux remonter la note ?',
+      question: 'Que se passe-t-il si je mets 0 ?',
       answer:
-        "Oui. Le catalogue contient des qualités autant que des défauts, et la note se déplace dans les deux sens. Seul le zéro est définitif.",
+        "Rien ne s'arrête : le 0 compte dans la moyenne comme les autres notes. Il pèse simplement très lourd — à lui seul, il retire deux points à une moyenne de cinq notes.",
     },
     {
       question: 'Les profils sont-ils de vraies personnes ?',

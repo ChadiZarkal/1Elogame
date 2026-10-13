@@ -11,6 +11,9 @@ export const GET = withApiHandler(async (req) => {
     .map(id => id.trim())
     .filter(Boolean);
 
-  const statements = await getRandomStatements(count, excludeIds);
+  // `types=negative` : que des red flags (mécanique de la moyenne).
+  const redFlagsSeulement = searchParams.get('types') === 'negative';
+
+  const statements = await getRandomStatements(count, excludeIds, redFlagsSeulement);
   return apiSuccess(statements);
 }, { rateLimit: 'public' });

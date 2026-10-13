@@ -4,9 +4,10 @@
  * @module dixmais/useDixMais
  * Machine à états de la manche.
  *
- * Séparé de l'affichage pour que la règle du jeu — la note *persiste* d'une
- * révélation à l'autre et n'est jamais ressaisie de zéro — soit lisible en un
- * seul endroit.
+ * La règle tient en deux lignes : chaque red flag se note **seul**, de 0 à 10,
+ * en repartant de 10 ; et au cinquième, la personne reçoit la moyenne des
+ * cinq. Le calcul est dans `moyenne.ts`, l'affichage dans les écrans — ce
+ * fichier ne fait qu'enchaîner.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -14,37 +15,32 @@ import type { DixMaisStatement } from '@/types/database';
 import { useHaptics } from '@/lib/hooks';
 import { START_SCORE, clampScore } from './scale';
 import { generateIdentity, type ProfileIdentity } from './profile';
-import { computeEnding, readCommunityStat, readTrajectory } from './endings';
+import {
+  PROPOSITIONS_PAR_PROFIL,
+  choisirFin,
+  moyenneDe,
+  moyenneDesAutres,
+  noteDesAutres,
+  type ProfilJuge,
+} from './moyenne';
 import { getProfile, saveProfile } from '@/lib/session';
 import type { PlayerProfile } from '@/types/game';
-import type { PlayedRound } from './report';
 
-/** Fixé, et non plus aléatoire entre 5 et 9 : la carte de profil doit pouvoir
- * afficher **toutes** les révélations sans jamais en repousser une hors écran. */
-export const REVEALS_PER_PROFILE = 5;
-
-const COMMIT_MS = 620;
-const COACH_KEY = 'dixmais.coached';
 /**
- * Borne la liste d'exclusion. La contrainte réelle est la longueur de l'URL :
- * la liste part en paramètre de requête, à 37 caractères par UUID, et au-delà
- * d'environ 8 000 caractères la requête est rejetée — le joueur ne recevrait
- * plus aucun profil.
+ * Les votes ne partent pas encore.
  *
- * Fixé au-dessus du nombre d'énoncés distincts du catalogue pour qu'une session
- * entière tienne dans la fenêtre : tant que le catalogue n'est pas réellement
- * parcouru, aucun énoncé déjà vu ne peut ressortir par éviction.
+ * La base enregistre des votes de l'ancienne mécanique (combien une révélation
+ * retire à une note cumulée). Y mêler des notes isolées fausserait ses
+ * moyennes et le classement public. Tant que la base n'a pas sa place pour ces
+ * notes, la nouvelle mécanique joue sans rien écrire.
  */
+export const ENREGISTRER_VOTES = false;
+
+const COMMIT_MS = 560;
+const COACH_KEY = 'dixmais.coached.moyenne';
+/** Borne la liste d'exclusion, qui part en paramètre d'URL (voir l'API). */
 const MAX_SEEN = 150;
-
-/**
- * Nombre de fins récentes écartées au moment d'en choisir une nouvelle.
- *
- * Deux, et pas davantage : le plus petit groupe de fins interchangeables en
- * compte trois (les replis d'élimination). En écarter deux force la rotation
- * sans jamais vider le tirage ; en écarter trois le viderait, et la fin
- * repartirait au hasard — exactement ce qu'on cherche à éviter.
- */
+/** Fins récentes écartées au moment d'en choisir une nouvelle. */
 const RECENT_ENDINGS = 2;
 
 export type Phase = 'intro' | 'profile' | 'loading' | 'error' | 'reveal' | 'verdict' | 'report';
@@ -52,99 +48,78 @@ export type Phase = 'intro' | 'profile' | 'loading' | 'error' | 'reveal' | 'verd
 export interface Round {
   statements: DixMaisStatement[];
   identity: ProfileIdentity;
-  ratings: number[];
+  /** La note de chaque red flag déjà jugé. */
+  notes: number[];
   index: number;
 }
 
+/** Bilan d'un coup : la note posée, et la moyenne qu'elle donne. */
 export interface Flash {
-  from: number;
-  to: number;
-  delta: number;
+  note: number;
+  moyenne: number;
 }
 
 async function fetchStatements(count: number, excludeIds: string[]): Promise<DixMaisStatement[]> {
-  const params = new URLSearchParams({ count: String(count) });
+  // Que des red flags : une qualité notée seule vaut 10 à tout coup, elle ne
+  // ferait que gonfler la moyenne sans rien demander au joueur.
+  const params = new URLSearchParams({ count: String(count), types: 'negative' });
   if (excludeIds.length) params.set('exclude', excludeIds.join(','));
   const res = await fetch(`/api/dixmais/statements?${params.toString()}`, { cache: 'no-store' });
   if (!res.ok) throw new Error('fetch failed');
   return ((await res.json()).data ?? []) as DixMaisStatement[];
 }
 
-/** Tir et oubli : un vote perdu ne doit jamais interrompre une partie. */
-function sendVote(
-  statementId: string,
-  sessionId: string,
-  previous: number,
-  next: number,
-  profile: PlayerProfile | null,
-) {
+/** Tir et oubli, et seulement quand la base est prête (voir ENREGISTRER_VOTES). */
+function sendVote(statementId: string, sessionId: string, note: number, profile: PlayerProfile | null) {
+  if (!ENREGISTRER_VOTES) return;
   fetch('/api/dixmais/vote', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       statement_id: statementId,
       session_id: sessionId,
-      previous_score: previous,
-      new_score: next,
-      // Le profil vient de l'enregistrement partagé avec les autres jeux : qui
-      // a déjà joué au Pire des deux contribue à sa cohorte sans qu'on lui
-      // redemande quoi que ce soit.
+      previous_score: START_SCORE,
+      new_score: note,
       sex: profile?.sex ?? null,
       age: profile?.age ?? null,
     }),
   }).catch(() => null);
 }
 
-/**
- * Fige une manche terminée : les phrases réellement lues, ce qu'elles ont
- * coûté, ce qu'elles coûtent aux autres, et la fin retenue.
- *
- * La fin est décidée ici plutôt que dans l'écran de verdict, pour deux
- * raisons : le rapport de session a besoin de la connaître, et le choix doit
- * tenir compte des fins déjà servies — ce que l'écran de verdict, qui ne voit
- * qu'une manche, ne peut pas faire.
- */
-function closeRound(
+/** Fige un profil jugé : ses cinq notes, sa moyenne, ce qu'en pensent les
+ * autres, et la fin retenue. */
+export function closeRound(
   round: Round,
-  ratings: number[],
-  profileNumber: number,
+  notes: number[],
+  numero: number,
   recentEndings: string[],
-): PlayedRound {
-  // L'élimination interrompt la manche : les phrases suivantes n'ont jamais
-  // été montrées et ne doivent entrer dans aucune statistique.
-  const played = round.statements.slice(0, ratings.length);
-  const deltas = ratings.map((r, i) => r - (i === 0 ? START_SCORE : ratings[i - 1]));
-  const stats = played.map(readCommunityStat);
-
-  const summary = played.map((s) => ({
+): ProfilJuge {
+  const jouees = round.statements.slice(0, notes.length);
+  const propositions = jouees.map((s) => ({
     id: s.id,
     text: s.text,
     type: s.type,
     category: s.category,
   }));
-
-  const ending = computeEnding(
-    {
-      traj: readTrajectory(ratings),
-      played: summary,
-      deltas,
-      community: stats.map((s) => s.avgDelta),
-    },
-    recentEndings,
-  );
+  const communaute = jouees.map(noteDesAutres);
+  const moyenne = moyenneDe(notes);
+  const moyenneCommunaute = moyenneDesAutres(communaute);
 
   return {
-    profileNumber,
-    name: round.identity.name,
+    numero,
+    nom: round.identity.name,
     age: round.identity.age,
-    played: summary,
-    ratings,
-    deltas,
-    community: stats.map((s) => s.avgDelta),
-    communityElim: stats.map((s) => s.eliminationRate),
-    final: ratings.at(-1) ?? START_SCORE,
-    eliminated: (ratings.at(-1) ?? START_SCORE) === 0,
-    ending,
+    initiale: round.identity.initial,
+    teinte: round.identity.hue,
+    propositions,
+    notes,
+    communaute,
+    moyenne,
+    moyenneCommunaute,
+    fin: choisirFin(
+      { propositions, notes, moyenne, moyenneCommunaute, pronom: round.identity.pronoun },
+      recentEndings,
+    ),
   };
 }
 
@@ -159,39 +134,24 @@ export function useDixMais() {
   const [profileNumber, setProfileNumber] = useState(0);
   const [showCoach, setShowCoach] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
-  /** Toutes les manches terminées de la session, dans l'ordre. La dernière est
-   * celle qu'affiche le verdict ; l'ensemble alimente le rapport. */
-  const [history, setHistory] = useState<PlayedRound[]>([]);
+  /** Tous les profils jugés de la session, dans l'ordre. */
+  const [history, setHistory] = useState<ProfilJuge[]>([]);
   /** Sexe et tranche d'âge du joueur, partagés avec les autres jeux du site. */
   const [playerProfile, setPlayerProfileState] = useState<PlayerProfile | null>(null);
-  /**
-   * L'enregistrement local a été consulté.
-   *
-   * Sans cet indicateur, `playerProfile` vaut `null` au premier rendu — la
-   * lecture se fait dans un effet, donc après la première peinture — et
-   * l'accueil montrerait le questionnaire le temps d'une image à quelqu'un qui
-   * a déjà répondu, sur un autre jeu du site ou à sa partie précédente.
-   */
+  /** L'enregistrement local a été consulté — évite de montrer le
+   * questionnaire le temps d'une image à qui a déjà répondu. */
   const [profileChecked, setProfileChecked] = useState(false);
 
   const sessionId = useRef('');
   const seenIds = useRef<string[]>([]);
   const locked = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** Jeton de chargement : un fetch dont le jeton a été périmé par un
-   * redémarrage ne doit plus rien écrire. */
+  /** Jeton de chargement : un fetch périmé par un redémarrage n'écrit plus rien. */
   const runId = useRef(0);
-  /** Valeur courante de la jauge, lisible sans re-mémoïser les callbacks. */
   const draftRef = useRef(START_SCORE);
   const phaseRef = useRef<Phase>('intro');
-  /** Clés des dernières fins servies, passées à `computeEnding` pour qu'il ne
-   * les resserve pas tant qu'une autre est éligible. */
   const recentEndings = useRef<string[]>([]);
-  /** Même valeur que `profileNumber`, lisible depuis `commit` sans l'ajouter à
-   * ses dépendances — le rappeler à chaque changement de numéro recréerait le
-   * callback au milieu d'une manche. */
   const profileNumberRef = useRef(0);
-  /** Même valeur que `playerProfile`, lisible depuis `commit`. */
   const profileRef = useRef<PlayerProfile | null>(null);
 
   useEffect(() => { phaseRef.current = phase; }, [phase]);
@@ -215,8 +175,6 @@ export function useDixMais() {
     }
     setProfileChecked(true);
 
-    // Les confettis ne servent qu'à l'écran de fin : on les charge pendant un
-    // temps mort plutôt que de figer l'animation au moment du verdict.
     const preload = () => { import('canvas-confetti').catch(() => {}); };
     const idle = typeof requestIdleCallback === 'function'
       ? requestIdleCallback(preload)
@@ -229,20 +187,11 @@ export function useDixMais() {
     };
   }, []);
 
-  /** Note en vigueur avant la révélation en cours. C'est le point de départ du
-   * curseur : le joueur ajuste une note existante, il n'en saisit pas une neuve. */
-  const previousScore = round?.ratings.at(-1) ?? START_SCORE;
-
   const applyDraft = useCallback((value: number) => {
     draftRef.current = value;
     setDraftState(value);
   }, []);
 
-  /** Une fois une note posée, l'aide ne réapparaît plus, y compris aux visites
-   * suivantes. Volontairement appelée depuis `commit` et non depuis `setDraft` :
-   * la faire disparaître au premier contact du doigt escamoterait le texte au
-   * moment précis où le joueur exécute le geste qu'il décrit, et décalerait la
-   * jauge sous son pouce. */
   const dismissCoach = useCallback(() => {
     setShowCoach((visible) => {
       if (visible) {
@@ -263,7 +212,7 @@ export function useDixMais() {
   const loadProfile = useCallback(async () => {
     const myRun = ++runId.current;
     // Un échec au moment d'enchaîner ne doit pas détruire le verdict affiché.
-    const fromVerdict = phaseRef.current === 'verdict';
+    const fromVerdict = phaseRef.current === 'verdict' || phaseRef.current === 'report';
 
     if (timer.current) clearTimeout(timer.current);
     locked.current = false;
@@ -275,7 +224,7 @@ export function useDixMais() {
       setRound({
         statements,
         identity: generateIdentity(statements.map((s) => s.text)),
-        ratings: [],
+        notes: [],
         index: 0,
       });
       applyDraft(START_SCORE);
@@ -285,15 +234,13 @@ export function useDixMais() {
     };
 
     try {
-      let statements = await fetchStatements(REVEALS_PER_PROFILE, seenIds.current);
+      let statements = await fetchStatements(PROPOSITIONS_PAR_PROFIL, seenIds.current);
       if (runId.current !== myRun) return;
 
-      // Catalogue épuisé : ce n'est pas une panne, c'est un tour complet. On
-      // repart de zéro plutôt que d'enfermer le joueur dans une fausse erreur
-      // réseau que « Réessayer » ne pourrait jamais résoudre.
+      // Catalogue épuisé : un tour complet, pas une panne. On repart du début.
       if (!statements.length && seenIds.current.length) {
         seenIds.current = [];
-        statements = await fetchStatements(REVEALS_PER_PROFILE, []);
+        statements = await fetchStatements(PROPOSITIONS_PAR_PROFIL, []);
         if (runId.current !== myRun) return;
       }
 
@@ -311,56 +258,46 @@ export function useDixMais() {
     locked.current = true;
     dismissCoach();
 
-    const value = draftRef.current;
-    const from = previousScore;
-    const delta = value - from;
+    const note = draftRef.current;
     const statement = round.statements[round.index];
+    const notes = [...round.notes, note];
+    const moyenne = moyenneDe(notes);
 
-    // Consigné ici, à la validation, et non au chargement du profil : une note
-    // de 0 met fin à la manche sur le champ, et les énoncés suivants n'ont
-    // jamais été montrés. Les marquer d'avance revenait à en condamner deux ou
-    // trois par profil sans que le joueur les ait lus — le catalogue s'épuisait
-    // deux fois plus vite qu'il n'était réellement parcouru, et le
-    // redémarrage qui suit ramenait tout depuis le début.
     seenIds.current = [...seenIds.current, statement.id].slice(-MAX_SEEN);
+    sendVote(statement.id, sessionId.current, note, profileRef.current);
 
-    sendVote(statement.id, sessionId.current, from, value, profileRef.current);
-
-    if (value === 0) haptics.error();
-    else if (delta <= -3) haptics.success();
+    if (note === 0) haptics.error();
+    else if (note <= 3) haptics.success();
     else haptics.tap();
 
-    setFlash({ from, to: value, delta });
-    if (delta <= -3) setShock((n) => n + 1);
+    setFlash({ note, moyenne });
+    if (note <= 2) setShock((n) => n + 1);
 
-    const ratings = [...round.ratings, value];
     const isLast = round.index >= round.statements.length - 1;
 
     timer.current = setTimeout(() => {
       setFlash(null);
       locked.current = false;
 
-      if (value === 0 || isLast) {
-        // Calculé ici et non dans une fonction de mise à jour d'état : choisir
-        // la fin met à jour `recentEndings`, et React réexécute ces fonctions
-        // en mode strict — la clé y serait empilée deux fois.
-        const finished = closeRound(round, ratings, profileNumberRef.current, recentEndings.current);
-        recentEndings.current = [...recentEndings.current, finished.ending.key].slice(-RECENT_ENDINGS);
+      if (isLast) {
+        // Calculé hors d'une fonction de mise à jour : choisir la fin met à
+        // jour `recentEndings`, et le mode strict rejoue ces fonctions.
+        const juge = closeRound(round, notes, profileNumberRef.current, recentEndings.current);
+        recentEndings.current = [...recentEndings.current, juge.fin.key].slice(-RECENT_ENDINGS);
 
-        setRound((r) => (r ? { ...r, ratings } : r));
-        setHistory((h) => [...h, finished]);
+        setRound((r) => (r ? { ...r, notes } : r));
+        setHistory((h) => [...h, juge]);
         setPhase('verdict');
       } else {
-        setRound((r) => (r ? { ...r, ratings, index: r.index + 1 } : r));
-        // Le curseur reste sur la note qui vient d'être posée : la note suivante
-        // part de là, pas de 10.
-        applyDraft(value);
+        setRound((r) => (r ? { ...r, notes, index: r.index + 1 } : r));
+        // Chaque red flag se juge seul : la jauge repart de 10.
+        applyDraft(START_SCORE);
       }
     }, COMMIT_MS);
-  }, [round, previousScore, haptics, dismissCoach, applyDraft]);
+  }, [round, haptics, dismissCoach, applyDraft]);
 
   const restart = useCallback(() => {
-    runId.current += 1; // périme tout chargement encore en vol
+    runId.current += 1;
     if (timer.current) clearTimeout(timer.current);
     locked.current = false;
     seenIds.current = [];
@@ -375,7 +312,6 @@ export function useDixMais() {
     setPhase('intro');
   }, [applyDraft]);
 
-  /** Le rapport n'est atteignable que depuis le verdict : on y revient. */
   const openReport = useCallback(() => setPhase('report'), []);
   const closeReport = useCallback(() => setPhase('verdict'), []);
 
@@ -385,11 +321,7 @@ export function useDixMais() {
     saveProfile(profile);
   }, []);
 
-  /**
-   * « Jouer » : on passe par l'étape de profil seulement si on ne le connaît
-   * pas. Les joueurs venus des autres jeux du site entrent directement en
-   * partie — le profil est enregistré une fois pour tout le site.
-   */
+  /** « Jouer » : l'étape de profil seulement si on ne le connaît pas. */
   const start = useCallback(() => {
     if (profileRef.current) {
       void loadProfile();
@@ -398,36 +330,32 @@ export function useDixMais() {
     setPhase('profile');
   }, [loadProfile]);
 
-  /**
-   * Fin de l'étape de profil : on enchaîne sur la première manche.
-   *
-   * `setPlayerProfile` écrit `profileRef` de façon synchrone, donc le tout
-   * premier vote part déjà étiqueté — c'est toute la raison de poser la
-   * question ici plutôt qu'à la fin.
-   */
   const submitProfile = useCallback((profile: PlayerProfile) => {
     setPlayerProfile(profile);
     void loadProfile();
   }, [setPlayerProfile, loadProfile]);
 
-  /** Teinte du fond : suit le doigt pendant la notation, se fige sur la note
-   * finale au verdict. Le rapport garde la teinte du dernier verdict plutôt
-   * que de repasser au vert de départ le temps d'un aller-retour. */
+  const lastJudged = history.at(-1) ?? null;
+
+  /** Teinte du fond : suit le doigt pendant la notation, puis la moyenne. */
   const ambientScore =
-    phase === 'verdict' || phase === 'report' ? (round?.ratings.at(-1) ?? START_SCORE)
+    (phase === 'verdict' || phase === 'report') && lastJudged ? lastJudged.moyenne
     : phase === 'reveal' ? draft
     : START_SCORE;
+
+  /** Moyenne en cours du profil, `null` avant la première note. */
+  const runningAverage = round && round.notes.length ? moyenneDe(round.notes) : null;
 
   return {
     phase,
     round,
     draft,
     setDraft,
-    previousScore,
     commit,
     flash,
     shock,
     ambientScore,
+    runningAverage,
     profileNumber,
     showCoach,
     loadFailed,
@@ -441,8 +369,7 @@ export function useDixMais() {
     restart,
     openReport,
     closeReport,
-    /** Verrouille la jauge pendant l'animation de validation. Dérivé de `flash`,
-     * qui est un état : la ref `locked` ne provoquerait aucun rendu. */
+    /** Verrouille la jauge pendant l'animation de validation. */
     locked: flash !== null,
   };
 }

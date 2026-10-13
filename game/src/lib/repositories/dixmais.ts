@@ -172,14 +172,20 @@ function selectFromPools(
 // ---------------------------------------------------------------------------
 // Public: fetch random statements for a game round
 // ---------------------------------------------------------------------------
-export async function getRandomStatements(count = 7, excludeIds: string[] = []): Promise<DixMaisStatement[]> {
+export async function getRandomStatements(
+  count = 7,
+  excludeIds: string[] = [],
+  /** `true` : que des red flags. La mécanique de la moyenne note chaque phrase
+   * seule, et une qualité notée seule vaudrait 10 à tout coup. */
+  redFlagsSeulement = false,
+): Promise<DixMaisStatement[]> {
   const exclude = new Set(excludeIds);
 
   if (isMockMode()) {
     const all = dedupeByText(buildMockStatements()).filter(s => !exclude.has(s.id));
     return selectFromPools(
       all.filter(s => s.type === 'negative'),
-      all.filter(s => s.type === 'positive'),
+      redFlagsSeulement ? [] : all.filter(s => s.type === 'positive'),
       count,
     );
   }
@@ -217,14 +223,14 @@ export async function getRandomStatements(count = 7, excludeIds: string[] = []):
     const seed = dedupeByText(buildMockStatements());
     return selectFromPools(
       seed.filter(s => s.type === 'negative'),
-      seed.filter(s => s.type === 'positive'),
+      redFlagsSeulement ? [] : seed.filter(s => s.type === 'positive'),
       count,
     );
   }
 
   const combined = selectFromPools(
     negAll.filter(s => !exclude.has(s.id)),
-    posAll.filter(s => !exclude.has(s.id)),
+    redFlagsSeulement ? [] : posAll.filter(s => !exclude.has(s.id)),
     count,
   );
 

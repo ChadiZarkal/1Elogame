@@ -25,8 +25,8 @@ import { scoreColor, withAlpha, START_SCORE } from './scale';
 export default function DixMaisPage() {
   const game = useDixMais();
   const { phase, round } = game;
-  /** La manche figée qu'affiche le verdict : toujours la dernière rangée dans
-   * l'historique, puisqu'elle y est versée au moment même où la phase bascule. */
+  /** Le profil qu'affiche le verdict : toujours le dernier jugé, versé dans
+   * l'historique au moment même où la phase bascule. */
   const lastRound = game.history.at(-1) ?? null;
 
   // Le pied de page du site est un frère de cette page dans la mise en page
@@ -84,7 +84,7 @@ export default function DixMaisPage() {
                   width: i === round.index ? 18 : 6,
                   background:
                     i < round.index
-                      ? withAlpha(scoreColor(round.ratings[i] ?? START_SCORE), 0.85)
+                      ? withAlpha(scoreColor(round.notes[i] ?? START_SCORE), 0.85)
                       : i === round.index
                         ? '#FFD700'
                         : 'rgba(255,255,255,0.14)',
@@ -133,9 +133,10 @@ export default function DixMaisPage() {
               <ProfileCard
                 identity={round.identity}
                 statements={round.statements}
-                ratings={round.ratings}
+                notes={round.notes}
                 index={round.index}
                 draft={game.draft}
+                moyenne={game.runningAverage}
                 flash={game.flash}
               />
 
@@ -155,19 +156,13 @@ export default function DixMaisPage() {
                   <p className="text-center text-[13px] font-bold leading-tight text-white/75">
                     {game.showCoach && round.index === 0 ? (
                       <>
-                        Glisse la jauge pour poser ta note —{' '}
-                        <span style={{ color: '#FBBF24' }}>elle repartira de là</span> à la
-                        révélation suivante.
-                      </>
-                    ) : round.index === 0 ? (
-                      <>
-                        Tu lui mets combien,{' '}
-                        <span style={{ color: '#FBBF24' }}>maintenant que tu sais ça</span> ?
+                        Note ce red flag <span style={{ color: '#FBBF24' }}>tout seul</span>. Au
+                        bout de 5, sa note sera <span style={{ color: '#FBBF24' }}>ta moyenne</span>.
                       </>
                     ) : (
                       <>
-                        Et maintenant, en comptant{' '}
-                        <span style={{ color: '#FBBF24' }}>tout ce qui est écrit au-dessus</span> ?
+                        Rien que pour ça,{' '}
+                        <span style={{ color: '#FBBF24' }}>tu lui mets combien</span> ?
                       </>
                     )}
                   </p>
@@ -175,7 +170,7 @@ export default function DixMaisPage() {
 
                 <ScoreDial
                   value={game.draft}
-                  previous={game.previousScore}
+                  previous={START_SCORE}
                   onChange={game.setDraft}
                   onCommit={game.commit}
                   disabled={game.locked}
@@ -187,7 +182,7 @@ export default function DixMaisPage() {
           {phase === 'verdict' && lastRound && (
             <Verdict
               key="verdict"
-              round={lastRound}
+              profil={lastRound}
               sessionCount={game.history.length}
               onNext={game.nextProfile}
               onReport={game.openReport}

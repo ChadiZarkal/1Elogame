@@ -1,19 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { useDixMais } from '../useDixMais';
+import { ENREGISTRER_VOTES, useDixMais } from '../useDixMais';
 
-/**
- * Ce que le profil sert à faire : voyager avec chaque vote.
- *
- * C'est l'unique raison de le demander avant la première note. Un test sur
- * l'écran de question ne le prouve pas — il montre que la question est posée,
- * pas que la réponse arrive jusqu'à la base.
- */
 function statementsFactices(nombre = 5) {
   return Array.from({ length: nombre }, (_, i) => ({
     id: `stmt-${i}`,
-    text: `Révélation ${i + 1}`,
-    type: i === 0 ? 'negative' : 'positive',
+    text: `Red flag ${i + 1}`,
+    type: 'negative',
     category: 'caractere',
     is_active: true,
     is_approved: true,
@@ -24,7 +17,7 @@ function statementsFactices(nombre = 5) {
   }));
 }
 
-let appels: { url: string; body: Record<string, unknown> }[] = [];
+let appels: { url: string; body: Record<string, unknown> | null }[] = [];
 
 beforeEach(() => {
   appels = [];
@@ -33,9 +26,7 @@ beforeEach(() => {
     'fetch',
     vi.fn((url: string, init?: RequestInit) => {
       const adresse = String(url);
-      if (init?.body) {
-        appels.push({ url: adresse, body: JSON.parse(String(init.body)) });
-      }
+      appels.push({ url: adresse, body: init?.body ? JSON.parse(String(init.body)) : null });
       if (adresse.startsWith('/api/dixmais/statements')) {
         return Promise.resolve({ ok: true, json: async () => ({ data: statementsFactices() }) });
       }
@@ -45,10 +36,28 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
-const votesEnvoyes = () => appels.filter((a) => a.url === '/api/dixmais/vote');
+async function enPartie() {
+  localStorage.setItem(
+    'rog_session',
+    JSON.stringify({ profile: { sex: 'femme', age: '19-22' }, seenDuels: [], streak: 0, duelCount: 0 }),
+  );
+  const hook = renderHook(() => useDixMais());
+  await waitFor(() => expect(hook.result.current.profileChecked).toBe(true));
+  await act(async () => { hook.result.current.start(); });
+  await waitFor(() => expect(hook.result.current.phase).toBe('reveal'));
+  return hook;
+}
+
+/** Pose une note et laisse passer l'animation de validation. */
+function noter(result: { current: ReturnType<typeof useDixMais> }, note: number) {
+  act(() => result.current.setDraft(note));
+  act(() => result.current.commit());
+  act(() => { vi.advanceTimersByTime(700); });
+}
 
 describe('useDixMais — enchaînement du départ', () => {
   it('passe par l’étape de profil quand on ne le connaît pas', async () => {
@@ -58,68 +67,76 @@ describe('useDixMais — enchaînement du départ', () => {
     act(() => result.current.start());
 
     expect(result.current.phase).toBe('profile');
-    // Aucun profil n'est encore chargé : la partie attend la réponse.
     expect(appels.some((a) => a.url.startsWith('/api/dixmais/statements'))).toBe(false);
   });
 
   it('entre directement en partie quand le profil est déjà connu', async () => {
-    localStorage.setItem(
-      'rog_session',
-      JSON.stringify({ profile: { sex: 'homme', age: '27+' }, seenDuels: [], streak: 3, duelCount: 12 }),
-    );
+    const { result } = await enPartie();
+    expect(result.current.round?.statements).toHaveLength(5);
+  });
 
-    const { result } = renderHook(() => useDixMais());
-    await waitFor(() => expect(result.current.playerProfile).toEqual({ sex: 'homme', age: '27+' }));
-
-    await act(async () => { result.current.start(); });
-    await waitFor(() => expect(result.current.phase).toBe('reveal'));
+  it('ne demande que des red flags', async () => {
+    await enPartie();
+    const requete = appels.find((a) => a.url.startsWith('/api/dixmais/statements'));
+    expect(requete?.url).toContain('types=negative');
   });
 });
 
-describe('useDixMais — le profil accompagne le vote', () => {
-  it('étiquette le tout premier vote de la partie', async () => {
-    const { result } = renderHook(() => useDixMais());
-    await waitFor(() => expect(result.current.profileChecked).toBe(true));
+describe('useDixMais — chaque red flag se note seul', () => {
+  it('repart de 10 à chaque red flag', async () => {
+    const { result } = await enPartie();
+    vi.useFakeTimers();
 
-    act(() => result.current.start());
-    await act(async () => { result.current.submitProfile({ sex: 'femme', age: '19-22' }); });
-    await waitFor(() => expect(result.current.phase).toBe('reveal'));
+    noter(result, 3);
+    expect(result.current.round?.index).toBe(1);
+    expect(result.current.draft).toBe(10);
+    expect(result.current.runningAverage).toBe(3);
 
-    act(() => result.current.setDraft(7));
-    act(() => result.current.commit());
+    noter(result, 7);
+    expect(result.current.draft).toBe(10);
+    expect(result.current.runningAverage).toBe(5);
+  });
 
-    expect(votesEnvoyes()).toHaveLength(1);
-    expect(votesEnvoyes()[0].body).toMatchObject({
-      statement_id: 'stmt-0',
-      previous_score: 10,
-      new_score: 7,
-      sex: 'femme',
-      age: '19-22',
+  it('donne au profil la moyenne des cinq notes, et seulement au cinquième', async () => {
+    const { result } = await enPartie();
+    vi.useFakeTimers();
+
+    [0, 6, 8, 10, 6].forEach((n, i) => {
+      noter(result, n);
+      // Un 0 n'arrête plus la manche.
+      if (i < 4) expect(result.current.phase).toBe('reveal');
     });
+
+    expect(result.current.phase).toBe('verdict');
+    const juge = result.current.history[0];
+    expect(juge.notes).toEqual([0, 6, 8, 10, 6]);
+    expect(juge.moyenne).toBe(6);
+    // Les phrases factices coûtent 2 points aux autres : ils mettent 8.
+    expect(juge.communaute).toEqual([8, 8, 8, 8, 8]);
+    expect(juge.moyenneCommunaute).toBe(8);
+    expect(juge.fin.key).toBeTruthy();
   });
 
-  // Le profil est partagé avec les autres jeux : celui qui a déjà joué au
-  // Pire des deux n'est pas resollicité, et ses votes sont étiquetés dès le
-  // premier.
-  it('reprend le profil enregistré par un autre jeu du site', async () => {
-    localStorage.setItem(
-      'rog_session',
-      JSON.stringify({ profile: { sex: 'homme', age: '27+' }, seenDuels: [], streak: 3, duelCount: 12 }),
-    );
+  it('teinte le fond de la moyenne au verdict', async () => {
+    const { result } = await enPartie();
+    vi.useFakeTimers();
+    [2, 2, 2, 2, 2].forEach((n) => noter(result, n));
+    expect(result.current.ambientScore).toBe(2);
+  });
+});
 
-    const { result } = renderHook(() => useDixMais());
-    await waitFor(() => expect(result.current.profileChecked).toBe(true));
+describe('useDixMais — la base n’est pas touchée', () => {
+  it('n’envoie aucun vote tant que la base n’est pas prête', async () => {
+    expect(ENREGISTRER_VOTES).toBe(false);
+    const { result } = await enPartie();
+    vi.useFakeTimers();
+    [4, 5, 6, 7, 8].forEach((n) => noter(result, n));
 
-    await act(async () => { result.current.start(); });
-    await waitFor(() => expect(result.current.phase).toBe('reveal'));
-    act(() => result.current.setDraft(4));
-    act(() => result.current.commit());
-
-    expect(votesEnvoyes()[0].body).toMatchObject({ sex: 'homme', age: '27+' });
+    expect(appels.filter((a) => a.url === '/api/dixmais/vote')).toHaveLength(0);
   });
 
-  // Enregistrer le profil ne doit pas effacer la session de l'autre jeu, qui
-  // partage le même stockage.
+  // Le profil est partagé avec les autres jeux : l'enregistrer ne doit pas
+  // effacer la session de l'autre jeu.
   it('n’écrase pas les duels déjà vus de l’autre jeu', async () => {
     localStorage.setItem(
       'rog_session',
@@ -136,25 +153,5 @@ describe('useDixMais — le profil accompagne le vote', () => {
     expect(session.seenDuels).toEqual(['a-b', 'c-d']);
     expect(session.streak).toBe(5);
     expect(session.duelCount).toBe(9);
-  });
-
-  // Le profil vit en mémoire autant qu'en stockage : un navigateur qui refuse
-  // d'écrire ne doit pas coûter l'étiquetage de la partie en cours.
-  it('étiquette quand même les votes si le stockage refuse d’écrire', async () => {
-    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new Error('stockage indisponible');
-    });
-
-    const { result } = renderHook(() => useDixMais());
-    await waitFor(() => expect(result.current.profileChecked).toBe(true));
-
-    act(() => result.current.start());
-    await act(async () => { result.current.submitProfile({ sex: 'autre', age: '16-18' }); });
-    await waitFor(() => expect(result.current.phase).toBe('reveal'));
-    act(() => result.current.setDraft(5));
-    act(() => result.current.commit());
-
-    expect(votesEnvoyes()[0].body).toMatchObject({ sex: 'autre', age: '16-18' });
-    setItem.mockRestore();
   });
 });

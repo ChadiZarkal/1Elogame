@@ -15,7 +15,8 @@
  */
 
 import type { PlayerProfile } from '@/types/game';
-import type { PlayedRound } from './report';
+import { MAX_SCORE, MIN_SCORE, START_SCORE } from './scale';
+import type { ProfilJuge } from './moyenne';
 
 export interface CohortStat {
   statement_id: string;
@@ -25,9 +26,9 @@ export interface CohortStat {
 }
 
 export interface CohortComparison {
-  /** Moyenne du joueur sur les phrases où la cohorte a voté. */
+  /** Note moyenne du joueur sur les phrases où la cohorte a voté. */
   mine: number;
-  /** Moyenne de la cohorte sur ces mêmes phrases. */
+  /** Note moyenne de la cohorte sur ces mêmes phrases (voir `noteDesAutres`). */
   theirs: number;
   /** mine − theirs. Négatif = le joueur est plus sévère que sa cohorte. */
   gap: number;
@@ -54,8 +55,8 @@ const MIN_SAMPLE = 5;
 const MIN_TOTAL_VOTES = 25;
 
 /** Tous les identifiants vus dans la session, sans doublon. */
-export function statementIdsOf(rounds: PlayedRound[]): string[] {
-  return [...new Set(rounds.flatMap((r) => r.played.map((p) => p.id)))];
+export function statementIdsOf(profils: ProfilJuge[]): string[] {
+  return [...new Set(profils.flatMap((p) => p.propositions.map((x) => x.id)))];
 }
 
 export async function fetchCohortStats(
@@ -82,18 +83,21 @@ export async function fetchCohortStats(
  * serveur : mieux vaut ne rien afficher qu'un écart écrasé par sa propre voix.
  */
 export function compareToCohort(
-  rounds: PlayedRound[],
+  profils: ProfilJuge[],
   stats: CohortStat[],
 ): CohortComparison | null {
   const byId = new Map(stats.map((s) => [s.statement_id, s]));
   const pairs: [number, number][] = [];
   let votes = 0;
 
-  for (const round of rounds) {
-    round.played.forEach((stmt, i) => {
+  for (const profil of profils) {
+    profil.propositions.forEach((stmt, i) => {
       const stat = byId.get(stmt.id);
       if (!stat) return;
-      pairs.push([round.deltas[i] ?? 0, stat.avg_delta]);
+      // Même conversion que `noteDesAutres` : le coût moyen d'une phrase
+      // pour la cohorte, ramené à une note sur 10.
+      const noteCohorte = Math.min(MAX_SCORE, Math.max(MIN_SCORE, START_SCORE + stat.avg_delta));
+      pairs.push([profil.notes[i] ?? START_SCORE, noteCohorte]);
       votes += stat.votes;
     });
   }
@@ -159,12 +163,13 @@ export function cohortSentence(
 ): string {
   const label = cohortLabel(profile);
   const { gap } = comparison;
+  const pts = (n: number) => (Math.abs(n) >= 2 ? 'points' : 'point');
 
   if (gap <= -2) {
-    return `Tu es extrêmement sévère par rapport ${cohortDative(profile)} : ${fr(gap)} points de plus retirés à chaque révélation.`;
+    return `Tu es extrêmement sévère par rapport ${cohortDative(profile)} : ${fr(gap)} ${pts(gap)} de moins à chaque red flag.`;
   }
   if (gap <= -0.8) {
-    return `Tu es plus sévère que ${label} : ${fr(gap)} point de plus retiré à chaque révélation.`;
+    return `Tu es plus sévère que ${label} : ${fr(gap)} ${pts(gap)} de moins à chaque red flag.`;
   }
   if (gap < -0.3) {
     return `Tu es un peu plus dur que ${label}.`;
@@ -173,7 +178,7 @@ export function cohortSentence(
     return `Tu notes exactement comme ${label}. Rien ne te distingue.`;
   }
   if (gap < 1.5) {
-    return `Tu es plus indulgent que ${label} : ${fr(gap)} point de moins retiré à chaque révélation.`;
+    return `Tu es plus indulgent que ${label} : ${fr(gap)} ${pts(gap)} de plus à chaque red flag.`;
   }
-  return `Tu es bien plus tendre que ${label} : ${fr(gap)} points de moins retirés à chaque révélation.`;
+  return `Tu es bien plus tendre que ${label} : ${fr(gap)} ${pts(gap)} de plus à chaque red flag.`;
 }

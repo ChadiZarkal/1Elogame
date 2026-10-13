@@ -4,10 +4,10 @@
  * @module dixmais/Intro
  * Écran d'accueil.
  *
- * Une liste de règles ne se lit pas en soirée. La règle centrale — les
- * révélations s'empilent et la note se réévalue sur l'ensemble — est donc
- * *montrée* : une démonstration de quatre secondes tourne en boucle, où le
- * joueur voit les phrases s'accumuler et la note descendre.
+ * Une liste de règles ne se lit pas en soirée. La règle — chaque red flag se
+ * note seul, et la personne reçoit la moyenne — est donc *montrée* : une
+ * démonstration tourne en boucle, où chaque phrase reçoit sa note puis où les
+ * notes se fondent en une moyenne.
  *
  * Le bouton est hors du conteneur défilant : sur un iPhone SE avec les barres
  * de Safari, il tombait cent pixels sous la ligne de flottaison, sans barre de
@@ -20,15 +20,16 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Trophy } from 'lucide-react';
 import { scoreColor, withAlpha } from './scale';
+import { formatNote, moyenneDe } from './moyenne';
 
-/** Ouvre sur un red flag, comme le jeu : le serveur garantit que la première
- * révélation d'un profil est toujours négative. Le troisième temps montre
- * qu'une qualité peut aussi faire remonter la note. */
+/** Trois red flags, trois notes, une moyenne. */
 const DEMO = [
-  { text: 'il est jaloux maladif', score: 6, connector: null, icon: '🚩' },
-  { text: 'il parle de son ex non-stop', score: 3, connector: 'ET', icon: '🚩' },
-  { text: 'il cuisine très bien', score: 5, connector: 'MAIS', icon: '🟢' },
+  { text: 'Il est jaloux maladif', score: 2 },
+  { text: 'Il parle de son ex non-stop', score: 5 },
+  { text: 'Il ne fait jamais la vaisselle', score: 8 },
 ] as const;
+
+const DEMO_MOYENNE = moyenneDe(DEMO.map((d) => d.score));
 
 export function Intro({ onStart, failed }: { onStart: () => void; failed: boolean }) {
   return (
@@ -79,12 +80,11 @@ export function Intro({ onStart, failed }: { onStart: () => void; failed: boolea
           <MechanicDemo />
 
           <p className="mt-4 max-w-xs text-sm font-semibold leading-snug text-white/55">
-            Les révélations <span className="text-white">s&apos;empilent</span>. À chaque fois, tu
-            renotes la personne{' '}
-            <span style={{ color: '#FBBF24' }}>en comptant tout ce que tu sais déjà</span>.
+            5 red flags, notés <span className="text-white">un par un</span>, de 0 à 10. Sa note
+            finale, <span style={{ color: '#FBBF24' }}>c&apos;est ta moyenne</span>.
           </p>
           <p className="mt-1.5 text-xs font-bold text-white/35">
-            Un 0 est éliminatoire : la partie s&apos;arrête là.
+            Un 0 pèse lourd, mais ne met pas fin à la partie.
           </p>
 
           <Link
@@ -137,76 +137,87 @@ export function Intro({ onStart, failed }: { onStart: () => void; failed: boolea
   );
 }
 
-/** Boucle : une phrase s'ajoute, la note bouge. Se passe de commentaire. */
+/** Boucle : chaque phrase reçoit sa note, puis les notes deviennent une
+ * moyenne. Se passe de commentaire. */
 function MechanicDemo() {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    // Le compteur cyclait sur `DEMO.length + 1` valeurs alors que `shown` était
-    // plafonné à `DEMO.length - 1` : les deux derniers pas affichaient la même
-    // image, et le dernier temps de la démonstration durait 3 s au lieu de 1,5.
-    const id = setInterval(() => setStep((s) => (s + 1) % DEMO.length), 1500);
+    const id = setInterval(() => setStep((s) => (s + 1) % (DEMO.length + 1)), 1500);
     return () => clearInterval(id);
   }, []);
 
-  const shown = step;
-  const score = DEMO[shown].score;
-  const tint = scoreColor(score);
+  const finale = step === DEMO.length;
+  const courant = finale ? null : DEMO[step];
+  const affiche = finale ? DEMO_MOYENNE : (courant?.score ?? 10);
+  const tint = scoreColor(affiche);
 
   return (
     <div
       className="w-full max-w-xs rounded-2xl px-4 py-3"
       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex min-h-[52px] items-center gap-3">
         <div className="min-w-0 flex-1 text-left">
-          {DEMO.map((item, i) => (
+          {courant ? (
             <motion.div
-              key={item.text}
-              animate={{ opacity: i <= shown ? (i === shown ? 1 : 0.35) : 0.08 }}
-              transition={{ duration: 0.35 }}
-              className="py-[3px]"
+              key={courant.text}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
             >
-              {item.connector && (
-                <span
-                  className="mr-1.5 text-[11px] font-black uppercase tracking-[0.14em]"
-                  style={{ color: '#F59E0B' }}
-                >
-                  {item.connector}
-                </span>
-              )}
-              <span className="text-[12px] font-semibold leading-tight text-white">
-                {item.icon} {item.text}
-              </span>
+              <p className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: '#F59E0B' }}>
+                C&apos;est un 10, mais…
+              </p>
+              <p className="text-[13px] font-semibold leading-tight text-white">🚩 {courant.text}</p>
             </motion.div>
-          ))}
+          ) : (
+            <motion.p
+              key="moyenne"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-[13px] font-black uppercase tracking-wide text-white"
+            >
+              Sa note : la moyenne
+            </motion.p>
+          )}
         </div>
 
         <div className="shrink-0 text-right">
           <motion.p
-            key={score}
+            key={step}
             initial={{ scale: 0.7, opacity: 0.4 }}
             animate={{ scale: 1, opacity: 1 }}
             className="text-3xl font-black leading-none tabular-nums"
             style={{ color: tint, textShadow: `0 0 24px ${withAlpha(tint, 0.5)}` }}
           >
-            {score}
+            {formatNote(affiche)}
           </motion.p>
-          <p className="text-[11px] font-black uppercase tracking-wider text-white/40">sur 10</p>
+          <p className="text-[11px] font-black uppercase tracking-wider text-white/40">
+            {finale ? 'moyenne' : 'sur 10'}
+          </p>
         </div>
       </div>
 
-      {/* `scaleX` et non `width` : cette barre s'anime toutes les 1,5 s, en
-          boucle, sur le premier écran que voit chaque joueur. Animer `width`
-          y déclenchait une passe de mise en page à chaque image — la propriété
-          la plus coûteuse à animer sur un téléphone d'entrée de gamme.
-          `transform` est composé par le GPU. */}
-      <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-        <motion.div
-          className="h-full w-full origin-left rounded-full"
-          animate={{ scaleX: score / 10, backgroundColor: tint }}
-          transition={{ duration: 0.45, ease: 'easeOut' }}
-        />
+      {/* Les cases se remplissent une à une : on voit que chaque note compte
+          pour elle-même avant de compter dans la moyenne. */}
+      <div className="mt-2.5 flex gap-1.5">
+        {DEMO.map((d, i) => {
+          const visible = finale || i <= step;
+          return (
+            <motion.div
+              key={d.text}
+              animate={{ opacity: visible ? 1 : 0.25 }}
+              className="flex h-6 flex-1 items-center justify-center rounded-md text-[11px] font-black tabular-nums"
+              style={{
+                background: visible ? withAlpha(scoreColor(d.score), 0.18) : 'rgba(255,255,255,0.05)',
+                color: visible ? scoreColor(d.score) : 'transparent',
+              }}
+            >
+              {d.score}
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );
