@@ -4,24 +4,21 @@
  * @module dixmais/Intro
  * Écran d'accueil.
  *
- * Une liste de règles ne se lit pas en soirée. La règle — chaque révélation
+ * Le titre, une démonstration, une phrase, un bouton. La règle — chaque info
  * se note seule, jusqu'à 15 pour une qualité, et la personne reçoit la
- * moyenne — est donc *montrée* : une
- * démonstration tourne en boucle, où chaque phrase reçoit sa note puis où les
- * notes se fondent en une moyenne.
+ * moyenne — est *montrée* plutôt qu'expliquée : une phrase apparaît, reçoit sa
+ * note, puis les notes se fondent en une moyenne.
  *
  * Le bouton est hors du conteneur défilant : sur un iPhone SE avec les barres
- * de Safari, il tombait cent pixels sous la ligne de flottaison, sans barre de
- * défilement pour le signaler — le tout premier écran du jeu n'affichait pas
- * son unique bouton.
+ * de Safari, il tombait sous la ligne de flottaison sans rien pour le signaler.
  */
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Trophy } from 'lucide-react';
-import { scoreColor, withAlpha } from './scale';
+import { scoreColor } from './scale';
 import { formatNote, moyenneDe } from './moyenne';
+import { BoutonDiscret, BoutonPrincipal, TEINTES } from './ui';
 
 /** Deux red flags, un green flag qui dépasse le 10, une moyenne. */
 const DEMO = [
@@ -43,19 +40,11 @@ export function Intro({ onStart, failed }: { onStart: () => void; failed: boolea
     >
       <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto overscroll-contain px-6">
         <div className="flex min-h-full flex-col items-center justify-center py-3 text-center">
-          <p
-            className="mb-3 text-[11px] font-black uppercase tracking-[0.24em]"
-            style={{ color: 'rgba(245,158,11,0.6)' }}
-          >
-            Jeu de soirée
-          </p>
-
-          {/* Bornées en vh : sur un écran court, le titre cède la place au
-              reste plutôt que de repousser tout le contenu vers le bas. */}
-          <h1 className="mb-5">
+          {/* Bornées en vh : sur un écran court, le titre cède la place. */}
+          <h1>
             <span
               className="block font-black uppercase leading-none tracking-tight text-white"
-              style={{ fontSize: 'min(3.2rem, 10vw, 5.5vh)' }}
+              style={{ fontSize: 'min(3rem, 10vw, 5.5vh)' }}
             >
               C&apos;est un
             </span>
@@ -64,167 +53,101 @@ export function Intro({ onStart, failed }: { onStart: () => void; failed: boolea
               style={{
                 fontSize: 'min(9rem, 26vw, 15vh)',
                 letterSpacing: '-0.06em',
-                color: '#FFD700',
-                textShadow: '0 0 60px rgba(255,215,0,0.55), 0 0 120px rgba(245,158,11,0.28)',
+                color: TEINTES.or,
+                textShadow: '0 0 60px rgba(255,215,0,0.35)',
               }}
             >
               10
             </span>
             <span
               className="block font-black uppercase leading-none tracking-tight text-white/90"
-              style={{ fontSize: 'min(3.2rem, 10vw, 5.5vh)' }}
+              style={{ fontSize: 'min(3rem, 10vw, 5.5vh)' }}
             >
               mais…
             </span>
           </h1>
 
-          <MechanicDemo />
+          <Demonstration />
 
-          <p className="mt-4 max-w-xs text-sm font-semibold leading-snug text-white/55">
-            5 infos, notées <span className="text-white">une par une</span>. Les red flags font
-            descendre, les <span style={{ color: '#4ADE80' }}>green flags montent jusqu&apos;à 15</span>.
-            Sa note finale, <span style={{ color: '#FBBF24' }}>c&apos;est ta moyenne</span>.
+          <p className="mt-6 max-w-[28ch] text-[15px] leading-snug" style={{ color: TEINTES.secondaire }}>
+            Cinq infos sur quelqu&apos;un, notées une par une de 0 à 15.{' '}
+            <span className="text-white">Sa note, c&apos;est ta moyenne.</span>
           </p>
-          <p className="mt-1.5 text-xs font-bold text-white/35">
-            Un 0 pèse lourd, mais ne met pas fin à la partie.
-          </p>
-
-          <Link
-            href="/dixmais/leaderboard"
-            className="mt-4 flex min-h-11 items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.16em] transition-colors hover:text-amber-300"
-            style={{ color: 'rgba(245,158,11,0.45)' }}
-          >
-            <Trophy size={10} /> Classement des red flags
-          </Link>
         </div>
       </div>
 
-      <div
-        className="shrink-0 px-6 pt-2"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 16px)' }}
-      >
+      <div className="shrink-0 px-6 pt-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}>
         {failed && (
-          <p className="mb-2 text-center text-xs font-bold text-red-400">
-            Connexion impossible. Réessaie.
-          </p>
+          <p className="mb-2 text-center text-xs font-bold text-red-400">Connexion impossible. Réessaie.</p>
         )}
-        {/* Le bouton ne demande rien et ne se désactive pas : sexe et âge sont
-            demandés *après* l'appui, sur leur propre écran. Placés ici, dans la
-            zone défilante, il fallait faire défiler pour les trouver pendant
-            que le bouton en réclamait la réponse. */}
-        <motion.button
-          whileTap={{ scale: 0.96 }}
-          onClick={onStart}
-          className="w-full cursor-pointer rounded-2xl py-[18px] text-lg font-black uppercase tracking-widest text-black"
-          style={{
-            background: 'linear-gradient(135deg, #F59E0B 0%, #FFD700 100%)',
-            boxShadow: '0 8px 40px rgba(245,158,11,0.45)',
-          }}
-        >
-          {failed ? 'Réessayer' : 'Jouer'}
-        </motion.button>
-
-        {/* L'écran de jeu occupe exactement la hauteur de la fenêtre : rien
-            n'indiquait que des explications suivaient, et personne ne fait
-            défiler une page qui semble finie. Ce rappel ne coûte qu'une ligne
-            et ne s'affiche que sur l'accueil du jeu. */}
-        <a
-          href="#page-notes-title"
-          className="mt-1 flex min-h-11 items-center justify-center text-center text-[11px] font-bold uppercase tracking-[0.18em] text-white/30 transition-colors hover:text-white/60"
-        >
-          Comment ça marche ↓
-        </a>
+        <BoutonPrincipal onClick={onStart}>{failed ? 'Réessayer' : 'Jouer'}</BoutonPrincipal>
+        <div className="mt-1 flex">
+          <BoutonDiscret href="/dixmais/leaderboard">
+            <Trophy size={14} /> Classement
+          </BoutonDiscret>
+          {/* L'écran de jeu occupe toute la hauteur : rien n'indique que des
+              explications suivent. Ce lien ne coûte qu'une ligne. */}
+          <BoutonDiscret href="#page-notes-title">Comment ça marche ↓</BoutonDiscret>
+        </div>
       </div>
     </motion.div>
   );
 }
 
-/** Boucle : chaque phrase reçoit sa note, puis les notes deviennent une
- * moyenne. Se passe de commentaire. */
-function MechanicDemo() {
+/** Une phrase, sa note ; puis la moyenne. En boucle. */
+function Demonstration() {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(() => setStep((s) => (s + 1) % (DEMO.length + 1)), 1500);
+    const id = setInterval(() => setStep((s) => (s + 1) % (DEMO.length + 1)), 1600);
     return () => clearInterval(id);
   }, []);
 
   const finale = step === DEMO.length;
   const courant = finale ? null : DEMO[step];
   const affiche = finale ? DEMO_MOYENNE : (courant?.score ?? 10);
-  const tint = scoreColor(affiche);
 
   return (
-    <div
-      className="w-full max-w-xs rounded-2xl px-4 py-3"
-      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-    >
-      <div className="flex min-h-[52px] items-center gap-3">
-        <div className="min-w-0 flex-1 text-left">
+    <div className="mt-8 w-full max-w-[19rem]">
+      <div className="flex min-h-[46px] items-center gap-4 text-left">
+        <motion.div
+          key={step}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="min-w-0 flex-1"
+        >
           {courant ? (
-            <motion.div
-              key={courant.text}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <p
-                className="text-[10px] font-black uppercase tracking-[0.14em]"
-                style={{ color: courant.vert ? '#4ADE80' : '#F59E0B' }}
-              >
-                {courant.vert ? 'C’est un 10, et en plus…' : 'C’est un 10, mais…'}
+            <>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: courant.vert ? TEINTES.vert : TEINTES.ambre }}>
+                {courant.vert ? 'Et en plus…' : 'Mais…'}
               </p>
-              <p className="text-[13px] font-semibold leading-tight text-white">
-                {courant.vert ? '🟢' : '🚩'} {courant.text}
-              </p>
-            </motion.div>
+              <p className="text-[15px] font-semibold leading-tight text-white">{courant.text}</p>
+            </>
           ) : (
-            <motion.p
-              key="moyenne"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-[13px] font-black uppercase tracking-wide text-white"
-            >
-              Sa note : la moyenne
-            </motion.p>
+            <p className="text-[15px] font-semibold text-white">Sa note : la moyenne</p>
           )}
-        </div>
-
-        <div className="shrink-0 text-right">
-          <motion.p
-            key={step}
-            initial={{ scale: 0.7, opacity: 0.4 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="text-3xl font-black leading-none tabular-nums"
-            style={{ color: tint, textShadow: `0 0 24px ${withAlpha(tint, 0.5)}` }}
-          >
-            {formatNote(affiche)}
-          </motion.p>
-          <p className="text-[11px] font-black uppercase tracking-wider text-white/40">
-            {finale ? 'moyenne' : 'sur 10'}
-          </p>
-        </div>
+        </motion.div>
+        <motion.span
+          key={`n-${step}`}
+          initial={{ scale: 0.7, opacity: 0.4 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="shrink-0 text-[34px] font-black leading-none tabular-nums"
+          style={{ color: scoreColor(affiche) }}
+        >
+          {formatNote(affiche)}
+        </motion.span>
       </div>
 
-      {/* Les cases se remplissent une à une : on voit que chaque note compte
-          pour elle-même avant de compter dans la moyenne. */}
-      <div className="mt-2.5 flex gap-1.5">
-        {DEMO.map((d, i) => {
-          const visible = finale || i <= step;
-          return (
-            <motion.div
-              key={d.text}
-              animate={{ opacity: visible ? 1 : 0.25 }}
-              className="flex h-6 flex-1 items-center justify-center rounded-md text-[11px] font-black tabular-nums"
-              style={{
-                background: visible ? withAlpha(scoreColor(d.score), 0.18) : 'rgba(255,255,255,0.05)',
-                color: visible ? scoreColor(d.score) : 'transparent',
-              }}
-            >
-              {d.score}
-            </motion.div>
-          );
-        })}
+      {/* Les traits se colorent un à un, comme la progression en partie. */}
+      <div className="mt-3 flex gap-1.5" aria-hidden>
+        {DEMO.map((d, i) => (
+          <span
+            key={d.text}
+            className="h-1 flex-1 rounded-full transition-colors duration-300"
+            style={{ background: finale || i <= step ? scoreColor(d.score) : 'rgba(255,255,255,0.1)' }}
+          />
+        ))}
       </div>
     </div>
   );

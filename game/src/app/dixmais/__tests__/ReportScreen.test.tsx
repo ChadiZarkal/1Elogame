@@ -24,7 +24,7 @@ describe('Verdict', () => {
     const profil = profilJuge([2, 2, 2, 2, 2], { communaute: [6, 6, 6, 6, 6] });
     render(<Verdict profil={profil} sessionCount={1} onNext={vi.fn()} onReport={vi.fn()} loadFailed={false} />);
 
-    expect(screen.getByText('Les autres')).toBeInTheDocument();
+    expect(screen.getByText(/Les autres lui mettent/)).toBeInTheDocument();
     expect(screen.getByText(/4 points plus dur que les autres avec Lucas/)).toBeInTheDocument();
   });
 
@@ -96,7 +96,8 @@ describe('ReportScreen', () => {
     render(
       <ReportScreen rounds={rounds} profile={{ sex: 'femme', age: '19-22' }} onBack={vi.fn()} onNext={vi.fn()} />,
     );
-    await waitFor(() => expect(screen.getByText('Face aux femmes de 19-22 ans')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Ta cohorte')).toBeInTheDocument());
+    expect(screen.getByText('Face aux autres')).toBeInTheDocument();
     expect(screen.getByText(/extrêmement sévère par rapport aux femmes de 19-22 ans/)).toBeInTheDocument();
   });
 });

@@ -20,7 +20,7 @@ import { Verdict } from './Verdict';
 import { ReportScreen } from './ReportScreen';
 import { ProfileStep } from './ProfileStep';
 import { useDixMais } from './useDixMais';
-import { scoreColor, withAlpha, START_SCORE } from './scale';
+import { scoreColor } from './scale';
 
 export default function DixMaisPage() {
   const game = useDixMais();
@@ -69,43 +69,35 @@ export default function DixMaisPage() {
     <div className="relative flex h-[calc(100dvh-var(--header-h,3rem))] min-h-[500px] flex-col overflow-hidden text-white select-none">
       <Ambient score={game.ambientScore} shock={game.shock} />
 
-      {/* Resserré sous 620 px de haut : chaque pixel rendu ici revient à la
-          phrase notée, qui sinon déborde de sa carte sur un 320 × 568. */}
-      <header className="relative z-10 flex shrink-0 items-center justify-between gap-3 px-5 pt-4 pb-2 [@media(max-height:620px)]:pt-2 [@media(max-height:620px)]:pb-1">
-        {/* Le retour à l'accueil est le logo de la barre du site. Cette cale
-            garde la progression au centre et « recommencer » à droite. */}
-        <span aria-hidden className="w-6" />
+      {/* Une seule ligne : la progression en cinq traits, et « recommencer ».
+          Les traits prennent la couleur de la note donnée — c'est le seul
+          rappel des notes passées pendant la partie. */}
+      <header className="relative z-10 flex h-12 shrink-0 items-center gap-4 px-5 [@media(max-height:620px)]:h-10">
+        <div className="flex flex-1 items-center gap-1.5" aria-hidden={phase !== 'reveal'}>
+          {phase === 'reveal' && round && round.statements.map((s, i) => (
+            <span
+              key={s.id}
+              className="h-1 flex-1 rounded-full transition-colors duration-300"
+              style={{
+                background:
+                  i < round.notes.length
+                    ? scoreColor(round.notes[i])
+                    : i === round.index
+                      ? 'rgba(255,255,255,0.7)'
+                      : 'rgba(255,255,255,0.12)',
+              }}
+            />
+          ))}
+        </div>
 
-        {phase === 'reveal' && round && (
-          <div className="flex items-center gap-1.5">
-            {round.statements.map((s, i) => (
-              <span
-                key={s.id}
-                className="h-1.5 rounded-full transition-all duration-300"
-                style={{
-                  width: i === round.index ? 18 : 6,
-                  background:
-                    i < round.index
-                      ? withAlpha(scoreColor(round.notes[i] ?? START_SCORE), 0.85)
-                      : i === round.index
-                        ? '#FFD700'
-                        : 'rgba(255,255,255,0.14)',
-                }}
-              />
-            ))}
-          </div>
-        )}
-
-        {phase !== 'intro' ? (
+        {phase !== 'intro' && (
           <button
             onClick={game.restart}
             aria-label="Recommencer"
-            className="-m-2.5 flex h-11 w-11 cursor-pointer items-center justify-center text-white/25 transition-colors hover:text-white/50 active:scale-90"
+            className="-m-2.5 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center text-white/30 transition-colors hover:text-white/60 active:scale-90"
           >
-            <RotateCcw size={17} />
+            <RotateCcw size={16} />
           </button>
-        ) : (
-          <span className="w-[17px]" />
         )}
       </header>
 
@@ -130,49 +122,34 @@ export default function DixMaisPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-3"
+              className="flex min-h-0 flex-1 flex-col px-5"
             >
               <ProfileCard
                 identity={round.identity}
                 statements={round.statements}
-                notes={round.notes}
                 index={round.index}
-                draft={game.draft}
                 moyenne={game.runningAverage}
                 flash={game.flash}
               />
 
               <div
                 className="shrink-0"
-                /* Le plancher passe de 4 à 12 px : la jauge est le contrôle le
-                   plus bas de l'écran, et 4 px la collaient à la barre
-                   gestuelle sur les téléphones sans encoche. */
+                /* 12 px au moins : la jauge est le contrôle le plus bas de
+                   l'écran, et collée à la barre gestuelle elle se rate. */
                 style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}
               >
-                {/* L'instruction porte tout le sens du jeu : elle est écrite en
-                    clair, pas en légende grise de 10 px comme auparavant.
-                    L'aide de premier lancement occupe cet emplacement plutôt
-                    que d'en ajouter un — hauteur réservée pour deux lignes, la
-                    jauge ne bouge donc jamais sous le pouce. */}
-                <div className="mb-2 flex min-h-[34px] items-center justify-center [@media(max-height:620px)]:mb-1">
-                  <p className="text-center text-[13px] font-bold leading-tight text-white/75">
-                    {game.showCoach && round.index === 0 ? (
-                      <>
-                        Note cette info <span style={{ color: '#FBBF24' }}>toute seule</span>. Un
-                        green flag peut <span style={{ color: '#4ADE80' }}>dépasser 10</span>.
-                      </>
-                    ) : (
-                      <>
-                        Rien que pour ça,{' '}
-                        <span style={{ color: '#FBBF24' }}>tu lui mets combien</span> ?
-                      </>
-                    )}
+                {/* La consigne ne s'affiche qu'à la toute première note : passé
+                    ce cap, la phrase et la jauge se suffisent. */}
+                {game.showCoach && round.index === 0 && (
+                  <p className="mb-3 text-center text-[13px] font-medium leading-snug text-white/55">
+                    Note chaque info seule, en partant de 10.
+                    <br />
+                    Une qualité peut <span className="text-emerald-400">dépasser 10</span>.
                   </p>
-                </div>
+                )}
 
                 <ScoreDial
                   value={game.draft}
-                  previous={START_SCORE}
                   onChange={game.setDraft}
                   onCommit={game.commit}
                   disabled={game.locked}

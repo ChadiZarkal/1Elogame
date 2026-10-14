@@ -34,7 +34,8 @@ export function Ambient({ score, shock }: { score: number; shock: number }) {
         className="absolute inset-0"
         style={{
           backgroundColor: tint,
-          opacity: 0.3,
+          // Discret : le halo situe la note, il ne doit pas la concurrencer.
+          opacity: 0.17,
           maskImage: 'radial-gradient(130% 70% at 50% -10%, #000 0%, transparent 62%)',
           WebkitMaskImage: 'radial-gradient(130% 70% at 50% -10%, #000 0%, transparent 62%)',
           transition: 'background-color 650ms ease',
@@ -46,7 +47,7 @@ export function Ambient({ score, shock }: { score: number; shock: number }) {
         className="absolute inset-0"
         style={{
           backgroundColor: tint,
-          opacity: 0.16,
+          opacity: 0.07,
           maskImage: 'radial-gradient(100% 45% at 50% 108%, #000 0%, transparent 70%)',
           WebkitMaskImage: 'radial-gradient(100% 45% at 50% 108%, #000 0%, transparent 70%)',
           transition: 'background-color 650ms ease',
@@ -63,7 +64,7 @@ export function Ambient({ score, shock }: { score: number; shock: number }) {
         {shock > 0 && (
           <motion.div
             key={shock}
-            initial={{ opacity: 0.5 }}
+            initial={{ opacity: 0.32 }}
             animate={{ opacity: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.55, ease: 'easeOut' }}

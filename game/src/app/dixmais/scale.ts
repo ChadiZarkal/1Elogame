@@ -74,6 +74,14 @@ export function scoreColor(n: number): string {
   return RAMP[clampScore(n)];
 }
 
+/**
+ * Couleur d'une note écrite en chiffres. Le rouge sang du 0 est fait pour un
+ * aplat ; en texte sur fond noir, il disparaît. On l'éclaircit.
+ */
+export function scoreInk(n: number): string {
+  return clampScore(n) === 0 ? '#F87171' : scoreColor(n);
+}
+
 export function scoreLabel(n: number): string {
   return LABELS[clampScore(n)];
 }

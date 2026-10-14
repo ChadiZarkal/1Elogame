@@ -166,10 +166,10 @@ export function cohortSentence(
   const pts = (n: number) => (Math.abs(n) >= 2 ? 'points' : 'point');
 
   if (gap <= -2) {
-    return `Tu es extrêmement sévère par rapport ${cohortDative(profile)} : ${fr(gap)} ${pts(gap)} de moins à chaque red flag.`;
+    return `Tu es extrêmement sévère par rapport ${cohortDative(profile)} : ${fr(gap)} ${pts(gap)} de moins à chaque révélation.`;
   }
   if (gap <= -0.8) {
-    return `Tu es plus sévère que ${label} : ${fr(gap)} ${pts(gap)} de moins à chaque red flag.`;
+    return `Tu es plus sévère que ${label} : ${fr(gap)} ${pts(gap)} de moins à chaque révélation.`;
   }
   if (gap < -0.3) {
     return `Tu es un peu plus dur que ${label}.`;
@@ -178,7 +178,7 @@ export function cohortSentence(
     return `Tu notes exactement comme ${label}. Rien ne te distingue.`;
   }
   if (gap < 1.5) {
-    return `Tu es plus indulgent que ${label} : ${fr(gap)} ${pts(gap)} de plus à chaque red flag.`;
+    return `Tu es plus indulgent que ${label} : ${fr(gap)} ${pts(gap)} de plus à chaque révélation.`;
   }
-  return `Tu es bien plus tendre que ${label} : ${fr(gap)} ${pts(gap)} de plus à chaque red flag.`;
+  return `Tu es bien plus tendre que ${label} : ${fr(gap)} ${pts(gap)} de plus à chaque révélation.`;
 }

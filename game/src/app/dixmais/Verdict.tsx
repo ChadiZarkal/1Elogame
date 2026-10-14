@@ -4,25 +4,22 @@
  * @module dixmais/Verdict
  * Fin d'un profil : les cinq notes deviennent une seule.
  *
- * L'écran raconte le calcul plutôt que d'en donner le résultat : les cinq
- * notes apparaissent l'une après l'autre, puis se fondent en une moyenne qui
- * vient se poser sur la personne. C'est la règle du jeu, montrée.
- *
- * Viennent ensuite la fin retenue, ce que les autres joueurs lui auraient mis,
- * et le détail révélation par révélation.
+ * En haut, ce qu'on vient chercher : la personne, ses cinq notes qui se
+ * fondent en une moyenne, et la fin qui la nomme. Dessous, sans cadres, le
+ * détail note par note. Un seul bouton doré ; le reste en actions discrètes.
  */
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Trophy, Share2, Check, BarChart3 } from 'lucide-react';
-import { MAX_SCORE, START_SCORE, scoreColor, scoreLabel, withAlpha } from './scale';
+import { START_SCORE, scoreColor, scoreInk, scoreLabel, withAlpha } from './scale';
 import { formatNote, poidsDansLaMoyenne, type ProfilJuge } from './moyenne';
+import { BoutonDiscret, BoutonPrincipal, Pastille, Pied, Section, TEINTES } from './ui';
 
 const SHARE_URL = 'https://redorgreen.fr/dixmais';
 
 /** Délai avant que la moyenne n'apparaisse : le temps de voir les cinq notes. */
-const DELAI_MOYENNE = 0.95;
+const DELAI_MOYENNE = 0.75;
 
 interface Props {
   profil: ProfilJuge;
@@ -32,6 +29,10 @@ interface Props {
   onReport: () => void;
   /** Le chargement du profil suivant a échoué : on reste ici. */
   loadFailed: boolean;
+}
+
+function points(n: number): string {
+  return `${formatNote(n)} point${n >= 2 ? 's' : ''}`;
 }
 
 export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: Props) {
@@ -53,10 +54,10 @@ export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: 
         .then(({ default: confetti }) => {
           if (cancelled) return;
           confetti({
-            particleCount: 70,
+            particleCount: 60,
             spread: 70,
-            origin: { y: 0.35 },
-            colors: ['#FFD700', '#F59E0B', '#22C55E'],
+            origin: { y: 0.3 },
+            colors: ['#FFD700', '#4ADE80', '#FFFFFF'],
             disableForReducedMotion: true,
           });
         })
@@ -85,266 +86,175 @@ export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: 
     }
   };
 
+  const ecart = moyenneCommunaute === null ? 0 : moyenne - moyenneCommunaute;
+
   return (
     <motion.div
       key="verdict"
-      initial={{ opacity: 0, y: 18 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       className="scrollbar-hide flex flex-1 flex-col overflow-y-auto overscroll-contain px-5"
     >
-      <p className="pt-1 text-center text-[11px] font-black uppercase tracking-[0.22em] text-white/45">
-        Profil #{profil.numero}
-      </p>
-
-      {/* ── Le calcul : cinq notes, une moyenne ──────────────────────────── */}
-      <div className="mt-3 flex items-center justify-center gap-1.5" aria-hidden>
-        {notes.map((n, i) => (
-          <motion.span
-            key={i}
-            initial={{ opacity: 0, y: -10, scale: 0.6 }}
-            animate={{ opacity: [0, 1, 1, 0.55], y: [-10, 0, 0, 6], scale: [0.6, 1, 1, 0.92] }}
-            transition={{ duration: DELAI_MOYENNE + 0.5, times: [0, 0.2, 0.7, 1], delay: i * 0.1 }}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-[15px] font-black tabular-nums"
+      {/* ── La note ─────────────────────────────────────────────────────── */}
+      <div className="flex flex-col items-center pt-2 text-center">
+        <div className="flex items-center gap-2.5">
+          <span
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-black text-white"
             style={{
-              background: withAlpha(scoreColor(n), 0.16),
-              border: `1.5px solid ${withAlpha(scoreColor(n), 0.55)}`,
-              color: scoreColor(n),
-            }}
-          >
-            {n}
-          </motion.span>
-        ))}
-      </div>
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.55 }}
-        className="mt-1.5 text-center text-[10px] font-black uppercase tracking-[0.2em] text-white/35"
-        aria-hidden
-      >
-        ↓ moyenne des 5 ↓
-      </motion.p>
-
-      {/* ── La note, posée sur la personne ───────────────────────────────── */}
-      <motion.div
-        className="mt-2 flex items-center justify-center gap-4"
-        initial={{ opacity: 0, scale: 0.6 }}
-        animate={
-          fin.tone === 'brutal'
-            ? { opacity: 1, scale: 1, x: [0, -7, 6, -4, 0] }
-            : { opacity: 1, scale: 1 }
-        }
-        transition={{ type: 'spring', stiffness: 230, damping: 17, delay: DELAI_MOYENNE }}
-      >
-        <div className="text-center">
-          <div
-            className="mx-auto flex h-14 w-14 items-center justify-center rounded-full text-2xl font-black"
-            style={{
-              background: `linear-gradient(145deg, hsl(${profil.teinte} 62% 46%), hsl(${profil.teinte + 26} 58% 32%))`,
-              boxShadow: `0 0 0 3px ${withAlpha(tint, 0.9)}, 0 0 28px ${withAlpha(tint, 0.45)}`,
+              background: `linear-gradient(145deg, hsl(${profil.teinte} 55% 46%), hsl(${profil.teinte + 26} 50% 30%))`,
             }}
           >
             {profil.initiale}
-          </div>
-          <p className="mt-1.5 max-w-[7rem] truncate text-[12px] font-black uppercase tracking-tight text-white/80">
+          </span>
+          <span className="text-[15px] font-bold" style={{ color: TEINTES.texte }}>
             {profil.nom}, {profil.age}
-          </p>
+          </span>
         </div>
 
-        <div className="text-left">
-          <p
+        {/* Les cinq notes, puis leur moyenne : la règle du jeu, montrée. */}
+        <div className="mt-5 flex items-center gap-1.5" aria-hidden>
+          {notes.map((n, i) => (
+            <motion.span
+              key={i}
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
+            >
+              <Pastille note={n} couleur={scoreInk(n)} taille="sm" />
+            </motion.span>
+          ))}
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.7 }}
+          animate={
+            fin.tone === 'brutal'
+              ? { opacity: 1, scale: 1, x: [0, -6, 5, -3, 0] }
+              : { opacity: 1, scale: 1 }
+          }
+          // La secousse d'une fin brutale a ses cinq étapes : un ressort n'en
+          // accepte que deux, et Motion lève une erreur qui vide l'écran. Elle
+          // a donc sa propre transition, en courbe simple.
+          transition={{
+            default: { type: 'spring', stiffness: 240, damping: 18, delay: DELAI_MOYENNE },
+            x: { type: 'tween', duration: 0.4, ease: 'easeInOut', delay: DELAI_MOYENNE + 0.15 },
+          }}
+          className="mt-2 flex items-baseline"
+          aria-label={`Moyenne ${formatNote(moyenne)} sur 10`}
+        >
+          <span
             className="font-black leading-none tabular-nums"
-            style={{
-              fontSize: 'clamp(4rem, 21vw, 7rem)',
-              color: tint,
-              letterSpacing: '-0.05em',
-              textShadow: `0 0 70px ${withAlpha(tint, 0.4)}`,
-            }}
-            aria-label={`Moyenne ${formatNote(moyenne)} sur 10`}
+            style={{ fontSize: 'clamp(4.5rem, 24vw, 7rem)', color: tint, letterSpacing: '-0.05em' }}
           >
             {formatNote(moyenne)}
-          </p>
-          <p className="text-sm font-black uppercase tracking-wide" style={{ color: tint }}>
-            {scoreLabel(moyenne)}
-          </p>
-        </div>
-      </motion.div>
-
-      {/* ── La fin ───────────────────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: DELAI_MOYENNE + 0.25 }}
-        className="mt-5 rounded-2xl px-4 py-4 text-center"
-        style={{ background: withAlpha(tint, 0.09), border: `1px solid ${withAlpha(tint, 0.28)}` }}
-      >
-        <p
-          className="font-black uppercase leading-none tracking-tight"
-          style={{ fontSize: 'clamp(1.6rem, 8vw, 2.2rem)', color: tint }}
-        >
-          {fin.title}
+          </span>
+          <span className="ml-1 text-xl font-bold" style={{ color: TEINTES.discret }}>/10</span>
+        </motion.div>
+        <p className="mt-1 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ color: withAlpha(tint, 0.8) }}>
+          {scoreLabel(moyenne)}
         </p>
-        <p className="mt-2 text-[13px] font-semibold leading-snug text-white/65">{fin.subtitle}</p>
-      </motion.div>
 
-      {/* ── Toi contre les autres ────────────────────────────────────────── */}
-      {moyenneCommunaute !== null && (
+        {/* ── La fin ────────────────────────────────────────────────────── */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: DELAI_MOYENNE + 0.4 }}
-          className="mt-4 rounded-2xl px-4 py-3.5"
-          style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.07)' }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: DELAI_MOYENNE + 0.2 }}
+          className="mt-6 max-w-[32ch]"
         >
-          <Echelle label="Toi" valeur={moyenne} fort />
-          <div className="h-2" />
-          <Echelle label="Les autres" valeur={moyenneCommunaute} />
-          <p className="mt-2.5 text-center text-[12px] font-bold text-white/55">
-            {Math.abs(moyenne - moyenneCommunaute) < 0.5
-              ? 'Tu lui mets ce que tout le monde lui met.'
-              : moyenne < moyenneCommunaute
-                ? `Tu es ${formatNote(moyenneCommunaute - moyenne)} point${moyenneCommunaute - moyenne >= 2 ? 's' : ''} plus dur que les autres avec ${profil.nom}.`
-                : `Tu es ${formatNote(moyenne - moyenneCommunaute)} point${moyenne - moyenneCommunaute >= 2 ? 's' : ''} plus indulgent que les autres avec ${profil.nom}.`}
+          <p className="text-[clamp(1.35rem,6.5vw,1.75rem)] font-black uppercase leading-tight text-white">
+            {fin.title}
+          </p>
+          <p className="mt-2 text-[14px] leading-snug" style={{ color: TEINTES.secondaire }}>
+            {fin.subtitle}
           </p>
         </motion.div>
-      )}
 
-      {/* ── Détail par révélation ────────────────────────────────────────── */}
-      <p className="mt-6 mb-2 text-center text-[11px] font-black uppercase tracking-[0.18em] text-white/45">
-        Tes 5 notes
-      </p>
-
-      <div className="flex flex-col gap-1.5">
-        {propositions.map((p, i) => {
-          const autres = communaute[i];
-          return (
-            <div
-              key={p.id}
-              className="rounded-xl px-3.5 py-2.5"
-              style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.07)' }}
-            >
-              <div className="flex items-start gap-2.5">
-                <span className="mt-px shrink-0 text-xs">{p.type === 'positive' ? '🟢' : '🚩'}</span>
-                <p className="min-w-0 flex-1 text-[13px] font-semibold leading-snug text-white/75">
-                  {p.text}
-                </p>
-                <span
-                  className="flex h-7 min-w-7 shrink-0 items-center justify-center rounded-lg px-1.5 text-sm font-black tabular-nums"
-                  style={{ background: withAlpha(scoreColor(notes[i]), 0.16), color: scoreColor(notes[i]) }}
-                >
-                  {notes[i]}
-                </span>
-              </div>
-
-              {(autres !== null || (i === plusLourd && poids >= 0.5) || (i === plusPorteur && apport >= 0.5)) && (
-                <p className="mt-1.5 pl-6 text-[12px] font-bold text-white/50">
-                  {autres !== null && <>Les autres : {formatNote(autres)}</>}
-                  {autres !== null && ((i === plusLourd && poids >= 0.5) || (i === plusPorteur && apport >= 0.5)) && ' · '}
-                  {i === plusPorteur && apport >= 0.5 && (
-                    <span className="text-emerald-400/90">lui rapporte {formatNote(apport)} point{apport >= 2 ? 's' : ''} de moyenne</span>
-                  )}
-                  {i === plusLourd && poids >= 0.5 && (
-                    <span className="text-red-400/80">lui coûte {formatNote(poids)} point{poids >= 2 ? 's' : ''} de moyenne</span>
-                  )}
-                </p>
-              )}
-            </div>
-          );
-        })}
+        {moyenneCommunaute !== null && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: DELAI_MOYENNE + 0.35 }}
+            className="mt-4 text-[13px]"
+            style={{ color: TEINTES.secondaire }}
+          >
+            Les autres lui mettent{' '}
+            <span className="font-black tabular-nums" style={{ color: scoreColor(moyenneCommunaute) }}>
+              {formatNote(moyenneCommunaute)}
+            </span>
+            {' · '}
+            {Math.abs(ecart) < 0.5
+              ? 'comme toi.'
+              : ecart < 0
+                ? `tu es ${points(-ecart)} plus dur que les autres avec ${profil.nom}.`
+                : `tu es ${points(ecart)} plus indulgent que les autres avec ${profil.nom}.`}
+          </motion.p>
+        )}
       </div>
 
-      {/* ── Suite ────────────────────────────────────────────────────────── */}
-      <div
-        className="sticky bottom-0 z-10 mt-6 -mx-5 space-y-2 px-5 pt-4"
-        style={{
-          paddingBottom: 'max(env(safe-area-inset-bottom), 12px)',
-          background: 'linear-gradient(to top, #07070A 62%, rgba(7,7,10,0))',
-        }}
-      >
+      {/* ── Le détail ───────────────────────────────────────────────────── */}
+      <div className="mt-7">
+        <Section titre="Tes 5 notes">
+          <ul>
+            {propositions.map((p, i) => {
+              const autres = communaute[i];
+              const coute = i === plusLourd && poids >= 0.5;
+              const rapporte = i === plusPorteur && apport >= 0.5;
+              return (
+                <li key={p.id} className="flex items-start gap-3 py-2.5">
+                  <span className="mt-0.5 shrink-0 text-[13px]" aria-hidden>
+                    {p.type === 'positive' ? '🟢' : '🚩'}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[14px] font-semibold leading-snug" style={{ color: TEINTES.texte }}>
+                      {p.text}
+                    </p>
+                    {(autres !== null || coute || rapporte) && (
+                      <p className="mt-0.5 text-[12px]" style={{ color: TEINTES.discret }}>
+                        {[
+                          autres !== null && `Les autres : ${formatNote(autres)}`,
+                          rapporte && `lui rapporte ${points(apport)} de moyenne`,
+                          coute && `lui coûte ${points(poids)} de moyenne`,
+                        ].filter(Boolean).join(' · ')}
+                      </p>
+                    )}
+                  </div>
+                  <Pastille note={notes[i]} couleur={scoreInk(notes[i])} />
+                </li>
+              );
+            })}
+          </ul>
+        </Section>
+      </div>
+
+      {/* ── Suite ───────────────────────────────────────────────────────── */}
+      <Pied>
         {loadFailed && (
-          <p className="text-center text-xs font-bold text-red-400">
+          <p className="pb-2 text-center text-xs font-bold text-red-400">
             Impossible de charger le profil suivant. Réessaie.
           </p>
         )}
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={onNext}
-          className="w-full cursor-pointer rounded-2xl py-4 text-base font-black uppercase tracking-widest text-black"
-          style={{
-            background: 'linear-gradient(135deg, #F59E0B 0%, #FFD700 100%)',
-            boxShadow: '0 6px 30px rgba(245,158,11,0.4)',
-          }}
-        >
-          Profil suivant →
-        </motion.button>
-
-        {/* Le bilan n'apparaît qu'à partir du deuxième profil : sur un seul,
-            il ne dirait rien de plus que cet écran. */}
-        {sessionCount >= 2 && (
-          <motion.button
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={onReport}
-            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-3 text-[11px] font-black uppercase tracking-widest"
-            style={{
-              background: 'rgba(139,92,246,0.12)',
-              border: '1px solid rgba(139,92,246,0.35)',
-              color: '#C4B5FD',
-            }}
-          >
-            <BarChart3 size={13} />
-            Mon bilan · {sessionCount} profils
-          </motion.button>
-        )}
-
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={share}
-            className="flex cursor-pointer items-center justify-center gap-2 rounded-xl py-3 text-[11px] font-black uppercase tracking-widest text-white/70"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
-          >
-            {copied ? <Check size={13} /> : <Share2 size={13} />}
+        <BoutonPrincipal onClick={onNext}>Profil suivant →</BoutonPrincipal>
+        <div className="flex">
+          {/* Le bilan n'apparaît qu'à partir du deuxième profil : sur un seul,
+              il ne dirait rien de plus que cet écran. */}
+          {sessionCount >= 2 && (
+            <BoutonDiscret onClick={onReport}>
+              <BarChart3 size={15} /> Mon bilan · {sessionCount} profils
+            </BoutonDiscret>
+          )}
+          <BoutonDiscret onClick={share}>
+            {copied ? <Check size={15} /> : <Share2 size={15} />}
             {copied ? 'Copié' : 'Partager'}
-          </button>
-          <Link
-            href="/dixmais/leaderboard"
-            className="flex items-center justify-center gap-2 rounded-xl py-3 text-[11px] font-black uppercase tracking-widest"
-            style={{
-              background: 'rgba(245,158,11,0.08)',
-              border: '1px solid rgba(245,158,11,0.22)',
-              color: '#F59E0B',
-            }}
-          >
-            <Trophy size={13} /> Classement
-          </Link>
+          </BoutonDiscret>
+          {/* À côté du bilan, le classement se réduit à son icône : trois
+              libellés ne tiennent pas sur 320 px. */}
+          <BoutonDiscret href="/dixmais/leaderboard">
+            <Trophy size={15} />
+            <span className={sessionCount >= 2 ? 'sr-only' : ''}>Classement</span>
+          </BoutonDiscret>
         </div>
-      </div>
+      </Pied>
     </motion.div>
-  );
-}
-
-/** Une barre de 0 à 10 : deux longueurs se comparent d'un coup d'œil. */
-function Echelle({ label, valeur, fort = false }: { label: string; valeur: number; fort?: boolean }) {
-  const couleur = fort ? scoreColor(valeur) : 'rgba(255,255,255,0.35)';
-  return (
-    <div className="flex items-center gap-2.5">
-      <span className={`w-[68px] shrink-0 text-[10px] font-black uppercase tracking-wide ${fort ? 'text-white/75' : 'text-white/35'}`}>
-        {label}
-      </span>
-      <div className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${(valeur / MAX_SCORE) * 100}%` }}
-          transition={{ duration: 0.5, ease: 'easeOut', delay: DELAI_MOYENNE + 0.4 }}
-          className="h-full rounded-full"
-          style={{ background: couleur }}
-        />
-      </div>
-      <span className="w-[34px] shrink-0 text-right text-[13px] font-black tabular-nums" style={{ color: fort ? couleur : 'rgba(255,255,255,0.45)' }}>
-        {formatNote(valeur)}
-      </span>
-    </div>
   );
 }
