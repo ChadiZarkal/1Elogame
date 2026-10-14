@@ -119,7 +119,7 @@ export function ScoreDial({ value, onChange, onCommit, disabled }: Props) {
         onKeyDown={onKeyDown}
         // La zone sensible déborde des barres de quelques pixels : on attrape
         // la jauge sans viser au millimètre.
-        className="flex w-full items-end gap-[3px] py-2 outline-none"
+        className="relative flex w-full items-end gap-[3px] py-2 outline-none"
         style={{
           touchAction: 'none',
           opacity: disabled ? 0.45 : 1,
@@ -127,6 +127,22 @@ export function ScoreDial({ value, onChange, onCommit, disabled }: Props) {
           transition: 'opacity 200ms ease',
         }}
       >
+        {/* Le trait doré entre le 10 et la zone bonus. En absolu plutôt qu'en
+            marge : une marge décalerait les cellules et fausserait la division
+            qui traduit le doigt en note. Placé au milieu de l'espace entre la
+            11ᵉ et la 12ᵉ barre : 11 seizièmes de la piste, corrigés des 10 et
+            demi écarts de 3 px qui les précèdent. */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute top-0 bottom-0 w-px"
+          style={{
+            left: `calc(${((START_SCORE + 1) / (MAX_SCORE + 1)) * 100}% + ${
+              // − 0,5 : on centre le trait d'un pixel, pas son bord gauche.
+              (START_SCORE + 0.5) * 3 - ((START_SCORE + 1) * 3 * MAX_SCORE) / (MAX_SCORE + 1) - 0.5
+            }px)`,
+            background: withAlpha(TEINTES.or, 0.5),
+          }}
+        />
         {STEPS.map((step) => {
           const filled = step <= value;
           const isCurrent = step === value;
@@ -134,7 +150,9 @@ export function ScoreDial({ value, onChange, onCommit, disabled }: Props) {
           return (
             <div
               key={step}
-              className="flex-1 rounded-full"
+              // Positionnées, les barres passent devant le trait doré : l'anneau de
+              // la note en cours le recouvre au lieu d'être barré par lui.
+              className="relative flex-1 rounded-full"
               style={{
                 height: 14 + step * 1.7,
                 background: filled
