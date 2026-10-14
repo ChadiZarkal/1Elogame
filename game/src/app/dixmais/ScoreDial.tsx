@@ -23,7 +23,15 @@ import { MAX_SCORE, START_SCORE, isBonus, scoreColor, scoreLabel, withAlpha } fr
 import { TEINTES } from './ui';
 
 const STEPS = Array.from({ length: MAX_SCORE + 1 }, (_, i) => i);
-const REPERES = [0, 5, 10, 15];
+const REPERES = [0, 5, 10];
+/** L'écart qui détache la zone bonus du 10, partagé par la piste et les repères. */
+const ZONE_BONUS = 'ml-2';
+/**
+ * Le bloc bonus prend cinq parts, comme cinq barres, plus de quoi loger son
+ * rembourrage (2 × 4 px) et ses quatre écarts de 3 px : sans ces 20 px de
+ * base, ses barres sortaient plus étroites que les autres.
+ */
+const FLEX_BONUS = `${MAX_SCORE - START_SCORE} 1 20px`;
 
 interface Props {
   value: number;
@@ -39,7 +47,11 @@ export function ScoreDial({ value, onChange, onCommit, disabled }: Props) {
   const tint = scoreColor(value);
   const untouched = value === START_SCORE;
 
-  /** 16 cellules de largeur égale : l'index est une division directe.
+  /** La note est celle de la barre la plus proche du doigt.
+   *
+   * Plus de division de la piste en seize parts égales : la zone bonus est un
+   * bloc à part, décalé et rembourré, et les barres n'ont plus toutes la même
+   * position théorique. On mesure donc les barres elles-mêmes.
    *
    * Sortir de la piste par la gauche n'est volontairement **pas** ramené à 0 :
    * un doigt qui dérape ne doit pas poser la note la plus lourde du jeu. */
@@ -48,9 +60,41 @@ export function ScoreDial({ value, onChange, onCommit, disabled }: Props) {
     if (!el) return;
     const rect = el.getBoundingClientRect();
     if (rect.width === 0 || clientX < rect.left) return;
-    const index = Math.floor(((clientX - rect.left) / rect.width) * (MAX_SCORE + 1));
-    onChange(Math.min(MAX_SCORE, index));
+    let meilleure = START_SCORE;
+    let distance = Infinity;
+    el.querySelectorAll<HTMLElement>('[data-note]').forEach((barre) => {
+      const r = barre.getBoundingClientRect();
+      const d = Math.abs(clientX - (r.left + r.width / 2));
+      if (d < distance) {
+        distance = d;
+        meilleure = Number(barre.dataset.note);
+      }
+    });
+    onChange(meilleure);
   }, [onChange]);
+
+  /** Une barre de la jauge. */
+  const barre = (step: number) => {
+    const filled = step <= value;
+    const isCurrent = step === value;
+    return (
+      <div
+        key={step}
+        data-note={step}
+        className="flex-1 rounded-full"
+        style={{
+          height: 14 + step * 1.7,
+          background: filled
+            ? tint
+            : isBonus(step)
+              ? withAlpha(TEINTES.or, 0.16)
+              : 'rgba(255,255,255,0.07)',
+          boxShadow: isCurrent ? `0 0 0 2px ${TEINTES.fond}, 0 0 0 3.5px ${tint}` : 'none',
+          transition: 'background-color 140ms ease',
+        }}
+      />
+    );
+  };
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (disabled) return;
@@ -119,7 +163,7 @@ export function ScoreDial({ value, onChange, onCommit, disabled }: Props) {
         onKeyDown={onKeyDown}
         // La zone sensible déborde des barres de quelques pixels : on attrape
         // la jauge sans viser au millimètre.
-        className="relative flex w-full items-end gap-[3px] py-2 outline-none"
+        className="flex w-full items-end gap-[3px] py-2 outline-none"
         style={{
           touchAction: 'none',
           opacity: disabled ? 0.45 : 1,
@@ -127,62 +171,37 @@ export function ScoreDial({ value, onChange, onCommit, disabled }: Props) {
           transition: 'opacity 200ms ease',
         }}
       >
-        {/* Le trait doré entre le 10 et la zone bonus. En absolu plutôt qu'en
-            marge : une marge décalerait les cellules et fausserait la division
-            qui traduit le doigt en note. Placé au milieu de l'espace entre la
-            11ᵉ et la 12ᵉ barre : 11 seizièmes de la piste, corrigés des 10 et
-            demi écarts de 3 px qui les précèdent. */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute top-0 bottom-0 w-px"
+        {STEPS.filter((s) => !isBonus(s)).map(barre)}
+
+        {/* La zone bonus, un bloc à part : un léger fond doré qui regroupe le
+            11 au 15, détaché du 10 par un écart. C'est ce qui dit, sans trait
+            ni légende, qu'au-delà du 10 on entre dans autre chose. */}
+        <div
+          className={`${ZONE_BONUS} flex items-end gap-[3px] self-stretch rounded-[14px] p-1`}
           style={{
-            left: `calc(${((START_SCORE + 1) / (MAX_SCORE + 1)) * 100}% + ${
-              // − 0,5 : on centre le trait d'un pixel, pas son bord gauche.
-              (START_SCORE + 0.5) * 3 - ((START_SCORE + 1) * 3 * MAX_SCORE) / (MAX_SCORE + 1) - 0.5
-            }px)`,
-            background: withAlpha(TEINTES.or, 0.5),
+            flex: FLEX_BONUS,
+            background: withAlpha(TEINTES.or, 0.07),
+            boxShadow: `inset 0 0 0 1px ${withAlpha(TEINTES.or, 0.18)}`,
           }}
-        />
-        {STEPS.map((step) => {
-          const filled = step <= value;
-          const isCurrent = step === value;
-          const bonus = isBonus(step);
-          return (
-            <div
-              key={step}
-              // Positionnées, les barres passent devant le trait doré : l'anneau de
-              // la note en cours le recouvre au lieu d'être barré par lui.
-              className="relative flex-1 rounded-full"
-              style={{
-                height: 14 + step * 1.7,
-                background: filled
-                  ? tint
-                  : bonus
-                    ? withAlpha(TEINTES.or, 0.14)
-                    : 'rgba(255,255,255,0.07)',
-                boxShadow: isCurrent ? `0 0 0 2px ${TEINTES.fond}, 0 0 0 3.5px ${tint}` : 'none',
-                transition: 'background-color 140ms ease',
-              }}
-            />
-          );
-        })}
+        >
+          {STEPS.filter(isBonus).map(barre)}
+        </div>
       </div>
 
-      {/* Quatre repères, centrés sous leur barre. Le 10 est le point de
-          départ, le 15 le plafond doré. */}
-      <div className="relative h-4" aria-hidden>
-        {REPERES.map((r) => (
-          <span
-            key={r}
-            className="absolute -translate-x-1/2 text-[11px] font-bold tabular-nums"
-            style={{
-              left: `${((r + 0.5) / (MAX_SCORE + 1)) * 100}%`,
-              color: r === MAX_SCORE ? withAlpha(TEINTES.or, 0.7) : TEINTES.discret,
-            }}
-          >
-            {r}
+      {/* Les repères suivent la même structure que la piste — onze cases,
+          puis le bloc bonus — pour tomber pile sous leur barre. */}
+      <div className="flex w-full gap-[3px] text-[11px] font-bold tabular-nums" aria-hidden>
+        {STEPS.filter((s) => !isBonus(s)).map((s) => (
+          <span key={s} className="flex-1 text-center" style={{ color: TEINTES.discret }}>
+            {REPERES.includes(s) ? s : ''}
           </span>
         ))}
+        <span
+          className={`${ZONE_BONUS} text-center`}
+          style={{ flex: FLEX_BONUS, color: withAlpha(TEINTES.or, 0.75) }}
+        >
+          bonus ✨
+        </span>
       </div>
 
       <motion.button
