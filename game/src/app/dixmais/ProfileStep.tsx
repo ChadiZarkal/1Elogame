@@ -26,22 +26,20 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { AgeVotant, SexeVotant } from '@/types/database';
 import type { PlayerProfile } from '@/types/game';
+import { TEINTES } from './ui';
 
-const SEXES: { value: SexeVotant; label: string; emoji: string }[] = [
-  { value: 'homme', label: 'Homme', emoji: '♂️' },
-  { value: 'femme', label: 'Femme', emoji: '♀️' },
-  { value: 'autre', label: 'Autre', emoji: '🤷' },
+const SEXES: { value: SexeVotant; label: string }[] = [
+  { value: 'homme', label: 'Homme' },
+  { value: 'femme', label: 'Femme' },
+  { value: 'autre', label: 'Autre' },
 ];
 
-const AGES: { value: AgeVotant; emoji: string }[] = [
-  { value: '16-18', emoji: '🎒' },
-  { value: '19-22', emoji: '🎓' },
-  { value: '23-26', emoji: '💼' },
-  { value: '27+', emoji: '🧠' },
-];
+const AGES: AgeVotant[] = ['16-18', '19-22', '23-26', '27+'];
 
-const OR = '#F59E0B';
-
+/**
+ * Même retenue que le reste du jeu : pas d'émojis ni de cadres colorés. Un
+ * choix se signale en blanc ; l'or reste au seul bouton qui fait avancer.
+ */
 export function ProfileStep({ onSubmit }: { onSubmit: (profile: PlayerProfile) => void }) {
   const [sex, setSex] = useState<SexeVotant | null>(null);
   const [age, setAge] = useState<AgeVotant | null>(null);
@@ -56,34 +54,23 @@ export function ProfileStep({ onSubmit }: { onSubmit: (profile: PlayerProfile) =
       className="flex min-h-0 flex-1 flex-col"
     >
       <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto overscroll-contain px-6">
-        <div className="flex min-h-full flex-col items-center justify-center py-4 text-center">
-          <p
-            className="mb-2 text-[11px] font-black uppercase tracking-[0.24em]"
-            style={{ color: 'rgba(245,158,11,0.6)' }}
-          >
-            Avant de juger qui que ce soit
-          </p>
+        <div className="flex min-h-full flex-col justify-center py-4">
           <h2
-            className="mb-2 font-black uppercase leading-none tracking-tight text-white"
-            style={{ fontSize: 'min(2.6rem, 9vw, 6vh)' }}
+            className="font-black uppercase leading-none tracking-tight text-white"
+            style={{ fontSize: 'min(2.6rem, 10vw, 6vh)' }}
           >
             Tu es qui&nbsp;?
           </h2>
-          <p className="mb-6 max-w-[30ch] text-sm font-semibold leading-snug text-white/55">
-            Deux réponses, et on pourra te dire si tu notes{' '}
-            <span style={{ color: '#FBBF24' }}>plus dur que les gens comme toi</span>.
+          <p className="mt-3 mb-8 max-w-[32ch] text-[15px] leading-snug" style={{ color: TEINTES.secondaire }}>
+            Deux réponses, et on pourra te dire si tu notes plus dur que les gens comme toi.
           </p>
 
           <Question label="Tu es…">
             <div className="grid grid-cols-3 gap-2">
               {SEXES.map((option) => (
-                <Pastille
-                  key={option.value}
-                  active={sex === option.value}
-                  onClick={() => setSex(option.value)}
-                  emoji={option.emoji}
-                  label={option.label}
-                />
+                <Choix key={option.value} active={sex === option.value} onClick={() => setSex(option.value)}>
+                  {option.label}
+                </Choix>
               ))}
             </div>
           </Question>
@@ -91,35 +78,27 @@ export function ProfileStep({ onSubmit }: { onSubmit: (profile: PlayerProfile) =
           <Question label="Tu as…">
             <div className="grid grid-cols-4 gap-2">
               {AGES.map((option) => (
-                <Pastille
-                  key={option.value}
-                  active={age === option.value}
-                  onClick={() => setAge(option.value)}
-                  emoji={option.emoji}
-                  label={option.value}
-                />
+                <Choix key={option} active={age === option} onClick={() => setAge(option)}>
+                  {option}
+                </Choix>
               ))}
             </div>
           </Question>
         </div>
       </div>
 
-      <div
-        className="shrink-0 px-6 pt-2"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 16px)' }}
-      >
-        {/* Un bouton plutôt qu'un départ automatique au second appui : une
-            pastille touchée par erreur serait sinon enregistrée pour de bon,
-            le profil valant pour tout le site. */}
+      <div className="shrink-0 px-6 pt-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 16px)' }}>
+        {/* Un bouton plutôt qu'un départ automatique au second appui : un choix
+            touché par erreur serait sinon enregistré pour de bon, le profil
+            valant pour tout le site. */}
         <motion.button
-          whileTap={ready ? { scale: 0.96 } : undefined}
+          whileTap={ready ? { scale: 0.97 } : undefined}
           onClick={() => ready && onSubmit({ sex: sex!, age: age! })}
           disabled={!ready}
-          className="w-full rounded-2xl py-[18px] text-lg font-black uppercase tracking-widest"
+          className="w-full rounded-2xl py-4 text-[15px] font-black uppercase tracking-wider transition-colors"
           style={{
-            background: ready ? `linear-gradient(135deg, ${OR} 0%, #FFD700 100%)` : 'rgba(255,255,255,0.08)',
-            color: ready ? '#000' : 'rgba(255,255,255,0.35)',
-            boxShadow: ready ? '0 8px 40px rgba(245,158,11,0.45)' : 'none',
+            background: ready ? TEINTES.or : 'rgba(255,255,255,0.06)',
+            color: ready ? '#000' : TEINTES.discret,
             cursor: ready ? 'pointer' : 'not-allowed',
           }}
         >
@@ -132,8 +111,8 @@ export function ProfileStep({ onSubmit }: { onSubmit: (profile: PlayerProfile) =
 
 function Question({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="mb-5 w-full max-w-xs">
-      <p className="mb-2 text-[11px] font-black uppercase tracking-[0.2em] text-white/40">
+    <div className="mb-6 w-full">
+      <p className="mb-2.5 text-[13px] font-semibold" style={{ color: TEINTES.discret }}>
         {label}
       </p>
       {children}
@@ -142,27 +121,23 @@ function Question({ label, children }: { label: string; children: React.ReactNod
 }
 
 /**
- * Bouton ordinaire, et non `motion.button` : l'enfoncement se fait très bien
- * en CSS, et sept composants animés sur un écran qu'on ne touche que deux fois
- * coûtent plus qu'ils ne rapportent — à l'affichage comme au test, où ils
- * suffisaient à faire dépasser le délai d'exécution.
+ * Bouton ordinaire, et non `motion.button` : sept composants animés sur un
+ * écran qu'on ne touche que deux fois coûtent plus qu'ils ne rapportent — à
+ * l'affichage comme au test, où ils suffisaient à dépasser le délai.
  */
-function Pastille({
-  active, onClick, emoji, label,
-}: { active: boolean; onClick: () => void; emoji: string; label: string }) {
+function Choix({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       onClick={onClick}
       aria-pressed={active}
-      className="flex min-h-[64px] cursor-pointer flex-col items-center justify-center gap-1 rounded-xl transition-transform transition-colors active:scale-95"
+      className="min-h-12 cursor-pointer rounded-xl text-[14px] font-bold transition-colors active:scale-95"
       style={{
-        background: active ? OR : 'rgba(255,255,255,0.05)',
-        border: `1.5px solid ${active ? OR : 'rgba(255,255,255,0.1)'}`,
-        color: active ? '#000' : 'rgba(255,255,255,0.6)',
+        background: active ? '#FFFFFF' : 'rgba(255,255,255,0.04)',
+        boxShadow: active ? 'none' : `inset 0 0 0 1px ${TEINTES.filet}`,
+        color: active ? '#000' : TEINTES.secondaire,
       }}
     >
-      <span className="text-base leading-none">{emoji}</span>
-      <span className="text-[11px] font-black uppercase tracking-wide">{label}</span>
+      {children}
     </button>
   );
 }

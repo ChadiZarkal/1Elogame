@@ -23,6 +23,9 @@ export interface CohortStat {
   votes: number;
   avg_delta: number;
   elimination_rate: number;
+  /** Notes de la mécanique actuelle (migration 030), quand la cohorte en a. */
+  notes?: number;
+  avg_note?: number | null;
 }
 
 export interface CohortComparison {
@@ -94,11 +97,16 @@ export function compareToCohort(
     profil.propositions.forEach((stmt, i) => {
       const stat = byId.get(stmt.id);
       if (!stat) return;
-      // Même conversion que `noteDesAutres` : le coût moyen d'une phrase
-      // pour la cohorte, ramené à une note sur 10.
-      const noteCohorte = Math.min(MAX_SCORE, Math.max(MIN_SCORE, START_SCORE + stat.avg_delta));
+      // Les vraies notes de la cohorte d'abord ; à défaut, son coût moyen
+      // dans l'ancienne mécanique, ramené sur l'échelle du jeu (comme
+      // `noteDesAutres`).
+      const aDesNotes = (stat.notes ?? 0) > 0 && stat.avg_note !== null && stat.avg_note !== undefined;
+      if (!aDesNotes && stat.votes <= 0) return;
+      const noteCohorte = aDesNotes
+        ? Number(stat.avg_note)
+        : Math.min(MAX_SCORE, Math.max(MIN_SCORE, START_SCORE + stat.avg_delta));
       pairs.push([profil.notes[i] ?? START_SCORE, noteCohorte]);
-      votes += stat.votes;
+      votes += aDesNotes ? Number(stat.notes) : stat.votes;
     });
   }
 

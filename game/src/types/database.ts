@@ -15,9 +15,14 @@ export interface DixMaisStatement {
   total_delta: number;
   elimination_count: number;
   created_at: string;
+  /** Notes de la mécanique actuelle (0 à 15), migration 030. Absents tant
+   * qu'elle n'est pas jouée. */
+  notes_count?: number;
+  notes_total?: number;
   /** Computed in view only */
   avg_delta?: number;
   elimination_rate?: number;
+  avg_note?: number | null;
 }
 
 export interface DixMaisVote {

@@ -80,6 +80,28 @@ describe('compareToCohort', () => {
   });
 });
 
+describe('compareToCohort — notes de la mécanique actuelle', () => {
+  it('préfère la vraie note de la cohorte à l’estimation des anciens votes', () => {
+    const ids = ['a', 'b', 'c', 'd', 'e'];
+    const rounds = [manche([4, 4, 4, 4, 4], ids)];
+    // Anciens votes : la cohorte retirerait 1 point (note 9). Ses vraies notes
+    // disent 6 : c'est ce chiffre qui compte.
+    const stats = ids.map((id) => ({ ...stat(id, -1, 20), notes: 10, avg_note: 6 }));
+    const comparaison = compareToCohort(rounds, stats);
+
+    expect(comparaison!.theirs).toBe(6);
+    expect(comparaison!.gap).toBe(-2);
+    expect(comparaison!.votes).toBe(50);
+  });
+
+  it('compte un énoncé que la cohorte n’a noté que dans la nouvelle mécanique', () => {
+    const ids = ['a', 'b', 'c', 'd', 'e'];
+    const rounds = [manche([12, 12, 12, 12, 12], ids)];
+    const stats = ids.map((id) => ({ statement_id: id, votes: 0, avg_delta: 0, elimination_rate: 0, notes: 6, avg_note: 13 }));
+    expect(compareToCohort(rounds, stats)!.theirs).toBe(13);
+  });
+});
+
 describe('cohortLabel', () => {
   it('accorde le libellé au profil', () => {
     expect(cohortLabel({ sex: 'femme', age: '19-22' })).toBe('les femmes de 19-22 ans');

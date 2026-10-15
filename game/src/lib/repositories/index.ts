@@ -16,10 +16,11 @@ export { saveAnalyticsSession, getAnalyticsSessions } from './analytics';
 export {
 	getRandomStatements,
 	recordDixMaisVote,
+	recordDixMaisNote,
 	getDixMaisLeaderboard,
 	getAllDixMaisStatements,
 	createDixMaisStatement,
 	updateDixMaisStatement,
 	deleteDixMaisStatement,
 } from './dixmais';
-export type { RecordVoteParams, LeaderboardEntry } from './dixmais';
+export type { RecordVoteParams, RecordNoteParams, LeaderboardEntry } from './dixmais';

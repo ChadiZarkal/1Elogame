@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { ENREGISTRER_VOTES, useDixMais } from '../useDixMais';
+import { ENREGISTRER_NOTES, useDixMais } from '../useDixMais';
 
 function statementsFactices(nombre = 5) {
   return Array.from({ length: nombre }, (_, i) => ({
@@ -139,13 +139,25 @@ describe('useDixMais — chaque révélation se note seule', () => {
   });
 });
 
-describe('useDixMais — la base n’est pas touchée', () => {
-  it('n’envoie aucun vote tant que la base n’est pas prête', async () => {
-    expect(ENREGISTRER_VOTES).toBe(false);
+describe('useDixMais — chaque note part au serveur', () => {
+  it('envoie chaque note, avec le profil, à la route des notes', async () => {
+    expect(ENREGISTRER_NOTES).toBe(true);
+    const { result } = await enPartie();
+    vi.useFakeTimers();
+    [4, 0, 13, 7, 15].forEach((n) => noter(result, n));
+
+    const notes = appels.filter((a) => a.url === '/api/dixmais/note');
+    expect(notes.map((a) => a.body?.note)).toEqual([4, 0, 13, 7, 15]);
+    expect(notes[0].body).toMatchObject({ statement_id: 'stmt-0', sex: 'femme', age: '19-22' });
+    expect(typeof notes[0].body?.session_id).toBe('string');
+  });
+
+  // Les votes de l'ancienne mécanique mesuraient autre chose (une note
+  // cumulée bornée à 10) : la nouvelle ne doit jamais y écrire.
+  it('n’écrit jamais dans les votes de l’ancienne mécanique', async () => {
     const { result } = await enPartie();
     vi.useFakeTimers();
     [4, 5, 6, 7, 8].forEach((n) => noter(result, n));
-
     expect(appels.filter((a) => a.url === '/api/dixmais/vote')).toHaveLength(0);
   });
 

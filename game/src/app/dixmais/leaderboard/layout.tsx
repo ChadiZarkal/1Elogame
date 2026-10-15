@@ -2,16 +2,16 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: "Classement — C'est un 10 mais...",
-  description: "Le classement des révélations les plus éliminatoires du jeu « C'est un 10 mais... », établi à partir des notes de la communauté.",
+  description: "Le classement du jeu « C'est un 10 mais... » : la note moyenne que les joueurs donnent à chaque red flag et à chaque green flag, notés un par un.",
   openGraph: {
     title: "Classement — C'est un 10 mais...",
-    description: "Les révélations qui font le plus chuter la note, classées par la communauté.",
+    description: "Les red flags qui font le plus chuter la note, les green flags qui la font monter jusqu'à 15/10.",
     url: '/dixmais/leaderboard',
   },
   twitter: {
     card: 'summary_large_image',
     title: "Classement — C'est un 10 mais...",
-    description: "Les révélations qui font le plus chuter la note, classées par la communauté.",
+    description: "Les red flags qui font le plus chuter la note, les green flags qui la font monter jusqu'à 15/10.",
   },
   alternates: { canonical: '/dixmais/leaderboard' },
 };

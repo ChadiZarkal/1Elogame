@@ -5,12 +5,24 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff, CheckCircle, XCircle, Trophy, BarChart2, RefreshCw, Check, AlertCircle, Pencil, X } from 'lucide-react';
 import type { DixMaisStatement } from '@/types/database';
+import type { NoteMesuree } from '@/lib/dixmaisNote';
 
 type Tab = 'statements' | 'leaderboard';
 
 interface AdminStatement extends DixMaisStatement {
   avg_delta: number;
   elimination_rate: number;
+  /** Note des joueurs sur l'échelle du jeu (0 à 15) : vraies notes ou
+   * estimation tirée des anciens votes. Voir `lib/dixmaisNote`. */
+  note?: NoteMesuree | null;
+}
+
+/** La note la plus basse en tête, comme le classement public. */
+function parNote(a: AdminStatement, b: AdminStatement): number {
+  if (a.note && b.note) return a.note.note - b.note.note;
+  if (a.note) return -1;
+  if (b.note) return 1;
+  return a.avg_delta - b.avg_delta;
 }
 
 // ─── Connexion ────────────────────────────────────────────────────────────────
@@ -262,9 +274,9 @@ function Dashboard() {
           {tab === 'leaderboard' && (
             <motion.div key="lb" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               <p className="text-[11px] font-bold text-white/35 mb-4">
-                Affirmations qui font le plus chuter la note ({totalVotes.toLocaleString()} votes au total)
+                Note moyenne des joueurs, la plus basse en tête — « estimée » tant qu&apos;un énoncé n&apos;a pas cinq notes de la version actuelle ({totalVotes.toLocaleString()} votes de l&apos;ancienne version)
               </p>
-              {statements.filter(s => s.votes_count > 0).length === 0 ? (
+              {statements.filter(s => s.note).length === 0 ? (
                 <div className="text-center py-10 text-white/25">
                   <p className="text-2xl mb-2">📊</p>
                   <p className="text-sm font-bold">Pas encore de votes</p>
@@ -273,8 +285,8 @@ function Dashboard() {
               ) : (
                 <div className="space-y-2">
                   {[...statements]
-                    .filter(s => s.votes_count > 0)
-                    .sort((a, b) => a.avg_delta - b.avg_delta)
+                    .filter(s => s.note)
+                    .sort(parNote)
                     .map((stmt, i) => (
                       <div key={stmt.id} className="flex items-center gap-3 px-4 py-3 rounded-xl"
                         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
@@ -285,12 +297,15 @@ function Dashboard() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-white truncate">{stmt.text}</p>
                           <p className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                            {stmt.votes_count} votes · Élim. {stmt.elimination_rate.toFixed(0)}%
+                            {stmt.type === 'positive' ? '🟢' : '🚩'}{' '}
+                            {stmt.note?.source === 'notes'
+                              ? `${stmt.note.echantillon} notes`
+                              : `estimée sur ${stmt.votes_count} anciens votes`}
                           </p>
                         </div>
                         <span className="font-black text-sm shrink-0 px-2.5 py-1 rounded-lg"
-                          style={{ color: '#EF4444', background: 'rgba(239,68,68,0.12)' }}>
-                          {stmt.avg_delta > 0 ? '+' : ''}{stmt.avg_delta.toFixed(1)}
+                          style={{ color: '#FBBF24', background: 'rgba(251,191,36,0.1)' }}>
+                          {stmt.note?.note.toFixed(1).replace('.', ',')}/10
                         </span>
                       </div>
                     ))}
@@ -407,7 +422,12 @@ function StatementRow({ stmt, onToggle, onDelete, onUpdate }: {
         </span>
         <span className="text-[9px] font-bold text-white/30 px-1.5 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.05)' }}>{stmt.category}</span>
         {stmt.votes_count > 0 && (
-          <span className="text-[9px] font-bold text-white/30">{stmt.votes_count} votes · Δ {stmt.avg_delta.toFixed(1)}</span>
+          <span className="text-[9px] font-bold text-white/30">{stmt.votes_count} anciens votes · Δ {stmt.avg_delta.toFixed(1)}</span>
+        )}
+        {(stmt.notes_count ?? 0) > 0 && (
+          <span className="text-[9px] font-bold text-white/30">
+            {stmt.notes_count} notes · moy. {((stmt.notes_total ?? 0) / (stmt.notes_count ?? 1)).toFixed(1).replace('.', ',')}
+          </span>
         )}
         <div className="ml-auto flex items-center gap-2">
           <button onClick={() => onToggle(stmt.id, 'is_active', !stmt.is_active)}

@@ -29,14 +29,14 @@ import { getProfile, saveProfile } from '@/lib/session';
 import type { PlayerProfile } from '@/types/game';
 
 /**
- * Les votes ne partent pas encore.
+ * Chaque note part au serveur, qui l'enregistre dans sa propre table
+ * (`dixmais_notes`, migration 030) — jamais avec les votes de l'ancienne
+ * mécanique, qui mesuraient autre chose.
  *
- * La base enregistre des votes de l'ancienne mécanique (combien une révélation
- * retire à une note cumulée). Y mêler des notes isolées fausserait ses
- * moyennes et le classement public. Tant que la base n'a pas sa place pour ces
- * notes, la nouvelle mécanique joue sans rien écrire.
+ * Tant que la migration n'est pas jouée, le serveur répond sans rien écrire :
+ * le jeu n'en sait rien et n'a pas à le savoir.
  */
-export const ENREGISTRER_VOTES = false;
+export const ENREGISTRER_NOTES = true;
 
 const COMMIT_MS = 560;
 const COACH_KEY = 'dixmais.coached.moyenne';
@@ -71,17 +71,20 @@ async function fetchStatements(count: number, excludeIds: string[]): Promise<Dix
   return ((await res.json()).data ?? []) as DixMaisStatement[];
 }
 
-/** Tir et oubli, et seulement quand la base est prête (voir ENREGISTRER_VOTES). */
-function sendVote(statementId: string, sessionId: string, note: number, profile: PlayerProfile | null) {
-  if (!ENREGISTRER_VOTES) return;
-  fetch('/api/dixmais/vote', {
+/** Tir et oubli : une note perdue ne doit jamais interrompre une partie. */
+function sendNote(statementId: string, sessionId: string, note: number, profile: PlayerProfile | null) {
+  if (!ENREGISTRER_NOTES) return;
+  fetch('/api/dixmais/note', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    // `keepalive` : la dernière note d'un profil part juste avant l'écran de
+    // verdict, parfois juste avant que le joueur ne quitte la page.
+    keepalive: true,
     body: JSON.stringify({
       statement_id: statementId,
       session_id: sessionId,
-      previous_score: START_SCORE,
-      new_score: note,
+      note,
+      // Le profil vient de l'enregistrement partagé avec les autres jeux.
       sex: profile?.sex ?? null,
       age: profile?.age ?? null,
     }),
@@ -266,7 +269,7 @@ export function useDixMais() {
     const moyenne = moyenneDe(notes);
 
     seenIds.current = [...seenIds.current, statement.id].slice(-MAX_SEEN);
-    sendVote(statement.id, sessionId.current, note, profileRef.current);
+    sendNote(statement.id, sessionId.current, note, profileRef.current);
 
     if (note === 0) haptics.error();
     else if (note <= 3) haptics.success();

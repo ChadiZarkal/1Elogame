@@ -17,7 +17,7 @@
  * session se calculent d'ici.
  */
 
-import type { DixMaisStatement } from '@/types/database';
+import { noteMesuree, type CompteursEnonce } from '@/lib/dixmaisNote';
 import { MAX_SCORE, MIN_SCORE, START_SCORE } from './scale';
 
 /** Cinq révélations par profil : assez pour qu'une moyenne veuille dire
@@ -109,21 +109,13 @@ export function formatEcart(n: number): string {
 /**
  * La note que les autres joueurs donnent à cette phrase, seule.
  *
- * Les votes en base viennent de l'ancienne mécanique : ils mesurent combien
- * chaque révélation retirait (ou rendait) à la note en cours. Ce delta moyen
- * est l'estimation la plus proche d'une note isolée — 10 plus ce que la phrase
- * fait gagner ou perdre — tant que la nouvelle mécanique n'enregistre pas ses
- * propres votes.
- *
- * @remarks Pour un green flag, l'estimation est basse : l'ancienne note était
- * plafonnée à 10, si bien qu'une qualité ne pouvait que rattraper des points
- * perdus, jamais en ajouter.
+ * Les vraies notes de la mécanique actuelle quand l'énoncé en a assez, sinon
+ * une estimation tirée des anciens votes. Le calcul est partagé avec le
+ * classement public (voir `lib/dixmaisNote`) : les deux écrans affichent le
+ * même chiffre.
  */
-export function noteDesAutres(stmt: Pick<DixMaisStatement, 'votes_count' | 'total_delta'> & { avg_delta?: number }): number | null {
-  const votes = stmt.votes_count ?? 0;
-  if (votes < VOTES_MIN_COMPARAISON) return null;
-  const cout = stmt.avg_delta ?? (stmt.total_delta ?? 0) / votes;
-  return Math.min(MAX_SCORE, Math.max(MIN_SCORE, START_SCORE + cout));
+export function noteDesAutres(stmt: CompteursEnonce): number | null {
+  return noteMesuree(stmt)?.note ?? null;
 }
 
 export function moyenneDesAutres(communaute: (number | null)[]): number | null {

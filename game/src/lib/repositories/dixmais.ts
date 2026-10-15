@@ -5,6 +5,7 @@
 
 import type { DixMaisStatement, DixMaisVote } from '@/types/database';
 import { isMockMode } from '@/lib/apiHelpers';
+import { noteMesuree, type NoteMesuree } from '@/lib/dixmaisNote';
 
 // ---------------------------------------------------------------------------
 // Fallback seed data (used when mock mode or DB is empty)
@@ -60,10 +61,17 @@ function mockStats(index: number, type: 'positive' | 'negative') {
   const moyenne = type === 'negative' ? -1 - ((index * 3) % 5) : 0.5 + ((index * 2) % 3) * 0.5;
   const tauxElimination = type === 'negative' ? ((index * 11) % 60) / 100 : 0;
 
+  // Notes de la mécanique actuelle : un red flag entre 2 et 7, un green flag
+  // entre 11 et 14 — l'ordre de grandeur attendu sur une échelle à 15.
+  const notes = 6 + ((index * 5) % 30);
+  const noteMoyenne = type === 'negative' ? 2 + ((index * 3) % 6) : 11 + ((index * 2) % 4);
+
   return {
     votes_count: votes,
     total_delta: Math.round(moyenne * votes),
     elimination_count: Math.round(tauxElimination * votes),
+    notes_count: notes,
+    notes_total: Math.round(noteMoyenne * notes),
   };
 }
 
@@ -332,11 +340,72 @@ export async function recordDixMaisVote(params: RecordVoteParams): Promise<void>
 }
 
 // ---------------------------------------------------------------------------
+// Public : enregistrer une note de la mécanique actuelle (0 à 15)
+// ---------------------------------------------------------------------------
+export interface RecordNoteParams {
+  statement_id: string;
+  session_id: string;
+  /** La note donnée à cette info, seule : 0 à 15, 10 au départ. */
+  note: number;
+  sex?: string | null;
+  age?: string | null;
+}
+
+/** Signalé une seule fois par instance : sans la migration 030, chaque note
+ * échouerait de la même façon, et le journal se remplirait de la même ligne. */
+let migrationManquanteSignalee = false;
+
+/**
+ * Enregistre une note isolée (migration 030).
+ *
+ * Ne lève jamais : une note perdue ne doit pas interrompre une partie, et le
+ * client tire sans attendre la réponse. Tant que la migration n'est pas jouée,
+ * la fonction n'existe pas en base : on le dit une fois dans le journal, et on
+ * continue.
+ */
+export async function recordDixMaisNote(params: RecordNoteParams): Promise<boolean> {
+  const { statement_id, session_id, note, sex, age } = params;
+
+  if (isMockMode()) {
+    console.log('[MOCK] Note enregistrée :', { statement_id, note, sex, age });
+    return true;
+  }
+
+  const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
+  const supabase = createDixmaisServerClient();
+
+  const { error } = await supabase.rpc('record_dixmais_note', {
+    p_statement_id: statement_id,
+    p_session_id: session_id,
+    p_note: note,
+    p_sex: sex ?? null,
+    p_age: age ?? null,
+  } as any);
+
+  if (!error) return true;
+
+  // PGRST202 : fonction introuvable — la migration 030 n'est pas jouée.
+  if ((error as { code?: string }).code === 'PGRST202') {
+    if (!migrationManquanteSignalee) {
+      migrationManquanteSignalee = true;
+      console.warn("[NOTE] record_dixmais_note introuvable : la migration 030 n'est pas jouée sur la base du jeu. Les notes ne sont pas enregistrées.");
+    }
+    return false;
+  }
+
+  console.warn('[NOTE] Enregistrement refusé :', error.message);
+  return false;
+}
+
+// ---------------------------------------------------------------------------
 // Leaderboard (most red-flag statements)
 // ---------------------------------------------------------------------------
 export interface LeaderboardEntry extends DixMaisStatement {
   avg_delta: number;
   elimination_rate: number;
+  /** La note des joueurs sur l'échelle du jeu (0 à 15), `null` si trop peu
+   * mesurée. Voir `noteMesuree`. */
+  note: NoteMesuree | null;
 }
 
 /**
@@ -363,25 +432,40 @@ function aggregateByText(rows: LeaderboardEntry[]): LeaderboardEntry[] {
     current.votes_count += row.votes_count;
     current.total_delta += row.total_delta;
     current.elimination_count += row.elimination_count;
+    current.notes_count = (current.notes_count ?? 0) + (row.notes_count ?? 0);
+    current.notes_total = (current.notes_total ?? 0) + (row.notes_total ?? 0);
     // Même représentant que la sélection en jeu, pour que les deux écrans
     // désignent la même ligne.
     if (row.id < current.id) current.id = row.id;
   }
 
-  return [...merged.values()].map(row => ({
-    ...row,
-    avg_delta: row.votes_count > 0 ? row.total_delta / row.votes_count : 0,
-    elimination_rate: row.votes_count > 0 ? (row.elimination_count / row.votes_count) * 100 : 0,
-  }));
+  return [...merged.values()].map(row => {
+    const avg_delta = row.votes_count > 0 ? row.total_delta / row.votes_count : 0;
+    return {
+      ...row,
+      avg_delta,
+      elimination_rate: row.votes_count > 0 ? (row.elimination_count / row.votes_count) * 100 : 0,
+      note: noteMesuree({ ...row, avg_delta }),
+    };
+  });
+}
+
+/**
+ * Ordre du classement : la note la plus basse en tête — l'info qui coûte le
+ * plus. Les infos sans note mesurable ferment la marche.
+ */
+function parNote(a: LeaderboardEntry, b: LeaderboardEntry): number {
+  if (a.note && b.note) return a.note.note - b.note.note;
+  if (a.note) return -1;
+  if (b.note) return 1;
+  return a.avg_delta - b.avg_delta;
 }
 
 export async function getDixMaisLeaderboard(limit = 50): Promise<LeaderboardEntry[]> {
   if (isMockMode()) {
-    return dedupeByText(buildMockStatements()).map(s => ({
-      ...s,
-      avg_delta: 0,
-      elimination_rate: 0,
-    }));
+    return aggregateByText(dedupeByText(buildMockStatements()) as LeaderboardEntry[])
+      .sort(parNote)
+      .slice(0, limit);
   }
 
   const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
@@ -398,7 +482,7 @@ export async function getDixMaisLeaderboard(limit = 50): Promise<LeaderboardEntr
   if (error) throw new Error(`Leaderboard error: ${error.message}`);
 
   return aggregateByText((data as LeaderboardEntry[]) || [])
-    .sort((a, b) => a.avg_delta - b.avg_delta) // most negative = most red flag
+    .sort(parNote)
     .slice(0, limit);
 }
 
@@ -407,7 +491,7 @@ export async function getDixMaisLeaderboard(limit = 50): Promise<LeaderboardEntr
 // ---------------------------------------------------------------------------
 export async function getAllDixMaisStatements(): Promise<LeaderboardEntry[]> {
   if (isMockMode()) {
-    return buildMockStatements().map(s => ({ ...s, avg_delta: 0, elimination_rate: 0 }));
+    return buildMockStatements().map(s => ({ ...s, avg_delta: s.avg_delta ?? 0, elimination_rate: s.elimination_rate ?? 0, note: noteMesuree(s) }));
   }
 
   const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
@@ -419,11 +503,15 @@ export async function getAllDixMaisStatements(): Promise<LeaderboardEntry[]> {
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(`Admin fetch error: ${error.message}`);
-  return ((data as DixMaisStatement[]) || []).map(s => ({
-    ...s,
-    avg_delta: s.votes_count > 0 ? s.total_delta / s.votes_count : 0,
-    elimination_rate: s.votes_count > 0 ? (s.elimination_count / s.votes_count) * 100 : 0,
-  }));
+  return ((data as DixMaisStatement[]) || []).map(s => {
+    const avg_delta = s.votes_count > 0 ? s.total_delta / s.votes_count : 0;
+    return {
+      ...s,
+      avg_delta,
+      elimination_rate: s.votes_count > 0 ? (s.elimination_count / s.votes_count) * 100 : 0,
+      note: noteMesuree({ ...s, avg_delta }),
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -575,6 +663,11 @@ export interface CohortStat {
   votes: number;
   avg_delta: number;
   elimination_rate: number;
+  /** Note moyenne de la cohorte sur cet énoncé (mécanique actuelle), et le
+   * nombre de notes derrière. Absents tant que la migration 030 n'est pas
+   * jouée, ou que la cohorte n'a rien noté. */
+  notes?: number;
+  avg_note?: number | null;
 }
 
 /**
@@ -603,22 +696,37 @@ export async function getDixMaisCohortStats(
       votes: MIN_COHORT_VOTES + ((i * 5) % 20),
       avg_delta: -2 - ((i * 3) % 4),
       elimination_rate: ((i * 13) % 50),
+      notes: 3 + ((i * 7) % 15),
+      avg_note: 4 + ((i * 3) % 7),
     }));
   }
 
   const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
   const supabase = createDixmaisServerClient();
 
-  const { data, error } = await supabase.rpc('dixmais_cohort_stats', {
-    p_statement_ids: statementIds,
-    p_sex: sex,
-    p_age: age,
-  } as any);
+  const args = { p_statement_ids: statementIds, p_sex: sex, p_age: age } as any;
+  // Les deux mesures en parallèle : les anciens votes et, si la migration 030
+  // est jouée, les notes de la mécanique actuelle.
+  const [votes, notes] = await Promise.all([
+    supabase.rpc('dixmais_cohort_stats', args),
+    supabase.rpc('dixmais_cohort_notes', args),
+  ]);
 
-  if (error) {
-    console.warn('[COHORTE] Lecture impossible :', error.message);
-    return [];
+  if (votes.error) console.warn('[COHORTE] Votes illisibles :', votes.error.message);
+  if (notes.error && (notes.error as { code?: string }).code !== 'PGRST202') {
+    console.warn('[COHORTE] Notes illisibles :', notes.error.message);
   }
 
-  return ((data as CohortStat[]) ?? []).filter((row) => row.votes >= MIN_COHORT_VOTES);
+  const parEnonce = new Map<string, CohortStat>();
+  for (const row of ((votes.data as unknown as CohortStat[] | null) ?? [])) {
+    if (row.votes >= MIN_COHORT_VOTES) parEnonce.set(row.statement_id, { ...row, votes: Number(row.votes), avg_delta: Number(row.avg_delta) });
+  }
+  for (const row of ((notes.data as unknown as { statement_id: string; notes: number; avg_note: number }[] | null) ?? [])) {
+    const existant = parEnonce.get(row.statement_id);
+    const complement = { notes: Number(row.notes), avg_note: Number(row.avg_note) };
+    parEnonce.set(row.statement_id, existant
+      ? { ...existant, ...complement }
+      : { statement_id: row.statement_id, votes: 0, avg_delta: 0, elimination_rate: 0, ...complement });
+  }
+  return [...parEnonce.values()];
 }

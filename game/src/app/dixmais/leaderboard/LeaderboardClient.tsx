@@ -1,38 +1,46 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+/**
+ * @module dixmais/leaderboard
+ * Le classement des infos, par la note que leur donnent les joueurs.
+ *
+ * Même échelle que le jeu (0 à 15, 10 au départ) et même calcul que la « note
+ * des autres » du verdict (`lib/dixmaisNote`) : les deux écrans affichent le
+ * même chiffre pour la même phrase. Deux listes : les red flags qui coûtent le
+ * plus, les green flags qui rapportent le plus.
+ *
+ * Le classement est rendu côté serveur et passé en `initialData` : la page
+ * figure au sitemap, elle doit livrer ses lignes dans le HTML.
+ */
+
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, RotateCcw, Play } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, RotateCcw } from 'lucide-react';
 import type { DixMaisStatement } from '@/types/database';
+import type { NoteMesuree } from '@/lib/dixmaisNote';
+import { scoreInk } from '../scale';
+import { formatNote } from '../moyenne';
+import { TEINTES } from '../ui';
 
 export interface LeaderboardEntry extends DixMaisStatement {
   avg_delta: number;
   elimination_rate: number;
+  note: NoteMesuree | null;
 }
 
-type SortKey = 'avg_delta' | 'elimination_rate' | 'votes_count';
-type FilterKey = 'all' | 'negative' | 'positive';
+type Onglet = 'negative' | 'positive';
 
-function deltaColor(d: number) {
-  if (d >= 0) return '#22C55E';
-  if (d >= -2) return '#FBBF24';
-  if (d >= -4) return '#F59E0B';
-  return '#EF4444';
-}
+const ONGLETS: { cle: Onglet; libelle: string; sousTitre: string }[] = [
+  { cle: 'negative', libelle: '🚩 Red flags', sousTitre: 'Ce qui fait le plus chuter la note' },
+  { cle: 'positive', libelle: '🟢 Green flags', sousTitre: 'Ce qui la fait le plus monter' },
+];
 
-/**
- * Le classement est désormais rendu côté serveur et passé en `initialData` :
- * sans cela, le HTML servi se limitait à un indicateur de chargement, pour une
- * page pourtant présente au sitemap. Le rafraîchissement manuel et les filtres
- * restent côté navigateur.
- */
 export default function LeaderboardClient({ initialData }: { initialData: LeaderboardEntry[] }) {
   const [data, setData] = useState<LeaderboardEntry[]>(initialData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [sort, setSort] = useState<SortKey>('avg_delta');
-  const [filter, setFilter] = useState<FilterKey>('all');
+  const [onglet, setOnglet] = useState<Onglet>('negative');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -41,8 +49,11 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
       const res = await fetch('/api/dixmais/leaderboard?limit=100', { cache: 'no-store' });
       const json = await res.json();
       setData(json.data ?? []);
-    } catch { setError('Erreur de chargement'); }
-    finally { setLoading(false); }
+    } catch {
+      setError('Le classement ne répond pas. Réessaie dans un instant.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   // Le serveur a déjà fourni une liste : on ne refait la requête au montage que
@@ -51,154 +62,109 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
     if (initialData.length === 0) load();
   }, [initialData.length, load]);
 
-  const filtered = data
-    .filter(s => filter === 'all' || s.type === filter)
-    .sort((a, b) => {
-      if (sort === 'avg_delta') return a.avg_delta - b.avg_delta;
-      if (sort === 'elimination_rate') return b.elimination_rate - a.elimination_rate;
-      return b.votes_count - a.votes_count;
-    });
-
-  const totalVotes = data.reduce((a, s) => a + s.votes_count, 0);
-  const worstDelta = data.length ? Math.min(...data.map(d => d.avg_delta)) : null;
+  // Red flags : la note la plus basse en tête. Green flags : la plus haute.
+  const liste = data
+    .filter((s) => s.type === onglet && s.note)
+    .sort((a, b) => (onglet === 'negative' ? a.note!.note - b.note!.note : b.note!.note - a.note!.note));
+  const estimees = liste.some((s) => s.note?.source === 'estimation');
+  const courant = ONGLETS.find((o) => o.cle === onglet)!;
 
   return (
-    <div className="relative min-h-[calc(100dvh-var(--header-h,3rem))] text-white pb-10" style={{ background: '#080808' }}>
-      {/* `absolute` : décor de cette page, pas de la fenêtre. */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute inset-x-0 -top-32 h-[400px] opacity-15"
-          style={{ background: 'radial-gradient(60% 100% at 50% 0%, #F59E0B 0%, transparent 72%)' }} />
-        <div className="absolute inset-0 opacity-[0.025]"
-          style={{ backgroundImage: 'linear-gradient(to right,#fff 1px,transparent 1px),linear-gradient(to bottom,#fff 1px,transparent 1px)', backgroundSize: '28px 28px' }} />
-      </div>
+    <div className="relative min-h-[calc(100dvh-var(--header-h,3rem))] pb-10 text-white" style={{ background: TEINTES.fond }}>
+      <div className="mx-auto max-w-lg px-5">
+        <div className="flex h-12 items-center justify-between">
+          <Link href="/dixmais" className="-ml-2 flex min-h-11 items-center gap-1.5 px-2 text-[13px] font-semibold" style={{ color: TEINTES.secondaire }}>
+            <ArrowLeft size={15} /> Jeu
+          </Link>
+          <button
+            onClick={load}
+            aria-label="Actualiser le classement"
+            className="-mr-2.5 flex h-11 w-11 cursor-pointer items-center justify-center text-white/30 transition-colors hover:text-white/60 active:scale-90"
+          >
+            <RotateCcw size={15} className={loading ? 'animate-spin' : ''} />
+          </button>
+        </div>
 
-      <div className="relative z-10 flex items-center justify-between px-5 pt-6 pb-4">
-        <Link href="/dixmais" className="flex items-center gap-1.5 text-white/30 hover:text-white/60 transition-colors">
-          <ArrowLeft size={16} /><span className="text-[10px] font-black uppercase tracking-[0.2em]">Jeu</span>
-        </Link>
-        <button onClick={load} className="text-white/30 hover:text-white/60 transition-colors cursor-pointer active:scale-90">
-          <RotateCcw size={14} />
-        </button>
-      </div>
-
-      <div className="relative z-10 max-w-lg mx-auto px-5">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-6">
-          <h1 className="text-3xl font-black text-white tracking-[-0.03em]">🏆 CLASSEMENT</h1>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            Les affirmations les plus red flag
+        <header className="pt-4 pb-6">
+          <h1 className="text-[clamp(1.9rem,9vw,2.6rem)] font-black uppercase leading-none tracking-tight">Le classement</h1>
+          <p className="mt-3 text-[15px] leading-snug" style={{ color: TEINTES.secondaire }}>
+            La note moyenne que les joueurs donnent à chaque info, notée seule, en partant de 10.
           </p>
-          {totalVotes > 0 && (
-            <p className="text-[10px] font-bold mt-2 px-3 py-1.5 rounded-full inline-block"
-              style={{ color: 'rgba(245,158,11,0.7)', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)' }}>
-              {totalVotes.toLocaleString()} votes enregistrés
-            </p>
-          )}
-        </motion.div>
+        </header>
 
-        {worstDelta !== null && worstDelta < -3 && (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}
-            className="mb-5 px-5 py-4 rounded-2xl text-center"
-            style={{ background: 'rgba(239,68,68,0.07)', border: '1.5px solid rgba(239,68,68,0.2)' }}>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-1">Pire impact moyen</p>
-            <span className="font-black text-3xl" style={{ color: '#EF4444' }}>{worstDelta.toFixed(1)}</span>
-            <span className="text-white/30 text-sm ml-1">pts</span>
-          </motion.div>
-        )}
-
-        <div className="flex gap-2 mb-3">
-          <div className="flex gap-1 flex-1 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            {([['all', 'Tous'], ['negative', '🚩 Red'], ['positive', '🟢 Green']] as const).map(([v, l]) => (
-              <button key={v} onClick={() => setFilter(v)}
-                className="flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide cursor-pointer transition-all"
-                style={{ background: filter === v ? 'rgba(255,255,255,0.12)' : 'transparent', color: filter === v ? '#fff' : 'rgba(255,255,255,0.35)' }}>
-                {l}
+        {/* Deux onglets, soulignés : pas de boutons pleins. */}
+        <div className="flex border-b" style={{ borderColor: TEINTES.filet }} role="tablist">
+          {ONGLETS.map((o) => {
+            const actif = o.cle === onglet;
+            return (
+              <button
+                key={o.cle}
+                role="tab"
+                aria-selected={actif}
+                onClick={() => setOnglet(o.cle)}
+                className="-mb-px flex-1 cursor-pointer border-b-2 py-3 text-[14px] font-bold transition-colors"
+                style={{ borderColor: actif ? '#FFFFFF' : 'transparent', color: actif ? TEINTES.texte : TEINTES.discret }}
+              >
+                {o.libelle}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
+        <p className="pt-4 pb-2 text-[12px] font-semibold" style={{ color: TEINTES.discret }}>{courant.sousTitre}</p>
 
-        <div className="flex gap-2 mb-5">
-          {([['avg_delta', 'Impact'], ['elimination_rate', 'Élim.'], ['votes_count', 'Votes']] as [SortKey, string][]).map(([k, l]) => (
-            <button key={k} onClick={() => setSort(k)}
-              className="flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wide cursor-pointer transition-all"
-              style={{
-                background: sort === k ? '#F59E0B' : 'rgba(255,255,255,0.04)',
-                color: sort === k ? '#000' : 'rgba(255,255,255,0.35)',
-                border: `1.5px solid ${sort === k ? '#F59E0B' : 'rgba(255,255,255,0.07)'}`,
-              }}>
-              {l}
-            </button>
-          ))}
-        </div>
-
-        {loading ? (
-          <div className="text-center py-14">
-            <div className="inline-block w-8 h-8 rounded-full border-2 border-transparent animate-spin mb-3"
-              style={{ borderTopColor: '#FFD700', borderRightColor: 'rgba(245,158,11,0.3)' }} />
-            <p className="text-xs text-white/25">Chargement...</p>
-          </div>
-        ) : error ? (
-          <p className="text-center text-[#EF4444] py-12 text-sm font-bold">{error}</p>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-14">
-            <p className="text-4xl mb-4">📊</p>
-            <p className="text-sm font-bold text-white/40">Pas encore de données</p>
-            <p className="text-xs text-white/25 mt-1 mb-6">Joue quelques parties pour remplir le classement !</p>
-            <Link href="/dixmais"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest text-black"
-              style={{ background: 'linear-gradient(135deg,#F59E0B,#FFD700)' }}>
-              <Play size={14} /> JOUER
-            </Link>
+        {error ? (
+          <p className="py-12 text-center text-sm font-semibold text-red-400">{error}</p>
+        ) : liste.length === 0 ? (
+          <div className="py-14 text-center">
+            <p className="text-[15px] font-semibold" style={{ color: TEINTES.secondaire }}>Pas encore assez de notes.</p>
+            <p className="mt-1 text-[13px]" style={{ color: TEINTES.discret }}>Joue quelques profils pour remplir le classement.</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            <AnimatePresence mode="popLayout">
-              {filtered.map((stmt, i) => (
-                <motion.div key={stmt.id} layout
-                  initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-                  transition={{ delay: Math.min(i * 0.02, 0.15) }}
-                  className="flex items-center gap-3 px-4 py-3.5 rounded-xl"
-                  style={{
-                    background: i < 3 ? 'rgba(245,158,11,0.06)' : 'rgba(255,255,255,0.03)',
-                    border: `1px solid ${i < 3 ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.07)'}`,
-                  }}>
-                  <span className="text-base font-black w-7 text-center shrink-0"
-                    style={{ color: i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : 'rgba(255,255,255,0.25)' }}>
-                    {i < 3 ? ['🥇','🥈','🥉'][i] : `#${i+1}`}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="text-[12px]">{stmt.type === 'positive' ? '🟢' : '🚩'}</span>
-                      <p className="min-w-0 text-sm font-bold leading-snug text-white break-words">{stmt.text}</p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] font-bold text-white/45">{stmt.votes_count} votes</span>
-                      <span className="text-[11px] font-bold" style={{ color: 'rgba(239,68,68,0.8)' }}>
-                        🚫 {stmt.elimination_rate.toFixed(0)}% élim.
-                      </span>
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-white/30"
-                        style={{ background: 'rgba(255,255,255,0.05)' }}>
-                        {stmt.category}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-lg font-black leading-none" style={{ color: deltaColor(stmt.avg_delta) }}>
-                      {stmt.avg_delta > 0 ? '+' : ''}{stmt.avg_delta.toFixed(1)}
-                    </p>
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-white/25">impact</p>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+          <ol>
+            {liste.map((s, i) => (
+              <motion.li
+                key={s.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.min(i * 0.02, 0.2) }}
+                className="flex items-center gap-3 border-b py-3.5"
+                style={{ borderColor: TEINTES.filet }}
+              >
+                <span className="w-6 shrink-0 text-center text-[13px] font-bold tabular-nums" style={{ color: TEINTES.discret }}>
+                  {i + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[15px] font-semibold leading-snug [overflow-wrap:anywhere]" style={{ color: TEINTES.texte }}>
+                    {s.text}
+                  </p>
+                  <p className="mt-0.5 text-[12px]" style={{ color: TEINTES.discret }}>
+                    {s.note!.source === 'notes'
+                      ? `${s.note!.echantillon.toLocaleString('fr-FR')} notes`
+                      : 'estimée'}
+                  </p>
+                </div>
+                <span className="shrink-0 text-[20px] font-black tabular-nums" style={{ color: scoreInk(s.note!.note) }}>
+                  {formatNote(s.note!.note)}
+                </span>
+              </motion.li>
+            ))}
+          </ol>
         )}
 
-        <div className="mt-8 text-center">
-          <Link href="/dixmais"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest text-black cursor-pointer"
-            style={{ background: 'linear-gradient(135deg,#F59E0B,#FFD700)', boxShadow: '0 10px 30px rgba(245,158,11,0.3)' }}>
-            <Play size={16} /> JOUER MAINTENANT
+        {estimees && (
+          <p className="mt-4 text-[12px] leading-snug" style={{ color: TEINTES.discret }}>
+            « Estimée » : pas encore assez de notes de la version actuelle du jeu ; le chiffre vient de
+            l&apos;ancienne version, où la note ne pouvait pas dépasser 10.
+          </p>
+        )}
+
+        <div className="mt-8">
+          <Link
+            href="/dixmais"
+            className="block w-full rounded-2xl py-4 text-center text-[15px] font-black uppercase tracking-wider text-black"
+            style={{ background: TEINTES.or }}
+          >
+            Jouer
           </Link>
         </div>
       </div>
