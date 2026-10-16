@@ -41,6 +41,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Shield, Trophy } from 'lucide-react';
 import { useHaptics } from '@/lib/hooks';
+import { DON_URL } from '@/config/contact';
 
 type Jeu = {
   id: string;
@@ -404,7 +405,29 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
           </section>
         )}
 
-        {/* ── 5c. Et si ça ne va pas ? ───────────────────────────────────── */}
+        {/* ── 5c. Soutenir ───────────────────────────────────────────────── */}
+        <section
+          className="revele mt-10 rounded-3xl border border-[#FFC04D]/25 bg-[#120E06] p-5"
+          aria-labelledby="titre-cafe"
+        >
+          <h2 id="titre-cafe" className="text-[12px] font-black uppercase tracking-[0.18em] text-[#FFC04D]">
+            ☕ Offrir un café
+          </h2>
+          <p className="mt-2 text-[15px] font-medium leading-relaxed text-[#D9C9A8]">
+            Les jeux sont gratuits, sans compte. Si l&apos;un d&apos;eux t&apos;a fait rire ou
+            réfléchir, un café aide à payer l&apos;hébergement et le temps passé à les écrire.
+          </p>
+          <a
+            href={DON_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`mt-4 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#FFC04D] px-4 text-[14px] font-black text-black transition-opacity hover:opacity-90 ${FOCUS}`}
+          >
+            Soutenir sur Ko-fi
+          </a>
+        </section>
+
+        {/* ── 5d. Et si ça ne va pas ? ───────────────────────────────────── */}
         {/* Ce bloc était un tiroir : il fallait avoir l'idée d'appuyer sur un
             bouclier pour le trouver. C'est le seul contenu de la page dont on
             peut avoir besoin dans l'urgence. */}

@@ -98,20 +98,18 @@ export default function AProposPage() {
           </p>
         </section>
 
-        {DON_URL && (
-          <section className="legal-page__section">
-            <h2>Soutenir le site</h2>
-            <p>
-              Les jeux sont gratuits et le resteront. Si l&apos;un d&apos;eux vous a fait rire ou
-              réfléchir, vous pouvez{' '}
-              <a href={DON_URL} target="_blank" rel="noopener noreferrer">
-                offrir un café
-              </a>{' '}
-              : cela aide à payer l&apos;hébergement et le temps passé à l&apos;écrire. Le paiement
-              se fait sur la plateforme de don ; le site n&apos;en voit rien.
-            </p>
-          </section>
-        )}
+        <section className="legal-page__section">
+          <h2>Soutenir le site</h2>
+          <p>
+            Les jeux sont gratuits. Si l&apos;un d&apos;eux vous a fait rire ou
+            réfléchir, vous pouvez{' '}
+            <a href={DON_URL} target="_blank" rel="noopener noreferrer">
+              offrir un café
+            </a>{' '}
+            : cela aide à payer l&apos;hébergement et le temps passé à l&apos;écrire. Le paiement
+            se fait sur la plateforme de don ; le site n&apos;en voit rien.
+          </p>
+        </section>
 
         <section className="legal-page__section">
           <h2>Nous écrire</h2>

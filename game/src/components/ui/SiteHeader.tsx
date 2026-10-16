@@ -22,6 +22,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
+import { DON_URL } from '@/config/contact';
 
 /**
  * L'accueil est exclu : il porte déjà le logo en grand, la rangée d'onglets
@@ -155,6 +156,19 @@ export function SiteHeader() {
           ))}
         </nav>
 
+        {/* Toujours visible, à côté du menu : replié dans le panneau, le don
+            n'était vu que de ceux qui ouvraient le menu. */}
+        <a
+          href={DON_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="barre-site__cafe"
+          aria-label="Offrir un café (Ko-fi, nouvel onglet)"
+        >
+          <span aria-hidden>☕</span>
+          <span>Café</span>
+        </a>
+
         <details className="barre-site__menu" ref={panelRef}>
           <summary aria-label="Ouvrir le menu de navigation">
             <Menu size={16} aria-hidden />
@@ -179,6 +193,9 @@ export function SiteHeader() {
                 </ul>
               </div>
             ))}
+            <a href={DON_URL} target="_blank" rel="noopener noreferrer" className="barre-site__panel-cafe">
+              ☕ Offrir un café au site
+            </a>
           </div>
         </details>
       </div>

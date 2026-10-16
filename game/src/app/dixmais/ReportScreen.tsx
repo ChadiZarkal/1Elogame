@@ -31,7 +31,6 @@ import {
   type CohortComparison,
 } from './cohort';
 import { BoutonDiscret, BoutonPrincipal, Pastille, Pied, Section, TEINTES } from './ui';
-import { DON_URL } from '@/config/contact';
 import { LienCafe } from '@/components/ui/LienCafe';
 
 const SHARE_URL = 'https://redorgreen.fr/dixmais';
@@ -235,14 +234,18 @@ export function ReportScreen({ rounds, profile, getSessionId, onBack, onNext }: 
 
       {/* ── Soutien ─────────────────────────────────────────────────────── */}
       {/* Au bilan seulement : le joueur a fini sa série, on ne coupe rien. */}
-      {DON_URL && (
-        <section className="border-t py-5" style={{ borderColor: TEINTES.filet }}>
-          <p className="text-[13px] leading-snug" style={{ color: TEINTES.secondaire }}>
-            Le jeu est gratuit. S’il t’a plu, tu peux soutenir le site en offrant un café.
-          </p>
-          <LienCafe className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-[13px] font-semibold text-white ring-1 ring-white/15 transition-colors hover:bg-white/5" />
-        </section>
-      )}
+      <section
+        className="my-3 rounded-2xl border p-4"
+        style={{ borderColor: 'rgba(255,192,77,0.3)', background: 'rgba(255,192,77,0.06)' }}
+      >
+        <p className="text-[14px] font-bold text-white">☕ Ça t’a plu ?</p>
+        <p className="mt-1 text-[13px] leading-snug" style={{ color: TEINTES.secondaire }}>
+          Le jeu est gratuit. Un café aide à payer le site et à écrire de nouveaux profils.
+        </p>
+        <LienCafe className="mt-3 flex min-h-11 items-center justify-center rounded-xl bg-[#FFC04D] px-4 text-[14px] font-black text-black transition-opacity hover:opacity-90">
+          Offrir un café
+        </LienCafe>
+      </section>
 
       {/* ── Suite ───────────────────────────────────────────────────────── */}
       <Pied>
