@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useGameStore, type PartyStats } from '@/stores/gameStore';
 import { CATEGORIES_CONFIG } from '@/config/categories';
+import { DON_URL } from '@/config/contact';
 
 /* ═══════════════════════════════════════════════════════════════════════
    ARCHETYPE SYSTEM
@@ -396,6 +397,10 @@ export function GameRecap() {
             </button>
           </div>
 
+          <a href={DON_URL} target="_blank" rel="noopener noreferrer" style={btnCafe}>
+            ☕ Offrir un café
+          </a>
+
           <div style={{
             display: 'flex', justifyContent: 'center', gap: '0.8rem',
             padding: '0.3rem 0',
@@ -478,6 +483,17 @@ const btnSecondary: React.CSSProperties = {
   border: '1px solid rgba(255,255,255,0.08)',
   color: '#bbb', fontSize: '0.875rem', fontWeight: 700,
   cursor: 'pointer',
+};
+
+// Ambre comme partout sur le site pour le don, en contour : les relances
+// restent l'action principale.
+const btnCafe: React.CSSProperties = {
+  minHeight: 48, padding: '0.75rem', borderRadius: 8,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  background: 'rgba(255,192,77,0.08)',
+  border: '1px solid rgba(255,192,77,0.3)',
+  color: '#FFC04D', fontSize: '0.875rem', fontWeight: 700,
+  textDecoration: 'none',
 };
 
 // Liens texte nus : sans hauteur imposee, la cible se reduisait a la ligne.

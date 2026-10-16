@@ -1321,6 +1321,28 @@ body:has(.main-container) {
 
 .story-lien:hover { opacity: 1; }
 
+/* Le bouton café : fin des stories et bas du détail. Jaune du test, en
+   contour, pour ne pas concurrencer « Refaire le test ». */
+.rft-cafe {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  margin: 0.6rem auto;
+  padding: 0.5rem 1.4rem;
+  border: 2px solid var(--yellow);
+  border-radius: var(--border-radius, 0.6rem);
+  color: var(--yellow);
+  font-family: 'Agdasima', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  width: fit-content;
+}
+
+.rft-cafe:hover { background: rgba(247, 201, 20, 0.12); }
+
 /* --- Le pied ------------------------------------------------------------ */
 
 .stories-pied {

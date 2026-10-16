@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import type { JudgmentResult } from './constants';
+import { DON_URL } from '@/config/contact';
 
 interface RevealPhaseProps {
   result: JudgmentResult;
@@ -210,6 +211,23 @@ export function RevealPhase({
           </svg>
           Partager le verdict
         </motion.button>
+
+        <motion.a
+          href={DON_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 flex min-h-11 items-center gap-2 px-4 py-3 rounded-2xl text-[13px] font-bold"
+          style={{
+            background: 'rgba(255,192,77,0.08)',
+            border: '1px solid rgba(255,192,77,0.3)',
+            color: '#FFC04D',
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
+        >
+          ☕ Offrir un café à l&apos;Oracle
+        </motion.a>
       </div>
 
       {/* Encore CTA — pinned at bottom */}

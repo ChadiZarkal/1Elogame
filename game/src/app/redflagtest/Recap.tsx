@@ -19,6 +19,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import type { Resultat } from '@/lib/rft/types';
 import { ParisDesAutres, Stories } from './Stories';
+import { DON_URL } from '@/config/contact';
 
 /*
  * LE RÉCAP N'A PAS BESOIN DU PROFIL DU JOUEUR.
@@ -134,6 +135,10 @@ export function Recap({
       <Link href="/redflagtest/stats" className="stats-public-link">
         Voir ce que les autres ont répondu
       </Link>
+
+      <a href={DON_URL} target="_blank" rel="noopener noreferrer" className="rft-cafe">
+        ☕ Offrir un café
+      </a>
     </>
   );
 }

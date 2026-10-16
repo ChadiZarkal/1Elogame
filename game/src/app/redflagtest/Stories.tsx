@@ -42,6 +42,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import type { Axe, Classement, ParisMoyens, Resultat } from '@/lib/rft/types';
 import { PartageBar } from './PartageBar';
+import { DON_URL } from '@/config/contact';
 
 /**
  * Fait défiler le nombre jusqu'à sa valeur, pour qu'il atterrisse au lieu
@@ -868,6 +869,10 @@ function EcranFin({
             <p>Faire le test</p>
           </Link>
         )}
+        {/* Les stories recouvrent la barre du site, et son bouton café avec. */}
+        <a href={DON_URL} target="_blank" rel="noopener noreferrer" className="rft-cafe">
+          ☕ Offrir un café
+        </a>
         <button type="button" className="story-lien" onClick={onFermer}>
           Voir tout le détail
         </button>

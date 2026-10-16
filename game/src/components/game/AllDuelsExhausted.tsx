@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { useHaptics } from '@/lib/hooks';
+import { DON_URL } from '@/config/contact';
 
 interface AllDuelsExhaustedProps {
   duelCount: number;
@@ -77,6 +78,14 @@ export function AllDuelsExhausted({ duelCount, onReset }: AllDuelsExhaustedProps
           >
             📤 Partager mon score
           </button>
+          <a
+            href={DON_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="min-h-12 px-6 py-3 rounded-xl border border-[#FFC04D]/30 bg-[#FFC04D]/8 text-[#FFC04D] font-bold transition-colors hover:bg-[#FFC04D]/15 text-center flex items-center justify-center"
+          >
+            ☕ Offrir un café
+          </a>
         </div>
       </motion.div>
     </div>
