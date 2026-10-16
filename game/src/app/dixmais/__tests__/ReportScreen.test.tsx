@@ -81,23 +81,29 @@ describe('ReportScreen', () => {
       profilJuge([2, 2, 2, 2, 2], { ids: ids.slice(0, 5), nom: 'A' }),
       profilJuge([2, 2, 2, 2, 2], { ids: ids.slice(5), nom: 'B', numero: 2 }),
     ];
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(() =>
-        Promise.resolve({
-          ok: true,
-          json: async () => ({
-            data: ids.map((id) => ({ statement_id: id, votes: 5, avg_delta: -2, elimination_rate: 5 })),
-          }),
+    const fetchSimule = vi.fn((_url: string, _init?: RequestInit) =>
+      Promise.resolve({
+        ok: true,
+        json: async () => ({
+          data: ids.map((id) => ({ statement_id: id, notes: 5, avg_note: 8 })),
         }),
-      ),
+      }),
     );
+    vi.stubGlobal('fetch', fetchSimule);
 
     render(
-      <ReportScreen rounds={rounds} profile={{ sex: 'femme', age: '19-22' }} onBack={vi.fn()} onNext={vi.fn()} />,
+      <ReportScreen
+        rounds={rounds}
+        profile={{ sex: 'femme', age: '19-22' }}
+        getSessionId={() => 'ma-session'}
+        onBack={vi.fn()}
+        onNext={vi.fn()}
+      />,
     );
     await waitFor(() => expect(screen.getByText('Ta cohorte')).toBeInTheDocument());
     expect(screen.getByText('Face aux autres')).toBeInTheDocument();
     expect(screen.getByText(/extrêmement sévère par rapport aux femmes de 19-22 ans/)).toBeInTheDocument();
+    // Le joueur ne se compare pas à lui-même : sa session part pour être exclue.
+    expect(JSON.parse(String(fetchSimule.mock.calls[0][1]?.body))).toMatchObject({ session_id: 'ma-session', sex: 'femme' });
   });
 });

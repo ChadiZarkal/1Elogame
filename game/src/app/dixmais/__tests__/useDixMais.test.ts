@@ -12,6 +12,10 @@ function statementsFactices(nombre = 5) {
     is_approved: true,
     votes_count: 30,
     total_delta: -60,
+    // Six notes de la mécanique actuelle, 7 de moyenne : c'est ce chiffre, et
+    // non les anciens votes ci-dessus, qui doit servir de note des autres.
+    notes_count: 6,
+    notes_total: 42,
     elimination_count: 6,
     created_at: '2026-09-16T00:00:00.000Z',
   }));
@@ -112,9 +116,9 @@ describe('useDixMais — chaque révélation se note seule', () => {
     const juge = result.current.history[0];
     expect(juge.notes).toEqual([0, 6, 8, 10, 6]);
     expect(juge.moyenne).toBe(6);
-    // Les phrases factices coûtent 2 points aux autres : ils mettent 8.
-    expect(juge.communaute).toEqual([8, 8, 8, 8, 8]);
-    expect(juge.moyenneCommunaute).toBe(8);
+    // Les autres : la moyenne de leurs notes (7), pas l'ancienne estimation (8).
+    expect(juge.communaute).toEqual([7, 7, 7, 7, 7]);
+    expect(juge.moyenneCommunaute).toBe(7);
     expect(juge.fin.key).toBeTruthy();
   });
 

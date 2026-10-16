@@ -1,30 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { noteMesuree } from '@/lib/dixmaisNote';
+import { NOTES_MIN_COMPARAISON, noteMesuree } from '@/lib/dixmaisNote';
 
 describe('noteMesuree — la note des joueurs sur une info', () => {
-  it('prend les vraies notes dès qu’il y en a cinq', () => {
-    expect(noteMesuree({ notes_count: 8, notes_total: 100, votes_count: 50, total_delta: -300 }))
-      .toEqual({ note: 12.5, source: 'notes', echantillon: 8 });
+  it('est la moyenne des notes de la mécanique actuelle', () => {
+    expect(noteMesuree({ notes_count: 8, notes_total: 100 })).toEqual({ note: 12.5, echantillon: 8 });
   });
 
-  it('retombe sur l’estimation des anciens votes en deçà', () => {
-    expect(noteMesuree({ notes_count: 3, notes_total: 30, votes_count: 20, total_delta: -60 }))
-      .toEqual({ note: 7, source: 'estimation', echantillon: 20 });
-    // La moyenne précalculée par la vue prime sur le recalcul.
-    expect(noteMesuree({ votes_count: 20, total_delta: -60, avg_delta: -4.5 })?.note).toBe(5.5);
+  it(`apparaît à partir de ${NOTES_MIN_COMPARAISON} notes, pas avant`, () => {
+    expect(NOTES_MIN_COMPARAISON).toBe(3);
+    expect(noteMesuree({ notes_count: 2, notes_total: 20 })).toBeNull();
+    expect(noteMesuree({ notes_count: 3, notes_total: 21 })).toEqual({ note: 7, echantillon: 3 });
   });
 
-  it('marche sans les colonnes de la migration 030', () => {
-    expect(noteMesuree({ votes_count: 10, total_delta: -20 })).toEqual({ note: 8, source: 'estimation', echantillon: 10 });
+  // Le défaut signalé : les moyennes de fin mêlaient encore les anciens votes,
+  // qui mesuraient autre chose. Ils ne doivent plus rien produire, même quand
+  // ils sont nombreux et que les notes manquent.
+  it('ignore entièrement les votes de l’ancienne mécanique', () => {
+    const ancien = { votes_count: 400, total_delta: -1200, avg_delta: -3 } as Record<string, number>;
+    expect(noteMesuree(ancien)).toBeNull();
+    expect(noteMesuree({ ...ancien, notes_count: 4, notes_total: 48 })).toEqual({ note: 12, echantillon: 4 });
   });
 
   it('reste entre 0 et 15', () => {
-    expect(noteMesuree({ votes_count: 10, total_delta: -140 })?.note).toBe(0);
     expect(noteMesuree({ notes_count: 5, notes_total: 90 })?.note).toBe(15);
-  });
-
-  it('se tait quand rien n’est mesurable', () => {
-    expect(noteMesuree({ notes_count: 4, notes_total: 40, votes_count: 4, total_delta: -8 })).toBeNull();
-    expect(noteMesuree({})).toBeNull();
+    expect(noteMesuree({ notes_count: 5, notes_total: 0 })?.note).toBe(0);
   });
 });

@@ -318,6 +318,9 @@ export function useDixMais() {
   }, [applyDraft]);
 
   const openReport = useCallback(() => setPhase('report'), []);
+  /** Identifiant de la session, lu à la demande : le bilan l'envoie pour que
+   * ses propres notes ne comptent pas dans sa cohorte. */
+  const getSessionId = useCallback(() => sessionId.current, []);
   const closeReport = useCallback(() => setPhase('verdict'), []);
 
   const setPlayerProfile = useCallback((profile: PlayerProfile) => {
@@ -374,6 +377,7 @@ export function useDixMais() {
     restart,
     openReport,
     closeReport,
+    getSessionId,
     /** Verrouille la jauge pendant l'animation de validation. */
     locked: flash !== null,
   };

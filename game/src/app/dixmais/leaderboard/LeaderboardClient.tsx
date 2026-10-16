@@ -6,7 +6,8 @@
  *
  * Même échelle que le jeu (0 à 15, 10 au départ) et même calcul que la « note
  * des autres » du verdict (`lib/dixmaisNote`) : les deux écrans affichent le
- * même chiffre pour la même phrase. Deux listes : les red flags qui coûtent le
+ * même chiffre pour la même phrase. Seules comptent les notes de la mécanique
+ * actuelle. Deux listes : les red flags qui coûtent le
  * plus, les green flags qui rapportent le plus.
  *
  * Le classement est rendu côté serveur et passé en `initialData` : la page
@@ -18,7 +19,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowLeft, RotateCcw } from 'lucide-react';
 import type { DixMaisStatement } from '@/types/database';
-import type { NoteMesuree } from '@/lib/dixmaisNote';
+import { NOTES_MIN_COMPARAISON, type NoteMesuree } from '@/lib/dixmaisNote';
 import { scoreInk } from '../scale';
 import { formatNote } from '../moyenne';
 import { TEINTES } from '../ui';
@@ -66,7 +67,6 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
   const liste = data
     .filter((s) => s.type === onglet && s.note)
     .sort((a, b) => (onglet === 'negative' ? a.note!.note - b.note!.note : b.note!.note - a.note!.note));
-  const estimees = liste.some((s) => s.note?.source === 'estimation');
   const courant = ONGLETS.find((o) => o.cle === onglet)!;
 
   return (
@@ -117,7 +117,9 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
         ) : liste.length === 0 ? (
           <div className="py-14 text-center">
             <p className="text-[15px] font-semibold" style={{ color: TEINTES.secondaire }}>Pas encore assez de notes.</p>
-            <p className="mt-1 text-[13px]" style={{ color: TEINTES.discret }}>Joue quelques profils pour remplir le classement.</p>
+            <p className="mt-1 text-[13px]" style={{ color: TEINTES.discret }}>
+              Une info entre au classement à {NOTES_MIN_COMPARAISON} notes. Joue quelques profils pour le remplir.
+            </p>
           </div>
         ) : (
           <ol>
@@ -138,9 +140,7 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
                     {s.text}
                   </p>
                   <p className="mt-0.5 text-[12px]" style={{ color: TEINTES.discret }}>
-                    {s.note!.source === 'notes'
-                      ? `${s.note!.echantillon.toLocaleString('fr-FR')} notes`
-                      : 'estimée'}
+                    {s.note!.echantillon.toLocaleString('fr-FR')} notes
                   </p>
                 </div>
                 <span className="shrink-0 text-[20px] font-black tabular-nums" style={{ color: scoreInk(s.note!.note) }}>
@@ -151,10 +151,11 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
           </ol>
         )}
 
-        {estimees && (
+        {/* Une info n'entre au classement qu'à partir de quelques notes :
+            sous ce seuil, sa moyenne serait celle d'un ou deux joueurs. */}
+        {liste.length > 0 && (
           <p className="mt-4 text-[12px] leading-snug" style={{ color: TEINTES.discret }}>
-            « Estimée » : pas encore assez de notes de la version actuelle du jeu ; le chiffre vient de
-            l&apos;ancienne version, où la note ne pouvait pas dépasser 10.
+            Une info apparaît ici dès qu&apos;elle a reçu {NOTES_MIN_COMPARAISON} notes.
           </p>
         )}
 

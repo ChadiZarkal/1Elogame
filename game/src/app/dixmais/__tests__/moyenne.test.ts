@@ -41,19 +41,17 @@ describe('la note du profil', () => {
 });
 
 describe('la note des autres', () => {
-  it('ramène le coût moyen d’une phrase à une note sur 10', () => {
-    expect(noteDesAutres({ votes_count: 20, total_delta: -60 })).toBe(7);
-    expect(noteDesAutres({ votes_count: 20, total_delta: -60, avg_delta: -4.5 })).toBe(5.5);
+  it('est la moyenne des notes de la mécanique actuelle', () => {
+    expect(noteDesAutres({ notes_count: 10, notes_total: 70 })).toBe(7);
+    expect(noteDesAutres({ notes_count: 4, notes_total: 54 })).toBe(13.5);
   });
 
-  it('reste entre 0 et 15', () => {
-    expect(noteDesAutres({ votes_count: 10, total_delta: -140 })).toBe(0);
-    expect(noteDesAutres({ votes_count: 10, total_delta: 30 })).toBe(13);
-    expect(noteDesAutres({ votes_count: 10, total_delta: 90 })).toBe(15);
+  it('ne vient jamais des anciens votes', () => {
+    expect(noteDesAutres({ votes_count: 20, total_delta: -60 } as Record<string, number>)).toBeNull();
   });
 
-  it('se tait sous cinq votes', () => {
-    expect(noteDesAutres({ votes_count: 4, total_delta: -8 })).toBeNull();
+  it('se tait sous trois notes', () => {
+    expect(noteDesAutres({ notes_count: 2, notes_total: 8 })).toBeNull();
   });
 
   it("n'est citée pour un profil qu'à partir de trois phrases mesurables", () => {

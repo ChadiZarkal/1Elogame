@@ -28,9 +28,6 @@ export const PROPOSITIONS_PAR_PROFIL = 5;
  * qualités l'emportent sur les défauts, qui restent le cœur du jeu. */
 export const GREEN_FLAGS_PAR_PROFIL = 2;
 
-/** Sous ce nombre de votes, la note des autres sur une phrase est trop
- * bruitée pour être opposée au joueur. */
-export const VOTES_MIN_COMPARAISON = 5;
 
 /** Une moyenne des autres n'est citée que si au moins trois des cinq phrases
  * sont mesurables : sinon elle ne parle plus du même profil. */
@@ -109,9 +106,10 @@ export function formatEcart(n: number): string {
 /**
  * La note que les autres joueurs donnent à cette phrase, seule.
  *
- * Les vraies notes de la mécanique actuelle quand l'énoncé en a assez, sinon
- * une estimation tirée des anciens votes. Le calcul est partagé avec le
- * classement public (voir `lib/dixmaisNote`) : les deux écrans affichent le
+ * Les seules notes de la mécanique actuelle, dès que l'énoncé en a assez ;
+ * sinon `null`, et la ligne ne s'affiche pas. Les anciens votes ne servent
+ * plus d'estimation : ils mesuraient autre chose (voir `lib/dixmaisNote`). Le
+ * calcul est partagé avec le classement public : les deux écrans affichent le
  * même chiffre.
  */
 export function noteDesAutres(stmt: CompteursEnonce): number | null {

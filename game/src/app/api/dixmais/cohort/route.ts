@@ -17,6 +17,9 @@ const cohortSchema = z.object({
   statement_ids: z.array(z.string().min(1).max(64)).min(1).max(80),
   sex: z.enum(['homme', 'femme', 'autre']),
   age: z.enum(['16-18', '19-22', '23-26', '27+']),
+  // La session du joueur, exclue de sa cohorte : ses propres notes sont déjà
+  // en base au moment du bilan.
+  session_id: z.string().min(1).max(64).optional(),
 });
 
 export const POST = withApiHandler(async (req: NextRequest) => {
@@ -24,6 +27,6 @@ export const POST = withApiHandler(async (req: NextRequest) => {
   const { data, error } = validateBody(body, cohortSchema);
   if (error) return error;
 
-  const stats = await getDixMaisCohortStats(data.statement_ids, data.sex, data.age);
+  const stats = await getDixMaisCohortStats(data.statement_ids, data.sex, data.age, data.session_id ?? null);
   return apiSuccess(stats);
 }, { rateLimit: 'public' });

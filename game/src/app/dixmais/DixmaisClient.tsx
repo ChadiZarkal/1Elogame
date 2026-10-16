@@ -174,6 +174,7 @@ export default function DixMaisPage() {
               key="report"
               rounds={game.history}
               profile={game.playerProfile}
+              getSessionId={game.getSessionId}
               onBack={game.closeReport}
               onNext={game.nextProfile}
             />

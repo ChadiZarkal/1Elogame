@@ -43,11 +43,13 @@ interface Props {
   rounds: ProfilJuge[];
   /** Sexe et tranche d'âge du joueur, `null` tant qu'il ne les a pas donnés. */
   profile: PlayerProfile | null;
+  /** Session du joueur, exclue de sa cohorte. */
+  getSessionId?: () => string;
   onBack: () => void;
   onNext: () => void;
 }
 
-export function ReportScreen({ rounds, profile, onBack, onNext }: Props) {
+export function ReportScreen({ rounds, profile, getSessionId, onBack, onNext }: Props) {
   const [copied, setCopied] = useState(false);
   const [cohort, setCohort] = useState<CohortComparison | null>(null);
   const bilan = useMemo(() => construireBilan(rounds), [rounds]);
@@ -57,11 +59,11 @@ export function ReportScreen({ rounds, profile, onBack, onNext }: Props) {
   useEffect(() => {
     if (!profile) return;
     let abandonne = false;
-    fetchCohortStats(statementIdsOf(rounds), profile)
+    fetchCohortStats(statementIdsOf(rounds), profile, getSessionId?.())
       .then((stats) => { if (!abandonne) setCohort(compareToCohort(rounds, stats)); })
       .catch(() => { if (!abandonne) setCohort(null); });
     return () => { abandonne = true; };
-  }, [rounds, profile]);
+  }, [rounds, profile, getSessionId]);
 
   useEffect(() => {
     if (!copied) return;

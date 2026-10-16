@@ -5,15 +5,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff, CheckCircle, XCircle, Trophy, BarChart2, RefreshCw, Check, AlertCircle, Pencil, X } from 'lucide-react';
 import type { DixMaisStatement } from '@/types/database';
-import type { NoteMesuree } from '@/lib/dixmaisNote';
+import { NOTES_MIN_COMPARAISON, type NoteMesuree } from '@/lib/dixmaisNote';
 
 type Tab = 'statements' | 'leaderboard';
 
 interface AdminStatement extends DixMaisStatement {
   avg_delta: number;
   elimination_rate: number;
-  /** Note des joueurs sur l'échelle du jeu (0 à 15) : vraies notes ou
-   * estimation tirée des anciens votes. Voir `lib/dixmaisNote`. */
+  /** Note des joueurs sur l'échelle du jeu (0 à 15), tirée des seules notes de
+   * la mécanique actuelle. Voir `lib/dixmaisNote`. */
   note?: NoteMesuree | null;
 }
 
@@ -274,7 +274,7 @@ function Dashboard() {
           {tab === 'leaderboard' && (
             <motion.div key="lb" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               <p className="text-[11px] font-bold text-white/35 mb-4">
-                Note moyenne des joueurs, la plus basse en tête — « estimée » tant qu&apos;un énoncé n&apos;a pas cinq notes de la version actuelle ({totalVotes.toLocaleString()} votes de l&apos;ancienne version)
+                Note moyenne des joueurs (version actuelle du jeu), la plus basse en tête — un énoncé y entre à {NOTES_MIN_COMPARAISON} notes
               </p>
               {statements.filter(s => s.note).length === 0 ? (
                 <div className="text-center py-10 text-white/25">
@@ -298,9 +298,7 @@ function Dashboard() {
                           <p className="text-sm font-bold text-white truncate">{stmt.text}</p>
                           <p className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.35)' }}>
                             {stmt.type === 'positive' ? '🟢' : '🚩'}{' '}
-                            {stmt.note?.source === 'notes'
-                              ? `${stmt.note.echantillon} notes`
-                              : `estimée sur ${stmt.votes_count} anciens votes`}
+                            {stmt.note?.echantillon} notes
                           </p>
                         </div>
                         <span className="font-black text-sm shrink-0 px-2.5 py-1 rounded-lg"

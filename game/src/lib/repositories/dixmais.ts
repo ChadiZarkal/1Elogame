@@ -403,8 +403,8 @@ export async function recordDixMaisNote(params: RecordNoteParams): Promise<boole
 export interface LeaderboardEntry extends DixMaisStatement {
   avg_delta: number;
   elimination_rate: number;
-  /** La note des joueurs sur l'échelle du jeu (0 à 15), `null` si trop peu
-   * mesurée. Voir `noteMesuree`. */
+  /** La note des joueurs sur l'échelle du jeu (0 à 15), tirée des seules
+   * notes de la mécanique actuelle ; `null` tant qu'il y en a trop peu. */
   note: NoteMesuree | null;
 }
 
@@ -445,7 +445,7 @@ function aggregateByText(rows: LeaderboardEntry[]): LeaderboardEntry[] {
       ...row,
       avg_delta,
       elimination_rate: row.votes_count > 0 ? (row.elimination_count / row.votes_count) * 100 : 0,
-      note: noteMesuree({ ...row, avg_delta }),
+      note: noteMesuree(row),
     };
   });
 }
@@ -509,7 +509,7 @@ export async function getAllDixMaisStatements(): Promise<LeaderboardEntry[]> {
       ...s,
       avg_delta,
       elimination_rate: s.votes_count > 0 ? (s.elimination_count / s.votes_count) * 100 : 0,
-      note: noteMesuree({ ...s, avg_delta }),
+      note: noteMesuree(s),
     };
   });
 }
@@ -658,33 +658,33 @@ export async function deleteDixMaisStatement(id: string): Promise<void> {
  */
 export const MIN_COHORT_VOTES = 1;
 
+/** Notes d'une cohorte sur un énoncé (migration 030), sans la session du
+ * joueur (migration 031). */
 export interface CohortStat {
   statement_id: string;
-  votes: number;
-  avg_delta: number;
-  elimination_rate: number;
-  /** Note moyenne de la cohorte sur cet énoncé (mécanique actuelle), et le
-   * nombre de notes derrière. Absents tant que la migration 030 n'est pas
-   * jouée, ou que la cohorte n'a rien noté. */
-  notes?: number;
-  avg_note?: number | null;
+  notes: number;
+  avg_note: number;
 }
 
 /**
- * Moyennes d'une cohorte, énoncé par énoncé.
+ * Moyennes d'une cohorte, énoncé par énoncé, tirées des seules notes de la
+ * mécanique actuelle.
  *
  * Phrase par phrase, et non en bloc : comparer la moyenne du joueur à la
  * moyenne de la cohorte sur *tous* les énoncés mesurerait surtout la différence
  * entre les deux paniers d'énoncés tirés, pas une différence de sévérité.
  *
- * Rend une liste vide — et non une erreur — quand la fonction n'existe pas
- * encore en base : la comparaison par cohorte disparaît alors de l'écran, le
- * reste du rapport tient debout.
+ * `excludeSession` écarte les notes du joueur lui-même : déjà enregistrées au
+ * moment du bilan, elles le faisaient se comparer à lui-même.
+ *
+ * Rend une liste vide — et non une erreur — si la base ne répond pas : la
+ * comparaison par cohorte disparaît de l'écran, le reste du bilan tient.
  */
 export async function getDixMaisCohortStats(
   statementIds: string[],
   sex: string | null,
   age: string | null,
+  excludeSession: string | null = null,
 ): Promise<CohortStat[]> {
   if (statementIds.length === 0) return [];
 
@@ -693,9 +693,6 @@ export async function getDixMaisCohortStats(
     // voir le bloc de comparaison en développement.
     return statementIds.map((id, i) => ({
       statement_id: id,
-      votes: MIN_COHORT_VOTES + ((i * 5) % 20),
-      avg_delta: -2 - ((i * 3) % 4),
-      elimination_rate: ((i * 13) % 50),
       notes: 3 + ((i * 7) % 15),
       avg_note: 4 + ((i * 3) % 7),
     }));
@@ -704,29 +701,19 @@ export async function getDixMaisCohortStats(
   const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
   const supabase = createDixmaisServerClient();
 
-  const args = { p_statement_ids: statementIds, p_sex: sex, p_age: age } as any;
-  // Les deux mesures en parallèle : les anciens votes et, si la migration 030
-  // est jouée, les notes de la mécanique actuelle.
-  const [votes, notes] = await Promise.all([
-    supabase.rpc('dixmais_cohort_stats', args),
-    supabase.rpc('dixmais_cohort_notes', args),
-  ]);
+  const { data, error } = await supabase.rpc('dixmais_cohort_notes', {
+    p_statement_ids: statementIds,
+    p_sex: sex,
+    p_age: age,
+    p_exclude_session: excludeSession,
+  } as any);
 
-  if (votes.error) console.warn('[COHORTE] Votes illisibles :', votes.error.message);
-  if (notes.error && (notes.error as { code?: string }).code !== 'PGRST202') {
-    console.warn('[COHORTE] Notes illisibles :', notes.error.message);
+  if (error) {
+    console.warn('[COHORTE] Lecture impossible :', error.message);
+    return [];
   }
 
-  const parEnonce = new Map<string, CohortStat>();
-  for (const row of ((votes.data as unknown as CohortStat[] | null) ?? [])) {
-    if (row.votes >= MIN_COHORT_VOTES) parEnonce.set(row.statement_id, { ...row, votes: Number(row.votes), avg_delta: Number(row.avg_delta) });
-  }
-  for (const row of ((notes.data as unknown as { statement_id: string; notes: number; avg_note: number }[] | null) ?? [])) {
-    const existant = parEnonce.get(row.statement_id);
-    const complement = { notes: Number(row.notes), avg_note: Number(row.avg_note) };
-    parEnonce.set(row.statement_id, existant
-      ? { ...existant, ...complement }
-      : { statement_id: row.statement_id, votes: 0, avg_delta: 0, elimination_rate: 0, ...complement });
-  }
-  return [...parEnonce.values()];
+  return ((data as unknown as CohortStat[] | null) ?? [])
+    .map((row) => ({ statement_id: row.statement_id, notes: Number(row.notes), avg_note: Number(row.avg_note) }))
+    .filter((row) => row.notes >= MIN_COHORT_VOTES);
 }

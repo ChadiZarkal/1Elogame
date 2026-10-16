@@ -59,68 +59,61 @@ describe('getDixMaisLeaderboard', () => {
     votes_count: 0, total_delta: 0, elimination_count: 0, created_at: '', ...extra,
   });
 
-  it('classe sur la note, vraies notes et estimations confondues, la plus basse en tête', async () => {
+  it('classe sur les seules notes actuelles, la plus basse en tête', async () => {
     select.mockResolvedValue({
       data: [
-        ligne('a', 'Note réelle 6', { notes_count: 10, notes_total: 60 }),
-        ligne('b', 'Estimée 3', { votes_count: 10, total_delta: -70 }),
-        ligne('c', 'Rien de mesurable', { votes_count: 2, total_delta: -10 }),
-        ligne('d', 'Note réelle 2', { notes_count: 5, notes_total: 10, votes_count: 40, total_delta: 0 }),
+        ligne('a', 'Note 6', { notes_count: 10, notes_total: 60 }),
+        // Beaucoup d'anciens votes très négatifs, aucune note : plus de note du tout.
+        ligne('b', 'Seulement anciens votes', { votes_count: 400, total_delta: -2800 }),
+        ligne('c', 'Deux notes seulement', { notes_count: 2, notes_total: 2 }),
+        ligne('d', 'Note 2', { notes_count: 3, notes_total: 6, votes_count: 40, total_delta: 0 }),
       ],
       error: null,
     });
     const { getDixMaisLeaderboard } = await import('@/lib/repositories/dixmais');
 
     const classement = await getDixMaisLeaderboard(10);
-    expect(classement.map((l) => l.text)).toEqual(['Note réelle 2', 'Estimée 3', 'Note réelle 6', 'Rien de mesurable']);
-    expect(classement[0].note).toEqual({ note: 2, source: 'notes', echantillon: 5 });
-    expect(classement[3].note).toBeNull();
+    expect(classement.slice(0, 2).map((l) => l.text)).toEqual(['Note 2', 'Note 6']);
+    expect(classement[0].note).toEqual({ note: 2, echantillon: 3 });
+    expect(classement.find((l) => l.text === 'Seulement anciens votes')!.note).toBeNull();
+    expect(classement.find((l) => l.text === 'Deux notes seulement')!.note).toBeNull();
   });
 
   // Le même texte sur plusieurs lignes : les notes s'additionnent avant le
-  // calcul, comme les votes.
+  // calcul.
   it('réunit les notes des exemplaires d’un même énoncé', async () => {
     select.mockResolvedValue({
       data: [
-        ligne('a', 'Il ronfle', { notes_count: 3, notes_total: 24 }),
-        ligne('b', 'il ronfle ', { notes_count: 3, notes_total: 12 }),
+        ligne('a', 'Il ronfle', { notes_count: 2, notes_total: 16 }),
+        ligne('b', 'il ronfle ', { notes_count: 2, notes_total: 8 }),
       ],
       error: null,
     });
     const { getDixMaisLeaderboard } = await import('@/lib/repositories/dixmais');
 
     const [seul] = await getDixMaisLeaderboard(10);
-    expect(seul.note).toEqual({ note: 6, source: 'notes', echantillon: 6 });
+    expect(seul.note).toEqual({ note: 6, echantillon: 4 });
   });
 });
 
 describe('getDixMaisCohortStats', () => {
-  it('ajoute les notes de la cohorte aux anciens votes', async () => {
-    rpc.mockImplementation((nom: string) => Promise.resolve(
-      nom === 'dixmais_cohort_stats'
-        ? { data: [{ statement_id: 'a', votes: 4, avg_delta: -3, elimination_rate: 10 }], error: null }
-        : { data: [{ statement_id: 'a', notes: 6, avg_note: 5.5 }, { statement_id: 'b', notes: 2, avg_note: 12 }], error: null },
-    ));
+  it('lit les notes de la cohorte, sans la session du joueur', async () => {
+    rpc.mockResolvedValue({ data: [{ statement_id: 'a', notes: '6', avg_note: '5.5' }], error: null });
     const { getDixMaisCohortStats } = await import('@/lib/repositories/dixmais');
 
-    const stats = await getDixMaisCohortStats(['a', 'b'], 'femme', '19-22');
-    expect(stats).toEqual([
-      { statement_id: 'a', votes: 4, avg_delta: -3, elimination_rate: 10, notes: 6, avg_note: 5.5 },
-      { statement_id: 'b', votes: 0, avg_delta: 0, elimination_rate: 0, notes: 2, avg_note: 12 },
-    ]);
+    const stats = await getDixMaisCohortStats(['a', 'b'], 'femme', '19-22', 'ma-session');
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith('dixmais_cohort_notes', {
+      p_statement_ids: ['a', 'b'], p_sex: 'femme', p_age: '19-22', p_exclude_session: 'ma-session',
+    });
+    expect(stats).toEqual([{ statement_id: 'a', notes: 6, avg_note: 5.5 }]);
   });
 
-  it('se contente des anciens votes sans la migration 030', async () => {
-    rpc.mockImplementation((nom: string) => Promise.resolve(
-      nom === 'dixmais_cohort_stats'
-        ? { data: [{ statement_id: 'a', votes: 4, avg_delta: -3, elimination_rate: 10 }], error: null }
-        : { data: null, error: { code: 'PGRST202', message: 'Could not find the function' } },
-    ));
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  it('rend une liste vide si la base ne répond pas', async () => {
+    rpc.mockResolvedValue({ data: null, error: { message: 'timeout' } });
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { getDixMaisCohortStats } = await import('@/lib/repositories/dixmais');
 
-    const stats = await getDixMaisCohortStats(['a'], 'femme', '19-22');
-    expect(stats).toEqual([{ statement_id: 'a', votes: 4, avg_delta: -3, elimination_rate: 10 }]);
-    expect(warn).not.toHaveBeenCalled();
+    expect(await getDixMaisCohortStats(['a'], 'femme', '19-22')).toEqual([]);
   });
 });

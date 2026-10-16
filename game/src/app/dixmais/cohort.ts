@@ -15,63 +15,71 @@
  */
 
 import type { PlayerProfile } from '@/types/game';
-import { MAX_SCORE, MIN_SCORE, START_SCORE } from './scale';
+import { START_SCORE } from './scale';
 import type { ProfilJuge } from './moyenne';
 
+/** Ce que la base rend pour une info : les notes de la cohorte (migration
+ * 030), sans celles de la session du joueur (migration 031). */
 export interface CohortStat {
   statement_id: string;
-  votes: number;
-  avg_delta: number;
-  elimination_rate: number;
-  /** Notes de la mécanique actuelle (migration 030), quand la cohorte en a. */
-  notes?: number;
-  avg_note?: number | null;
+  notes: number;
+  avg_note: number;
 }
 
 export interface CohortComparison {
-  /** Note moyenne du joueur sur les phrases où la cohorte a voté. */
+  /** Note moyenne du joueur sur les phrases que la cohorte a notées. */
   mine: number;
-  /** Note moyenne de la cohorte sur ces mêmes phrases (voir `noteDesAutres`). */
+  /** Note moyenne de la cohorte sur ces mêmes phrases. */
   theirs: number;
   /** mine − theirs. Négatif = le joueur est plus sévère que sa cohorte. */
   gap: number;
   /** Nombre de phrases comparables. */
   sample: number;
-  /** Votes de la cohorte derrière la comparaison, tous énoncés confondus. */
+  /** Notes de la cohorte derrière la comparaison, toutes phrases confondues. */
   votes: number;
 }
 
-/**
- * Sous cinq phrases, l'écart tient au tirage plutôt qu'au tempérament.
- */
+/** Sous cinq phrases, l'écart tient au tirage plutôt qu'au tempérament. */
 const MIN_SAMPLE = 5;
 
 /**
- * Et sous ce total de votes, la cohorte n'est qu'une poignée de personnes.
+ * Et sous ce total de notes, la cohorte n'est qu'une poignée de personnes.
  *
- * C'est ce seuil-ci qui protège du bruit, et non un plancher par énoncé : la
- * comparaison moyenne plusieurs dizaines d'estimations, chacune pouvant reposer
- * sur un seul vote. Une estimation isolée et extrême pèse alors un
- * cinquantième, là où exiger huit votes par énoncé empêchait purement et
- * simplement la comparaison d'exister.
+ * C'est ce seuil-ci qui protège du bruit, et non un plancher par phrase : la
+ * comparaison moyenne plusieurs phrases, chacune pouvant ne reposer que sur
+ * une ou deux notes. Quinze plutôt que vingt-cinq : les notes de la mécanique
+ * actuelle viennent de démarrer, et un seuil plus haut aurait caché la
+ * comparaison pendant des semaines.
  */
-const MIN_TOTAL_VOTES = 25;
+const MIN_TOTAL_NOTES = 15;
 
 /** Tous les identifiants vus dans la session, sans doublon. */
 export function statementIdsOf(profils: ProfilJuge[]): string[] {
   return [...new Set(profils.flatMap((p) => p.propositions.map((x) => x.id)))];
 }
 
+/**
+ * `sessionId` : la session du joueur, exclue de la cohorte côté base. Ses
+ * propres notes sont déjà enregistrées au moment du bilan ; sans cette
+ * exclusion, sur une cohorte encore peu fournie, il se comparait surtout à
+ * lui-même et l'écart tendait vers zéro.
+ */
 export async function fetchCohortStats(
   statementIds: string[],
   profile: PlayerProfile,
+  sessionId?: string,
 ): Promise<CohortStat[]> {
   if (statementIds.length === 0) return [];
 
   const res = await fetch('/api/dixmais/cohort', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ statement_ids: statementIds, sex: profile.sex, age: profile.age }),
+    body: JSON.stringify({
+      statement_ids: statementIds,
+      sex: profile.sex,
+      age: profile.age,
+      ...(sessionId ? { session_id: sessionId } : {}),
+    }),
   });
   if (!res.ok) return [];
 
@@ -79,12 +87,6 @@ export async function fetchCohortStats(
   return (json?.data ?? []) as CohortStat[];
 }
 
-/**
- * @remarks Les votes du joueur font partie de la cohorte — il en est membre.
- * Sur une cohorte encore peu fournie, il se compare donc en partie à lui-même
- * et l'écart tend vers zéro. C'est la raison du seuil de votes appliqué côté
- * serveur : mieux vaut ne rien afficher qu'un écart écrasé par sa propre voix.
- */
 export function compareToCohort(
   profils: ProfilJuge[],
   stats: CohortStat[],
@@ -96,26 +98,18 @@ export function compareToCohort(
   for (const profil of profils) {
     profil.propositions.forEach((stmt, i) => {
       const stat = byId.get(stmt.id);
-      if (!stat) return;
-      // Les vraies notes de la cohorte d'abord ; à défaut, son coût moyen
-      // dans l'ancienne mécanique, ramené sur l'échelle du jeu (comme
-      // `noteDesAutres`).
-      const aDesNotes = (stat.notes ?? 0) > 0 && stat.avg_note !== null && stat.avg_note !== undefined;
-      if (!aDesNotes && stat.votes <= 0) return;
-      const noteCohorte = aDesNotes
-        ? Number(stat.avg_note)
-        : Math.min(MAX_SCORE, Math.max(MIN_SCORE, START_SCORE + stat.avg_delta));
-      pairs.push([profil.notes[i] ?? START_SCORE, noteCohorte]);
-      votes += aDesNotes ? Number(stat.notes) : stat.votes;
+      if (!stat || !(Number(stat.notes) > 0)) return;
+      pairs.push([profil.notes[i] ?? START_SCORE, Number(stat.avg_note)]);
+      votes += Number(stat.notes);
     });
   }
 
-  if (pairs.length < MIN_SAMPLE || votes < MIN_TOTAL_VOTES) return null;
+  if (pairs.length < MIN_SAMPLE || votes < MIN_TOTAL_NOTES) return null;
 
   // Moyenne non pondérée des deux côtés : la moyenne de la cohorte est calculée
-  // énoncé par énoncé puis moyennée comme le joueur moyenne ses propres notes.
-  // Cumuler les votes bruts donnerait plus de poids aux énoncés les plus servis
-  // d'un côté seulement, et l'écart mesurerait ce déséquilibre.
+  // phrase par phrase puis moyennée comme le joueur moyenne ses propres notes.
+  // Cumuler les notes brutes donnerait plus de poids aux phrases les plus
+  // servies d'un côté seulement, et l'écart mesurerait ce déséquilibre.
   const mine = pairs.reduce((acc, p) => acc + p[0], 0) / pairs.length;
   const theirs = pairs.reduce((acc, p) => acc + p[1], 0) / pairs.length;
   return { mine, theirs, gap: mine - theirs, sample: pairs.length, votes };
