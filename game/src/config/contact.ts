@@ -23,3 +23,21 @@ export const CONTACT_EMAIL = 'chadizarkal25@gmail.com';
 
 export const INSTAGRAM_HANDLE = 'redorgreen.fr';
 export const INSTAGRAM_URL = `https://www.instagram.com/${INSTAGRAM_HANDLE}`;
+
+/**
+ * Page de don (Ko-fi, Buy Me a Coffee, lien de paiement Stripe…).
+ *
+ * Lue dans la variable `NEXT_PUBLIC_DON_URL`, réglée sur Vercel : changer de
+ * plateforme ne demande aucune modification du code. Tant qu'elle est absente
+ * ou n'est pas une adresse https, aucun bouton de don ne s'affiche — mieux
+ * vaut pas de bouton qu'un bouton qui mène nulle part.
+ */
+export const DON_URL: string | null = (() => {
+  const brute = process.env.NEXT_PUBLIC_DON_URL?.trim();
+  if (!brute) return null;
+  try {
+    return new URL(brute).protocol === 'https:' ? brute : null;
+  } catch {
+    return null;
+  }
+})();

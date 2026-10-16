@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { CONTACT_EMAIL, INSTAGRAM_HANDLE, INSTAGRAM_URL } from '@/config/contact';
+import { CONTACT_EMAIL, DON_URL, INSTAGRAM_HANDLE, INSTAGRAM_URL } from '@/config/contact';
+import { LienCafe } from './LienCafe';
 
 /**
  * Pied de page présent sur toutes les routes publiques.
@@ -162,11 +163,21 @@ export function SiteFooter() {
                   Instagram
                 </a>
               </li>
+              <li>
+                <LienCafe className="text-[12px] font-semibold text-[#A6A6A6] transition-colors hover:text-white">
+                  Soutenir le site
+                </LienCafe>
+              </li>
             </ul>
           </div>
         </nav>
 
-        <div className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        {/* Hors du plan du site replié : visible sur mobile sans rien ouvrir.
+            Sur sa propre ligne : glissé dans la ligne de contact, il passait à
+            la ligne en y laissant une puce orpheline. */}
+        <LienCafe className="mt-8 inline-flex min-h-11 items-center text-[12px] font-semibold text-[#A6A6A6] transition-colors hover:text-white" />
+
+        <div className={`${DON_URL ? 'mt-2' : 'mt-8'} flex flex-wrap items-center gap-x-3 gap-y-1.5`}>
           <p className="text-[10px] text-[#5C5C5F]">
             RED OR GREEN © 2026 • POUR REPÉRER LES TOXICITÉS ORDINAIRES
           </p>

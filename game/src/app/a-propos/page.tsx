@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CONTACT_EMAIL, INSTAGRAM_HANDLE, INSTAGRAM_URL } from '@/config/contact';
+import { CONTACT_EMAIL, DON_URL, INSTAGRAM_HANDLE, INSTAGRAM_URL } from '@/config/contact';
 
 export const metadata: Metadata = {
   title: 'À propos — qui édite Red or Green et pourquoi',
@@ -97,6 +97,21 @@ export default function AProposPage() {
             <strong>119</strong> (enfance en danger), <strong>17</strong> (urgences).
           </p>
         </section>
+
+        {DON_URL && (
+          <section className="legal-page__section">
+            <h2>Soutenir le site</h2>
+            <p>
+              Les jeux sont gratuits et le resteront. Si l&apos;un d&apos;eux vous a fait rire ou
+              réfléchir, vous pouvez{' '}
+              <a href={DON_URL} target="_blank" rel="noopener noreferrer">
+                offrir un café
+              </a>{' '}
+              : cela aide à payer l&apos;hébergement et le temps passé à l&apos;écrire. Le paiement
+              se fait sur la plateforme de don ; le site n&apos;en voit rien.
+            </p>
+          </section>
+        )}
 
         <section className="legal-page__section">
           <h2>Nous écrire</h2>

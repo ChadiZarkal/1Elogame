@@ -31,6 +31,8 @@ import {
   type CohortComparison,
 } from './cohort';
 import { BoutonDiscret, BoutonPrincipal, Pastille, Pied, Section, TEINTES } from './ui';
+import { DON_URL } from '@/config/contact';
+import { LienCafe } from '@/components/ui/LienCafe';
 
 const SHARE_URL = 'https://redorgreen.fr/dixmais';
 
@@ -229,6 +231,17 @@ export function ReportScreen({ rounds, profile, getSessionId, onBack, onNext }: 
             )}
           </div>
         </Section>
+      )}
+
+      {/* ── Soutien ─────────────────────────────────────────────────────── */}
+      {/* Au bilan seulement : le joueur a fini sa série, on ne coupe rien. */}
+      {DON_URL && (
+        <section className="border-t py-5" style={{ borderColor: TEINTES.filet }}>
+          <p className="text-[13px] leading-snug" style={{ color: TEINTES.secondaire }}>
+            Le jeu est gratuit. S’il t’a plu, tu peux soutenir le site en offrant un café.
+          </p>
+          <LienCafe className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-[13px] font-semibold text-white ring-1 ring-white/15 transition-colors hover:bg-white/5" />
+        </section>
       )}
 
       {/* ── Suite ───────────────────────────────────────────────────────── */}
