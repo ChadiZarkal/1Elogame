@@ -340,14 +340,32 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
               ))}
             </ol>
 
-            <LienLigne href="/red-flags" onTap={tap} fleche="text-[#FFC04D]">
-              La liste des pires red flags, commentée
-            </LienLigne>
-            <LienLigne href="/classement" onTap={tap} fleche="text-[#FFC04D]">
-              {comportementsClasses !== null && comportementsClasses > 0
-                ? `Le classement complet — ${nombre.format(comportementsClasses)} comportements`
-                : 'Le classement complet'}
-            </LienLigne>
+            {/* Un vrai bouton, plein : en simple ligne bordée, comme les autres
+                liens de la page, il n'était presque pas cliqué. Le lien vers
+                la liste commentée (/red-flags) a été retiré de l'accueil, la
+                page existe toujours. */}
+            <Link
+              href="/classement"
+              onClick={tap}
+              className={`group mt-3 flex min-h-14 items-center gap-3 rounded-2xl bg-white px-5 py-3.5 text-black shadow-[0_8px_30px_rgba(255,255,255,0.08)] transition-transform motion-safe:active:scale-[0.98] ${FOCUS}`}
+            >
+              <Trophy size={20} aria-hidden className="shrink-0 text-[#D97706]" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-[16px] font-black leading-tight">
+                  Voir le classement complet
+                </span>
+                {comportementsClasses !== null && comportementsClasses > 0 && (
+                  <span className="mt-0.5 block text-[12px] font-bold text-black/55">
+                    {nombre.format(comportementsClasses)} comportements classés
+                  </span>
+                )}
+              </span>
+              <ArrowRight
+                size={20}
+                aria-hidden
+                className="shrink-0 transition-transform motion-safe:group-hover:translate-x-0.5"
+              />
+            </Link>
           </section>
         )}
 

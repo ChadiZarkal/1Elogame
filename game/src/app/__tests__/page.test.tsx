@@ -133,6 +133,14 @@ describe('Accueil', () => {
     }
   });
 
+  it('mène au classement complet par un bouton, plus à la liste commentée', async () => {
+    render(await HomePage());
+    const bouton = screen.getByRole('link', { name: /Voir le classement complet/ });
+    expect(bouton.getAttribute('href')).toBe('/classement');
+    const liens = Array.from(document.querySelectorAll('a')).map((x) => x.getAttribute('href'));
+    expect(liens).not.toContain('/red-flags');
+  });
+
   it('montre les comportements les plus mal jugés, et non une promesse', async () => {
     render(await HomePage());
     for (const pire of PIRES) {
