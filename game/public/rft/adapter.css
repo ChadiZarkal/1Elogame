@@ -1236,6 +1236,32 @@ body:has(.main-container) {
   text-wrap: balance;
 }
 
+/* Écran « la réponse » : la question porte le sens, en grand ; la réponse,
+   souvent un simple oui ou non, passe dessous en petit. */
+.story-question-forte {
+  max-width: 24rem;
+  margin: clamp(0.2rem, 1svh, 0.6rem) 0 !important;
+  color: var(--white);
+  font-size: clamp(1.5rem, 4svh, 2.3rem);
+  font-weight: bold;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.story-question-forte.is-longue {
+  font-size: clamp(1.25rem, 3.2svh, 1.75rem);
+}
+
+.story-reponse {
+  max-width: 24rem;
+  margin-bottom: clamp(0.2rem, 1svh, 0.6rem) !important;
+  color: var(--grey);
+  font-size: clamp(1rem, 2.3svh, 1.25rem);
+  font-style: italic;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
 /* Une réponse de trois lignes à la taille d'une réponse d'un mot pousserait
    le coût hors de l'écran. */
 .story-citation.is-longue {
@@ -1906,4 +1932,16 @@ body:has(.main-container) {
 .interstitiel-actions .button-start {
   min-width: min(100%, 17rem);
   white-space: nowrap;
+}
+
+/* Détail, « Highlights » : même inversion que dans les stories — la question
+   en grand, la réponse en petit. Même sélecteur que flac.css, chargé après. */
+.switch-quiz-end .client-container .game-wrapper .finish-block .stats-rare-section .stats-rare li .question {
+  font-size: var(--font-size-m);
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.switch-quiz-end .client-container .game-wrapper .finish-block .stats-rare-section .stats-rare li .answer {
+  font-size: var(--font-size-s);
 }

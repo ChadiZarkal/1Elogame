@@ -766,16 +766,20 @@ function EcranReponse({ resultat }: { resultat: Resultat }) {
   // Souvent, la réponse la plus chère est aussi la plus rare : la citer deux
   // fois sur le même écran ne dirait rien de plus.
   const memeReponse = Boolean(decisive && rare && decisive.reponse === rare.reponse);
-  const citation = (texte: string) => (
-    <p className={`story-citation${texte.length > 70 ? ' is-longue' : ''}`}>« {texte} »</p>
+  // La question en grand, la réponse en dessous en petit : les réponses se
+  // ressemblent d'une question à l'autre (« oui », « non », « souvent »…),
+  // c'est la question qui dit ce qui distingue le joueur.
+  const question = (texte: string) => (
+    <p className={`story-question-forte${texte.length > 70 ? ' is-longue' : ''}`}>{texte}</p>
   );
+  const citation = (texte: string) => <p className="story-reponse">Ta réponse : « {texte} »</p>;
 
   return (
     <>
       {decisive ? (
         <>
           <p className="story-surtitre">La réponse qui t’a coûté le plus</p>
-          <p className="story-question">{decisive.question}</p>
+          {question(decisive.question)}
           {citation(decisive.reponse)}
           <p className="story-cout">
             <strong>{decisive.points}</strong>
@@ -786,7 +790,7 @@ function EcranReponse({ resultat }: { resultat: Resultat }) {
         rare && (
           <>
             <p className="story-surtitre">Ta réponse la plus rare</p>
-            <p className="story-question">{rare.question}</p>
+            {question(rare.question)}
             {citation(rare.reponse)}
             <p className="story-geant jaune">{rare.part}<span>%</span></p>
             <p className="story-texte">des joueurs ont répondu comme toi</p>
