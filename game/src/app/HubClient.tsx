@@ -126,7 +126,7 @@ const AUTRES_JEUX: Jeu[] = [
 const REPERES: { emoji: string; titre: string; sous: string; href: string; couleur: string }[] = [
   {
     emoji: '🚩',
-    titre: 'GUIDE DES FLAGS',
+    titre: 'C’EST QUOI UN RED FLAG ?',
     sous: 'Green, white, orange, red, black : ce que chaque couleur veut dire',
     href: '/guide',
     couleur: '#5FE39B',
@@ -136,8 +136,8 @@ const REPERES: { emoji: string; titre: string; sous: string; href: string; coule
     // l'autre aide à les reconnaître dans une situation réelle. L'Observatoire
     // reste joignable par le baromètre, les articles et le pied de page.
     emoji: '🧭',
-    titre: "TESTS D'AUTO-ÉVALUATION",
-    sous: 'Violentomètre, consentomètre : faire le point sur une situation réelle',
+    titre: 'VIOLENTOMÈTRE ET AUTRES',
+    sous: 'Consentomètre, harcèlomètre… : faire le point sur une situation réelle',
     href: '/ressources',
     couleur: '#C4B5FD',
   },
