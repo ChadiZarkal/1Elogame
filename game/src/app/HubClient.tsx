@@ -174,6 +174,14 @@ function TitreSection({ id, children }: { id: string; children: React.ReactNode 
   );
 }
 
+/**
+ * La section « À lire » (les derniers articles) est masquée de l'accueil à la
+ * demande de Chadi, sans être supprimée : repasser à `true` la rétablit telle
+ * quelle. Les articles restent joignables par le pied de page et le menu des
+ * autres pages.
+ */
+const AFFICHER_A_LIRE = false;
+
 export function HubClient({ votes, comportementsClasses, pires, bande, articles }: DonneesHub) {
   const { tap } = useHaptics();
 
@@ -373,7 +381,7 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
         {/* ── 5b. À lire ─────────────────────────────────────────────────── */}
         {/* L'accueil n'a pas de barre de menu (retirée pour laisser la place
             aux jeux) : sans cette section, rien n'y menait aux articles. */}
-        {articles.length > 0 && (
+        {AFFICHER_A_LIRE && articles.length > 0 && (
           <section className="revele mt-10" aria-labelledby="titre-articles">
             <TitreSection id="titre-articles">À lire</TitreSection>
             <ul className="flex flex-col gap-2">

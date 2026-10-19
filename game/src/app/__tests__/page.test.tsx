@@ -104,21 +104,18 @@ describe('Accueil', () => {
     expect(jeux.at(-1)).toBe('LE PIRE DES DEUX');
   });
 
-  it('mène aux articles, que la barre de menu absente de l’accueil ne montre pas', async () => {
+  // Masquée, pas supprimée : voir AFFICHER_A_LIRE dans HubClient.
+  it('n’affiche plus la section « À lire »', async () => {
     render(await HomePage());
-    const section = screen.getByRole('region', { name: 'À lire' });
-    const liens = Array.from(section.querySelectorAll('a')).map((a) => a.getAttribute('href'));
-    expect(liens).toContain('/articles');
-    expect(liens.filter((h) => h?.startsWith('/articles/')).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('region', { name: 'À lire' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'À lire' })).toBeNull();
   });
 
-  it('place le guide et les outils d’auto-évaluation côte à côte, avant les articles', async () => {
+  it('place le guide et les outils d’auto-évaluation côte à côte', async () => {
     render(await HomePage());
     const comprendre = screen.getByRole('region', { name: 'Comprendre' });
     const liens = Array.from(comprendre.querySelectorAll('a')).map((a) => a.getAttribute('href'));
     expect(liens).toEqual(['/guide', '/ressources']);
-    const titres = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
-    expect(titres.indexOf('Comprendre')).toBeLessThan(titres.indexOf('À lire'));
   });
 
   it('ne promet pas « sans pub » : le site sert des annonces', async () => {
