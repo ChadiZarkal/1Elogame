@@ -9,7 +9,7 @@
  * et le châssis commun.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { RotateCcw } from 'lucide-react';
 import { Ambient } from './Ambient';
@@ -20,6 +20,8 @@ import { Verdict } from './Verdict';
 import { ReportScreen } from './ReportScreen';
 import { ProfileStep } from './ProfileStep';
 import { useDixMais } from './useDixMais';
+import { PausePub } from './PausePub';
+import { pauseDixmaisDue } from '@/config/ads';
 import { scoreColor } from './scale';
 
 export default function DixMaisPage() {
@@ -28,6 +30,34 @@ export default function DixMaisPage() {
   /** Le profil qu'affiche le verdict : toujours le dernier jugé, versé dans
    * l'historique au moment même où la phase bascule. */
   const lastRound = game.history.at(-1) ?? null;
+
+  /* La pause publicitaire, tous les cinq profils : elle s'intercale entre le
+     verdict (ou le bilan) et le profil suivant. `pauseVue` retient après
+     quel profil elle a déjà eu lieu, pour ne pas la montrer deux fois. */
+  const [enPause, setEnPause] = useState(false);
+  const pauseVue = useRef(0);
+  const profilSuivant = () => {
+    const n = game.history.length;
+    if (pauseDixmaisDue(n) && pauseVue.current !== n) {
+      pauseVue.current = n;
+      setEnPause(true);
+      return;
+    }
+    game.nextProfile();
+  };
+  const finirPause = () => {
+    setEnPause(false);
+    game.nextProfile();
+  };
+  // « Recommencer » remet l'historique à zéro : la pause repart du début, et
+  // une pause ouverte au moment du clic ne doit pas resurgir au verdict suivant.
+  const profilsJuges = game.history.length;
+  useEffect(() => {
+    if (profilsJuges === 0) pauseVue.current = 0;
+  }, [profilsJuges]);
+  useEffect(() => {
+    if (phase !== 'verdict' && phase !== 'report') setEnPause(false);
+  }, [phase]);
 
   // Le pied de page du site est un frère de cette page dans la mise en page
   // racine : le document reste donc défilant derrière le châssis `h-dvh`, et un
@@ -158,25 +188,29 @@ export default function DixMaisPage() {
             </motion.div>
           )}
 
-          {phase === 'verdict' && lastRound && (
+          {enPause && (phase === 'verdict' || phase === 'report') && (
+            <PausePub key="pause-pub" profilsJuges={game.history.length} onContinuer={finirPause} />
+          )}
+
+          {!enPause && phase === 'verdict' && lastRound && (
             <Verdict
               key="verdict"
               profil={lastRound}
               sessionCount={game.history.length}
-              onNext={game.nextProfile}
+              onNext={profilSuivant}
               onReport={game.openReport}
               loadFailed={game.loadFailed}
             />
           )}
 
-          {phase === 'report' && game.history.length > 0 && (
+          {!enPause && phase === 'report' && game.history.length > 0 && (
             <ReportScreen
               key="report"
               rounds={game.history}
               profile={game.playerProfile}
               getSessionId={game.getSessionId}
               onBack={game.closeReport}
-              onNext={game.nextProfile}
+              onNext={profilSuivant}
             />
           )}
         </AnimatePresence>

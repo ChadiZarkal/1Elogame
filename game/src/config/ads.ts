@@ -69,6 +69,39 @@ export const ACCUEIL_NATIVE: NativeAdUnit = {
   containerId: 'container-8413c6c99c5cae8d29d9ac7c0cf1d2d6',
 };
 
+/**
+ * « C'est un 10 mais… » : une pause publicitaire tous les cinq profils, entre
+ * un verdict (ou le bilan) et le profil suivant. Demandée côté produit le
+ * 2026-10-19.
+ *
+ * L'encart natif plutôt que les deux autres formats :
+ *  - le pop-under s'ouvrirait au premier clic, et dans ce jeu tout est clic ;
+ *    surtout, AdSense est chargé sur /dixmais, et son règlement interdit ses
+ *    annonces sur une page portant un pop-under ;
+ *  - la barre sociale flotte en bas de l'écran, là où vivent la jauge et le
+ *    bouton « Valider » : elle les recouvrirait pendant toute la partie.
+ * L'encart natif, lui, occupe un écran à part, puis le jeu reprend.
+ *
+ * Même conteneur que les autres encarts natifs : aucun n'est allumé sur
+ * /dixmais, il est seul sur la page.
+ */
+export const DIXMAIS_PAUSE: NativeAdUnit = {
+  enabled: true,
+  src: ACCUEIL_NATIVE.src,
+  containerId: ACCUEIL_NATIVE.containerId,
+};
+
+/** Une pause tous les combien de profils jugés. */
+export const DIXMAIS_PAUSE_TOUS_LES = 5;
+
+/** Durée minimale de la pause, avant que le profil suivant soit accessible. */
+export const DIXMAIS_PAUSE_DUREE_S = 5;
+
+/** Faut-il une pause après ce nombre de profils jugés ? */
+export function pauseDixmaisDue(profilsJuges: number): boolean {
+  return DIXMAIS_PAUSE.enabled && profilsJuges > 0 && profilsJuges % DIXMAIS_PAUSE_TOUS_LES === 0;
+}
+
 export const SOCIAL_BAR: AdUnit = {
   enabled: false,
   src: 'https://pl31008336.profitableratecpmnetwork.com/68/18/5e/68185e1c4ae03b3726a06b8ab25952ad.js',
