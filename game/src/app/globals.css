@@ -274,6 +274,12 @@
 .native-ad :where(img, iframe, table) {
   max-width: 100%;
 }
+/* Format carré de l'accueil : centré, à la largeur d'une carte sur mobile,
+   sans s'étaler sur toute la colonne à l'écran large. */
+.native-ad--carre {
+  max-width: 22rem;
+  margin-inline: auto;
+}
 
 /* ========== Scrollbar ========== */
 

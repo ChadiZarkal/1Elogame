@@ -53,6 +53,22 @@ export const NATIVE_BANNER: NativeAdUnit = {
   containerId: 'container-8413c6c99c5cae8d29d9ac7c0cf1d2d6',
 };
 
+/**
+ * Encart natif carré (1:1) de l'accueil, juste après « Offrir un café ».
+ * Demandé côté produit le 2026-10-19, en connaissance des réserves de
+ * l'en-tête sur `NATIVE_BANNER` (examen AdSense) : c'est un emplacement à part,
+ * allumé seul, qui ne rallume pas le bandeau des autres pages.
+ *
+ * Même conteneur que `NATIVE_BANNER` : la régie l'impose pour cet emplacement.
+ * Les deux ne doivent donc jamais être allumés sur une même page — l'accueil
+ * porte aussi `PageNotes`, qui rend `NATIVE_BANNER`.
+ */
+export const ACCUEIL_NATIVE: NativeAdUnit = {
+  enabled: true,
+  src: 'https://bauval.org/21/8413c6c99c5cae8d29d9ac7c0cf1d2d6',
+  containerId: 'container-8413c6c99c5cae8d29d9ac7c0cf1d2d6',
+};
+
 export const SOCIAL_BAR: AdUnit = {
   enabled: false,
   src: 'https://pl31008336.profitableratecpmnetwork.com/68/18/5e/68185e1c4ae03b3726a06b8ab25952ad.js',

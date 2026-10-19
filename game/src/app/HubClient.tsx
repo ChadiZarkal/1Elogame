@@ -42,6 +42,8 @@ import Image from 'next/image';
 import { ArrowRight, Shield, Trophy } from 'lucide-react';
 import { useHaptics } from '@/lib/hooks';
 import { DON_URL } from '@/config/contact';
+import { ACCUEIL_NATIVE } from '@/config/ads';
+import { NativeAd } from '@/components/ads/NativeAd';
 
 type Jeu = {
   id: string;
@@ -435,7 +437,10 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
           </a>
         </section>
 
-        {/* ── 5d. Et si ça ne va pas ? ───────────────────────────────────── */}
+        {/* ── 5d. Publicité (encart natif carré) ─────────────────────────── */}
+        <NativeAd unit={ACCUEIL_NATIVE} className="native-ad--carre" />
+
+        {/* ── 5e. Et si ça ne va pas ? ───────────────────────────────────── */}
         {/* Ce bloc était un tiroir : il fallait avoir l'idée d'appuyer sur un
             bouclier pour le trouver. C'est le seul contenu de la page dont on
             peut avoir besoin dans l'urgence. */}

@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { isAdFreePath, NATIVE_BANNER } from '@/config/ads';
+import { isAdFreePath, NATIVE_BANNER, type NativeAdUnit } from '@/config/ads';
 import { useAdsterraScript } from './useAdsterraScript';
 
 /**
@@ -31,13 +31,20 @@ import { useAdsterraScript } from './useAdsterraScript';
  * c'est-à-dire souvent. L'emplacement est placé sous la ligne de flottaison,
  * là où un décalage tardif ne déplace rien de ce qui est à l'écran.
  */
-export function NativeAd({ className = '' }: { className?: string }) {
+export function NativeAd({
+  className = '',
+  unit = NATIVE_BANNER,
+}: {
+  className?: string;
+  /** L'emplacement de la régie ; le bandeau des pages de contenu par défaut. */
+  unit?: NativeAdUnit;
+}) {
   const hostRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname() ?? '';
 
-  useAdsterraScript(NATIVE_BANNER.src, NATIVE_BANNER.enabled, hostRef);
+  useAdsterraScript(unit.src, unit.enabled, hostRef);
 
-  if (!NATIVE_BANNER.enabled) return null;
+  if (!unit.enabled) return null;
   if (isAdFreePath(pathname)) return null;
 
   return (
@@ -51,7 +58,7 @@ export function NativeAd({ className = '' }: { className?: string }) {
       </p>
       {/* Le script de la régie retrouve ce conteneur par son identifiant : il
           est imposé par l'emplacement, pas choisi ici. */}
-      <div id={NATIVE_BANNER.containerId} />
+      <div id={unit.containerId} />
     </aside>
   );
 }
