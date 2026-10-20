@@ -2,9 +2,9 @@
 
 /**
  * @module dixmais/Verdict
- * Fin d'un profil : les cinq notes deviennent une seule.
+ * Fin d'un profil : les sept notes deviennent une seule.
  *
- * En haut, ce qu'on vient chercher : la personne, ses cinq notes qui se
+ * En haut, ce qu'on vient chercher : la personne, ses sept notes qui se
  * fondent en une moyenne, et la fin qui la nomme. Dessous, sans cadres, le
  * détail note par note. Un seul bouton doré ; le reste en actions discrètes.
  */
@@ -18,7 +18,7 @@ import { BoutonDiscret, BoutonPrincipal, Pastille, Pied, Section, TEINTES } from
 
 const SHARE_URL = 'https://redorgreen.fr/dixmais';
 
-/** Délai avant que la moyenne n'apparaisse : le temps de voir les cinq notes. */
+/** Délai avant que la moyenne n'apparaisse : le temps de voir les sept notes. */
 const DELAI_MOYENNE = 0.75;
 
 interface Props {
@@ -73,7 +73,7 @@ export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: 
   }, [copied]);
 
   const share = async () => {
-    const text = `${profil.nom}, ${profil.age} : 5 révélations, ${formatNote(moyenne)}/10 de moyenne — « ${fin.title} ». Et toi, tu lui mets combien ?`;
+    const text = `${profil.nom}, ${profil.age} : ${profil.notes.length} révélations, ${formatNote(moyenne)}/10 de moyenne — « ${fin.title} ». Et toi, tu lui mets combien ?`;
     try {
       if (navigator.share) {
         await navigator.share({ title: "C'est un 10 mais…", text, url: SHARE_URL });
@@ -112,7 +112,7 @@ export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: 
           </span>
         </div>
 
-        {/* Les cinq notes, puis leur moyenne : la règle du jeu, montrée. */}
+        {/* Les sept notes, puis leur moyenne : la règle du jeu, montrée. */}
         <div className="mt-5 flex items-center gap-1.5" aria-hidden>
           {notes.map((n, i) => (
             <motion.span
@@ -194,7 +194,7 @@ export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: 
 
       {/* ── Le détail ───────────────────────────────────────────────────── */}
       <div className="mt-7">
-        <Section titre="Tes 5 notes">
+        <Section titre={`Tes ${profil.notes.length} notes`}>
           <ul>
             {propositions.map((p, i) => {
               const autres = communaute[i];

@@ -99,7 +99,7 @@ export default function DixMaisPage() {
     <div className="relative flex h-[calc(100dvh-var(--header-h,3rem))] min-h-[500px] flex-col overflow-hidden text-white select-none">
       <Ambient score={game.ambientScore} shock={game.shock} />
 
-      {/* Une seule ligne : la progression en cinq traits, et « recommencer ».
+      {/* Une seule ligne : la progression en sept traits, et « recommencer ».
           Les traits prennent la couleur de la note donnée — c'est le seul
           rappel des notes passées pendant la partie. */}
       <header className="relative z-10 flex h-12 shrink-0 items-center gap-4 px-5 [@media(max-height:620px)]:h-10">

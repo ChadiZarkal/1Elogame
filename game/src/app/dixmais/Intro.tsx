@@ -70,7 +70,7 @@ export function Intro({ onStart, failed }: { onStart: () => void; failed: boolea
           <Demonstration />
 
           <p className="mt-6 max-w-[28ch] text-[15px] leading-snug" style={{ color: TEINTES.secondaire }}>
-            Cinq infos sur quelqu&apos;un, notées une par une de 0 à 15.{' '}
+            Sept infos sur quelqu&apos;un, notées une par une de 0 à 15.{' '}
             <span className="text-white">Sa note, c&apos;est ta moyenne.</span>
           </p>
         </div>

@@ -67,7 +67,7 @@ export const HOME_NOTES: PageNotes = {
       heading: 'Quel jeu pour quoi',
       bullets: [
         'Le pire des deux — deux comportements, tu désignes le plus grave. C\'est ce jeu qui alimente le classement.',
-        "C'est un 10 mais… — un profil, cinq infos notées une par une : les red flags font descendre sous 10, les green flags peuvent monter jusqu'à 15. Sa note finale est la moyenne des cinq.",
+        "C'est un 10 mais… — un profil, sept infos notées une par une : les red flags font descendre sous 10, les green flags peuvent monter jusqu'à 15. Sa note finale est la moyenne des sept.",
         "L'Oracle — tu écris une situation, un modèle génératif rend un verdict tranché. À prendre pour ce que c'est : une amorce de discussion, pas un avis autorisé.",
       ],
     },
@@ -229,13 +229,13 @@ export const JEU_NOTES: PageNotes = {
 export const DIXMAIS_NOTES: PageNotes = {
   title: 'Comprendre ce jeu',
   lede:
-    "Un profil, cinq infos : des red flags et des green flags. Tu notes chacune seule, de 0 à 15, et la personne reçoit la moyenne des cinq. Le jeu ne demande pas si un comportement est grave dans l'absolu, mais ce qu'il te coûte — ou ce qu'il te rapporte.",
+    "Un profil, sept infos : des red flags et des green flags. Tu notes chacune seule, de 0 à 15, et la personne reçoit la moyenne des sept. Le jeu ne demande pas si un comportement est grave dans l'absolu, mais ce qu'il te coûte — ou ce qu'il te rapporte.",
   blocks: [
     {
       heading: 'La règle',
       body: [
         "Chaque info se présente comme une phrase : « C'est un 10, mais… » pour un red flag, « C'est un 10, et en plus… » pour un green flag. Tu dis combien la personne vaut, rien qu'avec ça, en partant de 10. Puis l'info suivante arrive, et la jauge repart de 10.",
-        "Un red flag fait descendre. Un green flag peut faire monter au-delà du 10, jusqu'à 15 : un 14/10, c'est une qualité qui t'a vraiment conquis. À la cinquième info, les cinq notes se fondent en une seule : la moyenne, qui devient la note de la personne. Un 0 pèse lourd, mais il n'arrête pas la partie.",
+        "Un red flag fait descendre. Un green flag peut faire monter au-delà du 10, jusqu'à 15 : un 14/10, c'est une qualité qui t'a vraiment conquis. À la septième info, les sept notes se fondent en une seule : la moyenne, qui devient la note de la personne. Un 0 pèse lourd, mais il n'arrête pas la partie.",
       ],
     },
     {
@@ -248,7 +248,7 @@ export const DIXMAIS_NOTES: PageNotes = {
     {
       heading: 'Ce que dit ta note finale',
       body: [
-        "Deux joueurs peuvent finir sur la même moyenne par des chemins opposés : l'un a mis 6 partout, l'autre a mis quatre 9 et un 0. Le chiffre ne les distingue pas — les cinq notes, oui.",
+        "Deux joueurs peuvent finir sur la même moyenne par des chemins opposés : l'un a mis 6 partout, l'autre a mis six 7 et un 0. Le chiffre ne les distingue pas — les sept notes, oui.",
         "C'est pour cela que le jeu montre le calcul plutôt que le seul résultat, et qu'il signale l'info qui a le plus coûté à la moyenne — et celle qui lui a le plus rapporté.",
       ],
     },
@@ -272,7 +272,7 @@ export const DIXMAIS_NOTES: PageNotes = {
     {
       question: 'Combien d’infos par profil ?',
       answer:
-        'Cinq : trois red flags et deux green flags. Assez pour que la moyenne veuille dire quelque chose, assez peu pour enchaîner les profils.',
+        'Sept : cinq red flags et deux green flags. Assez pour que la moyenne veuille dire quelque chose, assez peu pour enchaîner les profils.',
     },
     {
       question: 'Pourquoi peut-on mettre plus que 10 ?',
@@ -282,7 +282,7 @@ export const DIXMAIS_NOTES: PageNotes = {
     {
       question: 'Que se passe-t-il si je mets 0 ?',
       answer:
-        "Rien ne s'arrête : le 0 compte dans la moyenne comme les autres notes. Il pèse simplement très lourd — à lui seul, il retire deux points à une moyenne de cinq notes.",
+        "Rien ne s'arrête : le 0 compte dans la moyenne comme les autres notes. Il pèse simplement très lourd — face à un 10, il retire près d'un point et demi à une moyenne de sept notes.",
     },
     {
       question: 'Les profils sont-ils de vraies personnes ?',

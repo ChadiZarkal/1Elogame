@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { ENREGISTRER_NOTES, useDixMais } from '../useDixMais';
+import { PROPOSITIONS_PAR_PROFIL } from '../moyenne';
 
-function statementsFactices(nombre = 5) {
+function statementsFactices(nombre = PROPOSITIONS_PAR_PROFIL) {
   return Array.from({ length: nombre }, (_, i) => ({
     id: `stmt-${i}`,
     text: `Red flag ${i + 1}`,
@@ -76,12 +77,14 @@ describe('useDixMais — enchaînement du départ', () => {
 
   it('entre directement en partie quand le profil est déjà connu', async () => {
     const { result } = await enPartie();
-    expect(result.current.round?.statements).toHaveLength(5);
+    expect(PROPOSITIONS_PAR_PROFIL).toBe(7);
+    expect(result.current.round?.statements).toHaveLength(7);
   });
 
-  it('demande deux green flags par profil', async () => {
+  it('demande sept infos, dont deux green flags, par profil', async () => {
     await enPartie();
     const requete = appels.find((a) => a.url.startsWith('/api/dixmais/statements'));
+    expect(requete?.url).toContain('count=7');
     expect(requete?.url).toContain('verts=2');
     expect(requete?.url).not.toContain('types=negative');
   });
@@ -102,22 +105,22 @@ describe('useDixMais — chaque révélation se note seule', () => {
     expect(result.current.runningAverage).toBe(5);
   });
 
-  it('donne au profil la moyenne des cinq notes, et seulement au cinquième', async () => {
+  it('donne au profil la moyenne des sept notes, et seulement à la septième', async () => {
     const { result } = await enPartie();
     vi.useFakeTimers();
 
-    [0, 6, 8, 10, 6].forEach((n, i) => {
+    [0, 6, 8, 10, 6, 7, 5].forEach((n, i) => {
       noter(result, n);
       // Un 0 n'arrête plus la manche.
-      if (i < 4) expect(result.current.phase).toBe('reveal');
+      if (i < 6) expect(result.current.phase).toBe('reveal');
     });
 
     expect(result.current.phase).toBe('verdict');
     const juge = result.current.history[0];
-    expect(juge.notes).toEqual([0, 6, 8, 10, 6]);
+    expect(juge.notes).toEqual([0, 6, 8, 10, 6, 7, 5]);
     expect(juge.moyenne).toBe(6);
     // Les autres : la moyenne de leurs notes (7), pas l'ancienne estimation (8).
-    expect(juge.communaute).toEqual([7, 7, 7, 7, 7]);
+    expect(juge.communaute).toEqual([7, 7, 7, 7, 7, 7, 7]);
     expect(juge.moyenneCommunaute).toBe(7);
     expect(juge.fin.key).toBeTruthy();
   });
@@ -131,14 +134,14 @@ describe('useDixMais — chaque révélation se note seule', () => {
     act(() => result.current.setDraft(22));
     expect(result.current.draft).toBe(15);
 
-    [15, 14, 10, 12, 9].forEach((n) => noter(result, n));
+    [15, 14, 10, 12, 9, 13, 11].forEach((n) => noter(result, n));
     expect(result.current.history[0].moyenne).toBe(12);
   });
 
   it('teinte le fond de la moyenne au verdict', async () => {
     const { result } = await enPartie();
     vi.useFakeTimers();
-    [2, 2, 2, 2, 2].forEach((n) => noter(result, n));
+    [2, 2, 2, 2, 2, 2, 2].forEach((n) => noter(result, n));
     expect(result.current.ambientScore).toBe(2);
   });
 });

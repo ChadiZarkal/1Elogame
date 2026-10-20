@@ -7,7 +7,7 @@
  * La règle tient en deux lignes : chaque révélation se note **seule**, de 0 à
  * 15, en repartant de 10 — un red flag fait descendre, un green flag peut
  * faire dépasser 10 ; et à la cinquième, la personne reçoit la moyenne des
- * cinq. Le calcul est dans `moyenne.ts`, l'affichage dans les écrans — ce
+ * sept. Le calcul est dans `moyenne.ts`, l'affichage dans les écrans — ce
  * fichier ne fait qu'enchaîner.
  */
 
@@ -62,7 +62,7 @@ export interface Flash {
 }
 
 async function fetchStatements(count: number, excludeIds: string[]): Promise<DixMaisStatement[]> {
-  // Trois red flags, deux green flags : la jauge va jusqu'à 15, une qualité
+  // Cinq red flags, deux green flags : la jauge va jusqu'à 15, une qualité
   // peut donc rapporter plus que le 10 de départ.
   const params = new URLSearchParams({ count: String(count), verts: String(GREEN_FLAGS_PAR_PROFIL) });
   if (excludeIds.length) params.set('exclude', excludeIds.join(','));
@@ -91,7 +91,7 @@ function sendNote(statementId: string, sessionId: string, note: number, profile:
   }).catch(() => null);
 }
 
-/** Fige un profil jugé : ses cinq notes, sa moyenne, ce qu'en pensent les
+/** Fige un profil jugé : ses sept notes, sa moyenne, ce qu'en pensent les
  * autres, et la fin retenue. */
 export function closeRound(
   round: Round,

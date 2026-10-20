@@ -32,7 +32,7 @@ function DixMaisJsonLd() {
     '@context': 'https://schema.org',
     '@type': 'VideoGame',
     name: "C'est un 10 mais...",
-    description: "Cinq infos notées une par une, de 0 à 15/10. La note du profil est la moyenne des cinq.",
+    description: "Sept infos notées une par une, de 0 à 15/10. La note du profil est la moyenne des sept.",
     url: `${SITE_URL}/dixmais`,
     genre: 'Party Game',
     numberOfPlayers: { '@type': 'QuantitativeValue', minValue: 1 },

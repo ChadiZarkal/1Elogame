@@ -1,7 +1,7 @@
 /**
  * @module dixmais/moyenne
  * La règle du jeu : chaque révélation se note seule, et la note du profil est
- * la moyenne des cinq.
+ * la moyenne des sept.
  *
  * Un red flag fait descendre sous 10 ; un green flag peut faire monter
  * au-dessus, jusqu'à 15. Une moyenne peut donc dépasser 10 : c'est le
@@ -10,7 +10,7 @@
  * L'ancienne version empilait les révélations et faisait réajuster une note
  * unique, qui ne remontait presque jamais. Ici, chaque phrase est jugée pour
  * elle-même — « c'est un 10, mais il est jaloux maladif : combien ? » — et ce
- * n'est qu'une fois les cinq jugées que la personne reçoit sa note : la
+ * n'est qu'une fois les sept jugées que la personne reçoit sa note : la
  * moyenne. Un zéro pèse lourd, mais il n'efface plus le reste.
  *
  * Tout est pur et sans réseau : l'écran de fin, la fin retenue et le bilan de
@@ -20,16 +20,17 @@
 import { noteMesuree, type CompteursEnonce } from '@/lib/dixmaisNote';
 import { MAX_SCORE, MIN_SCORE, START_SCORE } from './scale';
 
-/** Cinq révélations par profil : assez pour qu'une moyenne veuille dire
- * quelque chose, assez peu pour qu'on enchaîne les profils. */
-export const PROPOSITIONS_PAR_PROFIL = 5;
+/** Sept révélations par profil (cinq le 2026-10-19, sept à la demande de
+ * Chadi) : assez pour qu'une moyenne veuille dire quelque chose, assez peu
+ * pour qu'on enchaîne les profils. */
+export const PROPOSITIONS_PAR_PROFIL = 7;
 
 /** Dont deux green flags : de quoi faire remonter un profil, sans que les
  * qualités l'emportent sur les défauts, qui restent le cœur du jeu. */
 export const GREEN_FLAGS_PAR_PROFIL = 2;
 
 
-/** Une moyenne des autres n'est citée que si au moins trois des cinq phrases
+/** Une moyenne des autres n'est citée que si au moins trois des sept phrases
  * sont mesurables : sinon elle ne parle plus du même profil. */
 const MESURABLES_MIN_PROFIL = 3;
 
@@ -68,7 +69,7 @@ export interface ProfilJuge {
   notes: number[];
   /** La note que les autres donnent à cette révélation, `null` si trop peu votée. */
   communaute: (number | null)[];
-  /** La note de la personne : la moyenne exacte des cinq. */
+  /** La note de la personne : la moyenne exacte des sept. */
   moyenne: number;
   /** Ce que les autres lui auraient mis, `null` si trop peu mesurable. */
   moyenneCommunaute: number | null;
@@ -166,7 +167,7 @@ const Il = (c: ContexteFin) => (c.pronom === 'elle' ? 'Elle' : 'Il');
 const il = (c: ContexteFin) => c.pronom;
 
 const CANDIDATES: Candidate[] = [
-  // ── Palier 3 : ce que les cinq notes racontent précisément ───────────────
+  // ── Palier 3 : ce que les sept notes racontent précisément ───────────────
   {
     key: 'hors-bareme',
     tier: 3,
@@ -312,7 +313,7 @@ const CANDIDATES: Candidate[] = [
     when: (c) => c.notes.length >= 4 && Math.max(...c.notes) - Math.min(...c.notes) <= 1,
     build: () => ({
       title: 'LE BARÈME',
-      subtitle: 'Cinq révélations, cinq notes à un point près. Tu as une règle, et tu t’y tiens.',
+      subtitle: 'Sept révélations, sept notes à un point près. Tu as une règle, et tu t’y tiens.',
       tone: 'neutral',
     }),
   },
