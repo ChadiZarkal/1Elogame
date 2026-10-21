@@ -15,6 +15,8 @@ import { Trophy, Share2, Check, BarChart3 } from 'lucide-react';
 import { START_SCORE, scoreColor, scoreInk, scoreLabel, withAlpha } from './scale';
 import { formatNote, poidsDansLaMoyenne, type ProfilJuge } from './moyenne';
 import { BoutonDiscret, BoutonPrincipal, Pastille, Pied, Section, TEINTES } from './ui';
+import { NativeAd } from '@/components/ads/NativeAd';
+import { DIXMAIS_VERDICT } from '@/config/ads';
 
 const SHARE_URL = 'https://redorgreen.fr/dixmais';
 
@@ -191,6 +193,12 @@ export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: 
           </motion.p>
         )}
       </div>
+
+      {/* ── Publicité : le carré, après chaque profil ───────────────────── */}
+      {/* Sous la note et l'avis des autres, avant le détail : le joueur a son
+          verdict, rien n'est caché. `key` : un nouveau profil remonte
+          l'encart, et le script de la régie repasse derrière. */}
+      <NativeAd key={profil.numero} unit={DIXMAIS_VERDICT} className="native-ad--carre" />
 
       {/* ── Le détail ───────────────────────────────────────────────────── */}
       <div className="mt-7">

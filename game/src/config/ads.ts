@@ -70,6 +70,19 @@ export const ACCUEIL_NATIVE: NativeAdUnit = {
 };
 
 /**
+ * « C'est un 10 mais… » : l'encart natif carré sur l'écran du verdict, après
+ * chaque profil (demandé côté produit le 2026-10-21). Il s'insère dans la
+ * page, sous la note : pas d'écran à part, pas de compte à rebours. Il
+ * remplace la pause tous les cinq profils (`DIXMAIS_PAUSE`, éteinte) — les
+ * deux ensemble feraient deux pubs d'affilée au cinquième profil.
+ */
+export const DIXMAIS_VERDICT: NativeAdUnit = {
+  enabled: true,
+  src: ACCUEIL_NATIVE.src,
+  containerId: ACCUEIL_NATIVE.containerId,
+};
+
+/**
  * « C'est un 10 mais… » : une pause publicitaire tous les cinq profils, entre
  * un verdict (ou le bilan) et le profil suivant. Demandée côté produit le
  * 2026-10-19.
@@ -86,7 +99,8 @@ export const ACCUEIL_NATIVE: NativeAdUnit = {
  * /dixmais, il est seul sur la page.
  */
 export const DIXMAIS_PAUSE: NativeAdUnit = {
-  enabled: true,
+  // Éteinte le 2026-10-21 : remplacée par l'encart du verdict (DIXMAIS_VERDICT).
+  enabled: false,
   src: ACCUEIL_NATIVE.src,
   containerId: ACCUEIL_NATIVE.containerId,
 };

@@ -1,17 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { DIXMAIS_PAUSE, DIXMAIS_PAUSE_TOUS_LES, pauseDixmaisDue } from '@/config/ads';
+import { DIXMAIS_PAUSE, DIXMAIS_VERDICT, pauseDixmaisDue } from '@/config/ads';
 
-describe('pause publicitaire de « C’est un 10 mais… »', () => {
-  it('tombe tous les cinq profils, jamais avant', () => {
-    expect(DIXMAIS_PAUSE_TOUS_LES).toBe(5);
-    expect([0, 1, 2, 3, 4].some(pauseDixmaisDue)).toBe(false);
-    expect(pauseDixmaisDue(5)).toBe(true);
-    expect([6, 7, 8, 9].some(pauseDixmaisDue)).toBe(false);
-    expect(pauseDixmaisDue(10)).toBe(true);
+describe('publicité de « C’est un 10 mais… »', () => {
+  // Depuis le 2026-10-21 : le carré sur chaque verdict, plus de pause.
+  it('affiche l’encart natif sur chaque verdict', () => {
+    expect(DIXMAIS_VERDICT.enabled).toBe(true);
+    expect(DIXMAIS_VERDICT.containerId).toMatch(/^container-/);
+    expect(DIXMAIS_VERDICT.src).toMatch(/^https:\/\//);
   });
 
-  it('utilise l’encart natif', () => {
-    expect(DIXMAIS_PAUSE.containerId).toMatch(/^container-/);
-    expect(DIXMAIS_PAUSE.src).toMatch(/^https:\/\//);
+  it('n’ouvre plus la pause tous les cinq profils', () => {
+    expect(DIXMAIS_PAUSE.enabled).toBe(false);
+    expect([0, 5, 10, 15].some(pauseDixmaisDue)).toBe(false);
   });
 });
