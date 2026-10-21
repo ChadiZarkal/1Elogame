@@ -83,6 +83,17 @@ export const DIXMAIS_VERDICT: NativeAdUnit = {
 };
 
 /**
+ * « Le pire des deux » : l'encart natif carré sur le récap de fin de partie
+ * (`/jeu/recap`), sous « Partager mon résultat ». Demandé côté produit le
+ * 2026-10-21. Rien pendant les duels : `/jeu/jouer` reste sans publicité.
+ */
+export const JEU_RECAP: NativeAdUnit = {
+  enabled: true,
+  src: ACCUEIL_NATIVE.src,
+  containerId: ACCUEIL_NATIVE.containerId,
+};
+
+/**
  * « C'est un 10 mais… » : une pause publicitaire tous les cinq profils, entre
  * un verdict (ou le bilan) et le profil suivant. Demandée côté produit le
  * 2026-10-19.
@@ -168,7 +179,8 @@ export const AD_FREE_PATHS: RegExp[] = [
   /^\/admin(\/|$)/,
   /^\/dixmais\/admin(\/|$)/,
   /^\/jeu\/jouer(\/|$)/,
-  /^\/jeu\/recap(\/|$)/,
+  // `/jeu/recap` en est sorti le 2026-10-21 : la fin de partie porte l'encart
+  // JEU_RECAP. Il reste exclu d'AdSense (voir `AdSenseScript`).
   /^\/hors-ligne(\/|$)/,
 ];
 

@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useGameStore, type PartyStats } from '@/stores/gameStore';
 import { CATEGORIES_CONFIG } from '@/config/categories';
+import { JEU_RECAP } from '@/config/ads';
+import { NativeAd } from '@/components/ads/NativeAd';
 import { DON_URL } from '@/config/contact';
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -281,6 +283,9 @@ export function GameRecap() {
         >
           {copied ? '✅ Copié !' : '📤 PARTAGER MON RÉSULTAT'}
         </button>
+
+        {/* Publicité : le carré, une fois la partie finie. */}
+        <NativeAd unit={JEU_RECAP} className="native-ad--carre" />
 
         {/* KEY MOMENTS */}
         {stats.keyDuels.length > 0 && (
