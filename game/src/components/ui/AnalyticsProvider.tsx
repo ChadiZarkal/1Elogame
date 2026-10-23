@@ -23,22 +23,21 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     }
   }, [pathname]);
   
-  // Flush session on unload
+  // Flush the session when the page is hidden or closed — not on a timer.
+  // `visibilitychange` is the event mobile browsers reliably fire when the user
+  // switches apps; `pagehide` covers desktop tab closes. A flush every minute
+  // per open tab used to be the largest source of database writes.
   useEffect(() => {
-    const handleUnload = () => {
-      flushSessionToAPI();
+    const handleHidden = () => {
+      if (document.visibilityState === 'hidden') flushSessionToAPI();
     };
-    
-    window.addEventListener('beforeunload', handleUnload);
-    window.addEventListener('pagehide', handleUnload);
-    
-    // Also flush every 60 seconds while active
-    const interval = setInterval(flushSessionToAPI, 60000);
-    
+
+    document.addEventListener('visibilitychange', handleHidden);
+    window.addEventListener('pagehide', flushSessionToAPI);
+
     return () => {
-      window.removeEventListener('beforeunload', handleUnload);
-      window.removeEventListener('pagehide', handleUnload);
-      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleHidden);
+      window.removeEventListener('pagehide', flushSessionToAPI);
     };
   }, []);
   

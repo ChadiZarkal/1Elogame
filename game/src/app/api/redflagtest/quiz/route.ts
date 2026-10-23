@@ -1,5 +1,5 @@
 import { withApiHandler, apiSuccess } from '@/lib/apiHelpers';
-import { lireQuizPublic, lireVerdicts } from '@/lib/rft/repository';
+import { lireQuizPublic, lireVerdictsPublics } from '@/lib/rft/repository';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +14,6 @@ export const dynamic = 'force-dynamic';
  * « à partir de 75 points » n'en déduit pas ce que vaut une réponse.
  */
 export const GET = withApiHandler(async () => {
-  const [quiz, verdicts] = await Promise.all([lireQuizPublic(), lireVerdicts()]);
+  const [quiz, verdicts] = await Promise.all([lireQuizPublic(), lireVerdictsPublics()]);
   return apiSuccess({ ...quiz, verdicts });
 });

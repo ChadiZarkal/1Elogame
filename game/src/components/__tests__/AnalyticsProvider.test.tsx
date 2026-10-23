@@ -74,11 +74,31 @@ describe('AnalyticsProvider', () => {
     expect(mockTrackGameEntry).not.toHaveBeenCalled();
   });
 
-  it('enregistre un listener beforeunload pour flush', () => {
-    const spy = vi.spyOn(window, 'addEventListener');
+  it('envoie la session à la fermeture de la page', () => {
     render(<AnalyticsProvider><div /></AnalyticsProvider>);
-    const beforeUnloadCalls = spy.mock.calls.filter(c => c[0] === 'beforeunload');
-    expect(beforeUnloadCalls.length).toBeGreaterThanOrEqual(1);
-    spy.mockRestore();
+    window.dispatchEvent(new Event('pagehide'));
+    expect(mockFlushSessionToAPI).toHaveBeenCalledTimes(1);
+  });
+
+  it('envoie la session quand la page passe en arrière-plan, pas quand elle revient', () => {
+    render(<AnalyticsProvider><div /></AnalyticsProvider>);
+    const visibilite = vi.spyOn(document, 'visibilityState', 'get');
+
+    visibilite.mockReturnValue('visible');
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect(mockFlushSessionToAPI).not.toHaveBeenCalled();
+
+    visibilite.mockReturnValue('hidden');
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect(mockFlushSessionToAPI).toHaveBeenCalledTimes(1);
+    visibilite.mockRestore();
+  });
+
+  // Un envoi par minute et par onglet ouvert était, le 2026-10-23, la plus
+  // grosse source d'écritures en base.
+  it("n'envoie rien à intervalle régulier", () => {
+    render(<AnalyticsProvider><div /></AnalyticsProvider>);
+    vi.advanceTimersByTime(10 * 60_000);
+    expect(mockFlushSessionToAPI).not.toHaveBeenCalled();
   });
 });

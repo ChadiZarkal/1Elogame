@@ -409,11 +409,12 @@ export interface CohorteBrute {
 /**
  * Ajoute aux cohortes une partie qui n'a pas été enregistrée.
  *
- * Une partie ordinaire est écrite en base AVANT qu'on interroge les cohortes :
- * elle fait partie de la population à laquelle on la compare. Une partie de
- * test n'est jamais écrite ; sans cette correction, elle serait comparée à une
- * population qui ne la contient pas, et l'administrateur verrait un rang et
- * des moyennes que personne d'autre ne verrait pour le même score.
+ * Une partie doit faire partie de la population à laquelle on la compare. Or
+ * les cohortes viennent d'une distribution gardée une minute en cache, qui ne
+ * contient pas encore la partie qu'on vient de jouer — et une partie de test
+ * n'est jamais écrite du tout. Sans cette correction, le premier joueur serait
+ * comparé au vide, et l'administrateur verrait un rang que personne d'autre ne
+ * verrait pour le même score.
  *
  * Seules les cohortes dont le joueur fait partie la reçoivent : un joueur sans
  * âge déclaré n'ajoute rien à la cohorte d'âge. Les scores strictement plus
@@ -436,6 +437,97 @@ export function ajouterPartie(
     const moyenne = c.moyenne === null ? score : (c.moyenne * c.effectif + score) / effectif;
     return { ...c, effectif, moyenne };
   });
+}
+
+/** Une ligne de `rft_distribution` : combien de parties ont fait ce score. */
+export interface LigneDistribution {
+  sexe: string | null;
+  age: string | null;
+  score: number;
+  effectif: number;
+}
+
+/**
+ * Les quatre cohortes d'un joueur, tirées de la distribution des scores.
+ *
+ * Rend exactement ce que rendait `rft_cohortes`, sans relire toutes les
+ * parties à chaque fin de partie : une cohorte que le joueur n'a pas déclarée
+ * (pas d'âge, par exemple) est rendue vide, avec une moyenne `null`.
+ */
+export function cohortesDepuis(
+  distribution: LigneDistribution[],
+  score: number,
+  profil: { sexe: string | null; age: string | null },
+): CohorteBrute[] {
+  const filtres: Array<[NomCohorte, (l: LigneDistribution) => boolean]> = [
+    ['tous', () => true],
+    ['sexe', (l) => profil.sexe !== null && l.sexe === profil.sexe],
+    ['age', (l) => profil.age !== null && l.age === profil.age],
+    ['sexe_age', (l) => profil.sexe !== null && profil.age !== null
+      && l.sexe === profil.sexe && l.age === profil.age],
+  ];
+
+  return filtres.map(([cohorte, garder]) => {
+    let effectif = 0;
+    let plusHauts = 0;
+    let somme = 0;
+    for (const l of distribution) {
+      if (!garder(l)) continue;
+      effectif += l.effectif;
+      somme += l.score * l.effectif;
+      if (l.score > score) plusHauts += l.effectif;
+    }
+    return { cohorte, effectif, plusHauts, moyenne: effectif > 0 ? somme / effectif : null };
+  });
+}
+
+/** Le compteur d'une réponse, tel que `rft_answer_counts` le tient. */
+export interface CompteReponse {
+  questionId: string;
+  choix: number;
+  choixH: number;
+  choixF: number;
+}
+
+/** Les totaux d'une question : la somme des compteurs de ses réponses. */
+export interface TotauxQuestion {
+  total: number;
+  totalH: number;
+  totalF: number;
+}
+
+export function totauxParQuestion(comptes: Map<string, CompteReponse>): Map<string, TotauxQuestion> {
+  const totaux = new Map<string, TotauxQuestion>();
+  for (const c of comptes.values()) {
+    const t = totaux.get(c.questionId) ?? { total: 0, totalH: 0, totalF: 0 };
+    t.total += c.choix;
+    t.totalH += c.choixH;
+    t.totalF += c.choixF;
+    totaux.set(c.questionId, t);
+  }
+  return totaux;
+}
+
+/**
+ * La part de joueurs qui a fait chacun des choix du joueur.
+ *
+ * `inclureLesSiens` ajoute le joueur à ses propres réponses, pour la même raison
+ * que `ajouterPartie` : les compteurs en cache ne contiennent pas encore la
+ * partie qu'il vient de jouer. Un lien partagé, relu plus tard, y est déjà.
+ */
+export function partsDepuis(
+  comptes: Map<string, CompteReponse>,
+  choix: ChoixResolu[],
+  inclureLesSiens: boolean,
+): Map<string, number> {
+  const totaux = totauxParQuestion(comptes);
+  const ajout = inclureLesSiens ? 1 : 0;
+
+  return new Map(choix.map((c) => {
+    const choisie = (comptes.get(c.answerId)?.choix ?? 0) + ajout;
+    const total = (totaux.get(c.questionId)?.total ?? 0) + ajout;
+    return [c.answerId, part(choisie, total)];
+  }));
 }
 
 /**
