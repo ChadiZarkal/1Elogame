@@ -20,6 +20,15 @@
  *   ressemble donc à une réussite si l'on ne regarde pas. Chaque appel est
  *   vérifié, et `verifier()` transforme l'erreur en exception avec le message
  *   de Postgres — que les routes d'administration affichent en clair.
+ *
+ * SOUS UN PIC
+ *   Le 2026-10-23, la base est tombée à environ 3 300 parties par heure : chaque
+ *   fin de partie relisait le questionnaire et recomptait toutes les parties
+ *   jamais jouées. Désormais une partie ne coûte que ses deux écritures. Le
+ *   questionnaire et les agrégats sont gardés une minute en mémoire (voir
+ *   `memoire.ts`), et les agrégats viennent de compteurs tenus par la base
+ *   (migration 032). L'administration, elle, lit toujours en direct, et chaque
+ *   écriture de contenu vide le cache de l'instance qui l'a faite.
  */
 
 import 'server-only';
@@ -30,26 +39,32 @@ import {
   calculerAxes,
   calculerScore,
   classement,
+  cohortesDepuis,
   comparaison,
   indicePour,
   maximumAtteignable,
   part,
+  partsDepuis,
   pointNoir,
   legendeAgeCourte,
   legendeCohorte,
   legendeSexeCourte,
   reponseLaPlusChere,
   ressourcesPour,
+  totauxParQuestion,
   trouverArchetype,
   verdictPour,
   type ChoixResolu,
   type CohorteBrute,
+  type CompteReponse,
+  type LigneDistribution,
   type MaximumQuestion,
   type NomCohorte,
   type PariBrut,
 } from './score';
 import type { Archetype, Highlight, QuestionAdmin, QuizPublic, Resultat, Soumission, StatQuestion, Tag, Verdict, ParisMoyens } from './types';
 import * as fictif from './mock';
+import { memoriser } from './memoire';
 
 // ---------------------------------------------------------------------------
 // Plomberie
@@ -60,6 +75,24 @@ type Erreur = { message: string; code?: string } | null;
 /** Transforme le `{ error }` silencieux de Supabase en exception parlante. */
 function verifier(erreur: Erreur, quoi: string): void {
   if (erreur) throw new Error(`${quoi} : ${erreur.message}`);
+}
+
+/**
+ * La fonction ou la table n'existe pas encore : migration pas jouée.
+ * PGRST202 et PGRST205 sont les codes de PostgREST, 42883 et 42P01 ceux de
+ * Postgres quand l'erreur lui parvient.
+ */
+function absente(erreur: Erreur): boolean {
+  return ['PGRST202', 'PGRST205', '42883', '42P01'].includes(erreur?.code ?? '');
+}
+
+const dejaSignale = new Set<string>();
+
+/** Un seul message par instance : le journal ne doit pas répéter cela à chaque partie. */
+function signalerUneFois(quoi: string, erreur: Erreur): void {
+  if (dejaSignale.has(quoi)) return;
+  dejaSignale.add(quoi);
+  console.error(`[RFT] ${quoi} indisponible, repli sur l'ancien calcul :`, erreur?.message);
 }
 
 async function client() {
@@ -169,7 +202,7 @@ export async function lireQuestionsAdmin(): Promise<QuestionAdmin[]> {
  * sur un écran sans bouton.
  */
 export async function lireQuizPublic(): Promise<QuizPublic> {
-  const [questions, tags] = await Promise.all([lireQuestionsAdmin(), lireTags()]);
+  const { questions, tags } = await contexte();
 
   return {
     questions: questions
@@ -189,6 +222,11 @@ export async function lireQuizPublic(): Promise<QuizPublic> {
       }),
     tags: tags.filter((t) => t.isActive).map((t) => ({ id: t.id, label: t.label, color: t.color })),
   };
+}
+
+/** Les verdicts du questionnaire public, servis depuis le même cache. */
+export async function lireVerdictsPublics(): Promise<Verdict[]> {
+  return (await contexte()).verdicts;
 }
 
 // ---------------------------------------------------------------------------
@@ -277,6 +315,7 @@ export async function ecrireQuestion(id: string | null, q: EcritureQuestion): Pr
     verifier(error, 'Écriture des tags');
   }
 
+  oublierContenu();
   return questionId as string;
 }
 
@@ -286,6 +325,7 @@ export async function supprimerQuestion(id: string): Promise<void> {
   const supabase = await client();
   const { error } = await supabase.from('rft_questions').delete().eq('id', id);
   verifier(error, 'Suppression de la question');
+  oublierContenu();
 }
 
 export async function reordonnerQuestions(ids: string[]): Promise<void> {
@@ -301,6 +341,7 @@ export async function reordonnerQuestions(ids: string[]): Promise<void> {
     ),
   );
   for (const r of resultats) verifier(r.error, 'Réordonnancement');
+  oublierContenu();
 }
 
 export async function ecrireTag(
@@ -326,6 +367,7 @@ export async function ecrireTag(
     ? await supabase.from('rft_tags').update(rangee).eq('id', id).select('id')
     : await supabase.from('rft_tags').insert(rangee).select('id');
   verifier(error, id ? 'Mise à jour du tag' : 'Création du tag');
+  oublierContenu();
 }
 
 export async function supprimerTag(id: string): Promise<void> {
@@ -334,6 +376,7 @@ export async function supprimerTag(id: string): Promise<void> {
   const supabase = await client();
   const { error } = await supabase.from('rft_tags').delete().eq('id', id);
   verifier(error, 'Suppression du tag');
+  oublierContenu();
 }
 
 export async function ecrireVerdict(
@@ -354,6 +397,7 @@ export async function ecrireVerdict(
     ? await supabase.from('rft_verdicts').update(rangee).eq('id', id).select('id')
     : await supabase.from('rft_verdicts').insert(rangee).select('id');
   verifier(error, id ? 'Mise à jour du verdict' : 'Création du verdict');
+  oublierContenu();
 }
 
 export async function supprimerVerdict(id: string): Promise<void> {
@@ -362,6 +406,7 @@ export async function supprimerVerdict(id: string): Promise<void> {
   const supabase = await client();
   const { error } = await supabase.from('rft_verdicts').delete().eq('id', id);
   verifier(error, 'Suppression du verdict');
+  oublierContenu();
 }
 
 // ---------------------------------------------------------------------------
@@ -435,6 +480,7 @@ export async function ecrireArchetype(id: string | null, a: EcritureArchetype): 
     ? await supabase.from('rft_archetypes').update(rangee).eq('id', id).select('id')
     : await supabase.from('rft_archetypes').insert(rangee).select('id');
   verifier(error, id ? 'Mise à jour de l’archétype' : 'Création de l’archétype');
+  oublierContenu();
 }
 
 export async function supprimerArchetype(id: string): Promise<void> {
@@ -443,6 +489,7 @@ export async function supprimerArchetype(id: string): Promise<void> {
   const supabase = await client();
   const { error } = await supabase.from('rft_archetypes').delete().eq('id', id);
   verifier(error, 'Suppression de l’archétype');
+  oublierContenu();
 }
 
 // ---------------------------------------------------------------------------
@@ -466,8 +513,23 @@ function codePartage(): string {
   return Array.from(octets, (o) => (o % 36).toString(36)).join('');
 }
 
-/** Tout le contenu dont dépend le calcul d'un résultat. */
-async function contexte() {
+/**
+ * Combien de temps une instance garde le questionnaire et les agrégats.
+ *
+ * Une minute : une correction faite dans l'admin met au plus ce temps à
+ * atteindre les autres instances, et les classements ont au plus une minute de
+ * retard — ce que personne ne peut voir à l'échelle de milliers de parties.
+ */
+const DUREE_CACHE_MS = 60_000;
+
+interface Contexte {
+  questions: QuestionAdmin[];
+  tags: Tag[];
+  verdicts: Verdict[];
+  archetypes: Archetype[];
+}
+
+async function chargerContexte(): Promise<Contexte> {
   const [questions, tags, verdicts, archetypes] = await Promise.all([
     lireQuestionsAdmin(),
     lireTags(),
@@ -477,7 +539,92 @@ async function contexte() {
   return { questions, tags, verdicts, archetypes };
 }
 
-type Contexte = Awaited<ReturnType<typeof contexte>>;
+const contexteEnCache = memoriser(DUREE_CACHE_MS, chargerContexte);
+
+/**
+ * Tout le contenu dont dépend le calcul d'un résultat.
+ *
+ * Le mode fictif lit en direct : son contenu vit en mémoire et se modifie
+ * depuis l'admin locale, un cache n'y servirait qu'à cacher les modifications.
+ */
+async function contexte(): Promise<Contexte> {
+  return isMockMode() ? chargerContexte() : contexteEnCache();
+}
+
+/** Après une écriture de l'admin : cette instance relira le contenu. */
+function oublierContenu(): void {
+  contexteEnCache.oublier();
+}
+
+// ---------------------------------------------------------------------------
+// Les agrégats en cache
+// ---------------------------------------------------------------------------
+
+/**
+ * Ce que les récaps de toutes les parties partagent, relu une fois par minute.
+ *
+ * `null` quand la migration 032 n'est pas jouée : `agreger` revient alors aux
+ * anciennes fonctions, appelées à chaque partie comme avant.
+ */
+interface Agregats {
+  distribution: LigneDistribution[] | null;
+  comptes: Map<string, CompteReponse> | null;
+  paris: ParisMoyens | null;
+}
+
+async function chargerAgregats(): Promise<Agregats> {
+  const supabase = await client();
+
+  const [distribution, comptes, paris] = await Promise.all([
+    supabase.rpc('rft_distribution', {}),
+    // Une ligne par réponse du questionnaire : loin des mille lignes auxquelles
+    // PostgREST tronque, tant que le questionnaire compte moins de mille réponses.
+    supabase.from('rft_answer_counts').select('answer_id, question_id, choix, choix_h, choix_f'),
+    supabase.rpc('rft_paris_moyens', {}),
+  ]);
+
+  if (distribution.error && !absente(distribution.error)) verifier(distribution.error, 'Lecture de la distribution');
+  if (comptes.error && !absente(comptes.error)) verifier(comptes.error, 'Lecture des compteurs');
+  if (distribution.error) signalerUneFois('rft_distribution', distribution.error);
+  if (comptes.error) signalerUneFois('rft_answer_counts', comptes.error);
+  // Les paris moyens sont un à-côté : leur absence (migration 029 pas encore
+  // jouée, panne passagère) ne doit pas priver le joueur de son résultat.
+  if (paris.error) console.error('[RFT] Paris moyens indisponibles :', paris.error.message);
+
+  type LignePari = { sexe: string; effectif: number; pari_moyen: string | number; score_moyen: string | number };
+  type LigneCompte = { answer_id: string; question_id: string; choix: number; choix_h: number; choix_f: number };
+  // [sexe, âge, score, effectif] : voir la migration 032.
+  type Element = [string | null, string | null, number, number];
+
+  return {
+    distribution: distribution.error
+      ? null
+      : ((distribution.data as Element[] | null) ?? []).map(([sexe, age, score, effectif]) => ({
+          sexe,
+          age,
+          score: Number(score),
+          effectif: Number(effectif),
+        })),
+    comptes: comptes.error
+      ? null
+      : new Map(((comptes.data as LigneCompte[] | null) ?? []).map((l) => [l.answer_id, {
+          questionId: l.question_id,
+          choix: Number(l.choix),
+          choixH: Number(l.choix_h),
+          choixF: Number(l.choix_f),
+        }])),
+    paris: paris.error
+      ? null
+      : parisMoyens(((paris.data as LignePari[] | null) ?? []).map((l): PariBrut => ({
+          sexe: l.sexe,
+          effectif: Number(l.effectif),
+          pariMoyen: Number(l.pari_moyen),
+          scoreMoyen: Number(l.score_moyen),
+        }))),
+  };
+}
+
+const agregatsEnCache = memoriser(DUREE_CACHE_MS, chargerAgregats);
 
 /**
  * Résout les identifiants envoyés par le client en réponses munies de leurs
@@ -582,9 +729,10 @@ function composer(
  * n'envoie que des identifiants de réponses. Un navigateur qui mentirait sur
  * ses points n'obtiendrait rien — il n'a pas de point à envoyer.
  *
- * L'enregistrement précède le classement, et c'est voulu : la partie doit être
- * dans la population qu'elle interroge, sinon le premier joueur serait comparé
- * au vide et le rang bougerait d'une partie à l'autre pour un même score.
+ * La partie doit être dans la population qu'elle interroge, sinon le premier
+ * joueur serait comparé au vide et le rang bougerait d'une partie à l'autre
+ * pour un même score. Les agrégats en cache datent d'avant elle : `agreger`
+ * l'y ajoute (partie `nouvelle`).
  */
 export async function enregistrerPartie(s: Soumission): Promise<Resultat> {
   const ctx = await contexte();
@@ -600,8 +748,8 @@ export async function enregistrerPartie(s: Soumission): Promise<Resultat> {
   // La partie de test de l'administrateur : rien n'est écrit, et elle est
   // ajoutée aux cohortes pour être classée comme si elle l'avait été.
   if (s.test) {
-    const { brutes, parts, paris } = await agreger(score, s.sexe, s.age, choix);
-    return { ...composer(ctx, choix, ajouterPartie(brutes, score, profil), parts, null, profil), paris };
+    const { brutes, parts, paris } = await agreger(score, s.sexe, s.age, choix, 'test');
+    return { ...composer(ctx, choix, brutes, parts, null, profil), paris };
   }
 
   const supabase = await client();
@@ -631,7 +779,7 @@ export async function enregistrerPartie(s: Soumission): Promise<Resultat> {
     if (error) console.error('[RFT] Réponses de partie non enregistrées :', error.message);
   }
 
-  const { brutes, parts, paris } = await agreger(score, s.sexe, s.age, choix);
+  const { brutes, parts, paris } = await agreger(score, s.sexe, s.age, choix, 'nouvelle');
   return { ...composer(ctx, choix, brutes, parts, code, profil), paris };
 }
 
@@ -674,7 +822,7 @@ export async function lireResultatParCode(code: string): Promise<Resultat | null
 
   // Le score relu, et non recalculé : une question dont le barème a changé
   // depuis ne doit pas réécrire après coup le résultat de quelqu'un.
-  const { brutes, parts, paris } = await agreger(partie.score, partie.sex, partie.age, choix);
+  const { brutes, parts, paris } = await agreger(partie.score, partie.sex, partie.age, choix, 'relue');
   const resultat = composer(ctx, choix, brutes, parts, code, {
     sexe: partie.sex,
     age: partie.age,
@@ -683,29 +831,54 @@ export async function lireResultatParCode(code: string): Promise<Resultat | null
   return { ...resultat, score: partie.score, paris };
 }
 
-/** Les deux agrégats dont dépend le récap : cohortes et parts de réponses. */
+/**
+ * Où en est la partie dont on fait le récap, par rapport aux agrégats stockés.
+ *
+ * - `nouvelle` : elle vient d'être écrite, mais les agrégats en cache datent
+ *   d'avant elle ;
+ * - `test` : elle n'est écrite nulle part ;
+ * - `relue` : un lien partagé, ouvert après coup — elle y est déjà.
+ */
+type Partie = 'nouvelle' | 'test' | 'relue';
+
+/**
+ * Les deux agrégats dont dépend le récap : cohortes et parts de réponses.
+ *
+ * Tirés du cache, sans aller en base. Si la migration 032 manque, chacun revient
+ * à l'ancienne fonction — qui lit la base après l'écriture, et contient donc
+ * déjà une partie `nouvelle`.
+ */
 async function agreger(
   score: number,
   sexe: string | null,
   age: string | null,
   choix: ChoixResolu[],
+  partie: Partie,
 ): Promise<{ brutes: CohorteBrute[]; parts: Map<string, number>; paris: ParisMoyens | null }> {
+  const profil = { sexe, age };
+  const agregats = await agregatsEnCache();
+
+  let brutes: CohorteBrute[];
+  if (agregats.distribution) {
+    const tirees = cohortesDepuis(agregats.distribution, score, profil);
+    brutes = partie === 'relue' ? tirees : ajouterPartie(tirees, score, profil);
+  } else {
+    const lues = await cohortesAnciennes(score, sexe, age);
+    brutes = partie === 'test' ? ajouterPartie(lues, score, profil) : lues;
+  }
+
+  const parts = agregats.comptes
+    ? partsDepuis(agregats.comptes, choix, partie !== 'relue')
+    : await partsAnciennes(choix);
+
+  return { brutes, parts, paris: agregats.paris };
+}
+
+/** Repli sans la migration 032 : `rft_cohortes`, qui parcourt toutes les parties. */
+async function cohortesAnciennes(score: number, sexe: string | null, age: string | null): Promise<CohorteBrute[]> {
   const supabase = await client();
-
-  const [cohortes, parts, paris] = await Promise.all([
-    supabase.rpc('rft_cohortes', { p_score: score, p_sex: sexe, p_age: age }),
-    choix.length > 0
-      ? supabase.rpc('rft_parts_reponses', { p_answer_ids: choix.map((c) => c.answerId) })
-      : Promise.resolve({ data: [], error: null }),
-    supabase.rpc('rft_paris_moyens', {}),
-  ]);
-  verifier(cohortes.error, 'Lecture des classements');
-  verifier(parts.error, 'Lecture des parts de réponses');
-  // Les paris moyens sont un à-côté : leur absence (migration 029 pas encore
-  // jouée, panne passagère) ne doit pas priver le joueur de son résultat.
-  if (paris.error) console.error('[RFT] Paris moyens indisponibles :', paris.error.message);
-
-  type LignePari = { sexe: string; effectif: number; pari_moyen: string | number; score_moyen: string | number };
+  const { data, error } = await supabase.rpc('rft_cohortes', { p_score: score, p_sex: sexe, p_age: age });
+  verifier(error, 'Lecture des classements');
 
   type LigneCohorte = {
     cohorte: NomCohorte;
@@ -715,30 +888,32 @@ async function agreger(
     // pas perdre de précision — et `null` quand la cohorte est vide.
     moyenne: string | number | null;
   };
-  type LignePart = { answer_id: string; choix: number; total_question: number };
 
-  return {
-    brutes: ((cohortes.data as LigneCohorte[] | null) ?? []).map((c) => ({
-      cohorte: c.cohorte,
-      effectif: Number(c.effectif),
-      plusHauts: Number(c.plus_hauts),
-      moyenne: c.moyenne === null ? null : Number(c.moyenne),
-    })),
-    parts: new Map(
-      ((parts.data as LignePart[] | null) ?? []).map((p) => [
-        p.answer_id,
-        part(Number(p.choix), Number(p.total_question)),
-      ]),
-    ),
-    paris: paris.error
-      ? null
-      : parisMoyens(((paris.data as LignePari[] | null) ?? []).map((l): PariBrut => ({
-          sexe: l.sexe,
-          effectif: Number(l.effectif),
-          pariMoyen: Number(l.pari_moyen),
-          scoreMoyen: Number(l.score_moyen),
-        }))),
-  };
+  return ((data as LigneCohorte[] | null) ?? []).map((c) => ({
+    cohorte: c.cohorte,
+    effectif: Number(c.effectif),
+    plusHauts: Number(c.plus_hauts),
+    moyenne: c.moyenne === null ? null : Number(c.moyenne),
+  }));
+}
+
+/** Repli sans la migration 032 : `rft_parts_reponses`, qui relit toutes les réponses. */
+async function partsAnciennes(choix: ChoixResolu[]): Promise<Map<string, number>> {
+  if (choix.length === 0) return new Map();
+
+  const supabase = await client();
+  const { data, error } = await supabase.rpc('rft_parts_reponses', {
+    p_answer_ids: choix.map((c) => c.answerId),
+  });
+  verifier(error, 'Lecture des parts de réponses');
+
+  type LignePart = { answer_id: string; choix: number; total_question: number };
+  return new Map(
+    ((data as LignePart[] | null) ?? []).map((p) => [
+      p.answer_id,
+      part(Number(p.choix), Number(p.total_question)),
+    ]),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -789,12 +964,39 @@ function construireHighlights(
  * barème le rendrait consultable par tout le monde, et le test truquable.
  */
 export async function lireStatsPubliques(): Promise<StatQuestion[]> {
-  const questions = (await lireQuestionsAdmin()).filter(
+  const questions = (await contexte()).questions.filter(
     (q) => q.active && q.reponses.length > 0,
   );
 
   if (isMockMode()) return fictif.stats(questions);
 
+  const { comptes } = await agregatsEnCache();
+  if (comptes) {
+    const totaux = totauxParQuestion(comptes);
+    return questions.map((q) => {
+      const t = totaux.get(q.id);
+      return {
+        questionId: q.id,
+        texte: q.texte,
+        total: t?.total ?? 0,
+        totalH: t?.totalH ?? 0,
+        totalF: t?.totalF ?? 0,
+        reponses: q.reponses.map((r) => {
+          const c = comptes.get(r.id);
+          return {
+            answerId: r.id,
+            texte: r.texte,
+            points: r.points,
+            choix: c?.choix ?? 0,
+            choixH: c?.choixH ?? 0,
+            choixF: c?.choixF ?? 0,
+          };
+        }),
+      };
+    });
+  }
+
+  // Repli sans la migration 032 : l'ancien recomptage complet.
   const supabase = await client();
   const { data, error } = await supabase.rpc('rft_stats_publiques', {});
   verifier(error, 'Lecture des statistiques');

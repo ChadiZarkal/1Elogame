@@ -159,4 +159,33 @@ describe('flushSessionToAPI', () => {
     expect(payload.age).toBe('23-26');
     expect(payload.duration).toBeGreaterThanOrEqual(0);
   });
+
+  // `visibilitychange` et `pagehide` se suivent à la fermeture : la même
+  // session ne doit pas être écrite deux fois en base.
+  it("n'envoie pas deux fois une session inchangée, mais renvoie dès qu'elle change", () => {
+    const sendBeacon = vi.fn().mockReturnValue(true);
+    Object.defineProperty(navigator, 'sendBeacon', { value: sendBeacon, writable: true, configurable: true });
+
+    trackProfile('homme', '19-22');
+    flushSessionToAPI();
+    flushSessionToAPI();
+    expect(sendBeacon).toHaveBeenCalledTimes(1);
+
+    trackVote('quotidien');
+    flushSessionToAPI();
+    expect(sendBeacon).toHaveBeenCalledTimes(2);
+  });
+
+  it('renvoie une session inchangée au bout de cinq minutes, pour sa durée', () => {
+    vi.useFakeTimers();
+    const sendBeacon = vi.fn().mockReturnValue(true);
+    Object.defineProperty(navigator, 'sendBeacon', { value: sendBeacon, writable: true, configurable: true });
+
+    trackProfile('femme', '27+');
+    flushSessionToAPI();
+    vi.advanceTimersByTime(5 * 60_000);
+    flushSessionToAPI();
+    expect(sendBeacon).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
+  });
 });

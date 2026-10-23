@@ -154,11 +154,33 @@ export function getCurrentSessionStats(): AnalyticsSession {
   return getSession();
 }
 
-/** Flush session data via sendBeacon (page unload) or fetch with keepalive. */
+/**
+ * A session identical to the last one sent is sent again only after this long,
+ * so the recorded duration still moves for someone who reads without clicking.
+ */
+const RESEND_UNCHANGED_AFTER_MS = 5 * 60_000;
+
+let lastFlush: { signature: string; at: number } | null = null;
+
+/**
+ * Flush session data via sendBeacon (page unload) or fetch with keepalive.
+ *
+ * Each flush is an upsert of the whole session row. On 2026-10-23 a flush per
+ * open tab per minute made analytics the largest source of writes on the
+ * database. Hiding a page now fires both `visibilitychange` and `pagehide`, so
+ * an unchanged session is skipped instead of being written twice.
+ */
 export function flushSessionToAPI(): void {
   const session = getSession();
   if (!session) return; // Nothing to flush if no session exists
-  
+
+  const signature = JSON.stringify(session);
+  const now = Date.now();
+  if (lastFlush && lastFlush.signature === signature && now - lastFlush.at < RESEND_UNCHANGED_AFTER_MS) {
+    return;
+  }
+  lastFlush = { signature, at: now };
+
   const duration = getSessionDuration();
   
   // Use navigator.sendBeacon for reliable delivery on page unload

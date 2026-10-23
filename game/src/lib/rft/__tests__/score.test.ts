@@ -22,6 +22,9 @@ import {
   POINTS_DECISIFS,
   COMPARAISON_MIN,
   ajouterPartie,
+  cohortesDepuis,
+  partsDepuis,
+  totauxParQuestion,
   parisMoyens,
   legendeCohorte,
   legendeSexeCourte,
@@ -31,6 +34,8 @@ import {
   type NomCohorte,
   type ChoixResolu,
   type MaximumQuestion,
+  type CompteReponse,
+  type LigneDistribution,
 } from '@/lib/rft/score';
 import type { Verdict } from '@/lib/rft/types';
 
@@ -597,5 +602,70 @@ describe('parisMoyens', () => {
   it('ne rend rien quand personne n’a parié', () => {
     expect(parisMoyens([])).toBeNull();
     expect(parisMoyens([ligne('autre', 40, 50, 50)])).toBeNull();
+  });
+});
+
+describe('cohortesDepuis', () => {
+  const l = (sexe: string | null, age: string | null, score: number, effectif: number): LigneDistribution =>
+    ({ sexe, age, score, effectif });
+  const distribution = [
+    l('femme', '19-22', 30, 2),
+    l('femme', '19-22', 80, 1),
+    l('femme', '27+', 50, 3),
+    l('homme', '19-22', 90, 4),
+    l(null, null, 10, 5),
+  ];
+
+  // Mêmes chiffres que rendait `rft_cohortes`, calculés sans relire les parties.
+  it('rend effectif, scores strictement plus hauts et moyenne, par cohorte', () => {
+    const [tous, sexe, age, croisee] = cohortesDepuis(distribution, 50, { sexe: 'femme', age: '19-22' });
+
+    expect(tous).toEqual({ cohorte: 'tous', effectif: 15, plusHauts: 5, moyenne: (60 + 80 + 150 + 360 + 50) / 15 });
+    expect(sexe).toEqual({ cohorte: 'sexe', effectif: 6, plusHauts: 1, moyenne: (60 + 80 + 150) / 6 });
+    expect(age).toEqual({ cohorte: 'age', effectif: 7, plusHauts: 5, moyenne: (60 + 80 + 360) / 7 });
+    expect(croisee).toEqual({ cohorte: 'sexe_age', effectif: 3, plusHauts: 1, moyenne: 140 / 3 });
+  });
+
+  it("rend vides les cohortes que le joueur n'a pas déclarées", () => {
+    const [, sexe, age, croisee] = cohortesDepuis(distribution, 50, { sexe: null, age: '27+' });
+    expect(sexe).toEqual({ cohorte: 'sexe', effectif: 0, plusHauts: 0, moyenne: null });
+    expect(age.effectif).toBe(3);
+    expect(croisee).toEqual({ cohorte: 'sexe_age', effectif: 0, plusHauts: 0, moyenne: null });
+  });
+
+  it('rend une moyenne nulle sur une base vide', () => {
+    expect(cohortesDepuis([], 10, { sexe: 'homme', age: '16-18' })[0]).toEqual(
+      { cohorte: 'tous', effectif: 0, plusHauts: 0, moyenne: null },
+    );
+  });
+});
+
+describe('partsDepuis', () => {
+  const comptes = new Map<string, CompteReponse>([
+    ['q1-a', { questionId: 'q1', choix: 3, choixH: 1, choixF: 2 }],
+    ['q1-b', { questionId: 'q1', choix: 1, choixH: 1, choixF: 0 }],
+    ['q2-a', { questionId: 'q2', choix: 4, choixH: 0, choixF: 4 }],
+  ]);
+  const joue = (questionId: string, answerId: string): ChoixResolu => ({ questionId, answerId, points: 0, tagIds: [] });
+
+  it('totalise une question par la somme de ses réponses', () => {
+    expect(totauxParQuestion(comptes).get('q1')).toEqual({ total: 4, totalH: 2, totalF: 2 });
+  });
+
+  it('rend la part de chaque choix, telle que la base la compte', () => {
+    const parts = partsDepuis(comptes, [joue('q1', 'q1-b'), joue('q2', 'q2-a')], false);
+    expect(parts.get('q1-b')).toBe(25);
+    expect(parts.get('q2-a')).toBe(100);
+  });
+
+  // Les compteurs en cache ne contiennent pas encore la partie qu'on vient de jouer.
+  it('ajoute le joueur à ses propres réponses quand on le demande', () => {
+    const parts = partsDepuis(comptes, [joue('q1', 'q1-b')], true);
+    expect(parts.get('q1-b')).toBe(40);
+  });
+
+  it("donne cent pour cent au premier joueur d'une question jamais jouée", () => {
+    expect(partsDepuis(new Map(), [joue('q9', 'q9-a')], true).get('q9-a')).toBe(100);
+    expect(partsDepuis(new Map(), [joue('q9', 'q9-a')], false).get('q9-a')).toBe(0);
   });
 });
