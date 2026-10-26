@@ -44,6 +44,8 @@ import { useHaptics } from '@/lib/hooks';
 import { DON_URL } from '@/config/contact';
 import { ACCUEIL_NATIVE } from '@/config/ads';
 import { NativeAd } from '@/components/ads/NativeAd';
+import { AFFICHER_PISSE_DEBOUT } from '@/config/affiliation';
+import { EncartPisseDebout } from '@/components/affiliation/EncartPisseDebout';
 
 type Jeu = {
   id: string;
@@ -273,6 +275,11 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
             ))}
           </ul>
         </section>
+
+        {/* ── 3b. Spécial festival (lien affilié) ────────────────────────── */}
+        {/* Juste sous les jeux, au deuxième écran : plus bas, sous le
+            palmarès, presque personne ne le verrait. */}
+        {AFFICHER_PISSE_DEBOUT && <EncartPisseDebout className="revele mt-8" />}
 
         {/* ── 4. C'est sérieux ? ─────────────────────────────────────────── */}
         {/* Rendu seulement s'il y a de quoi le remplir : un podium vide, ou à
