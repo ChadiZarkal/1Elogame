@@ -114,9 +114,7 @@ export function EncartPisseDebout({ className = '' }: { className?: string }) {
           onClick={tap}
           className={`group mt-3 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#2ECC71] px-4 text-[14px] font-black text-black shadow-[0_8px_30px_-8px_rgba(46,204,113,0.5)] transition-[filter] hover:brightness-110 ${FOCUS}`}
         >
-          {/* À 320 px, l'intitulé long passe sur deux lignes. */}
-          <span className="min-[360px]:hidden">Voir sur Amazon</span>
-          <span className="hidden min-[360px]:inline">Voir le pisse-debout sur Amazon</span>
+          Voir le pisse&#8209;debout
           <ExternalLink size={16} strokeWidth={2.5} aria-hidden />
         </a>
 
