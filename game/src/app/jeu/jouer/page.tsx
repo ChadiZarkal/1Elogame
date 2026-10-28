@@ -13,7 +13,8 @@ import { StreakDisplay } from '@/components/game/StreakDisplay';
 import { CategorySelector } from '@/components/game/CategorySelector';
 import { FullPageLoading } from '@/components/ui/Loading';
 import { PausePubDuel } from '@/components/game/PausePubDuel';
-import { pauseJeuDue } from '@/config/ads';
+import { pauseJeuDue, POPUNDER_APRES } from '@/config/ads';
+import { usePopunderApres } from '@/components/ads/usePopunderApres';
 
 // Lazy-load components only needed rarely
 const AllDuelsExhausted = dynamic(() => import('@/components/game/AllDuelsExhausted').then(m => m.AllDuelsExhausted), { ssr: false });
@@ -53,6 +54,10 @@ export default function JouerPage() {
     clearError,
     startParty,
   } = useGameStore();
+
+  // Au 10e duel de la partie, le pop-under s'arme : il s'ouvre au clic sur
+  // « Suivant » (ou vers le récap, pour une partie de dix).
+  usePopunderApres(duelCount, POPUNDER_APRES.pireDesDeux);
   
   // Initialize from storage
   useEffect(() => {

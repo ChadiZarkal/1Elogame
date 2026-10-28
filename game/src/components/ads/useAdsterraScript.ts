@@ -18,14 +18,18 @@ import { isAdFreePath } from '@/config/ads';
  * doit pas être exclue.
  *
  * @param target Élément qui reçoit le script. À défaut, `document.body`.
+ * @param toutesRoutes Ignorer la liste des routes exclues. Réservé au
+ *   pop-under armé en cours de partie (voir `usePopunderApres`) : il n'occupe
+ *   aucune place à l'écran, et `/jeu/jouer` est exclu pour ses encarts.
  */
 export function useAdsterraScript(
   src: string,
   enabled: boolean,
   target?: RefObject<HTMLElement | null>,
+  toutesRoutes = false,
 ) {
   const pathname = usePathname() ?? '';
-  const allowed = enabled && !isAdFreePath(pathname);
+  const allowed = enabled && (toutesRoutes || !isAdFreePath(pathname));
 
   useEffect(() => {
     if (!allowed) return;
