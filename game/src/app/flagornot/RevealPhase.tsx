@@ -3,6 +3,8 @@
 import { motion } from 'framer-motion';
 import type { JudgmentResult } from './constants';
 import { DON_URL } from '@/config/contact';
+import { ORACLE_VERDICT } from '@/config/ads';
+import { NativeAd } from '@/components/ads/NativeAd';
 
 interface RevealPhaseProps {
   result: JudgmentResult;
@@ -228,6 +230,17 @@ export function RevealPhase({
         >
           ☕ Offrir un café à l&apos;Oracle
         </motion.a>
+
+        {/* Publicité : le carré, sur chaque verdict. Après le verdict, sa
+            justification et les deux boutons, pour ne rien repousser de ce
+            que le joueur est venu lire ou partager. `key` : un nouveau
+            verdict remonte l'encart, et le script de la régie repasse
+            derrière. */}
+        <NativeAd
+          key={submittedText}
+          unit={ORACLE_VERDICT}
+          className="native-ad--carre mt-6 w-full"
+        />
       </div>
 
       {/* Encore CTA — pinned at bottom */}
