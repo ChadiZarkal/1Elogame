@@ -94,6 +94,17 @@ export const JEU_RECAP: NativeAdUnit = {
 };
 
 /**
+ * L'Oracle : l'encart natif carré sur chaque verdict (`RevealPhase`), sous
+ * « Partager » et « Offrir un café ». Demandé côté produit le 2026-10-28.
+ * Rien pendant la saisie ni l'attente : seul l'écran du verdict le porte.
+ */
+export const ORACLE_VERDICT: NativeAdUnit = {
+  enabled: true,
+  src: ACCUEIL_NATIVE.src,
+  containerId: ACCUEIL_NATIVE.containerId,
+};
+
+/**
  * « C'est un 10 mais… » : une pause publicitaire tous les cinq profils, entre
  * un verdict (ou le bilan) et le profil suivant. Demandée côté produit le
  * 2026-10-19.
