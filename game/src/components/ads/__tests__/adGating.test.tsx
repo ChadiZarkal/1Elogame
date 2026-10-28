@@ -52,6 +52,11 @@ function regieScripts() {
   ).map((s) => s.src);
 }
 
+/** Les cadres d'encart, et le document que chacun reçoit. */
+function cadres() {
+  return Array.from(document.querySelectorAll<HTMLIFrameElement>('iframe[title="Publicité"]'));
+}
+
 describe("chargement de la régie", () => {
   beforeEach(() => {
     pathname = '/guide';
@@ -61,36 +66,37 @@ describe("chargement de la régie", () => {
     document.querySelectorAll('script[src^="https://regie.test"]').forEach((s) => s.remove());
   });
 
-  it('insère le script dès l’affichage de l’encart', () => {
+  it('charge le script dans un cadre à part, pas dans la page', () => {
     render(<NativeAd />);
-    expect(regieScripts()).toEqual([NATIVE_SRC]);
+    // La régie ne remplit qu'un conteneur par document : dans la page, le
+    // deuxième encart d'une visite restait vide (voir CadreRegie).
+    expect(regieScripts()).toEqual([]);
+    expect(cadres()).toHaveLength(1);
+    expect(cadres()[0].srcdoc).toContain(`src="${NATIVE_SRC}"`);
   });
 
-  it('n’insère qu’un seul script par emplacement', () => {
+  it('n’ouvre qu’un seul cadre par emplacement, avec un seul script', () => {
     render(<NativeAd />);
-    // Deux exemplaires se disputeraient le même conteneur, que la régie
-    // retrouve par un identifiant unique.
-    expect(regieScripts()).toHaveLength(1);
+    expect(cadres()).toHaveLength(1);
+    expect(cadres()[0].srcdoc.match(/<script/g)).toHaveLength(1);
   });
 
-  it('retire le script quand l’encart quitte la page', () => {
+  it('retire le cadre quand l’encart quitte la page', () => {
     const view = render(<NativeAd />);
-    expect(regieScripts()).toHaveLength(1);
+    expect(cadres()).toHaveLength(1);
 
     view.unmount();
 
-    // Sans ce retrait, une navigation côté client empilerait un script par
-    // page visitée.
-    expect(regieScripts()).toEqual([]);
+    expect(cadres()).toEqual([]);
   });
 
   it('reste muet sur un écran de jeu', () => {
     pathname = '/jeu/jouer';
     const { container } = render(<NativeAd />);
 
-    // Ni script, ni emplacement : un encart n'a pas sa place au milieu d'une
+    // Ni cadre, ni emplacement : un encart n'a pas sa place au milieu d'une
     // partie, et l'écran y est dimensionné à la fenêtre pile.
-    expect(regieScripts()).toEqual([]);
+    expect(cadres()).toEqual([]);
     expect(container.querySelector('.native-ad')).toBeNull();
   });
 
@@ -109,7 +115,13 @@ describe("chargement de la régie", () => {
     // lit comme un article du site.
     expect(screen.getByText('Publicité')).toBeInTheDocument();
     // L'identifiant est imposé par la régie, qui retrouve son conteneur ainsi.
-    expect(container.querySelector('#container-essai')).not.toBeNull();
+    expect(container.querySelector('iframe')!.srcdoc).toContain('id="container-essai"');
+  });
+
+  it('déclare le cadre sombre, comme la page', () => {
+    render(<NativeAd />);
+    // Sans cette déclaration, Chrome peint un fond blanc opaque sous le cadre.
+    expect(cadres()[0].srcdoc).toContain('<meta name="color-scheme" content="dark">');
   });
 
   it('ne recouvre rien : l’encart vit dans le flux', () => {
