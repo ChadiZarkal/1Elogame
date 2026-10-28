@@ -199,6 +199,18 @@ export const RFT_POPUNDER: AdUnit = {
 export const RFT_INTERSTITIEL_DUREE_S = 5;
 
 /**
+ * Le Red Flag Test, avant la partie : l'encart natif sous le bouton de départ.
+ * Demandé côté produit le 2026-10-28 (« sous le bouton Commencer »). Il est
+ * posé sur les deux écrans de départ : le profil (« Commencer », vu une seule
+ * fois) et le pari (« Je parie… » / « Passer »), que tout le monde voit.
+ */
+export const RFT_DEPART: NativeAdUnit = {
+  enabled: true,
+  src: NATIVE_BANNER.src,
+  containerId: NATIVE_BANNER.containerId,
+};
+
+/**
  * Routes sans aucune publicité, ni bandeau de consentement.
  *
  * Un écran de jeu en cours n'a pas de place pour un encart. `/hors-ligne` est

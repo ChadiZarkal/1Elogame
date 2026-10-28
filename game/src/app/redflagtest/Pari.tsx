@@ -23,6 +23,8 @@
 
 import { useState } from 'react';
 import { useGesteModeTest } from './modeTest';
+import { RFT_DEPART } from '@/config/ads';
+import { NativeAd } from '@/components/ads/NativeAd';
 
 /** Le curseur va au-delà de 100, comme le score. */
 export const PARI_MAX = 120;
@@ -133,6 +135,9 @@ export function Pari({
         </button>
         <p className="intro-note pari-note">Réponse à la fin du test.</p>
       </div>
+
+      {/* Sous « Je parie » et « Passer » : le départ de la partie reste en haut. */}
+      <NativeAd unit={RFT_DEPART} className="native-ad--carre" />
     </section>
   );
 }

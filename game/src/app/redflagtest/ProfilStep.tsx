@@ -25,6 +25,8 @@
 
 import { useState } from 'react';
 import { useGesteModeTest } from './modeTest';
+import { RFT_DEPART } from '@/config/ads';
+import { NativeAd } from '@/components/ads/NativeAd';
 import type { AgeVotant, SexeVotant } from '@/types/database';
 import type { PlayerProfile } from '@/types/game';
 
@@ -109,6 +111,9 @@ export function ProfilStep({ onDemarrer }: { onDemarrer: (profil: PlayerProfile)
           Deux réponses, anonymes. Elles servent à te comparer aux autres à la fin.
         </p>
       </form>
+
+      {/* Sous le bouton et sa note : rien de ce qu'il faut remplir ne descend. */}
+      <NativeAd unit={RFT_DEPART} className="native-ad--carre" />
     </section>
   );
 }
