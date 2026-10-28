@@ -79,6 +79,26 @@ describe('getDixMaisLeaderboard', () => {
     expect(classement.find((l) => l.text === 'Deux notes seulement')!.note).toBeNull();
   });
 
+  // Le cas de la production : plus de red flags que la limite, tous notés plus
+  // bas que les green flags. Les green flags doivent quand même revenir.
+  it('garde les green flags même quand les red flags dépassent la limite', async () => {
+    const rouges = Array.from({ length: 5 }, (_, i) =>
+      ligne(`r${i}`, `Rouge ${i}`, { notes_count: 10, notes_total: 10 * (i + 1) }),
+    );
+    const verts = [
+      ligne('v1', 'Vert 9', { type: 'positive', notes_count: 10, notes_total: 90 }),
+      ligne('v2', 'Vert 12', { type: 'positive', notes_count: 10, notes_total: 120 }),
+      ligne('v3', 'Vert 11', { type: 'positive', notes_count: 10, notes_total: 110 }),
+    ];
+    select.mockResolvedValue({ data: [...rouges, ...verts], error: null });
+    const { getDixMaisLeaderboard } = await import('@/lib/repositories/dixmais');
+
+    const classement = await getDixMaisLeaderboard(2);
+    // Deux par liste : les deux red flags les plus bas, les deux green flags les plus hauts.
+    expect(classement.filter((l) => l.type === 'negative').map((l) => l.text)).toEqual(['Rouge 0', 'Rouge 1']);
+    expect(classement.filter((l) => l.type === 'positive').map((l) => l.text)).toEqual(['Vert 12', 'Vert 11']);
+  });
+
   // Le même texte sur plusieurs lignes : les notes s'additionnent avant le
   // calcul.
   it('réunit les notes des exemplaires d’un même énoncé', async () => {

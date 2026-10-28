@@ -461,11 +461,28 @@ function parNote(a: LeaderboardEntry, b: LeaderboardEntry): number {
   return a.avg_delta - b.avg_delta;
 }
 
+/**
+ * Les deux listes du classement, chacune tranchée à `limit` : les red flags de
+ * la note la plus basse à la plus haute, les green flags dans l'ordre inverse.
+ *
+ * Trancher l'ensemble trié par note croissante gardait les `limit` infos les
+ * plus basses — toutes des red flags, puisqu'une qualité est notée au-dessus.
+ * Constaté en production le 2026-10-28 : 100 lignes sur 100 étaient des red
+ * flags, et l'onglet des green flags restait vide alors que chacune avait
+ * quelque 2 500 notes.
+ */
+function parListe(lignes: LeaderboardEntry[], limit: number): LeaderboardEntry[] {
+  const rouges = lignes.filter((l) => l.type === 'negative').sort(parNote).slice(0, limit);
+  const verts = lignes
+    .filter((l) => l.type === 'positive')
+    .sort((a, b) => parNote(b, a))
+    .slice(0, limit);
+  return [...rouges, ...verts];
+}
+
 export async function getDixMaisLeaderboard(limit = 50): Promise<LeaderboardEntry[]> {
   if (isMockMode()) {
-    return aggregateByText(dedupeByText(buildMockStatements()) as LeaderboardEntry[])
-      .sort(parNote)
-      .slice(0, limit);
+    return parListe(aggregateByText(dedupeByText(buildMockStatements()) as LeaderboardEntry[]), limit);
   }
 
   const { createDixmaisServerClient } = await import('@/lib/supabaseDixmais');
@@ -481,9 +498,7 @@ export async function getDixMaisLeaderboard(limit = 50): Promise<LeaderboardEntr
 
   if (error) throw new Error(`Leaderboard error: ${error.message}`);
 
-  return aggregateByText((data as LeaderboardEntry[]) || [])
-    .sort(parNote)
-    .slice(0, limit);
+  return parListe(aggregateByText((data as LeaderboardEntry[]) || []), limit);
 }
 
 // ---------------------------------------------------------------------------
