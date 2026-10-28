@@ -7,6 +7,8 @@ import { LoadingPhase } from './LoadingPhase';
 import { RevealPhase } from './RevealPhase';
 import { IdlePhase } from './IdlePhase';
 import { GenderSelect } from './GenderSelect';
+import { POPUNDER_APRES } from '@/config/ads';
+import { usePopunderApres } from '@/components/ads/usePopunderApres';
 
 export default function FlagOrNotPage() {
   const {
@@ -35,7 +37,11 @@ export default function FlagOrNotPage() {
     handleKeyDown,
     privateMode,
     setPrivateMode,
+    verdictsDeLaVisite,
   } = useFlagOrNot();
+
+  // Au 4e verdict de la visite, le pop-under s'arme : il s'ouvre au clic suivant.
+  usePopunderApres(verdictsDeLaVisite, POPUNDER_APRES.oracle);
 
   return (
     <div

@@ -195,6 +195,26 @@ export const RFT_POPUNDER: AdUnit = {
   src: POPUNDER.src,
 };
 
+/**
+ * Le pop-under dans les trois autres jeux, armé après un certain nombre de
+ * tours (demandé côté produit le 2026-10-28) : verdicts de l'Oracle dans la
+ * visite, duels de la partie du Pire des deux, profils jugés dans « C'est un
+ * 10 mais… ». Une fois armé, il s'ouvre au clic suivant — « Encore »,
+ * « Suivant », le profil d'après. Combien de fois il peut s'ouvrir se règle
+ * dans le tableau de bord Adsterra (plafond de fréquence), pas ici.
+ */
+export const JEUX_POPUNDER: AdUnit = {
+  enabled: true,
+  src: POPUNDER.src,
+};
+
+/** À partir de combien de tours le pop-under s'arme, jeu par jeu. */
+export const POPUNDER_APRES = {
+  oracle: 4,
+  pireDesDeux: 10,
+  dixmais: 3,
+} as const;
+
 /** Durée minimale de la pause publicitaire, avant que le résultat soit accessible. */
 export const RFT_INTERSTITIEL_DUREE_S = 5;
 

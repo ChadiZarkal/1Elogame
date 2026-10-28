@@ -20,6 +20,9 @@ export function useFlagOrNot() {
   const [submittedText, setSubmittedText] = useState('');
   const [result, setResult] = useState<JudgmentResult | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  /** Verdicts rendus pendant cette visite. `history`, lui, est relu depuis le
+   * stockage local et compte aussi les visites passées. */
+  const [verdictsDeLaVisite, setVerdictsDeLaVisite] = useState(0);
   const [loadingPhrase, setLoadingPhrase] = useState(LOADING_PHRASES[0]);
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [showJustification, setShowJustification] = useState(true);
@@ -218,6 +221,7 @@ export function useFlagOrNot() {
       await ensureMinDelay();
       setResult(data);
       setHistory((prev) => [{ ...data, text }, ...prev].slice(0, 50));
+      setVerdictsDeLaVisite((n) => n + 1);
       setPhase('reveal');
 
       const justifSetting = localStorage.getItem('flagornot_show_justification');
@@ -311,6 +315,7 @@ export function useFlagOrNot() {
     submittedText,
     result,
     history,
+    verdictsDeLaVisite,
     loadingPhrase,
     placeholderIdx,
     showJustification,
