@@ -18,9 +18,10 @@
  * son compte à rebours, et le résultat arrive à l'heure.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { RFT_INTERSTITIEL, RFT_INTERSTITIEL_DUREE_S, RFT_POPUNDER } from '@/config/ads';
 import { useAdsterraScript } from '@/components/ads/useAdsterraScript';
+import { CadreRegie } from '@/components/ads/CadreRegie';
 
 /** AdSense est-il chargé sur la page ? Si oui, pas de pop-under. */
 function adsensePresent(): boolean {
@@ -36,12 +37,12 @@ export function Interstitiel({
   onContinuer: () => void;
 }) {
   const [reste, setReste] = useState(RFT_INTERSTITIEL_DUREE_S);
-  const encart = useRef<HTMLDivElement>(null);
   // Décidé une fois, au montage : la présence d'AdSense ne change pas pendant
   // les cinq secondes de la pause.
   const [popunderPermis] = useState(() => typeof document !== 'undefined' && !adsensePresent());
 
-  useAdsterraScript(RFT_INTERSTITIEL.src, RFT_INTERSTITIEL.enabled, encart);
+  // Le pop-under reste dans la page : c'est elle qu'il doit surveiller.
+  // L'encart, lui, a son propre document (voir CadreRegie).
   useAdsterraScript(RFT_POPUNDER.src, RFT_POPUNDER.enabled && popunderPermis);
 
   // Recalculé depuis l'heure de départ plutôt que décompté seconde par
@@ -76,10 +77,9 @@ export function Interstitiel({
         </button>
       </div>
 
-      <aside className="interstitiel-pub" aria-label="Publicité" ref={encart}>
+      <aside className="interstitiel-pub" aria-label="Publicité">
         <p className="interstitiel-etiquette" aria-hidden="true">Publicité</p>
-        {/* Le script de la régie retrouve ce conteneur par son identifiant. */}
-        <div id={RFT_INTERSTITIEL.containerId} />
+        {RFT_INTERSTITIEL.enabled && <CadreRegie unit={RFT_INTERSTITIEL} />}
       </aside>
     </section>
   );

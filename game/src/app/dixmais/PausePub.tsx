@@ -13,17 +13,14 @@
  * son compte à rebours.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { DIXMAIS_PAUSE, DIXMAIS_PAUSE_DUREE_S } from '@/config/ads';
-import { useAdsterraScript } from '@/components/ads/useAdsterraScript';
+import { CadreRegie } from '@/components/ads/CadreRegie';
 import { Pied, TEINTES } from './ui';
 
 export function PausePub({ profilsJuges, onContinuer }: { profilsJuges: number; onContinuer: () => void }) {
   const [reste, setReste] = useState(DIXMAIS_PAUSE_DUREE_S);
-  const encart = useRef<HTMLElement>(null);
-
-  useAdsterraScript(DIXMAIS_PAUSE.src, DIXMAIS_PAUSE.enabled, encart);
 
   // Recalculé depuis l'heure de départ : un onglet en arrière-plan ralentit
   // les minuteurs, un décompte seconde par seconde durerait bien plus.
@@ -57,7 +54,7 @@ export function PausePub({ profilsJuges, onContinuer }: { profilsJuges: number; 
         </p>
       </div>
 
-      <aside ref={encart} aria-label="Publicité" className="mx-auto mt-6 w-full max-w-sm flex-1">
+      <aside aria-label="Publicité" className="mx-auto mt-6 w-full max-w-sm flex-1">
         <p
           aria-hidden
           className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.18em]"
@@ -65,8 +62,7 @@ export function PausePub({ profilsJuges, onContinuer }: { profilsJuges: number; 
         >
           Publicité
         </p>
-        {/* Le script de la régie retrouve ce conteneur par son identifiant. */}
-        <div id={DIXMAIS_PAUSE.containerId} className="[&_:where(img,iframe,table)]:max-w-full" />
+        {DIXMAIS_PAUSE.enabled && <CadreRegie unit={DIXMAIS_PAUSE} />}
       </aside>
 
       <Pied>

@@ -1,9 +1,8 @@
 'use client';
 
-import { useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { isAdFreePath, NATIVE_BANNER, type NativeAdUnit } from '@/config/ads';
-import { useAdsterraScript } from './useAdsterraScript';
+import { CadreRegie } from './CadreRegie';
 
 /**
  * @module components/ads/NativeAd
@@ -39,26 +38,19 @@ export function NativeAd({
   /** L'emplacement de la régie ; le bandeau des pages de contenu par défaut. */
   unit?: NativeAdUnit;
 }) {
-  const hostRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname() ?? '';
-
-  useAdsterraScript(unit.src, unit.enabled, hostRef);
 
   if (!unit.enabled) return null;
   if (isAdFreePath(pathname)) return null;
 
   return (
-    <aside
-      ref={hostRef}
-      className={`native-ad ${className}`.trim()}
-      aria-label="Publicité"
-    >
+    <aside className={`native-ad ${className}`.trim()} aria-label="Publicité">
       <p className="native-ad__label" aria-hidden>
         Publicité
       </p>
-      {/* Le script de la régie retrouve ce conteneur par son identifiant : il
-          est imposé par l'emplacement, pas choisi ici. */}
-      <div id={unit.containerId} />
+      {/* Dans son propre document : la régie ne remplit qu'un conteneur par
+          page, et le site ne recharge jamais la sienne (voir CadreRegie). */}
+      <CadreRegie unit={unit} />
     </aside>
   );
 }
