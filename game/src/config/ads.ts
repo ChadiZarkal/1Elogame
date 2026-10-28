@@ -85,13 +85,42 @@ export const DIXMAIS_VERDICT: NativeAdUnit = {
 /**
  * « Le pire des deux » : l'encart natif carré sur le récap de fin de partie
  * (`/jeu/recap`), sous « Partager mon résultat ». Demandé côté produit le
- * 2026-10-21. Rien pendant les duels : `/jeu/jouer` reste sans publicité.
+ * 2026-10-21.
  */
 export const JEU_RECAP: NativeAdUnit = {
   enabled: true,
   src: ACCUEIL_NATIVE.src,
   containerId: ACCUEIL_NATIVE.containerId,
 };
+
+/**
+ * « Le pire des deux » : une pause publicitaire tous les cinq duels, entre le
+ * résultat et le duel suivant (`components/game/PausePubDuel`). Demandée côté
+ * produit le 2026-10-28. Un écran à part, avec un bouton pour repartir : rien
+ * ne s'affiche pendant qu'on choisit, et le dernier duel d'une partie n'en a
+ * pas — le récap porte déjà `JEU_RECAP`.
+ *
+ * `/jeu/jouer` reste dans `AD_FREE_PATHS` : aucun encart *pendant* un duel.
+ * La pause monte son cadre elle-même, sur son propre écran.
+ */
+export const JEU_PAUSE: NativeAdUnit = {
+  enabled: true,
+  src: ACCUEIL_NATIVE.src,
+  containerId: ACCUEIL_NATIVE.containerId,
+};
+
+/** Une pause tous les combien de duels joués. */
+export const JEU_PAUSE_TOUS_LES = 5;
+
+/**
+ * Faut-il une pause après ce duel ? Jamais après le dernier d'une partie :
+ * le joueur part vers le récap, qui a son encart.
+ */
+export function pauseJeuDue(duelsJoues: number, taillePartie?: number): boolean {
+  if (!JEU_PAUSE.enabled || duelsJoues <= 0) return false;
+  if (taillePartie !== undefined && duelsJoues >= taillePartie) return false;
+  return duelsJoues % JEU_PAUSE_TOUS_LES === 0;
+}
 
 /**
  * L'Oracle : l'encart natif carré sur chaque verdict (`RevealPhase`), sous
@@ -189,6 +218,8 @@ export const RFT_INTERSTITIEL_DUREE_S = 5;
 export const AD_FREE_PATHS: RegExp[] = [
   /^\/admin(\/|$)/,
   /^\/dixmais\/admin(\/|$)/,
+  // Aucun encart pendant un duel. La pause tous les cinq duels (JEU_PAUSE) a
+  // son propre écran et ne passe pas par ce filtre.
   /^\/jeu\/jouer(\/|$)/,
   // `/jeu/recap` en est sorti le 2026-10-21 : la fin de partie porte l'encart
   // JEU_RECAP. Il reste exclu d'AdSense (voir `AdSenseScript`).
