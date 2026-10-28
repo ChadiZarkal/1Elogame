@@ -28,3 +28,25 @@ export function usePopunderApres(tours: number, seuil: number) {
 
   useAdsterraScript(JEUX_POPUNDER.src, atteint, undefined, true);
 }
+
+/**
+ * Arme le pop-under à chaque multiple de `periode` : au 2e tour, au 4e, au
+ * 6e… pour une période de deux. Chaque armement permet une ouverture, au tap
+ * suivant ; entre deux multiples, la garde reste fermée.
+ *
+ * Le script est chargé dès le premier multiple et le reste : la régie ne
+ * s'installe qu'une fois par visite, c'est la garde qui dose les ouvertures.
+ */
+export function usePopunderTousLes(tours: number, periode: number) {
+  const actif = JEUX_POPUNDER.enabled && tours >= periode;
+  const du = actif && tours % periode === 0;
+
+  // Avant le script, comme `usePopunderApres`. `tours` dans les dépendances :
+  // passer du 2e au 4e tour réarme, même si `du` vaut `true` les deux fois.
+  useEffect(() => {
+    if (du) armerPopunder();
+    else if (tours === 0) desarmerPopunder();
+  }, [du, tours]);
+
+  useAdsterraScript(JEUX_POPUNDER.src, actif, undefined, true);
+}

@@ -200,20 +200,25 @@ export const RFT_POPUNDER: AdUnit = {
  * tours (demandé côté produit le 2026-10-28) : verdicts de l'Oracle dans la
  * visite, duels de la partie du Pire des deux, profils jugés dans « C'est un
  * 10 mais… ». Une fois armé, il s'ouvre au clic suivant — « Encore »,
- * « Suivant », le profil d'après. Combien de fois il peut s'ouvrir se règle
- * dans le tableau de bord Adsterra (plafond de fréquence), pas ici.
+ * « Suivant », le profil d'après —, une seule fois (`gardePopunder`).
  */
 export const JEUX_POPUNDER: AdUnit = {
   enabled: true,
   src: POPUNDER.src,
 };
 
-/** À partir de combien de tours le pop-under s'arme, jeu par jeu. */
+/** À partir de combien de tours le pop-under s'arme, une fois, jeu par jeu. */
 export const POPUNDER_APRES = {
   oracle: 4,
   pireDesDeux: 10,
-  dixmais: 3,
 } as const;
+
+/**
+ * « C'est un 10 mais… » : un pop-under tous les deux profils, au verdict du
+ * 2e, du 4e, du 6e… (demandé côté produit le 2026-10-28, à la place d'un seul
+ * après le 3e). Il s'ouvre au tap suivant, une fois par verdict concerné.
+ */
+export const DIXMAIS_POPUNDER_TOUS_LES = 2;
 
 /** Durée minimale de la pause publicitaire, avant que le résultat soit accessible. */
 export const RFT_INTERSTITIEL_DUREE_S = 5;

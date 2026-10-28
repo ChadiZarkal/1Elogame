@@ -21,16 +21,17 @@ import { ReportScreen } from './ReportScreen';
 import { ProfileStep } from './ProfileStep';
 import { useDixMais } from './useDixMais';
 import { PausePub } from './PausePub';
-import { pauseDixmaisDue, POPUNDER_APRES } from '@/config/ads';
-import { usePopunderApres } from '@/components/ads/usePopunderApres';
+import { DIXMAIS_POPUNDER_TOUS_LES, pauseDixmaisDue } from '@/config/ads';
+import { usePopunderTousLes } from '@/components/ads/usePopunderApres';
 import { scoreColor } from './scale';
 
 export default function DixMaisPage() {
   const game = useDixMais();
   const { phase, round } = game;
 
-  // Au 3e profil jugé, le pop-under s'arme : il s'ouvre au clic suivant.
-  usePopunderApres(game.history.length, POPUNDER_APRES.dixmais);
+  // Au verdict du 2e profil, du 4e, du 6e… le pop-under s'arme : il s'ouvre
+  // une fois, au tap suivant.
+  usePopunderTousLes(game.history.length, DIXMAIS_POPUNDER_TOUS_LES);
   /** Le profil qu'affiche le verdict : toujours le dernier jugé, versé dans
    * l'historique au moment même où la phase bascule. */
   const lastRound = game.history.at(-1) ?? null;
