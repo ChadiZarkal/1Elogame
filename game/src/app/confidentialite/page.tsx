@@ -109,7 +109,7 @@ export default function ConfidentialitePage() {
             <li><strong>Google Cloud / Gemini AI</strong> (États-Unis) — analyse des situations Oracle. Couvert par les Clauses Contractuelles Types de Google.</li>
             <li><strong>Reconnaissance vocale du navigateur</strong> — sur Chrome et Edge, l&apos;audio de la dictée est transmis aux serveurs de Google par le navigateur lui-même. Ce transfert relève des conditions de votre navigateur, pas des nôtres : nous n&apos;y avons accès ni à l&apos;audio ni aux métadonnées.</li>
             <li><strong>Supabase Inc.</strong> — base de données. Le projet peut être hébergé en région EU.</li>
-            <li><strong>Régie publicitaire</strong> — les scripts publicitaires sont servis depuis le domaine <code>profitableratecpmnetwork.com</code>, hors Union européenne. L&apos;appel de ces scripts transmet à la régie votre adresse IP, votre navigateur et la page consultée. Il a lieu au chargement des pages qui portent un encart, listées ci-dessous.</li>
+            <li><strong>Régie publicitaire</strong> — les scripts publicitaires sont servis depuis les domaines <code>bauval.org</code> et <code>abscloud.org</code>, hors Union européenne. L&apos;appel de ces scripts transmet à la régie votre adresse IP, votre navigateur et la page consultée. Il a lieu au chargement des pages qui portent un encart, listées ci-dessous.</li>
           </ul>
         </section>
 
@@ -146,7 +146,7 @@ export default function ConfidentialitePage() {
           </ul>
           <p>
             Le site affiche des <strong>encarts publicitaires</strong> opérés par une régie tierce,
-            dont les scripts sont servis depuis le domaine <code>profitableratecpmnetwork.com</code>.
+            dont les scripts sont servis depuis les domaines <code>bauval.org</code> et <code>abscloud.org</code>.
             Ces encarts sont signalés par la mention « Publicité » et apparaissent au bas des pages
             de contenu — jamais pendant une partie.
           </p>
