@@ -12,6 +12,8 @@ import { ResultDisplay } from '@/components/game/ResultDisplay';
 import { StreakDisplay } from '@/components/game/StreakDisplay';
 import { CategorySelector } from '@/components/game/CategorySelector';
 import { FullPageLoading } from '@/components/ui/Loading';
+import { PausePubDuel } from '@/components/game/PausePubDuel';
+import { pauseJeuDue } from '@/config/ads';
 
 // Lazy-load components only needed rarely
 const AllDuelsExhausted = dynamic(() => import('@/components/game/AllDuelsExhausted').then(m => m.AllDuelsExhausted), { ssr: false });
@@ -23,6 +25,8 @@ export default function JouerPage() {
   const previousOnlineRef = useRef(true);
   const [showBackToLive, setShowBackToLive] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  /** La pause publicitaire, entre le résultat et le duel suivant. */
+  const [enPause, setEnPause] = useState(false);
   const isOnline = useOnlineStatus();
   const { tap, success: hapticSuccess, error: hapticError } = useHaptics();
   
@@ -190,6 +194,22 @@ export default function JouerPage() {
   
   const handleReset = useCallback(() => { resetGame(); router.push('/jeu'); }, [resetGame, router]);
 
+  // « Suivant » sur le résultat : tous les cinq duels, la pause publicitaire
+  // s'intercale. Le duel suivant ne vient qu'au bouton de la pause.
+  const handleNext = useCallback(() => {
+    if (pauseJeuDue(duelCount, partyConfig?.size)) {
+      setEnPause(true);
+      return;
+    }
+    showNextDuel();
+  }, [duelCount, partyConfig?.size, showNextDuel]);
+
+  const finirPause = useCallback(() => {
+    tap();
+    setEnPause(false);
+    showNextDuel();
+  }, [tap, showNextDuel]);
+
   const handleRefreshDuel = useCallback(async () => {
     tap();
     if (!isOnline) {
@@ -201,6 +221,7 @@ export default function JouerPage() {
     }
 
     setIsRefreshing(true);
+    setEnPause(false);
     clearError();
     // `fetchNextDuel` range son résultat dans `nextDuel` tant qu'un duel est
     // affiché : appelé tel quel, le bouton faisait tourner son indicateur puis
@@ -386,14 +407,18 @@ export default function JouerPage() {
           </button>
         )}
         
-        {showingResult && lastResult ? (
+        {enPause ? (
+          <div className="flex-1 min-h-0 flex flex-col w-full">
+            <PausePubDuel duelsJoues={duelCount} onContinuer={finirPause} />
+          </div>
+        ) : showingResult && lastResult ? (
           <div className="flex-1 min-h-0 flex flex-col w-full">
             <ResultDisplay
               duel={currentDuel}
               result={lastResult}
               streak={streak}
               streakEmoji={streakEmoji}
-              onNext={showNextDuel}
+              onNext={handleNext}
             />
           </div>
         ) : (
