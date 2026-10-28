@@ -122,9 +122,11 @@ export default function CGUPage() {
           <h2>9. Publicité</h2>
           <p>
             Le Service est financé par la publicité. Des <strong>encarts publicitaires</strong>
-            {' '}opérés par une régie tierce sont affichés au bas des pages de contenu, signalés par
-            la mention « Publicité ». Ils n&apos;apparaissent jamais pendant une partie, ni sur les
-            écrans d&apos;administration.
+            {' '}opérés par une régie tierce sont affichés sur l&apos;accueil et dans les jeux,
+            entre deux étapes (verdict, pause, fin de partie), signalés par la mention
+            « Publicité ». Ils n&apos;apparaissent jamais pendant qu&apos;on répond ou qu&apos;on
+            vote, ni sur les écrans d&apos;administration. À la fin du Red Flag Test, le clic sur
+            « Voir mon résultat » peut aussi ouvrir une page publicitaire en arrière-plan.
           </p>
           <p>
             Ces encarts sont chargés à l&apos;ouverture des pages qui les portent, et les scripts de
@@ -132,17 +134,6 @@ export default function CGUPage() {
             navigateur, bloqueur de publicité, liens d&apos;opposition des régies — sont détaillés
             dans la{' '}
             <Link href="/confidentialite">politique de confidentialité</Link>.
-          </p>
-          <p>
-            Le code de la régie <strong>Google AdSense</strong> reste intégré au Service, mais aucun
-            emplacement AdSense n&apos;est affiché à ce jour.
-          </p>
-          <p>
-            Vous pouvez modifier ces préférences à tout moment depuis les{' '}
-            <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer">
-              paramètres des annonces Google
-            </a>. Les modalités sont détaillées dans notre{' '}
-            <Link href="/confidentialite">Politique de Confidentialité</Link>.
           </p>
         </section>
 

@@ -12,7 +12,6 @@
  * Deux formats Adsterra, réglés dans `config/ads.ts` :
  *  - l'encart natif, au milieu de l'écran, étiqueté « Publicité » ;
  *  - le pop-under, armé ici et déclenché par le clic sur « Voir mon résultat ».
- *    Il n'est chargé que si AdSense est absent de la page (voir RFT_POPUNDER).
  *
  * Un bloqueur de publicité laisse l'encart vide : l'écran reste le même, avec
  * son compte à rebours, et le résultat arrive à l'heure.
@@ -23,11 +22,6 @@ import { RFT_INTERSTITIEL, RFT_INTERSTITIEL_DUREE_S, RFT_POPUNDER } from '@/conf
 import { useAdsterraScript } from '@/components/ads/useAdsterraScript';
 import { CadreRegie } from '@/components/ads/CadreRegie';
 
-/** AdSense est-il chargé sur la page ? Si oui, pas de pop-under. */
-function adsensePresent(): boolean {
-  return Boolean(document.querySelector('script[src*="adsbygoogle"], ins.adsbygoogle'));
-}
-
 export function Interstitiel({
   pret,
   onContinuer,
@@ -37,13 +31,9 @@ export function Interstitiel({
   onContinuer: () => void;
 }) {
   const [reste, setReste] = useState(RFT_INTERSTITIEL_DUREE_S);
-  // Décidé une fois, au montage : la présence d'AdSense ne change pas pendant
-  // les cinq secondes de la pause.
-  const [popunderPermis] = useState(() => typeof document !== 'undefined' && !adsensePresent());
-
   // Le pop-under reste dans la page : c'est elle qu'il doit surveiller.
   // L'encart, lui, a son propre document (voir CadreRegie).
-  useAdsterraScript(RFT_POPUNDER.src, RFT_POPUNDER.enabled && popunderPermis);
+  useAdsterraScript(RFT_POPUNDER.src, RFT_POPUNDER.enabled);
 
   // Recalculé depuis l'heure de départ plutôt que décompté seconde par
   // seconde : un onglet en arrière-plan ralentit les minuteurs, et un compte à

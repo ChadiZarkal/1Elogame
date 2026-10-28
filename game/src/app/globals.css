@@ -216,38 +216,11 @@
   }
 }
 
-/* ========== Emplacements publicitaires ==========
-   `AdBanner` posait cette classe sans qu'elle soit définie nulle part : le
-   `<ins>` naissait donc à hauteur zéro et grandissait d'un coup à l'arrivée de
-   la créative, poussant vers le bas tout ce qui suivait — c'est-à-dire les
-   boutons, sous un pouce déjà en mouvement. La hauteur est réservée d'avance.
-   (Le composant n'a aujourd'hui aucun site d'appel ; les annonces servies
-   viennent des annonces automatiques, qui s'insèrent hors de ce cadre.) */
-
-.ad-container {
-  display: block;
-  width: 100%;
-  min-height: 100px;
-  margin: 1rem 0;
-  contain: layout;
-}
-.ad-container > ins {
-  display: block;
-  width: 100%;
-}
-@media (min-width: 768px) {
-  .ad-container {
-    min-height: 280px;
-  }
-}
-
-
 /* ========== Publicité ========== */
 
 /* Encart natif Adsterra.
  *
- * Pas de `min-height` ici, à la différence de `.ad-container` au-dessus : un
- * encart natif ne se remplit pas toujours — régie sans annonce à servir,
+ * Pas de `min-height` ici : un encart natif ne se remplit pas toujours — régie sans annonce à servir,
  * bloqueur actif — et une hauteur réservée laisserait alors un trou franc au
  * milieu du texte. `contain: layout` garde en revanche ses recalculs internes
  * hors de la mise en page de la page qui l'accueille. */

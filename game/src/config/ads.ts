@@ -13,9 +13,8 @@
  * - `popunder` ouvre une fenêtre derrière la page au premier clic. Ici *tout*
  *   est un clic — voter, swiper, choisir une réponse : le premier geste de jeu
  *   déclencherait une fenêtre. En application installée (PWA autonome) elle
- *   sort carrément de l'application. Le règlement AdSense interdit par ailleurs
- *   les annonces Google sur une page portant un pop-under, et le code AdSense
- *   est déjà intégré : l'allumer mettrait en risque l'autre régie.
+ *   sort carrément de l'application. Il n'est allumé qu'à la fin du Red Flag
+ *   Test (`RFT_POPUNDER`).
  *
  * - `socialBar` est une barre flottante posée par-dessus le contenu, en bas de
  *   l'écran le plus souvent. C'est exactement la bande où vivent les boutons
@@ -25,14 +24,10 @@
  * Passer l'un des deux à `true` suffit à l'activer : le composant et
  * l'exclusion des routes sont déjà en place.
  *
- * Le troisième, `NATIVE_BANNER`, est éteint à son tour tant que le site est
- * en examen AdSense. Il s'affichait sur l'accueil, le guide, l'Observatoire
- * et sous chaque note de présentation — presque toutes les pages que
- * l'examinateur lit —, sans demande d'accord préalable. Des encarts « natifs »
- * d'une régie tierce, dont nous ne choisissons pas le contenu, sur les pages
- * mêmes que l'on présente comme informatives : c'est l'expérience que décrit
- * le refus « contenu à faible valeur ». Le rallumer une fois AdSense accepté
- * est une décision commerciale, pas technique : l'interrupteur suffit.
+ * Le troisième, `NATIVE_BANNER`, le bandeau du bas des pages de contenu (guide,
+ * notes de présentation), avait été éteint pendant l'examen AdSense. AdSense a
+ * été retiré du site le 2026-10-28 : la raison est tombée, mais le rallumer
+ * reste une décision commerciale. L'interrupteur suffit.
  */
 
 export interface AdUnit {
@@ -111,8 +106,6 @@ export const ORACLE_VERDICT: NativeAdUnit = {
  *
  * L'encart natif plutôt que les deux autres formats :
  *  - le pop-under s'ouvrirait au premier clic, et dans ce jeu tout est clic ;
- *    surtout, AdSense est chargé sur /dixmais, et son règlement interdit ses
- *    annonces sur une page portant un pop-under ;
  *  - la barre sociale flotte en bas de l'écran, là où vivent la jauge et le
  *    bouton « Valider » : elle les recouvrirait pendant toute la partie.
  * L'encart natif, lui, occupe un écran à part, puis le jeu reprend.
@@ -156,11 +149,9 @@ export const POPUNDER: AdUnit = {
  * - L'encart reprend l'emplacement natif : c'est le seul format qui s'affiche
  *   *dans* l'écran, et c'est ce qui permet « la pub, puis le résultat ».
  * - Le pop-under s'arme sur cet écran et s'ouvre au clic sur « Voir mon
- *   résultat ». Il n'est chargé que si AdSense est absent de la page : le
- *   règlement AdSense interdit les annonces Google à côté d'un pop-under, et
- *   AdSense n'est plus chargé sur `/redflagtest` (voir `AdSenseScript`). Un
- *   joueur arrivé d'une autre page du site, où AdSense s'est déjà chargé, n'a
- *   donc pas de pop-under — c'est voulu.
+ *   résultat ». Jusqu'au 2026-10-28, il ne s'armait que si AdSense était absent
+ *   de la page (règlement Google) : venu d'une autre page du site, presque
+ *   personne ne l'avait. AdSense est retiré, il s'arme pour tous.
  *
  * Éteindre l'un ou l'autre : passer son `enabled` à `false`.
  */
@@ -181,17 +172,15 @@ export const RFT_INTERSTITIEL_DUREE_S = 5;
 /**
  * Routes sans aucune publicité, ni bandeau de consentement.
  *
- * La liste reprend celle d'AdSense et l'étend : le règlement « valeur de
- * l'inventaire » vise les écrans sans contenu de l'éditeur, et un écran de jeu
- * en cours n'a pas de place pour un encart. `/hors-ligne` est servi sans réseau
- * — un script tiers n'y chargerait jamais.
+ * Un écran de jeu en cours n'a pas de place pour un encart. `/hors-ligne` est
+ * servi sans réseau — un script tiers n'y chargerait jamais.
  */
 export const AD_FREE_PATHS: RegExp[] = [
   /^\/admin(\/|$)/,
   /^\/dixmais\/admin(\/|$)/,
   /^\/jeu\/jouer(\/|$)/,
   // `/jeu/recap` en est sorti le 2026-10-21 : la fin de partie porte l'encart
-  // JEU_RECAP. Il reste exclu d'AdSense (voir `AdSenseScript`).
+  // JEU_RECAP.
   /^\/hors-ligne(\/|$)/,
 ];
 

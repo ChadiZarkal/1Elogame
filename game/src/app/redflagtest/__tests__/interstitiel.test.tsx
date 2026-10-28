@@ -52,16 +52,17 @@ describe('Interstitiel', () => {
     expect(bouton().disabled).toBe(false);
   });
 
-  // Le règlement AdSense interdit ses annonces à côté d'un pop-under.
-  it('ne charge pas le pop-under quand AdSense est sur la page', () => {
+  it('arme le pop-under', () => {
+    render(<Interstitiel pret onContinuer={() => {}} />);
+    expect(scripts.find(([src]) => src === RFT_POPUNDER.src)?.[1]).toBe(true);
+  });
+
+  // Jusqu'au 2026-10-28, un script AdSense déjà chargé désarmait le pop-under
+  // (règlement Google). AdSense est retiré : sa présence ne change plus rien.
+  it('arme le pop-under même si un script Google traîne sur la page', () => {
     const s = document.createElement('script');
     s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
     document.head.appendChild(s);
-    render(<Interstitiel pret onContinuer={() => {}} />);
-    expect(scripts.find(([src]) => src === RFT_POPUNDER.src)?.[1]).toBe(false);
-  });
-
-  it('charge le pop-under quand AdSense est absent', () => {
     render(<Interstitiel pret onContinuer={() => {}} />);
     expect(scripts.find(([src]) => src === RFT_POPUNDER.src)?.[1]).toBe(true);
   });

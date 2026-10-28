@@ -147,8 +147,7 @@ export default function ConfidentialitePage() {
           <p>
             Le site affiche des <strong>encarts publicitaires</strong> opérés par une régie tierce,
             dont les scripts sont servis depuis les domaines <code>bauval.org</code> et <code>abscloud.org</code>.
-            Ces encarts sont signalés par la mention « Publicité » et apparaissent au bas des pages
-            de contenu — jamais pendant une partie.
+            Ces encarts sont signalés par la mention « Publicité ».
           </p>
           <p>
             Ces scripts se chargent à l&apos;ouverture des pages concernées. La régie et ses
@@ -157,10 +156,11 @@ export default function ConfidentialitePage() {
             site ou sur d&apos;autres sites.
           </p>
           <p>
-            Les encarts apparaissent uniquement au bas des pages de contenu — sous les jeux, en fin
-            de guide et d&apos;Observatoire. Ils ne sont chargés ni pendant une partie
-            (<code>/jeu/jouer</code>, <code>/jeu/recap</code>), ni sur les
-            écrans d&apos;administration.
+            Les encarts apparaissent sur l&apos;accueil et dans les jeux, entre deux étapes :
+            verdicts, pauses, écrans de départ et de fin de partie. Ils ne sont jamais chargés
+            pendant qu&apos;on répond ou qu&apos;on vote, ni sur les écrans d&apos;administration.
+            À la fin du Red Flag Test, le clic sur « Voir mon résultat » peut aussi ouvrir une page
+            publicitaire en arrière-plan (« pop-under »).
           </p>
           <p>
             <strong>Pour vous y opposer</strong>, plusieurs moyens sont à votre main : régler votre
@@ -170,27 +170,10 @@ export default function ConfidentialitePage() {
             d&apos;opposition.
           </p>
           <p>
-            Le code de la régie <strong>Google AdSense</strong> reste par ailleurs intégré au site,
-            mais <strong>aucun emplacement AdSense n&apos;est affiché</strong> à ce jour.
-          </p>
-          <p>
-            Vous pouvez désactiver la publicité personnalisée depuis les{' '}
-            <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer">
-              paramètres des annonces Google
-            </a>, vous opposer à l&apos;utilisation de cookies par d&apos;autres fournisseurs via{' '}
+            Vous pouvez vous opposer à l&apos;utilisation de cookies publicitaires via{' '}
             <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer">
               aboutads.info/choices
             </a>, ou configurer votre navigateur pour limiter les cookies.
-          </p>
-          <p>
-            Pour comprendre comment Google traite ces données :{' '}
-            <a href="https://www.google.com/policies/technologies/partner-sites/" target="_blank" rel="noopener noreferrer">
-              Comment Google utilise les données lorsque vous utilisez les sites ou applications de ses partenaires
-            </a>{' '}
-            et{' '}
-            <a href="https://policies.google.com/technologies/ads?hl=fr" target="_blank" rel="noopener noreferrer">
-              policies.google.com/technologies/ads
-            </a>.
           </p>
         </section>
 
@@ -206,8 +189,8 @@ export default function ConfidentialitePage() {
             <li><strong>Supabase</strong> — stockage des données applicatives.</li>
             <li><strong>Google (Gemini)</strong> — analyse des textes soumis à l&apos;Oracle.</li>
             <li>
-              <strong>Google AdSense</strong> — code de régie présent sur le site, sans emplacement
-              publicitaire ni annonce diffusée à ce jour.
+              <strong>Régie publicitaire</strong> (<code>bauval.org</code>, <code>abscloud.org</code>)
+              — affichage des encarts publicitaires.
             </li>
           </ul>
         </section>
