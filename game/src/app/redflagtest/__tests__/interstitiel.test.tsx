@@ -7,9 +7,17 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
-const { scripts } = vi.hoisted(() => ({ scripts: [] as Array<[string, boolean]> }));
+const { scripts, garde } = vi.hoisted(() => ({
+  scripts: [] as Array<[string, boolean]>,
+  garde: { armements: 0 },
+}));
 vi.mock('@/components/ads/useAdsterraScript', () => ({
   useAdsterraScript: (src: string, actif: boolean) => { scripts.push([src, actif]); },
+}));
+vi.mock('@/components/ads/gardePopunder', () => ({
+  installerGardePopunder: () => {},
+  desarmerPopunder: () => {},
+  armerPopunder: () => { garde.armements += 1; },
 }));
 
 import { Interstitiel } from '@/app/redflagtest/Interstitiel';
@@ -21,6 +29,18 @@ describe('Interstitiel', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     scripts.length = 0;
+    garde.armements = 0;
+  });
+
+  // Une pub à l'entrée du récap, pas une à chaque « Continuer » : le pop-under
+  // n'est permis qu'une fois, quand « Voir mon résultat » devient cliquable.
+  it('n’autorise le pop-under qu’une fois, au moment où le résultat s’ouvre', () => {
+    render(<Interstitiel pret onContinuer={() => {}} />);
+    expect(garde.armements).toBe(0);
+    act(() => { vi.advanceTimersByTime(RFT_INTERSTITIEL_DUREE_S * 1000); });
+    expect(garde.armements).toBe(1);
+    act(() => { vi.advanceTimersByTime(10_000); });
+    expect(garde.armements).toBe(1);
   });
   afterEach(() => {
     vi.useRealTimers();
