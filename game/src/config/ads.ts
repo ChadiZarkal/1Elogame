@@ -49,7 +49,7 @@ export interface NativeAdUnit extends AdUnit {
 /** Bandeau natif : s'insère dans le flux, à la place d'un bloc de contenu. */
 export const NATIVE_BANNER: NativeAdUnit = {
   enabled: false,
-  src: 'https://pl31149603.profitableratecpmnetwork.com/8413c6c99c5cae8d29d9ac7c0cf1d2d6/invoke.js',
+  src: 'https://bauval.org/21/8413c6c99c5cae8d29d9ac7c0cf1d2d6',
   containerId: 'container-8413c6c99c5cae8d29d9ac7c0cf1d2d6',
 };
 
@@ -140,12 +140,12 @@ export function pauseDixmaisDue(profilsJuges: number): boolean {
 
 export const SOCIAL_BAR: AdUnit = {
   enabled: false,
-  src: 'https://pl31008336.profitableratecpmnetwork.com/68/18/5e/68185e1c4ae03b3726a06b8ab25952ad.js',
+  src: 'https://bauval.org/14/68185e1c4ae03b3726a06b8ab25952ad',
 };
 
 export const POPUNDER: AdUnit = {
   enabled: false,
-  src: 'https://pl31008335.profitableratecpmnetwork.com/74/f6/92/74f692d04f08eba7fcdc90ba9634f984.js',
+  src: 'https://abscloud.org/1/74f692d04f08eba7fcdc90ba9634f984',
 };
 
 /**

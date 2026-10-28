@@ -78,8 +78,8 @@ export default function MentionsLegalesPage() {
         <section className="legal-page__section">
           <h2>6. Publicité et transparence</h2>
           <p>
-            Le site affiche des encarts publicitaires opérés par une régie tierce, servis depuis le
-            domaine <code>profitableratecpmnetwork.com</code>. Ils portent la mention
+            Le site affiche des encarts publicitaires opérés par une régie tierce, servis depuis les
+            domaines <code>bauval.org</code> et <code>abscloud.org</code>. Ils portent la mention
             « Publicité » et apparaissent au bas des pages de contenu, jamais pendant une partie.
           </p>
           <p>
