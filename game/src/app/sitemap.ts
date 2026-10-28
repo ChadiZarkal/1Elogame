@@ -119,7 +119,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.6,
     },
-    // Pages légales : indexables, et attendues par les examinateurs AdSense.
+    // Pages légales : indexables.
     {
       url: `${baseUrl}/mentions-legales`,
       lastModified: now,

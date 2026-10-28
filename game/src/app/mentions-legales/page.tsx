@@ -80,7 +80,8 @@ export default function MentionsLegalesPage() {
           <p>
             Le site affiche des encarts publicitaires opérés par une régie tierce, servis depuis les
             domaines <code>bauval.org</code> et <code>abscloud.org</code>. Ils portent la mention
-            « Publicité » et apparaissent au bas des pages de contenu, jamais pendant une partie.
+            « Publicité » et apparaissent sur l&apos;accueil et dans les jeux, entre deux étapes,
+            jamais pendant qu&apos;on répond ou qu&apos;on vote.
           </p>
           <p>
             L&apos;éditeur n&apos;exerce aucun contrôle éditorial sur les annonces diffusées, qui

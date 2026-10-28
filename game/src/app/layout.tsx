@@ -3,7 +3,6 @@ import Script from "next/script";
 import { Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { AdSenseScript } from "@/components/ads/AdSenseScript";
 import { AdOverlays } from "@/components/ads/AdOverlays";
 import { SiteFooter } from "@/components/ui/SiteFooter";
 import { SiteHeader } from "@/components/ui/SiteHeader";
@@ -24,10 +23,9 @@ const SITE_NAME = 'Red or Green';
 const SITE_DESCRIPTION = 'Red flag ou green flag ? Fais le Red Flag Test, note des profils dans « C\'est un 10 mais… » et vote pour le pire des deux. Jeux gratuits, sans inscription. Violentomètre, consentomètre et outils d\'auto-évaluation inclus.';
 
 const rawGaId = process.env.NEXT_PUBLIC_GA_ID?.trim() || '';
-const rawAdSenseId = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ID?.trim() || '';
-const adSenseClientId = rawAdSenseId
-  ? (rawAdSenseId.startsWith('ca-pub-') ? rawAdSenseId : `ca-pub-${rawAdSenseId}`)
-  : '';
+/* Google AdSense a été retiré le 2026-10-28 : la régie du site est Adsterra,
+   et le règlement AdSense interdisait le pop-under du Red Flag Test.
+   `NEXT_PUBLIC_GOOGLE_ADSENSE_ID` n'est plus lue. */
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -99,7 +97,6 @@ export const metadata: Metadata = {
     ...(process.env.GOOGLE_SITE_VERIFICATION
       ? { 'google-site-verification': process.env.GOOGLE_SITE_VERIFICATION }
       : {}),
-    ...(adSenseClientId ? { 'google-adsense-account': adSenseClientId } : {}),
   },
 };
 
@@ -215,14 +212,6 @@ export default function RootLayout({
                 `,
               }}
             />
-          </>
-        )}
-        {adSenseClientId && (
-          <>
-            {/* Google AdSense — chargé via next/script, hors routes admin */}
-            <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
-            <link rel="preconnect" href="https://googleads.g.doubleclick.net" />
-            <AdSenseScript clientId={adSenseClientId} />
           </>
         )}
         {/* Les balises de manifeste et d'icône ne sont plus écrites ici : elles
