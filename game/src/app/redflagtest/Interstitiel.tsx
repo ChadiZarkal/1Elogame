@@ -21,6 +21,7 @@ import { useEffect, useState } from 'react';
 import { RFT_INTERSTITIEL, RFT_INTERSTITIEL_DUREE_S, RFT_POPUNDER } from '@/config/ads';
 import { useAdsterraScript } from '@/components/ads/useAdsterraScript';
 import { CadreRegie } from '@/components/ads/CadreRegie';
+import { armerPopunder, desarmerPopunder, installerGardePopunder } from '@/components/ads/gardePopunder';
 
 export function Interstitiel({
   pret,
@@ -31,6 +32,14 @@ export function Interstitiel({
   onContinuer: () => void;
 }) {
   const [reste, setReste] = useState(RFT_INTERSTITIEL_DUREE_S);
+
+  // La garde avant le script, fermée : un tap pendant le compte à rebours ne
+  // doit pas consommer le pop-under (voir `gardePopunder`).
+  useEffect(() => {
+    installerGardePopunder();
+    desarmerPopunder();
+  }, []);
+
   // Le pop-under reste dans la page : c'est elle qu'il doit surveiller.
   // L'encart, lui, a son propre document (voir CadreRegie).
   useAdsterraScript(RFT_POPUNDER.src, RFT_POPUNDER.enabled);
@@ -49,6 +58,12 @@ export function Interstitiel({
   }, []);
 
   const accessible = reste <= 0 && pret;
+
+  // Une seule ouverture, au tap sur « Voir mon résultat » : les « Continuer »
+  // du récap qui suivent ne rouvrent rien.
+  useEffect(() => {
+    if (accessible && RFT_POPUNDER.enabled) armerPopunder();
+  }, [accessible]);
 
   return (
     <section className="intro-wrapper interstitiel">
