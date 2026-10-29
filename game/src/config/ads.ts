@@ -196,6 +196,33 @@ export const RFT_POPUNDER: AdUnit = {
 };
 
 /**
+ * Le pop-under de fin de Red Flag Test ne revient pas à chaque partie : une
+ * fois par appareil et par période (demandé côté produit le 2026-10-29 — il
+ * s'ouvrait à chaque « Voir mon résultat », partie après partie).
+ */
+export const RFT_POPUNDER_INTERVALLE_MS = 24 * 60 * 60 * 1000;
+const CLE_RFT_POPUNDER = 'rog_rft_popunder';
+
+/** Le pop-under de fin de test peut-il s'ouvrir sur cet appareil ? */
+export function popunderRftPermis(maintenant = Date.now()): boolean {
+  try {
+    const dernier = Number(localStorage.getItem(CLE_RFT_POPUNDER));
+    return !dernier || maintenant - dernier >= RFT_POPUNDER_INTERVALLE_MS;
+  } catch {
+    return true; // Stockage indisponible : on ne peut pas compter, on laisse faire.
+  }
+}
+
+/** Retient qu'il a été proposé : plus rien avant la fin de la période. */
+export function noterPopunderRft(maintenant = Date.now()): void {
+  try {
+    localStorage.setItem(CLE_RFT_POPUNDER, String(maintenant));
+  } catch {
+    /* stockage indisponible */
+  }
+}
+
+/**
  * Le pop-under dans les trois autres jeux, armé après un certain nombre de
  * tours (demandé côté produit le 2026-10-28) : verdicts de l'Oracle dans la
  * visite, duels de la partie du Pire des deux, profils jugés dans « C'est un

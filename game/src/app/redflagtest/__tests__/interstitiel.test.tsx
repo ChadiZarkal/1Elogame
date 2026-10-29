@@ -21,7 +21,7 @@ vi.mock('@/components/ads/gardePopunder', () => ({
 }));
 
 import { Interstitiel } from '@/app/redflagtest/Interstitiel';
-import { RFT_INTERSTITIEL_DUREE_S, RFT_POPUNDER } from '@/config/ads';
+import { RFT_INTERSTITIEL_DUREE_S, RFT_POPUNDER, RFT_POPUNDER_INTERVALLE_MS } from '@/config/ads';
 
 const bouton = () => screen.getByRole('button') as HTMLButtonElement;
 
@@ -30,6 +30,28 @@ describe('Interstitiel', () => {
     vi.useFakeTimers();
     scripts.length = 0;
     garde.armements = 0;
+    localStorage.clear();
+  });
+
+  // Il revenait à chaque partie : une fois par 24 h et par appareil.
+  it('ne rouvre pas le pop-under à la partie suivante, avant 24 h', () => {
+    const premiere = render(<Interstitiel pret onContinuer={() => {}} />);
+    act(() => { vi.advanceTimersByTime(RFT_INTERSTITIEL_DUREE_S * 1000); });
+    expect(garde.armements).toBe(1);
+    premiere.unmount();
+
+    scripts.length = 0;
+    const deuxieme = render(<Interstitiel pret onContinuer={() => {}} />);
+    act(() => { vi.advanceTimersByTime(RFT_INTERSTITIEL_DUREE_S * 1000); });
+    expect(garde.armements).toBe(1);
+    expect(scripts.find(([src]) => src === RFT_POPUNDER.src)?.[1]).toBe(false);
+    deuxieme.unmount();
+
+    // Le lendemain, il revient.
+    act(() => { vi.advanceTimersByTime(RFT_POPUNDER_INTERVALLE_MS); });
+    render(<Interstitiel pret onContinuer={() => {}} />);
+    act(() => { vi.advanceTimersByTime(RFT_INTERSTITIEL_DUREE_S * 1000); });
+    expect(garde.armements).toBe(2);
   });
 
   // Une pub à l'entrée du récap, pas une à chaque « Continuer » : le pop-under

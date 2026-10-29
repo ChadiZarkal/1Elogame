@@ -18,7 +18,13 @@
  */
 
 import { useEffect, useState } from 'react';
-import { RFT_INTERSTITIEL, RFT_INTERSTITIEL_DUREE_S, RFT_POPUNDER } from '@/config/ads';
+import {
+  noterPopunderRft,
+  popunderRftPermis,
+  RFT_INTERSTITIEL,
+  RFT_INTERSTITIEL_DUREE_S,
+  RFT_POPUNDER,
+} from '@/config/ads';
 import { useAdsterraScript } from '@/components/ads/useAdsterraScript';
 import { CadreRegie } from '@/components/ads/CadreRegie';
 import { armerPopunder, desarmerPopunder, installerGardePopunder } from '@/components/ads/gardePopunder';
@@ -40,9 +46,15 @@ export function Interstitiel({
     desarmerPopunder();
   }, []);
 
+  // Une fois par 24 h et par appareil, pas à chaque partie : décidé au
+  // montage, la réponse ne change pas pendant la pause.
+  const [popunderPermis] = useState(
+    () => RFT_POPUNDER.enabled && typeof window !== 'undefined' && popunderRftPermis(),
+  );
+
   // Le pop-under reste dans la page : c'est elle qu'il doit surveiller.
   // L'encart, lui, a son propre document (voir CadreRegie).
-  useAdsterraScript(RFT_POPUNDER.src, RFT_POPUNDER.enabled);
+  useAdsterraScript(RFT_POPUNDER.src, popunderPermis);
 
   // Recalculé depuis l'heure de départ plutôt que décompté seconde par
   // seconde : un onglet en arrière-plan ralentit les minuteurs, et un compte à
@@ -62,8 +74,11 @@ export function Interstitiel({
   // Une seule ouverture, au tap sur « Voir mon résultat » : les « Continuer »
   // du récap qui suivent ne rouvrent rien.
   useEffect(() => {
-    if (accessible && RFT_POPUNDER.enabled) armerPopunder();
-  }, [accessible]);
+    if (accessible && popunderPermis) {
+      armerPopunder();
+      noterPopunderRft();
+    }
+  }, [accessible, popunderPermis]);
 
   return (
     <section className="intro-wrapper interstitiel">
