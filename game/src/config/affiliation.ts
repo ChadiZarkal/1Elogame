@@ -17,11 +17,12 @@
 export const AMAZON_TAG = 'redorgreen-21';
 
 /**
- * Le lien affilié vers le pisse-debout, tel que généré par SiteStripe, sans
- * les paramètres de la recherche qui l'avait précédé (`crid`, `dib`,
- * `keywords`…) ni le préfixe `/-/en/`, qui forçait la page en anglais.
+ * Le lien affilié vers le pisse-debout : le lien court d'Amazon fourni par
+ * Chadi le 2026-11-03. Il mène au Sunany en silicone (ASIN B088R55BX6) avec
+ * notre `tag`, et ouvre l'application Amazon sur Android, la page web
+ * ailleurs. Il remplace le modèle B0C8B2KZF6.
  */
-export const PISSE_DEBOUT_URL = `https://www.amazon.fr/dp/B0C8B2KZF6?th=1&linkCode=ll2&tag=${AMAZON_TAG}&linkId=1f7f48e77781d2c38802c2d84240cf80&ref_=as_li_ss_tl`;
+export const PISSE_DEBOUT_URL = 'https://link.amazon/B0g4zcQ9W';
 
 /** L'encart « Spécial festival » de l'accueil. `false` le retire sans rien supprimer. */
 export const AFFICHER_PISSE_DEBOUT = true;
