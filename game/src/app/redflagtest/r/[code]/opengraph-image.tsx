@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { lireResultatParCode } from '@/lib/rft/repository';
+import { LogoOg, policesOg, ressourcesOg } from '@/lib/carteOg';
 
 /**
  * La carte de partage.
@@ -29,7 +30,7 @@ const GRIS = '#9c9c9c';
 
 export default async function Image({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
-  const resultat = await lireResultatParCode(code).catch(() => null);
+  const [resultat, r] = await Promise.all([lireResultatParCode(code).catch(() => null), ressourcesOg()]);
 
   const score = resultat?.score ?? 0;
   const titre = resultat?.archetype?.titre ?? resultat?.verdict?.titre ?? 'RED FLAG TEST';
@@ -48,10 +49,13 @@ export default async function Image({ params }: { params: Promise<{ code: string
           backgroundColor: FOND,
           color: BLANC,
           fontFamily: 'sans-serif',
-          padding: 64,
+          padding: 40,
         }}
       >
-        <div style={{ display: 'flex', fontSize: 30, letterSpacing: 6, color: GRIS }}>
+        {/* Le logo du site en tête : sans lui, la carte ne disait pas d'où
+            venait le lien (2026-11-03). */}
+        <LogoOg r={r} hauteur={84} />
+        <div style={{ display: 'flex', marginTop: 10, fontSize: 26, letterSpacing: 6, color: GRIS }}>
           RED FLAG TEST
         </div>
 
@@ -59,12 +63,13 @@ export default async function Image({ params }: { params: Promise<{ code: string
           style={{
             display: 'flex',
             alignItems: 'center',
-            marginTop: 28,
+            marginTop: 18,
             padding: '12px 48px',
             borderRadius: 12,
             backgroundColor: ROUGE,
             color: '#fff',
-            fontSize: 148,
+            fontFamily: 'Agdasima',
+            fontSize: 124,
             fontWeight: 700,
             lineHeight: 1,
           }}
@@ -75,9 +80,11 @@ export default async function Image({ params }: { params: Promise<{ code: string
         <div
           style={{
             display: 'flex',
-            marginTop: 34,
-            fontSize: titre.length > 22 ? 56 : 72,
+            marginTop: 22,
+            fontFamily: 'Agdasima',
+            fontSize: titre.length > 22 ? 64 : 84,
             fontWeight: 700,
+            textTransform: 'uppercase',
             textAlign: 'center',
           }}
         >
@@ -88,9 +95,9 @@ export default async function Image({ params }: { params: Promise<{ code: string
           <div
             style={{
               display: 'flex',
-              marginTop: 18,
+              marginTop: 12,
               maxWidth: 900,
-              fontSize: 30,
+              fontSize: 28,
               color: GRIS,
               textAlign: 'center',
             }}
@@ -99,11 +106,11 @@ export default async function Image({ params }: { params: Promise<{ code: string
           </div>
         )}
 
-        <div style={{ display: 'flex', marginTop: 46, fontSize: 28, color: GRIS }}>
+        <div style={{ display: 'flex', marginTop: 26, fontSize: 26, color: GRIS }}>
           Devine son score avant de le voir →
         </div>
       </div>
     ),
-    size,
+    { ...size, fonts: policesOg(r) },
   );
 }

@@ -1,24 +1,30 @@
 import { ImageResponse } from 'next/og';
+import { FOND_OG, LogoOg, policesOg, ressourcesOg, TAILLE_OG } from '@/lib/carteOg';
 
-export const alt = "Red or Green — party games mobiles gratuits, sans compte";
-export const size = { width: 1200, height: 630 };
+// Node et non edge : le logo et la police sont lus sur le disque.
+export const runtime = 'nodejs';
+
+export const alt = 'Red or Green — le Red Flag Test et les jeux de red flags';
+export const size = TAILLE_OG;
 export const contentType = 'image/png';
 
 /**
- * La vignette précédente annonçait « Red FLAG Games » — un nom que le site ne
- * porte plus — et posait son sujet sur deux emojis. `ImageResponse` compose
- * avec satori, qui n'embarque aucune police emoji : les deux glyphes sortaient
- * vides. Le fanion est donc tracé en SVG, comme dans le jeu d'icônes, et les
- * trois jeux sont nommés tels qu'ils le sont à l'écran.
+ * L'image de partage du site : le logo, en grand, tel qu'il est sur
+ * l'accueil, et les quatre jeux nommés comme à l'écran. La version précédente
+ * écrivait « Red or Green » en police système à côté d'un fanion dessiné : la
+ * vignette ne ressemblait pas au site.
  */
 
-const GAMES = [
-  { name: 'Le pire des deux', color: '#22C55E' },
-  { name: "L'Oracle", color: '#88CEFF' },
-  { name: "C'est un 10 mais...", color: '#F59E0B' },
+const JEUX = [
+  { nom: 'Red Flag Test', couleur: '#FFB4AA' },
+  { nom: 'C’est un 10 mais…', couleur: '#F59E0B' },
+  { nom: 'L’Oracle', couleur: '#88CEFF' },
+  { nom: 'Le pire des deux', couleur: '#2ECC71' },
 ];
 
 export default async function Image() {
+  const r = await ressourcesOg();
+
   return new ImageResponse(
     (
       <div
@@ -27,77 +33,43 @@ export default async function Image() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
+          position: 'relative',
           width: '100%',
           height: '100%',
-          background: '#0A0A0B',
-          fontFamily: 'system-ui, sans-serif',
+          backgroundImage: FOND_OG,
+          fontFamily: 'sans-serif',
         }}
       >
-        {/* Deux voiles de couleur, l'une rouge l'autre verte, qui reprennent
-            la diagonale de l'icône sans la répéter littéralement. */}
-        <div
-          style={{
-            position: 'absolute',
-            top: -220,
-            left: -160,
-            width: 620,
-            height: 620,
-            borderRadius: 620,
-            background: '#FF2D2D',
-            opacity: 0.18,
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            bottom: -240,
-            right: -160,
-            width: 620,
-            height: 620,
-            borderRadius: 620,
-            background: '#22C55E',
-            opacity: 0.18,
-          }}
-        />
+        <LogoOg r={r} hauteur={210} />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-          <svg width="104" height="104" viewBox="0 0 100 100">
-            <g fill="#FFFFFF">
-              <path d="M0 3.5A3.5 3.5 0 0 1 7 3.5V96.5A3.5 3.5 0 0 1 0 96.5Z" />
-              <path d="M3.5 0A5.5 5.5 0 1 1 3.5 11A5.5 5.5 0 0 1 3.5 0Z" />
-              <path d="M7 8C34 12 68 20 99 33.5C99 33.5 68 43 7 61Z" />
-            </g>
-          </svg>
-          <div style={{ display: 'flex', fontSize: 92, fontWeight: 900, letterSpacing: -3 }}>
-            <span style={{ color: '#FF2D2D' }}>Red</span>
-            <span style={{ color: '#F5F5F7', padding: '0 16px' }}>or</span>
-            <span style={{ color: '#22C55E' }}>Green</span>
-          </div>
-        </div>
-
-        <p style={{ color: '#D0D0D6', fontSize: 32, marginTop: 24, fontWeight: 600 }}>
-          Party games mobiles gratuits — sans compte, sans téléchargement
+        <p style={{ color: '#D4D4D8', fontSize: '34px', marginTop: '34px', textAlign: 'center' }}>
+          « Red flag » désigne tout et n’importe quoi. Ici, les joueurs tranchent.
         </p>
 
-        <div style={{ display: 'flex', gap: 18, marginTop: 44 }}>
-          {GAMES.map((game) => (
+        <div style={{ display: 'flex', gap: '14px', marginTop: '30px' }}>
+          {JEUX.map((jeu) => (
             <div
-              key={game.name}
+              key={jeu.nom}
               style={{
-                border: `2px solid ${game.color}59`,
-                borderRadius: 16,
-                padding: '12px 28px',
-                color: game.color,
-                fontSize: 24,
+                display: 'flex',
+                padding: '10px 22px',
+                borderRadius: '12px',
+                border: `2px solid ${jeu.couleur}66`,
+                color: jeu.couleur,
+                fontFamily: 'Agdasima',
+                fontSize: '34px',
                 fontWeight: 700,
+                textTransform: 'uppercase',
               }}
             >
-              {game.name}
+              {jeu.nom}
             </div>
           ))}
         </div>
+
+        <p style={{ color: '#71717A', fontSize: '24px', marginTop: '30px' }}>redorgreen.fr · gratuit, sans compte</p>
       </div>
     ),
-    { ...size },
+    { ...TAILLE_OG, fonts: policesOg(r) },
   );
 }

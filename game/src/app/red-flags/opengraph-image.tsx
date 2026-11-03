@@ -1,6 +1,7 @@
 import { carteOg, TAILLE_OG } from '@/lib/carteOg';
 
-export const runtime = 'edge';
+// Node et non edge : le gabarit lit le logo et la police sur le disque.
+export const runtime = 'nodejs';
 
 export const alt = 'Les pires red flags, d’après les votes — Red or Green';
 export const size = TAILLE_OG;
