@@ -29,7 +29,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { getSession, initSession } from '@/lib/session';
 import { avancerAiguille } from '@/lib/rft/score';
 import type { PlayerProfile } from '@/types/game';

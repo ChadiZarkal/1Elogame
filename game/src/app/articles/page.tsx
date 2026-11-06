@@ -4,7 +4,7 @@
  */
 
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { ARTICLES, dateLongue } from '@/content/articles';
 
 export const metadata: Metadata = {

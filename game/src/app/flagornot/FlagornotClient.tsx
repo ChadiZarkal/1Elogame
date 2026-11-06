@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { useFlagOrNot } from './useFlagOrNot';
 import { LoadingPhase } from './LoadingPhase';
 import { RevealPhase } from './RevealPhase';

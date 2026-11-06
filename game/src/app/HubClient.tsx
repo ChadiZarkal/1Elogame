@@ -37,7 +37,7 @@
  * apparaître.
  */
 
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import Image from 'next/image';
 import { ArrowRight, Shield, Trophy } from 'lucide-react';
 import { useHaptics } from '@/lib/hooks';

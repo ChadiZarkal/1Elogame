@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff, CheckCircle, XCircle, Trophy, BarChart2, RefreshCw, Check, AlertCircle, Pencil, X } from 'lucide-react';
 import type { DixMaisStatement } from '@/types/database';
 import { NOTES_MIN_COMPARAISON, type NoteMesuree } from '@/lib/dixmaisNote';

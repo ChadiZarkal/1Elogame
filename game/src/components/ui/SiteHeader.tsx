@@ -18,7 +18,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';

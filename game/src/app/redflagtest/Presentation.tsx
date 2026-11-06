@@ -16,7 +16,7 @@
  * pour le score, le profil et les trois classements.
  */
 
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 
 export function Presentation() {
   return (

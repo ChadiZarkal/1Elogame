@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { ArrowRight, Shield } from 'lucide-react';
 import { METERS } from '@/config/meters-data';
 

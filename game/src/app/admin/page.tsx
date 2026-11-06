@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 

@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Loading } from '@/components/ui/Loading';

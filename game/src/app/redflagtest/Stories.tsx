@@ -39,7 +39,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import type { Axe, Classement, ParisMoyens, Resultat } from '@/lib/rft/types';
 import { PartageBar } from './PartageBar';
 import { DON_URL } from '@/config/contact';
