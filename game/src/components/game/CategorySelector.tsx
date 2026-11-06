@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { CATEGORIES_CONFIG, CategoryConfig } from '@/config/categories';
 import { useHaptics } from '@/lib/hooks';
 import { isAdultOnlyCategory, isMinorBracket } from '@/lib/contentRating';

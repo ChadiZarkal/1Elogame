@@ -15,7 +15,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { AdminNav } from '@/components/admin/AdminNav';
 import { Loading } from '@/components/ui/Loading';
 import { chargerContenu, SessionExpiree, type ContenuAdmin } from './api';

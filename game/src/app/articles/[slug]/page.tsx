@@ -5,7 +5,7 @@
  */
 
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { notFound } from 'next/navigation';
 import { ARTICLES, articleParSlug, dateLongue } from '@/content/articles';
 import { ArticleRendu } from '@/components/content/ArticleRendu';

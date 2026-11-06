@@ -16,7 +16,7 @@
  */
 
 import { useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import type { Resultat } from '@/lib/rft/types';
 import { ParisDesAutres, Stories } from './Stories';
 import { DON_URL } from '@/config/contact';

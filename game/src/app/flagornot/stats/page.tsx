@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { motion } from 'framer-motion';
 
 interface GenderStat {

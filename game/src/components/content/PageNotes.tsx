@@ -21,7 +21,7 @@
  * les questions déclarées à Google sont exactement celles qui sont à l'écran.
  */
 
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { NativeAd } from '@/components/ads/NativeAd';
 import type { FaqItem, PageNotes as PageNotesData } from '@/content/page-notes';
 

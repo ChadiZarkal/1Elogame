@@ -1,6 +1,9 @@
 import '@testing-library/jest-dom/vitest';
 
-const MockNextLink = ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => (
+// `prefetch` est une prop de Next, pas un attribut HTML : la poser sur le <a>
+// ferait râler React à chaque rendu (voir `LienIntention`).
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const MockNextLink = ({ children, href, prefetch, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => (
   <a href={href} {...props}>{children}</a>
 );
 

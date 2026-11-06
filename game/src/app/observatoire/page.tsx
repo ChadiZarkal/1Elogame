@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { withPrerenderTimeout } from '@/lib/prerenderTimeout';
 import { getPublicStats } from '@/lib/repositories';
 import {

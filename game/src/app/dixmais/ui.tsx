@@ -12,7 +12,7 @@
  *    que par des encadrés.
  */
 
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 

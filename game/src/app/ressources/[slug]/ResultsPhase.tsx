@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { Phone, ExternalLink, RotateCcw, ChevronRight, Download } from 'lucide-react';
 import type {
   Meter,

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { METERS } from '@/config/meters-data';
 import { EMERGENCY_LINES, SOURCES } from '@/config/sources-outils';
 

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { CONTACT_EMAIL, DON_URL, INSTAGRAM_HANDLE, INSTAGRAM_URL } from '@/config/contact';
 
 export const metadata: Metadata = {

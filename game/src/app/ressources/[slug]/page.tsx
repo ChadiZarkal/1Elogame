@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { useRouter, useParams } from 'next/navigation';
 import { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { ArrowLeft } from 'lucide-react';

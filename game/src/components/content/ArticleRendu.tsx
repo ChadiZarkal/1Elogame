@@ -5,7 +5,7 @@
  * Composant serveur : tout le texte est dans le HTML initial.
  */
 
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import type { ReactNode } from 'react';
 import type { Bloc } from '@/content/articles';
 

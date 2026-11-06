@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/ui/LienIntention';
 import { ChevronDown, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { NativeAd } from '@/components/ads/NativeAd';
