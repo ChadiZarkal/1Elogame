@@ -85,44 +85,40 @@ export function RevealPhase({
       </div>
 
       {/* Main verdict content — scrolls internally on small screens */}
-      <div className="flex-1 overflow-y-auto min-h-0 flex flex-col items-center relative z-10 w-full max-w-sm mx-auto px-5 pt-4 pb-2 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto min-h-0 flex flex-col items-center relative z-10 w-full max-w-sm mx-auto px-5 pt-2 pb-2 scrollbar-hide">
 
-        {/* Big verdict icon */}
-        <motion.span
-          className="text-6xl mb-2 block"
-          initial={{ opacity: 0, scale: 0.4, rotate: -18 }}
-          animate={{ opacity: 1, scale: 1, rotate: 0 }}
-          transition={{ delay: 0.14, type: 'spring', stiffness: 300, damping: 18 }}
-        >
-          {isRed ? '🚩' : '✅'}
-        </motion.span>
+        {/* Le verdict tient sur une ligne, icône comprise. Il occupait trois
+            étages (icône, puis deux lignes de 44 px), soit 170 px qui
+            repoussaient l'encart publicitaire sous le bord de l'écran. */}
+        <div className="mb-2 flex flex-wrap items-center justify-center gap-x-3">
+          <motion.span
+            className="text-[34px] min-[360px]:text-[40px] leading-none block"
+            initial={{ opacity: 0, scale: 0.4, rotate: -18 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ delay: 0.14, type: 'spring', stiffness: 300, damping: 18 }}
+          >
+            {isRed ? '🚩' : '✅'}
+          </motion.span>
 
-        {/* VERDICT text — massive & glowing */}
-        <motion.div
-          className="text-center mb-3"
-          initial={{ opacity: 0, y: 22, scale: 0.82 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ delay: 0.24, type: 'spring', stiffness: 200, damping: 20 }}
-        >
-          <p
-            className="text-[44px] font-black tracking-tighter leading-none"
-            style={{
-              color: primaryColor,
-              textShadow: `0 0 50px ${primaryColor}99, 0 0 100px ${primaryColor}33`,
-            }}
+          <motion.p
+            className="text-center text-[34px] min-[360px]:text-[40px] font-black tracking-tighter leading-none"
+            initial={{ opacity: 0, y: 22, scale: 0.82 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.24, type: 'spring', stiffness: 200, damping: 20 }}
           >
-            {result.degraded ? 'AUCUN' : isRed ? 'RED' : 'GREEN'}
-          </p>
-          <p
-            className="text-[44px] font-black tracking-tighter leading-none"
-            style={{
-              color: accentColor,
-              textShadow: `0 0 35px ${primaryColor}66`,
-            }}
-          >
-            {result.degraded ? 'VERDICT' : 'FLAG'}
-          </p>
-        </motion.div>
+            <span
+              style={{
+                color: primaryColor,
+                textShadow: `0 0 50px ${primaryColor}99, 0 0 100px ${primaryColor}33`,
+              }}
+            >
+              {result.degraded ? 'AUCUN' : isRed ? 'RED' : 'GREEN'}
+            </span>{' '}
+            <span style={{ color: accentColor, textShadow: `0 0 35px ${primaryColor}66` }}>
+              {result.degraded ? 'VERDICT' : 'FLAG'}
+            </span>
+          </motion.p>
+        </div>
 
         {/* Rien n'a été analysé : l'appel a échoué ou expiré. Le repli tirait
             auparavant un verdict au hasard et le présentait comme un vrai. */}
@@ -135,13 +131,16 @@ export function RevealPhase({
           </div>
         )}
 
-        {/* Submitted text */}
+        {/* Submitted text — deux lignes au plus : c'est la phrase que le
+            joueur vient de taper, il la connaît, et ses 280 caractères
+            pouvaient pousser l'encart d'une centaine de pixels. */}
         {/* `overflow-wrap: anywhere` : les 280 caractères autorisés peuvent
             n'être qu'un seul mot — une URL, une suite de lettres. Sans coupure
             forcée, le texte débordait et le parent, en `overflow-hidden`, le
             tronquait en silence. */}
         <motion.p
-          className="w-full text-[#6B7280] text-[13px] italic text-center mb-3 px-3 leading-relaxed break-words [overflow-wrap:anywhere]"
+          className="w-full text-[#6B7280] text-[13px] italic text-center mb-2 px-3 leading-relaxed break-words [overflow-wrap:anywhere] line-clamp-2 shrink-0"
+          title={submittedText}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.34 }}
@@ -152,7 +151,7 @@ export function RevealPhase({
         {/* Justification card */}
         {isMounted && showJustification && (
           <motion.div
-            className="w-full rounded-3xl p-4 mb-3 oracle-glass"
+            className="w-full rounded-3xl px-4 py-3.5 mb-1 oracle-glass"
             style={{ border: `1px solid ${primaryColor}33` }}
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
@@ -170,6 +169,23 @@ export function RevealPhase({
               >
                 Analyse de l&apos;Oracle
               </span>
+              {/* Partager, dans l'en-tête de l'analyse plutôt que sur sa
+                  propre ligne : il reste à l'écran sans repousser l'encart.
+                  Rien à partager quand aucun verdict n'a été rendu. */}
+              {!result.degraded && (
+                <button
+                  type="button"
+                  onClick={onShare}
+                  className="ml-auto -my-2 -mr-2 flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-[12px] font-bold text-[#9CA3AF] active:scale-95 transition-transform"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                  </svg>
+                  Partager
+                </button>
+              )}
             </div>
             <p className="text-[#D1D5DB] text-[13px] leading-relaxed break-words [overflow-wrap:anywhere]">
               {result.justification}
@@ -190,35 +206,49 @@ export function RevealPhase({
           </motion.div>
         )}
 
-        {/* Share button — rien à partager quand aucun verdict n'a été rendu. */}
-        <motion.button
-          onClick={onShare}
-          hidden={result.degraded}
-          className="flex min-h-11 items-center gap-2 px-4 py-3 rounded-2xl text-[13px] font-bold transition-all active:scale-95"
-          style={{
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.09)',
-            color: '#9CA3AF',
-          }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          whileTap={{ scale: 0.94 }}
-        >
-          {/* Share icon */}
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-          </svg>
-          Partager le verdict
-        </motion.button>
+        {/* Partager, quand la carte d'analyse est masquée (réglage du
+            joueur) : sinon il vit dans son en-tête. */}
+        {!result.degraded && !(isMounted && showJustification) && (
+          <motion.button
+            onClick={onShare}
+            className="mb-1 flex min-h-11 items-center gap-2 px-4 rounded-2xl text-[13px] font-bold transition-all active:scale-95"
+            style={{
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.09)',
+              color: '#9CA3AF',
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            whileTap={{ scale: 0.94 }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+            Partager le verdict
+          </motion.button>
+        )}
+
+        {/* Publicité : le carré, sur chaque verdict, juste sous l'analyse.
+            Elle était placée après les boutons Partager et Café, sous un
+            verdict sur trois étages, et une barre de stats épinglée en bas
+            mangeait 90 px de plus : il fallait faire défiler pour la voir.
+            Demandé côté produit le 2026-11-06 : visible sans défiler.
+            `key` : un nouveau verdict remonte l'encart, et le script de la
+            régie repasse derrière. */}
+        <NativeAd
+          key={submittedText}
+          unit={ORACLE_VERDICT}
+          className="native-ad--carre native-ad--serre w-full"
+        />
 
         <motion.a
           href={DON_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-2 flex min-h-11 items-center gap-2 px-4 py-3 rounded-2xl text-[13px] font-bold"
+          className="mt-4 flex min-h-11 items-center gap-2 px-4 py-3 rounded-2xl text-[13px] font-bold"
           style={{
             background: 'rgba(255,192,77,0.08)',
             border: '1px solid rgba(255,192,77,0.3)',
@@ -231,38 +261,8 @@ export function RevealPhase({
           ☕ Offrir un café à l&apos;Oracle
         </motion.a>
 
-        {/* Publicité : le carré, sur chaque verdict. Après le verdict, sa
-            justification et les deux boutons, pour ne rien repousser de ce
-            que le joueur est venu lire ou partager. `key` : un nouveau
-            verdict remonte l'encart, et le script de la régie repasse
-            derrière. */}
-        <NativeAd
-          key={submittedText}
-          unit={ORACLE_VERDICT}
-          className="native-ad--carre mt-6 w-full"
-        />
-      </div>
-
-      {/* Encore CTA — pinned at bottom */}
-      <motion.div
-        className="shrink-0 w-full max-w-sm mx-auto px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-2 relative z-10"
-        initial={{ opacity: 0, y: 28 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.58, type: 'spring', stiffness: 180, damping: 20 }}
-      >
-        <motion.button
-          onClick={onNext}
-          whileTap={{ scale: 0.96 }}
-          className="w-full py-4.5 rounded-2xl font-black text-[17px] text-white tracking-wide"
-          style={{
-            background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}55 100%)`,
-            boxShadow: `0 0 42px ${primaryColor}61, 0 8px 32px rgba(0,0,0,0.32)`,
-          }}
-        >
-          {result.degraded ? 'Réessayer 🔮' : 'Encore 🔮'}
-        </motion.button>
-
-        {/* Stats bar
+        {/* Stats bar — sous l'encart, dans la zone qui défile ; épinglée en
+            bas, elle prenait la place de la publicité.
             Le dénominateur était `historyLength`, le nombre de consultations
             de CET appareil, alors que `redCount` et `greenCount` sont les
             totaux du site entier. Après deux parties avec quelques milliers de
@@ -272,7 +272,7 @@ export function RevealPhase({
             Les libellés laissaient en outre croire à un score personnel. */}
         {redCount + greenCount > 0 && (
           <motion.div
-            className="mt-3 w-full"
+            className="mt-5 mb-2 w-full"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.78 }}
@@ -298,6 +298,26 @@ export function RevealPhase({
             </div>
           </motion.div>
         )}
+      </div>
+
+      {/* Encore CTA — pinned at bottom */}
+      <motion.div
+        className="shrink-0 w-full max-w-sm mx-auto px-5 pb-[max(12px,env(safe-area-inset-bottom))] pt-2 relative z-10"
+        initial={{ opacity: 0, y: 28 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.58, type: 'spring', stiffness: 180, damping: 20 }}
+      >
+        <motion.button
+          onClick={onNext}
+          whileTap={{ scale: 0.96 }}
+          className="w-full py-4 rounded-2xl font-black text-[17px] text-white tracking-wide"
+          style={{
+            background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}55 100%)`,
+            boxShadow: `0 0 42px ${primaryColor}61, 0 8px 32px rgba(0,0,0,0.32)`,
+          }}
+        >
+          {result.degraded ? 'Réessayer 🔮' : 'Encore 🔮'}
+        </motion.button>
       </motion.div>
     </motion.div>
   );

@@ -253,6 +253,16 @@
   max-width: 22rem;
   margin-inline: auto;
 }
+/* Écart resserré, pour un encart qui doit tenir dans le premier écran (verdict
+   de l'Oracle) : la marge par défaut, le filet et l'étiquette posaient 70 px de
+   vide avant l'annonce. La frontière visible et la mention restent. */
+.native-ad--serre {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+}
+.native-ad--serre .native-ad__label {
+  margin-bottom: 0.4rem;
+}
 
 /* ========== Scrollbar ========== */
 
