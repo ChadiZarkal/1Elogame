@@ -38,6 +38,8 @@ import { ProfilStep } from './ProfilStep';
 import { Pari } from './Pari';
 import { Interstitiel } from './Interstitiel';
 import { Recap } from './Recap';
+import { BanniereRegie } from '@/components/ads/BanniereRegie';
+import { RFT_BANNIERE, banniereActive } from '@/config/ads';
 import { modeTestActif, useGesteModeTest } from './modeTest';
 import {
   enregistrer,
@@ -423,7 +425,18 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
         </div>
       </div>
 
-      <Meter position={aiguille} />
+      {/* La bannière, à la place du compteur, pendant les questions seulement.
+          Tant que l'emplacement n'a pas de clé, le compteur reste. */}
+      {banniereActive(RFT_BANNIERE) ? (
+        phase === 'jeu' && (
+          <aside className="rft-banniere" aria-label="Publicité">
+            <p className="rft-banniere__label" aria-hidden>Publicité</p>
+            <BanniereRegie unit={RFT_BANNIERE} />
+          </aside>
+        )
+      ) : (
+        <Meter position={aiguille} />
+      )}
     </>
   );
 }

@@ -235,6 +235,46 @@ export const RFT_DEPART: NativeAdUnit = {
   containerId: NATIVE_BANNER.containerId,
 };
 
+/** Bannière Adsterra à format fixe (`atOptions`, puis le script de la régie). */
+export interface BanniereUnit {
+  enabled: boolean;
+  /** La clé de l'emplacement (`atOptions.key` dans le code de la régie). */
+  key: string;
+  /** Le script du code de la régie, tel quel. */
+  src: string;
+  largeur: number;
+  hauteur: number;
+}
+
+/**
+ * Le Red Flag Test, pendant les questions : la bannière 320×50 ancrée en bas
+ * de l'écran, à la place du « redflag-o-meter ». Demandée côté produit le
+ * 2026-11-09. La bande du compteur fait 72 px : le 320×50 y tient avec sa
+ * mention « Publicité » ; un 300×250 recouvrirait les réponses.
+ *
+ * Tant que la clé est vide, l'emplacement est éteint et la jauge reste.
+ *
+ * Les autres formats de bannière créés chez la régie le même jour, pour
+ * mémoire (clé ; script `https://bauval.org/22/<clé>`) :
+ *   468×60  0a436f5fc35c70892ce67b0ba2a9bc6a
+ *   160×300 13e9f07a75785de433dda4b7fa820bed
+ *   728×90  3fd4f87626d6704a6ab75e53c97d3bf6
+ *   160×600 14a35f63d48d35d214e2e10887081697
+ *   300×250 9b5c1a41b6129f2ffc0282e84d01e967
+ */
+export const RFT_BANNIERE: BanniereUnit = {
+  enabled: true,
+  key: '627563361650cd0f34072f85e734562e',
+  src: 'https://bauval.org/22/627563361650cd0f34072f85e734562e',
+  largeur: 320,
+  hauteur: 50,
+};
+
+/** L'emplacement est-il servi ? Activé, et pourvu d'une clé. */
+export function banniereActive(unit: BanniereUnit): boolean {
+  return unit.enabled && unit.key.length > 0;
+}
+
 /**
  * Routes sans aucune publicité, ni bandeau de consentement.
  *
