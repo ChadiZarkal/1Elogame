@@ -1,8 +1,15 @@
 import type { MetadataRoute } from 'next';
 import { ARTICLES } from '@/content/articles';
 import { METERS } from '@/config/meters-data';
+import { cheminLocalise, estTraduit } from '@/lib/i18n/langue';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+/**
+ * Les pages françaises, puis leur version anglaise (`/en/…`, ouverte aux
+ * moteurs le 2026-11-14). Chaque paire déclare ses deux langues
+ * (`hreflang`), comme les métadonnées des pages (`lib/i18n/alternances.ts`).
+ */
+
+function pagesFrancaises(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
   const now = new Date();
 
@@ -139,4 +146,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.3,
     },
   ];
+}
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
+  const francaises = pagesFrancaises();
+  return francaises.flatMap((page) => {
+    const chemin = page.url.slice(baseUrl.length) || '/';
+    if (!estTraduit(chemin)) return [page];
+    const languages = {
+      fr: page.url,
+      en: `${baseUrl}${cheminLocalise('en', chemin)}`,
+      'x-default': page.url,
+    };
+    return [
+      { ...page, alternates: { languages } },
+      { ...page, url: languages.en, alternates: { languages } },
+    ];
+  });
 }

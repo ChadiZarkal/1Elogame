@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import Link from '@/components/ui/LienIntention';
 import { CONTACT_EMAIL } from '@/config/contact';
+import { alternances } from '@/lib/i18n/alternances';
 
 export const metadata: Metadata = {
   title: "Conditions Générales d'Utilisation",
   description:
     "Les conditions d'utilisation de Red or Green : accès au service, règles de conduite, publicité, propriété intellectuelle et responsabilité.",
-  alternates: { canonical: '/cgu' },
+  alternates: alternances('fr', '/cgu'),
 };
 
 export default function CGUPage() {

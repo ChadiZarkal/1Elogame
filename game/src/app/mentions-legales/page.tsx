@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import Link from '@/components/ui/LienIntention';
 import { CONTACT_EMAIL, INSTAGRAM_HANDLE, INSTAGRAM_URL } from '@/config/contact';
+import { alternances } from '@/lib/i18n/alternances';
 
 export const metadata: Metadata = {
   title: 'Mentions Légales',
   description:
     "Éditeur, hébergeur et informations légales du site Red or Green.",
-  alternates: { canonical: '/mentions-legales' },
+  alternates: alternances('fr', '/mentions-legales'),
 };
 
 export default function MentionsLegalesPage() {

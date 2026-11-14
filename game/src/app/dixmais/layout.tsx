@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { alternances } from '@/lib/i18n/alternances';
 
 export const metadata: Metadata = {
   title: "C'est un 10 mais... — Le jeu de notation des red flags",
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
     title: "C'est un 10 mais... — Le jeu de notation des red flags",
     description: "Red flags et green flags, notés un par un jusqu'à 15/10. Sa note finale, c'est ta moyenne. Tu lui mets combien ?",
   },
-  alternates: { canonical: '/dixmais' },
+  alternates: alternances('fr', '/dixmais'),
 };
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';

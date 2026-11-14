@@ -7,19 +7,19 @@ import {
   GapTable,
   SpreadList,
 } from '@/app/observatoire/tableaux';
+import { alternances } from '@/lib/i18n/alternances';
 
 /**
  * L'Observatoire en anglais (traduction du 2026-11-14). Même données et mêmes
  * tableaux que `app/observatoire/page.tsx` ; les comportements sont traduits
- * par le serveur (`lib/jeu/traduction`). Fermé aux moteurs comme tout `/en`.
+ * par le serveur (`lib/jeu/traduction`).
  */
 export const metadata: Metadata = {
   title: 'The Red Flag Observatory — where nobody agrees',
   description:
     'What the Red or Green community’s votes reveal: the behaviors where men and women disagree the most, and the ones that split the generations.',
   openGraph: { locale: 'en_US', url: '/en/observatoire' },
-  alternates: { canonical: '/en/observatoire' },
-  robots: { index: false, follow: true },
+  alternates: alternances('en', '/observatoire'),
 };
 
 export const revalidate = 3600;

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { alternances } from '@/lib/i18n/alternances';
 
 /**
  * « C'est un 10 mais… » en anglais (traduction du 2026-11-14) : « It's a 10
@@ -6,8 +7,6 @@ import type { Metadata } from 'next';
  * `LangueFournie` (`app/en/layout.tsx`). Les énoncés arrivent traduits du
  * serveur (`lib/dixmais/traduction`) ; les notes sont communes aux deux
  * langues. La console d'administration reste en français, sous `/dixmais/admin`.
- *
- * Fermé aux moteurs comme tout `/en` pour l'instant (voir `app/en/layout.tsx`).
  */
 export const metadata: Metadata = {
   title: "It's a 10 But... — The red flag rating game",
@@ -32,8 +31,7 @@ export const metadata: Metadata = {
     title: "It's a 10 But... — The red flag rating game",
     description: 'Red flags and green flags, rated one by one up to 15/10. Their final score is your average. What would you give them?',
   },
-  alternates: { canonical: '/en/dixmais' },
-  robots: { index: false, follow: true },
+  alternates: alternances('en', '/dixmais'),
 };
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';

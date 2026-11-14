@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { METERS_EN } from '@/config/meters-data-en';
+import { alternances } from '@/lib/i18n/alternances';
 
 /**
  * Les outils d'auto-évaluation en anglais (traduction du 2026-11-14). Pendant
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
     description:
       'Assess your situation with our anonymous tools: Violentomètre, Consentomètre, Harcèlomètre and more. Free and confidential.',
   },
-  alternates: { canonical: '/en/ressources' },
+  alternates: alternances('en', '/ressources'),
 };
 
 function RessourcesJsonLd() {

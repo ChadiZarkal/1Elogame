@@ -16,6 +16,7 @@
 
 import type { Metadata } from 'next';
 import { PageRedFlags } from './PageRedFlags';
+import { alternances } from '@/lib/i18n/alternances';
 
 export const revalidate = 3600;
 
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
   description:
     'La liste des red flags du quotidien, classée par des milliers de duels : les pires, les moins graves, par thème, et ce que les femmes et les hommes placent en tête. Mise à jour chaque heure.',
   keywords: ['liste red flag', 'exemples de red flags', 'pire red flag', 'red flags', 'redflag', 'classement red flag'],
-  alternates: { canonical: '/red-flags' },
+  alternates: alternances('fr', '/red-flags'),
   openGraph: {
     title: 'Les pires red flags, d’après les votes',
     description: 'La liste des red flags classée par des milliers de duels, mise à jour chaque heure.',

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { FeuillesRft } from '@/app/redflagtest/FeuillesRft';
 import { LangueFournie } from '@/lib/i18n/LangueContexte';
+import { alternances } from '@/lib/i18n/alternances';
 
 /**
  * Le Red Flag Test en anglais (traduction commencée le 2026-11-14).
@@ -8,13 +9,6 @@ import { LangueFournie } from '@/lib/i18n/LangueContexte';
  * Mêmes composants que la version française (`app/redflagtest`), dans la
  * langue que pose `LangueFournie`. Le contenu de la base est traduit par le
  * serveur (`lib/rft/traduction`).
- *
- * FERMÉ AUX MOTEURS POUR L'INSTANT
- *   Les pages vers lesquelles le test renvoie (guide, ressources,
- *   confidentialité, les autres jeux) sont en français. Ouvrir l'indexation et déclarer le lien entre les
- *   deux versions (`hreflang`) se fera quand l'anglais sera relu et l'entourage
- *   traduit : il suffira de retirer `robots` ici et d'ajouter
- *   `alternates.languages` des deux côtés.
  */
 export const metadata: Metadata = {
   title: 'Free Red Flag Test: are you a red flag?',
@@ -27,8 +21,7 @@ export const metadata: Metadata = {
     url: '/en/redflagtest',
     locale: 'en_US',
   },
-  alternates: { canonical: '/en/redflagtest' },
-  robots: { index: false, follow: true },
+  alternates: alternances('en', '/redflagtest'),
 };
 
 export default function RedflagtestEnLayout({ children }: { children: React.ReactNode }) {

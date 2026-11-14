@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { alternances } from '@/lib/i18n/alternances';
 
 export const metadata: Metadata = {
   title: 'Red or Green — Quel est le plus gros Red Flag ?',
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
     title: 'Red or Green — Quel est le plus gros Red Flag ?',
     description: 'Choisis entre deux comportements : lequel est le plus gros Red Flag ? Un party game addictif et gratuit.',
   },
-  alternates: { canonical: '/jeu' },
+  alternates: alternances('fr', '/jeu'),
 };
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';

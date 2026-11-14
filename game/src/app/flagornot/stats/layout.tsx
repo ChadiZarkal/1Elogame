@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { alternances } from '@/lib/i18n/alternances';
 
 export const metadata: Metadata = {
   title: "Statistiques de l'Oracle — Red or Green",
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
     description: "Répartition des verdicts et tendances sur les situations soumises à l'Oracle IA.",
     url: '/flagornot/stats',
   },
-  alternates: { canonical: '/flagornot/stats' },
+  alternates: alternances('fr', '/flagornot/stats'),
   // Les chiffres sont chargés côté navigateur : le HTML servi ne contient que
   // « Chargement des stats... ». Tant que la page n'est pas rendue côté
   // serveur, elle ne doit pas être indexée.

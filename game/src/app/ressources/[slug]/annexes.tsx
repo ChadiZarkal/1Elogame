@@ -16,6 +16,7 @@ import { meterDe, metersDe } from '@/config/meters-data-en';
 import { meterFaq } from '@/content/meter-faq';
 import { meterNotes } from '@/content/meter-notes';
 import { cheminLocalise, type Langue } from '@/lib/i18n/langue';
+import { alternances } from '@/lib/i18n/alternances';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
 
@@ -92,7 +93,7 @@ function metadonneesFr(slug: string): Metadata {
       description,
       url: `/ressources/${slug}`,
     },
-    alternates: { canonical: `/ressources/${slug}` },
+    alternates: alternances('fr', `/ressources/${slug}`),
   };
 }
 
@@ -151,7 +152,7 @@ function metadonneesEn(slug: string): Metadata {
       url: `/en/ressources/${slug}`,
       locale: 'en_US',
     },
-    alternates: { canonical: `/en/ressources/${slug}` },
+    alternates: alternances('en', `/ressources/${slug}`),
   };
 }
 

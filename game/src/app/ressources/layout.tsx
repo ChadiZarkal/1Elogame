@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { METERS } from '@/config/meters-data';
+import { alternances } from '@/lib/i18n/alternances';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
 
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
     description:
       'Évalue ta situation avec nos outils anonymes : violentomètre, consentomètre, harcèlomètre et plus. Gratuit et confidentiel.',
   },
-  alternates: { canonical: '/ressources' },
+  alternates: alternances('fr', '/ressources'),
 };
 
 function RessourcesJsonLd() {

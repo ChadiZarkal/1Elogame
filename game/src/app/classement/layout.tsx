@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { alternances } from '@/lib/i18n/alternances';
 
 export const metadata: Metadata = {
   title: 'Classement Red Flag — Top des pires comportements',
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
     title: 'Classement Red Flag — Top des pires comportements',
     description: 'Quels sont les pires Red Flags selon la communauté ? Découvre le classement en temps réel.',
   },
-  alternates: { canonical: '/classement' },
+  alternates: alternances('fr', '/classement'),
 };
 
 // Le balisage ItemList est émis par la page elle-même : lui seul connaît les

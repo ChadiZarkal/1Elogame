@@ -3,6 +3,7 @@ import Link from '@/components/ui/LienIntention';
 import { AvisVersionFrancaise } from '@/components/legal/AvisVersionFrancaise';
 import { CONTACT_EMAIL } from '@/config/contact';
 import { cheminLocalise } from '@/lib/i18n/langue';
+import { alternances } from '@/lib/i18n/alternances';
 
 /**
  * La politique de confidentialité en anglais (traduction du 2026-11-14).
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
     'How Red or Green handles your data: cookies, advertising, analytics, processors and how to exercise your rights.',
-  alternates: { canonical: '/en/confidentialite' },
+  alternates: alternances('en', '/confidentialite'),
 };
 
 export default function ConfidentialiteEnPage() {

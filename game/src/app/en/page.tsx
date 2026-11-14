@@ -6,12 +6,13 @@ import { getPublicStats } from '@/lib/repositories';
 import { getLeaderboardPage } from '@/lib/leaderboard';
 import { withPrerenderTimeout } from '@/lib/prerenderTimeout';
 import { traduireElement } from '@/lib/jeu/traduction';
+import { alternances } from '@/lib/i18n/alternances';
 
 export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: { absolute: 'Red or Green — free Red Flag Test and red flag games' },
-  alternates: { canonical: '/en' },
+  alternates: alternances('en', '/'),
 };
 
 const PODIUM = 3;

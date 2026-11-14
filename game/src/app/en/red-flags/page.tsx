@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { PageRedFlags } from '@/app/red-flags/PageRedFlags';
 import { traduireElement } from '@/lib/jeu/traduction';
+import { alternances } from '@/lib/i18n/alternances';
 
 /**
  * Les pires red flags en anglais. Voir `app/red-flags/page.tsx`.
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
   description:
     'A list of everyday red flags ranked by thousands of duels: the worst, the least serious, by theme, and what women and men put at the top. Updated every hour.',
   keywords: ['red flag list', 'red flag examples', 'worst red flags', 'red flags', 'redflag', 'red flag ranking'],
-  alternates: { canonical: '/en/red-flags' },
+  alternates: alternances('en', '/red-flags'),
   openGraph: {
     title: 'The worst red flags, according to the votes',
     description: 'The red flag list ranked by thousands of duels, updated every hour.',

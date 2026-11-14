@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import Link from '@/components/ui/LienIntention';
 import { chargerObservatoire, formatNumber, GapTable, SpreadList } from './tableaux';
+import { alternances } from '@/lib/i18n/alternances';
 
 export const metadata: Metadata = {
   title: "L'Observatoire des red flags — ce sur quoi on n'est pas d'accord",
   description:
     "Ce que révèlent les votes de la communauté Red or Green : les comportements où hommes et femmes divergent le plus, et ceux qui séparent les générations.",
-  alternates: { canonical: '/observatoire' },
+  alternates: alternances('fr', '/observatoire'),
 };
 
 export const revalidate = 3600;
