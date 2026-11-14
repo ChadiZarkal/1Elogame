@@ -3,6 +3,7 @@ import Link from '@/components/ui/LienIntention';
 import { AvisVersionFrancaise } from '@/components/legal/AvisVersionFrancaise';
 import { CONTACT_EMAIL, INSTAGRAM_HANDLE, INSTAGRAM_URL } from '@/config/contact';
 import { cheminLocalise } from '@/lib/i18n/langue';
+import { alternances } from '@/lib/i18n/alternances';
 
 /**
  * Les mentions légales en anglais (traduction du 2026-11-14). Traduction
@@ -13,7 +14,7 @@ import { cheminLocalise } from '@/lib/i18n/langue';
 export const metadata: Metadata = {
   title: 'Legal Notice',
   description: 'Publisher, host and legal information for the Red or Green website.',
-  alternates: { canonical: '/en/mentions-legales' },
+  alternates: alternances('en', '/mentions-legales'),
 };
 
 export default function MentionsLegalesEnPage() {

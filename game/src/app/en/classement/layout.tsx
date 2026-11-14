@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
+import { alternances } from '@/lib/i18n/alternances';
 
-/** Le classement en anglais. Fermé aux moteurs comme tout `/en` pour l'instant. */
+/** Le classement en anglais. */
 export const metadata: Metadata = {
   title: 'Red Flag Rankings — the worst behaviors, ranked',
   description: 'The biggest red flags as voted by the community. Filter by gender and age group. Live Elo rankings.',
@@ -23,8 +24,7 @@ export const metadata: Metadata = {
     title: 'Red Flag Rankings — the worst behaviors, ranked',
     description: 'What are the worst red flags according to the community? See the live rankings.',
   },
-  alternates: { canonical: '/en/classement' },
-  robots: { index: false, follow: true },
+  alternates: alternances('en', '/classement'),
 };
 
 export default function ClassementEnLayout({ children }: { children: React.ReactNode }) {

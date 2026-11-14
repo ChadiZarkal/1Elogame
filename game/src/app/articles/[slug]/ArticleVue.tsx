@@ -11,6 +11,7 @@ import Link from '@/components/ui/LienIntention';
 import { articleParSlug, dateLongue, type Article } from '@/content/articles';
 import { ArticleRendu } from '@/components/content/ArticleRendu';
 import { cheminLocalise, localeDe, type Langue } from '@/lib/i18n/langue';
+import { alternances } from '@/lib/i18n/alternances';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
 
@@ -44,7 +45,7 @@ export function metadataArticle(slug: string, langue: Langue): Metadata {
   return {
     title: article.titre,
     description: article.description,
-    alternates: { canonical: chemin },
+    alternates: alternances(langue, `/articles/${article.slug}`),
     openGraph: {
       type: 'article',
       title: article.titre,

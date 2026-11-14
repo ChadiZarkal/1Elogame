@@ -32,6 +32,8 @@ export default function robots(): MetadataRoute.Robots {
           '/cgu',
           '/mentions-legales',
           '/confidentialite',
+          // La version anglaise, ouverte aux moteurs le 2026-11-14.
+          '/en',
         ],
         // Les pages d'état éphémère — /jeu/jouer, /jeu/recap et
         // /flagornot/stats — ne sont pas listées ici : elles portent un

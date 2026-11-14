@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { alternances } from '@/lib/i18n/alternances';
 
 export const metadata: Metadata = {
   title: 'Choisis ta catégorie — Red or Green Duel',
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
     description: 'Entre deux comportements, lequel est le plus gros red flag ? À toi de trancher.',
     url: '/jeu/jouer',
   },
-  alternates: { canonical: '/jeu/jouer' },
+  alternates: alternances('fr', '/jeu/jouer'),
   // Écran de partie : son contenu est tiré à chaque tour et le HTML initial se
   // réduit à un indicateur de chargement. Une telle page n'a rien à faire dans
   // l'index. `follow` reste actif pour que les liens sortants soient suivis.

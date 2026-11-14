@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { alternances } from '@/lib/i18n/alternances';
 
 /** Le classement de « It's a 10 but… », comme `app/dixmais/leaderboard/layout.tsx`. */
 export const metadata: Metadata = {
@@ -15,8 +16,7 @@ export const metadata: Metadata = {
     title: "Leaderboard — It's a 10 But...",
     description: 'The red flags that tank the score the most, and the green flags that push it all the way to 15/10.',
   },
-  alternates: { canonical: '/en/dixmais/leaderboard' },
-  robots: { index: false, follow: true },
+  alternates: alternances('en', '/dixmais/leaderboard'),
 };
 
 export default function DixMaisLeaderboardEnLayout({ children }: { children: React.ReactNode }) {

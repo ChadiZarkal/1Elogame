@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { GUIDE_FAQ_EN } from '@/app/guide/faq';
+import { alternances } from '@/lib/i18n/alternances';
 
 /**
  * Le guide des flags en anglais (2026-11-14) : métadonnées et balisage. Même
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
     title: 'Flag Guide — Definitions and real-life examples',
     description: 'Red, Green, Black, Orange, White Flag: every relationship signal explained, with examples.',
   },
-  alternates: { canonical: '/en/guide' },
+  alternates: alternances('en', '/guide'),
 };
 
 function GuideJsonLd() {

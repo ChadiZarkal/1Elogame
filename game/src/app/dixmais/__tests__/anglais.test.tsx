@@ -349,12 +349,14 @@ describe('It’s a 10 but… — les pages /en/dixmais', () => {
     expect(francaisDans(container)).toEqual([]);
   });
 
-  it('les métadonnées et l’image de partage, fermées aux moteurs', async () => {
+  it('les métadonnées et l’image de partage, ouvertes aux moteurs', async () => {
     const jeu = await import('@/app/en/dixmais/layout');
     const classement = await import('@/app/en/dixmais/leaderboard/layout');
     const og = await import('@/app/en/dixmais/opengraph-image');
     for (const meta of [jeu.metadata, classement.metadata]) {
-      expect(meta.robots).toEqual({ index: false, follow: true });
+      // Ouvert aux moteurs le 2026-11-14 : plus de noindex, et le lien vers le français.
+      expect(meta.robots).toBeUndefined();
+      expect((meta.alternates?.languages as Record<string, string>)?.fr).toMatch(/^\/dixmais/);
       expect(JSON.stringify(meta)).not.toMatch(FRANCAIS);
       expect(String(meta.alternates?.canonical)).toMatch(/^\/en\/dixmais/);
     }

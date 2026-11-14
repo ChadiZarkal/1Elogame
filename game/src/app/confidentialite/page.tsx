@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import Link from '@/components/ui/LienIntention';
 import { CONTACT_EMAIL } from '@/config/contact';
+import { alternances } from '@/lib/i18n/alternances';
 
 export const metadata: Metadata = {
   title: 'Politique de Confidentialité',
   description:
     "Comment Red or Green traite vos données : cookies, publicité, analytique, sous-traitants et exercice de vos droits.",
-  alternates: { canonical: '/confidentialite' },
+  alternates: alternances('fr', '/confidentialite'),
 };
 
 export default function ConfidentialitePage() {

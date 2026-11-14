@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { alternances } from '@/lib/i18n/alternances';
 
 export const metadata: Metadata = {
   title: { absolute: 'Oracle stats — Red or Green' },
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
     url: '/en/flagornot/stats',
     locale: 'en_US',
   },
-  alternates: { canonical: '/en/flagornot/stats' },
+  alternates: alternances('en', '/flagornot/stats'),
   // Comme la version française : chiffres chargés côté navigateur, page non
   // indexée tant qu'elle n'est pas rendue côté serveur.
   robots: { index: false, follow: true },

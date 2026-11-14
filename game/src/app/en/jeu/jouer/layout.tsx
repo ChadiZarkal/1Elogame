@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { alternances } from '@/lib/i18n/alternances';
 
 /** Voir `app/jeu/jouer/layout.tsx` : écran de partie, hors index. */
 export const metadata: Metadata = {
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
     url: '/en/jeu/jouer',
     locale: 'en_US',
   },
-  alternates: { canonical: '/en/jeu/jouer' },
+  alternates: alternances('en', '/jeu/jouer'),
   robots: { index: false, follow: true },
 };
 

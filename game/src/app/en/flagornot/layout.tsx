@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { alternances } from '@/lib/i18n/alternances';
 
 /**
  * L'Oracle en anglais (traduction du 2026-11-14).
@@ -7,9 +8,6 @@ import type { Metadata } from 'next';
  * que pose `LangueFournie` (gabarit `app/en/layout.tsx`). La justification du
  * verdict est écrite en anglais par l'IA : la page envoie `langue: 'en'` à
  * `/api/flagornot/judge`.
- *
- * FERMÉ AUX MOTEURS POUR L'INSTANT, comme tout `/en` : retirer `robots` et
- * déclarer `alternates.languages` des deux côtés quand l'anglais sera relu.
  */
 export const metadata: Metadata = {
   title: 'The Oracle — Red Flag or Green Flag?',
@@ -35,8 +33,7 @@ export const metadata: Metadata = {
     title: 'The Oracle — Red Flag or Green Flag?',
     description: 'Submit anything and find out if it’s a Red Flag or a Green Flag. The AI doesn’t do maybe.',
   },
-  alternates: { canonical: '/en/flagornot' },
-  robots: { index: false, follow: true },
+  alternates: alternances('en', '/flagornot'),
 };
 
 const SITE_URL = 'https://redorgreen.fr';

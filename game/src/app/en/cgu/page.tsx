@@ -3,6 +3,7 @@ import Link from '@/components/ui/LienIntention';
 import { AvisVersionFrancaise } from '@/components/legal/AvisVersionFrancaise';
 import { CONTACT_EMAIL } from '@/config/contact';
 import { cheminLocalise } from '@/lib/i18n/langue';
+import { alternances } from '@/lib/i18n/alternances';
 
 /**
  * Les conditions générales d'utilisation en anglais (traduction du
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
   title: 'Terms of Use',
   description:
     'The terms of use of Red or Green: access to the service, rules of conduct, advertising, intellectual property and liability.',
-  alternates: { canonical: '/en/cgu' },
+  alternates: alternances('en', '/cgu'),
 };
 
 export default function CGUEnPage() {

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { alternances } from '@/lib/i18n/alternances';
 
 export const metadata: Metadata = {
   title: 'Oracle — Red Flag ou Green Flag ?',
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
     title: 'Oracle — Red Flag ou Green Flag ?',
     description: 'Soumets n\'importe quoi et découvre si c\'est un Red Flag ou un Green Flag. Rejoins la communauté !',
   },
-  alternates: { canonical: '/flagornot' },
+  alternates: alternances('fr', '/flagornot'),
 };
 
 const SITE_URL = 'https://redorgreen.fr';

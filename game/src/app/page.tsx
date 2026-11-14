@@ -29,9 +29,14 @@ import { getPublicStats } from '@/lib/repositories';
 import { getLeaderboardPage } from '@/lib/leaderboard';
 import { withPrerenderTimeout } from '@/lib/prerenderTimeout';
 import { ARTICLES } from '@/content/articles';
+import type { Metadata } from 'next';
+import { alternances } from '@/lib/i18n/alternances';
 
 /** Cinq minutes, comme le classement : ces chiffres n'ont pas à être frais. */
 export const revalidate = 300;
+
+/** Le reste des métadonnées vient du gabarit racine ; ici, le lien vers `/en`. */
+export const metadata: Metadata = { alternates: alternances('fr', '/') };
 
 /** Le podium : trois, la preuve et non la liste. */
 const PODIUM = 3;

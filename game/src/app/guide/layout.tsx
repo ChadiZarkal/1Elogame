@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { GUIDE_FAQ } from './faq';
+import { alternances } from '@/lib/i18n/alternances';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
 
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
     title: 'Guide des Flags — Définitions et exemples concrets',
     description: 'Red, Green, Black, Orange, White Flag : tous les signaux relationnels expliqués avec exemples.',
   },
-  alternates: { canonical: '/guide' },
+  alternates: alternances('fr', '/guide'),
 };
 
 function GuideJsonLd() {

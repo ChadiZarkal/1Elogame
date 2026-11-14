@@ -1,12 +1,11 @@
 import type { Metadata } from 'next';
+import { alternances } from '@/lib/i18n/alternances';
 
 /**
  * « Le pire des deux » en anglais (traduction du 2026-11-14) : « The Worse of
  * Two ». Mêmes composants que `app/jeu`, dans la langue que pose
  * `LangueFournie` (`app/en/layout.tsx`). Les comportements arrivent traduits du
  * serveur (`lib/jeu/traduction`) ; les votes sont communs aux deux langues.
- *
- * Fermé aux moteurs comme tout `/en` pour l'instant (voir `app/en/layout.tsx`).
  */
 export const metadata: Metadata = {
   title: 'The Worse of Two — which one is the bigger red flag?',
@@ -30,8 +29,7 @@ export const metadata: Metadata = {
     title: 'The Worse of Two — which one is the bigger red flag?',
     description: 'Two behaviors: which one is the bigger red flag? An addictive, free party game.',
   },
-  alternates: { canonical: '/en/jeu' },
-  robots: { index: false, follow: true },
+  alternates: alternances('en', '/jeu'),
 };
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';

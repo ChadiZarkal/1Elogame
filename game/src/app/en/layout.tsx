@@ -3,13 +3,12 @@ import { LangueFournie } from '@/lib/i18n/LangueContexte';
 
 /**
  * Tout ce qui vit sous `/en` : l'anglais (2026-11-14). Tout le site public
- * est traduit, sauf « C'est un 10 mais… » (`/dixmais`), laissé en français à
- * la demande de Chadi.
+ * est traduit, « C'est un 10 mais… » compris ; l'administration reste en
+ * français.
  *
- * FERMÉ AUX MOTEURS POUR L'INSTANT
- *   L'anglais n'a pas encore été relu par un anglophone. Ouvrir l'indexation
- *   et déclarer le lien entre les deux versions (`hreflang`) se fera ensuite :
- *   retirer `robots` ici et ajouter `alternates.languages` des deux côtés.
+ * OUVERT AUX MOTEURS depuis le 2026-11-14 (demande de Chadi). Chaque page
+ *   déclare sa version française et sa version anglaise (`hreflang`) par
+ *   `alternances()` (`lib/i18n/alternances.ts`), des deux côtés.
  */
 export const metadata: Metadata = {
   title: {
@@ -19,7 +18,6 @@ export const metadata: Metadata = {
   description:
     'Red or Green: the free, anonymous Red Flag Test — your red flag score as a percentage and where you rank — plus red flag games.',
   openGraph: { locale: 'en_US', siteName: 'Red or Green' },
-  robots: { index: false, follow: true },
 };
 
 export default function EnLayout({ children }: { children: React.ReactNode }) {

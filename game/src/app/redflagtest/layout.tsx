@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { FeuillesRft } from './FeuillesRft';
+import { alternances } from '@/lib/i18n/alternances';
 
 /**
  * Le front-end de référence, chargé tel quel.
@@ -52,7 +53,7 @@ export const metadata: Metadata = {
    * Les résultats partagés (`r/[code]`) restent fermés : ils portent leur
    * propre règle, qui prime sur celle-ci.
    */
-  alternates: { canonical: '/redflagtest' },
+  alternates: alternances('fr', '/redflagtest'),
 };
 
 export default function RedflagtestLayout({ children }: { children: React.ReactNode }) {
