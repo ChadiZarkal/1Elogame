@@ -55,6 +55,41 @@ const nextConfig: NextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
         ],
       },
+      /*
+       * LE CACHE DES FICHIERS DE `public/` (2026-11-14).
+       *
+       * Vercel les sert par défaut en `max-age=0, must-revalidate` : chaque
+       * usage repasse par le CDN, et chaque passage est une requête facturée
+       * (forfait CDN). Le service worker aggravait la chose : il rafraîchit
+       * ces fichiers en arrière-plan à chaque affichage. Mesuré sur
+       * redorgreen.fr : sur une visite de retour de cinq pages, 21 requêtes
+       * pour le seul logo, l'icône et les feuilles, polices et images du Red
+       * Flag Test — plus que tout le reste réuni (13).
+       *
+       * Avec une durée de vie, le navigateur (et le service worker, dont le
+       * `fetch` passe par le même cache) les garde sans rien demander.
+       */
+      {
+        /* Les feuilles du Red Flag Test portent leur empreinte (`?v=…`, voir
+           `empreinteFeuillesRft`) : une nouvelle version change d'adresse. */
+        source: '/rft/:fichier(.*\\.css)',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
+        // Les polices ne changent jamais sous le même nom.
+        source: '/rft/fnt/:fichier*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
+        /* Images sans empreinte : une semaine. Un dessin modifié met au plus
+           ce temps à remplacer l'ancien chez un visiteur qui revient. */
+        source: '/rft/img/:fichier*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' }],
+      },
+      {
+        source: '/:fichier(logo-rog-new\\.svg|icon\\.svg|apple-icon\\.png|icon-.*\\.(?:png|svg)|screenshot-.*\\.png)',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' }],
+      },
       {
         /* `immutable` a été retiré : le manifeste change (icônes, raccourcis,
            couleurs), et un client qui le tenait pour immuable gardait pendant

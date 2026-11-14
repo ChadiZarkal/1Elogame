@@ -15,5 +15,10 @@ export const dynamic = 'force-dynamic';
  */
 export const GET = withApiHandler(async () => {
   const [quiz, verdicts] = await Promise.all([lireQuizPublic(), lireVerdictsPublics()]);
-  return apiSuccess({ ...quiz, verdicts });
+  const reponse = apiSuccess({ ...quiz, verdicts });
+  /* Le même questionnaire pour tout le monde : gardé cinq minutes par le CDN
+     de Vercel. Chaque partie lancée appelait la fonction et relisait la base ;
+     une question modifiée dans l'admin met au plus ce temps à apparaître. */
+  reponse.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+  return reponse;
 });

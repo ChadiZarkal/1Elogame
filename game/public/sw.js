@@ -23,8 +23,11 @@ const SHELL = `rog-shell-${VERSION}`;
 const ASSETS = `rog-assets-${VERSION}`;
 const OFFLINE_URL = '/hors-ligne';
 
-/* Précaché à l'installation : ce qui doit s'afficher même sans réseau. */
-const PRECACHE = [OFFLINE_URL, '/icon-192.png', '/icon-512.png', '/manifest.json'];
+/* Précaché à l'installation : ce qui doit s'afficher même sans réseau.
+   Seule la page hors ligne : les icônes et le manifeste, que le navigateur
+   charge déjà de lui-même, coûtaient trois requêtes de plus à chaque nouveau
+   visiteur (2026-11-14). */
+const PRECACHE = [OFFLINE_URL];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
