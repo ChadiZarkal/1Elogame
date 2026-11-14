@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VoteResult, Duel } from '@/types/game';
 import { ResultCard, type ElementStats } from './ResultCard';
+import { useTextesJeu } from './textes';
 
 interface ResultDisplayProps {
   duel: Duel;
@@ -20,6 +21,7 @@ export function ResultDisplay({
   streakEmoji,
   onNext,
 }: ResultDisplayProps) {
+  const t = useTextesJeu();
   const [showNextCta, setShowNextCta] = useState(false);
   const [canClickToAdvance, setCanClickToAdvance] = useState(false);
   
@@ -174,7 +176,7 @@ export function ResultDisplay({
                 : '0 4px 24px rgba(239,68,68,0.2)',
             }}
           >
-            {userGuessedCorrectly ? '✓ Bien vu !' : '✗ Raté !'}
+            {userGuessedCorrectly ? t.bienVu : t.rate}
           </div>
         </motion.div>
       )}
@@ -243,7 +245,7 @@ export function ResultDisplay({
               />
               <span aria-hidden className="absolute inset-px rounded-full border border-white/15" />
               <span className="relative inline-flex items-center gap-2">
-                <span>Suivant</span>
+                <span>{t.suivant}</span>
                 <span aria-hidden className="text-base leading-none">→</span>
               </span>
             </motion.button>
@@ -268,7 +270,7 @@ export function ResultDisplay({
           animate={{ opacity: [0.5, 1, 0.5] }}
           transition={{ duration: 1.5, repeat: Infinity }}
         >
-          <span className="text-white/50 text-sm">Touchez pour continuer</span>
+          <span className="text-white/50 text-sm">{t.toucherPourContinuer}</span>
         </motion.div>
       )}
     </div>

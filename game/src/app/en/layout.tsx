@@ -2,15 +2,14 @@ import type { Metadata } from 'next';
 import { LangueFournie } from '@/lib/i18n/LangueContexte';
 
 /**
- * Tout ce qui vit sous `/en` : l'anglais (traduction commencée le 2026-11-14,
- * l'accueil et le Red Flag Test).
+ * Tout ce qui vit sous `/en` : l'anglais (2026-11-14). Tout le site public
+ * est traduit, sauf « C'est un 10 mais… » (`/dixmais`), laissé en français à
+ * la demande de Chadi.
  *
  * FERMÉ AUX MOTEURS POUR L'INSTANT
- *   Les pages vers lesquelles l'anglais renvoie (les trois autres jeux, le
- *   guide, les ressources, la confidentialité) sont en français. Ouvrir
- *   l'indexation et déclarer le lien entre les deux versions (`hreflang`) se
- *   fera quand l'anglais sera relu : retirer `robots` ici et ajouter
- *   `alternates.languages` des deux côtés.
+ *   L'anglais n'a pas encore été relu par un anglophone. Ouvrir l'indexation
+ *   et déclarer le lien entre les deux versions (`hreflang`) se fera ensuite :
+ *   retirer `robots` ici et ajouter `alternates.languages` des deux côtés.
  */
 export const metadata: Metadata = {
   title: {

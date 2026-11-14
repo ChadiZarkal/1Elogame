@@ -5,6 +5,7 @@ import type { JudgmentResult } from './constants';
 import { DON_URL } from '@/config/contact';
 import { ORACLE_VERDICT } from '@/config/ads';
 import { NativeAd } from '@/components/ads/NativeAd';
+import { useTextesOracle } from './textes';
 
 interface RevealPhaseProps {
   result: JudgmentResult;
@@ -32,6 +33,7 @@ export function RevealPhase({
   onShare,
   onNext,
 }: RevealPhaseProps) {
+  const t = useTextesOracle();
   const isRed = result.verdict === 'red';
   // Ambre quand rien n'a été analysé : ni rouge ni vert, l'écran ne doit pas
   // porter la couleur d'un verdict qui n'a pas été rendu.
@@ -112,7 +114,7 @@ export function RevealPhase({
                 textShadow: `0 0 50px ${primaryColor}99, 0 0 100px ${primaryColor}33`,
               }}
             >
-              {result.degraded ? 'AUCUN' : isRed ? 'RED' : 'GREEN'}
+              {result.degraded ? t.aucun : isRed ? 'RED' : 'GREEN'}
             </span>{' '}
             <span style={{ color: accentColor, textShadow: `0 0 35px ${primaryColor}66` }}>
               {result.degraded ? 'VERDICT' : 'FLAG'}
@@ -127,7 +129,7 @@ export function RevealPhase({
             role="status"
             className="mb-3 w-full rounded-xl border border-amber-500/30 bg-amber-500/8 px-3 py-2 text-center text-[12px] font-semibold text-amber-200"
           >
-            L&apos;Oracle est injoignable — aucun verdict n&apos;a pu être rendu.
+            {t.injoignableBandeau}
           </div>
         )}
 
@@ -167,7 +169,7 @@ export function RevealPhase({
                 className="text-[12px] font-black uppercase tracking-[0.14em]"
                 style={{ color: primaryColor }}
               >
-                Analyse de l&apos;Oracle
+                {t.analyse}
               </span>
               {/* Partager, dans l'en-tête de l'analyse plutôt que sur sa
                   propre ligne : il reste à l'écran sans repousser l'encart.
@@ -183,7 +185,7 @@ export function RevealPhase({
                     <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
                     <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                   </svg>
-                  Partager
+                  {t.partager}
                 </button>
               )}
             </div>
@@ -227,7 +229,7 @@ export function RevealPhase({
               <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
               <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
             </svg>
-            Partager le verdict
+            {t.partagerVerdict}
           </motion.button>
         )}
 
@@ -258,7 +260,7 @@ export function RevealPhase({
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
         >
-          ☕ Offrir un café à l&apos;Oracle
+          {t.cafe}
         </motion.a>
 
         {/* Stats bar — sous l'encart, dans la zone qui défile ; épinglée en
@@ -278,9 +280,9 @@ export function RevealPhase({
             transition={{ delay: 0.78 }}
           >
             <div className="flex justify-between text-[12px] text-[#9CA3AF] mb-1.5 font-semibold">
-              <span>🚩 {redCount.toLocaleString('fr-FR')}</span>
-              <span className="text-[#6B7280]">sur tout le site</span>
-              <span>✅ {greenCount.toLocaleString('fr-FR')}</span>
+              <span>🚩 {redCount.toLocaleString(t.locale)}</span>
+              <span className="text-[#6B7280]">{t.surToutLeSite}</span>
+              <span>✅ {greenCount.toLocaleString(t.locale)}</span>
             </div>
             <div className="h-1.5 rounded-full overflow-hidden flex" style={{ background: 'rgba(255,255,255,0.06)' }}>
               <motion.div
@@ -316,7 +318,7 @@ export function RevealPhase({
             boxShadow: `0 0 42px ${primaryColor}61, 0 8px 32px rgba(0,0,0,0.32)`,
           }}
         >
-          {result.degraded ? 'Réessayer 🔮' : 'Encore 🔮'}
+          {result.degraded ? t.reessayer : t.encore}
         </motion.button>
       </motion.div>
     </motion.div>

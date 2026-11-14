@@ -4,7 +4,8 @@ import { Dispatch, RefObject, SetStateAction, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import type { HistoryItem, CommunitySubmission } from './constants';
-import { PLACEHOLDERS } from './constants';
+import { useTextesOracle } from './textes';
+import { useLangue } from '@/lib/i18n/LangueContexte';
 import { MAX_FLAGORNOT_TEXT_LENGTH } from '@/config/constants';
 import { useSpeechRecognition } from '@/lib/useSpeechRecognition';
 
@@ -37,6 +38,8 @@ export function IdlePhase({
   privateMode,
   setPrivateMode,
 }: IdlePhaseProps) {
+  const t = useTextesOracle();
+  const langue = useLangue();
   /* Chaque segment reconnu s'ajoute à la suite de la saisie, sans jamais
      dépasser la limite de l'Oracle : on peut donc taper puis dicter, ou
      reprendre la parole plusieurs fois. */
@@ -54,10 +57,10 @@ export function IdlePhase({
   );
 
   const speechError = useCallback((message: string) => {
-    toast('🎙️ Dictée interrompue', { description: message, duration: 3200 });
-  }, []);
+    toast(t.dicteeInterrompue, { description: message, duration: 3200 });
+  }, [t]);
 
-  const speech = useSpeechRecognition(appendTranscript, speechError);
+  const speech = useSpeechRecognition(appendTranscript, speechError, langue);
 
   const handleVoiceClick = () => {
     if (speech.listening) speech.stop();
@@ -115,7 +118,7 @@ export function IdlePhase({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          Soumets ton cas
+          {t.soumetsTonCas}
         </motion.h2>
         <motion.p
           className="text-[12px] text-[#6B7280] text-center mb-5 max-w-55 leading-relaxed"
@@ -123,7 +126,7 @@ export function IdlePhase({
           animate={{ opacity: 1 }}
           transition={{ delay: 0.18 }}
         >
-          Décris un comportement — l&apos;Oracle rend son verdict.
+          {t.saisieAccroche}
         </motion.p>
 
         {/* History / community */}
@@ -148,7 +151,7 @@ export function IdlePhase({
                       : 'text-[#6B7280] hover:text-[#9CA3AF]'
                   }`}
                 >
-                  📋 Mon histo ({history.length})
+                  {t.monHisto(history.length)}
                 </button>
                 <button
                   onClick={() => setShowCommunityTab(true)}
@@ -158,17 +161,17 @@ export function IdlePhase({
                       : 'text-[#6B7280] hover:text-[#9CA3AF]'
                   }`}
                 >
-                  👥 Communauté ({communitySubmissions.length})
+                  {t.communaute(communitySubmissions.length)}
                 </button>
               </div>
             )}
 
             {/* Solo labels */}
             {hasHistory && !hasCommunity && (
-              <p className="text-[12px] font-black uppercase tracking-wider text-[#9CA3AF] mb-2.5">📋 Mon historique</p>
+              <p className="text-[12px] font-black uppercase tracking-wider text-[#9CA3AF] mb-2.5">{t.monHistorique}</p>
             )}
             {!hasHistory && hasCommunity && (
-              <p className="text-[12px] font-black uppercase tracking-wider text-[#9CA3AF] mb-2.5">👥 D&apos;autres ont testé</p>
+              <p className="text-[12px] font-black uppercase tracking-wider text-[#9CA3AF] mb-2.5">{t.dAutresOntTeste}</p>
             )}
 
             {/* History list */}
@@ -252,7 +255,7 @@ export function IdlePhase({
           >
             <span aria-hidden className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-red-500 animate-mic-pulse" />
             <p className="min-w-0 break-words text-[#9CA3AF] italic">
-              {speech.interim || 'Je t’écoute…'}
+              {speech.interim || t.jeTEcoute}
             </p>
           </div>
         )}
@@ -270,7 +273,7 @@ export function IdlePhase({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder={PLACEHOLDERS[placeholderIdx]}
+              placeholder={t.placeholders[placeholderIdx % t.placeholders.length]}
               maxLength={MAX_FLAGORNOT_TEXT_LENGTH}
               autoComplete="off"
               autoCorrect="off"
@@ -278,7 +281,7 @@ export function IdlePhase({
               enterKeyHint="send"
               className="w-full bg-transparent text-[#FAFAFA] placeholder:text-[#3A3A50] focus:outline-none leading-relaxed"
               style={{ fontSize: '16px' }}
-              aria-label="Écris un comportement à analyser"
+              aria-label={t.saisieAria}
             />
             {input.length > 0 && (
               <p className="text-[10px] text-[#3A3A50] mt-0.5 tabular-nums text-right">
@@ -312,7 +315,7 @@ export function IdlePhase({
               <span className={`text-[12px] transition-colors ${
                 privateMode ? 'text-violet-400' : 'text-[#6B7280] group-hover:text-[#9CA3AF]'
               }`}>
-                🔒 Privé
+                {t.prive}
               </span>
             </button>
 
@@ -346,10 +349,10 @@ export function IdlePhase({
                   }
                   aria-label={
                     speech.listening
-                      ? 'Arrêter la dictée'
+                      ? t.arreterDictee
                       : speech.preparing
-                        ? 'Autorisation du micro en cours'
-                        : 'Dicter à la voix'
+                        ? t.autorisationMicro
+                        : t.dicter
                   }
                   aria-pressed={speech.listening}
                 >
@@ -375,7 +378,7 @@ export function IdlePhase({
                     : 'rgba(255,255,255,0.05)',
                   boxShadow: input.trim() ? '0 0 22px rgba(124,58,237,0.42)' : 'none',
                 }}
-                aria-label="Envoyer"
+                aria-label={t.envoyer}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14M12 5l7 7-7 7"/>

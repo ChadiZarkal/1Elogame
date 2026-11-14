@@ -2,15 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import Link from '@/components/ui/LienIntention';
-import { CATEGORIES_CONFIG, CategoryConfig } from '@/config/categories';
+import { CATEGORIES_CONFIG, CategoryConfig, libelleCategorie } from '@/config/categories';
 import { useHaptics } from '@/lib/hooks';
 import { isAdultOnlyCategory, isMinorBracket } from '@/lib/contentRating';
 import { type PartySize, useGameStore } from '@/stores/gameStore';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { cheminLocalise } from '@/lib/i18n/langue';
+import { useTextesJeu } from './textes';
 
-const PARTY_SIZES: { value: PartySize; label: string; tag: string }[] = [
-  { value: 10, label: '10', tag: '⚡ Rapide' },
-  { value: 15, label: '15', tag: '🎯 Classique' },
-  { value: 20, label: '20', tag: '🏆 Expert' },
+// L'étiquette de chaque taille (« ⚡ Rapide »…) vient de `textes.ts` (`t.tailles`).
+const PARTY_SIZES: { value: PartySize; label: string }[] = [
+  { value: 10, label: '10' },
+  { value: 15, label: '15' },
+  { value: 20, label: '20' },
 ];
 
 const DEFAULT_GAME_CATEGORIES_KEY = 'default_game_categories';
@@ -64,6 +68,8 @@ interface CategorySelectorProps {
 
 export function CategorySelector({ onStart }: CategorySelectorProps) {
   const { select, tap } = useHaptics();
+  const langue = useLangue();
+  const t = useTextesJeu();
   const [selected, setSelected] = useState<Set<string>>(() => getInitialSelectedCategories());
   const [partySize, setPartySize] = useState<PartySize>(() => getInitialPartySize());
   const [showRules, setShowRules] = useState(() => {
@@ -132,10 +138,10 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
       {/* Header */}
       <div className="text-center mb-5">
         <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2">
-          🎮 Choisis ton mode
+          {t.modeTitre}
         </h1>
         <p className="text-sm text-[#6B7280]">
-          Sélectionne une ou plusieurs catégories
+          {t.modeSousTitre}
         </p>
       </div>
 
@@ -144,24 +150,24 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
           navigation. */}
       <div className="w-full max-w-sm flex items-center justify-between mb-4">
         <Link
-          href="/jeu"
+          href={cheminLocalise(langue, '/jeu')}
           className="text-[#6B7280] hover:text-white transition-colors text-sm flex items-center gap-1 min-h-12 min-w-12"
-          aria-label="Retour au profil"
+          aria-label={t.ariaRetourProfil}
         >
-          ← Retour
+          {t.retour}
         </Link>
         <div className="flex items-center gap-2">
           <button
             onClick={handleSelectAll}
             className="px-2.5 py-1.5 rounded-lg border border-white/15 text-[11px] font-semibold text-[#D4D4D8] hover:border-white/30 transition-colors"
           >
-            Tout
+            {t.tout}
           </button>
           <button
             onClick={handleResetSelection}
             className="px-2.5 py-1.5 rounded-lg border border-white/15 text-[11px] font-semibold text-[#A3A3A3] hover:border-white/30 transition-colors"
           >
-            Reset
+            {t.reset}
           </button>
         </div>
       </div>
@@ -189,10 +195,9 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
             >
               <span className="text-3xl shrink-0">{cat.emoji}</span>
               <div className="flex-1 text-left">
-                <p className="text-lg font-bold text-white">{cat.labelFr}</p>
+                <p className="text-lg font-bold text-white">{langue === 'fr' ? cat.labelFr : libelleCategorie(cat.id, langue)}</p>
                 <p className="text-xs text-[#6B7280] mt-0.5">
-                  {cat.id === 'sexe' && 'Relations, flirt, intimité, kinks'}
-                  {cat.id === 'quotidien' && 'Comportements, habitudes, travail, argent...'}
+                  {t.descriptionsCategories[cat.id]}
                 </p>
               </div>
               <div
@@ -216,9 +221,9 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
       {/* Duel count selector */}
       <div className="w-full max-w-sm mb-5">
         <label className="block text-[0.6rem] font-black tracking-[0.14em] uppercase text-[#555] mb-2">
-          Nombre de duels
+          {t.nombreDuels}
         </label>
-        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Nombre de duels">
+        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t.nombreDuels}>
           {PARTY_SIZES.map(s => {
             const sel = partySize === s.value;
             return (
@@ -240,7 +245,7 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
                   {s.label}
                 </span>
                 <span className="text-[0.55rem] font-bold mt-0.5" style={{ color: sel ? '#FF6B6B' : '#555' }}>
-                  {s.tag}
+                  {t.tailles[s.value]}
                 </span>
               </button>
             );
@@ -258,18 +263,14 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
         >
           <span className="text-xs font-bold flex items-center gap-2">
             <span>📖</span>
-            <span style={{ color: '#ddd' }}>Comment ça marche ?</span>
+            <span style={{ color: '#ddd' }}>{t.commentCaMarche}</span>
           </span>
           <span className="text-[0.6rem] transition-transform" style={{ transform: showRules ? 'rotate(180deg)' : 'none' }}>▼</span>
         </button>
         {showRules && (
           <div className="px-4 pb-3">
             <div className="flex flex-col gap-2">
-              {[
-                { e: '🆚', t: '2 situations apparaissent : choisis le pire Red Flag' },
-                { e: '📊', t: 'Découvre si la communauté est d\'accord avec toi' },
-                { e: '🏆', t: 'Obtiens ton profil personnalisé en fin de partie' },
-              ].map(r => (
+              {t.regles.map(r => (
                 <div key={r.t} className="flex gap-2 items-start">
                   <span className="text-sm shrink-0 leading-tight">{r.e}</span>
                   <span className="text-[0.7rem] text-[#aaa] leading-snug font-medium">{r.t}</span>
@@ -278,8 +279,8 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
             </div>
             <div className="mt-3 px-3 py-2 rounded-md" style={{ background: 'rgba(255,45,45,0.04)', border: '1px solid rgba(255,45,45,0.1)' }}>
               <p className="text-[0.6rem] text-[#999] leading-relaxed m-0">
-                🔬 Tes votes mettent à jour les <strong className="text-[#ddd]">classements communautaires</strong> par sexe et âge.
-                {' '}<a href="/classement" className="text-[#FF6B6B] font-bold no-underline text-[0.6rem]">Voir →</a>
+                {t.reglesClassementAvant}<strong className="text-[#ddd]">{t.reglesClassementFort}</strong>{t.reglesClassementApres}
+                {' '}<a href={cheminLocalise(langue, '/classement')} className="text-[#FF6B6B] font-bold no-underline text-[0.6rem]">{t.voir}</a>
               </p>
             </div>
           </div>
@@ -289,7 +290,7 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
       {/* Info text */}
       {selected.size > 1 && (
         <p className="text-xs text-[#6B7280] text-center mb-4 max-w-xs">
-          Les challenges alterneront entre les catégories sélectionnées
+          {t.alternance}
         </p>
       )}
 
@@ -323,7 +324,7 @@ export function CategorySelector({ onStart }: CategorySelectorProps) {
           cursor: selected.size > 0 ? 'pointer' : 'not-allowed',
         }}
       >
-        {selected.size > 0 ? `🚩 LANCER · ${partySize} duels` : 'Sélectionne au moins une catégorie'}
+        {selected.size > 0 ? t.lancer(partySize) : t.auMoinsUne}
       </button>
       </div>
     </>

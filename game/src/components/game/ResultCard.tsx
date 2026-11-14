@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ElementDTO } from '@/types/game';
 import { formatNumber } from '@/lib/utils';
 import { AnimatedPercent } from './AnimatedPercent';
+import { useTextesJeu } from './textes';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -44,6 +45,9 @@ interface ResultCardProps {
  */
 export function ResultCard({ element, stats, flexValue, isOptimistic, topInset = 0 }: ResultCardProps) {
   const { isMoreRedFlag } = stats;
+  const t = useTextesJeu();
+  // `formatNumber` formate à la française ; l'anglais groupe à l'américaine.
+  const nombre = (n: number) => (t.locale === 'fr-FR' ? formatNumber(n) : n.toLocaleString(t.locale));
 
   const bgClass = isMoreRedFlag
     ? 'bg-gradient-to-br from-[#DC2626] to-[#991B1B]'
@@ -78,7 +82,7 @@ export function ResultCard({ element, stats, flexValue, isOptimistic, topInset =
           >
             <span className="inline-flex items-center gap-2 bg-black/20 text-white/85 px-4 py-1.5 rounded-lg text-sm font-semibold">
               <span>⏳</span>
-              <span>Calcul des votes...</span>
+              <span>{t.calculVotes}</span>
             </span>
           </motion.div>
         )}
@@ -93,7 +97,7 @@ export function ResultCard({ element, stats, flexValue, isOptimistic, topInset =
           >
             <span className="inline-flex items-center gap-2 bg-white text-[#DC2626] px-5 py-2 rounded-lg text-base sm:text-lg font-black shadow-xl border-2 border-white/50">
               <span className="text-xl">🚩</span>
-              <span>PLUS RED FLAG</span>
+              <span>{t.plusRedFlag}</span>
               <span className="text-xl">🚩</span>
             </span>
           </motion.div>
@@ -124,9 +128,9 @@ export function ResultCard({ element, stats, flexValue, isOptimistic, topInset =
               <AnimatedPercent value={stats.percentage} delay={isMoreRedFlag ? 0.15 : 0.25} />
             </p>
             <p className="text-white/60 text-[11px] sm:text-xs font-medium">
-              {isMoreRedFlag ? 'pensent que c\'est le plus red flag' : 'ont voté pour ça'}
+              {isMoreRedFlag ? t.pensentPlusRedFlag : t.ontVote}
             </p>
-            <p className="text-white/70 text-xs sm:text-sm">{formatNumber(stats.votes)} votes</p>
+            <p className="text-white/70 text-xs sm:text-sm">{t.votes(nombre(stats.votes))}</p>
           </motion.div>
         )}
 
@@ -155,7 +159,7 @@ export function ResultCard({ element, stats, flexValue, isOptimistic, topInset =
           <motion.div className="mt-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
             <span className="inline-flex items-center gap-1.5 bg-white/20 text-white px-3 py-1 rounded-full text-xs font-medium">
               <span>✓</span>
-              <span>Moins pire</span>
+              <span>{t.moinsPire}</span>
             </span>
           </motion.div>
         )}

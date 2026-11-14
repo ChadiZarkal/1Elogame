@@ -8,6 +8,7 @@ import { GoogleGenAI } from '@google/genai';
 import { readFileSync, existsSync, readdirSync, writeFileSync, unlinkSync } from 'fs';
 import { resolve, join } from 'path';
 import { tmpdir } from 'os';
+import type { Langue } from '@/lib/i18n/langue';
 
 // ---------------------------------------------------------------------------
 // Service Account credentials loading (unchanged — supports JSON env, file, auto-discovery)
@@ -124,9 +125,15 @@ function getGenAIClient(): GoogleGenAI {
 // Public API — judgeWithGemini
 // ---------------------------------------------------------------------------
 
+/**
+ * @param langue langue de la page : en anglais, la consigne envoyée au modèle
+ *   est en anglais. Le français, par défaut, reste la consigne d'origine. La
+ *   langue de la justification est fixée par `systemPrompt`.
+ */
 export async function judgeWithGemini(
   text: string,
   systemPrompt: string,
+  langue: Langue = 'fr',
 ): Promise<{ verdict: 'red' | 'green'; justification: string }> {
   const client = getGenAIClient();
   const model = process.env.VERTEX_AI_MODEL || 'gemini-2.5-flash';
@@ -134,7 +141,7 @@ export async function judgeWithGemini(
   try {
     const response = await client.models.generateContent({
       model,
-      contents: `Juge cette phrase: "${text}"`,
+      contents: langue === 'en' ? `Judge this: "${text}"` : `Juge cette phrase: "${text}"`,
       config: {
         systemInstruction: systemPrompt,
         temperature: 0.9,
@@ -167,7 +174,7 @@ export async function judgeWithGemini(
 
     return {
       verdict: parsed.verdict,
-      justification: parsed.justification || 'Pas de justification.',
+      justification: parsed.justification || (langue === 'en' ? 'No justification.' : 'Pas de justification.'),
     };
   } catch (error) {
     throw new Error(`Gemini API error: ${error instanceof Error ? error.message : String(error)}`);

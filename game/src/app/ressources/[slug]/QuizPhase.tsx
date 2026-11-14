@@ -1,6 +1,7 @@
 'use client';
 
 import type { MeterQuestion, SeverityLevel } from '@/config/meters-data';
+import { useTextesRessources } from '../textes';
 
 interface QuizPhaseProps {
   meter: { questionPrefix: string };
@@ -30,6 +31,7 @@ export function QuizPhase({
   progress,
   onAnswer,
 }: QuizPhaseProps) {
+  const t = useTextesRessources();
   return (
     <>
       {/* Progress bar */}
@@ -51,9 +53,7 @@ export function QuizPhase({
               backgroundColor: `${getLevelColor(currentQuestion.level)}15`,
             }}
           >
-            {currentQuestion.level === 'green' ? 'Zone saine' :
-             currentQuestion.level === 'yellow' ? 'Vigilance' :
-             currentQuestion.level === 'orange' ? 'Alerte' : 'Danger'}
+            {t.niveauQuiz[currentQuestion.level]}
           </span>
           <p className="text-[11px] text-[#4B5563]">
             {currentIdx + 1} / {totalQuestions}
@@ -70,7 +70,7 @@ export function QuizPhase({
         {/* Safe exit hint */}
         {currentIdx === 0 && (
           <p className="text-[10px] text-[#374151] text-center mb-1 animate-pulse">
-            Tu peux quitter à tout moment avec le bouton ✕ en haut
+            {t.quitterIndice}
           </p>
         )}
 
@@ -90,7 +90,7 @@ export function QuizPhase({
               {currentQuestion.text}
             </p>
             <p className="text-[11px] text-[#4B5563] text-center mt-4">
-              Question {currentIdx + 1} sur {totalQuestions}
+              {t.question}{currentIdx + 1}{t.sur}{totalQuestions}
             </p>
           </div>
         </div>
@@ -102,13 +102,13 @@ export function QuizPhase({
               onClick={() => onAnswer(true)}
               className="flex-1 py-4 rounded-2xl bg-[#1A1A1A] border border-[#2A2A2A] text-[#FAFAFA] font-bold text-base active:scale-[0.93] active:bg-[#EF4444]/10 hover:border-[#EF4444]/40 hover:bg-[#EF4444]/5 transition-all group/btn"
             >
-              <span className="group-hover/btn:scale-110 inline-block transition-transform mr-1">👍</span> Oui
+              <span className="group-hover/btn:scale-110 inline-block transition-transform mr-1">👍</span>{t.oui}
             </button>
             <button
               onClick={() => onAnswer(false)}
               className="flex-1 py-4 rounded-2xl bg-[#1A1A1A] border border-[#2A2A2A] text-[#FAFAFA] font-bold text-base active:scale-[0.93] active:bg-[#10B981]/10 hover:border-[#10B981]/40 hover:bg-[#10B981]/5 transition-all group/btn"
             >
-              <span className="group-hover/btn:scale-110 inline-block transition-transform mr-1">👎</span> Non
+              <span className="group-hover/btn:scale-110 inline-block transition-transform mr-1">👎</span>{t.non}
             </button>
           </div>
         </div>

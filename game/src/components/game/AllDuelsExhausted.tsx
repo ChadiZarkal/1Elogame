@@ -4,6 +4,9 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { useHaptics } from '@/lib/hooks';
 import { DON_URL } from '@/config/contact';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { cheminLocalise } from '@/lib/i18n/langue';
+import { useTextesJeu } from './textes';
 
 interface AllDuelsExhaustedProps {
   duelCount: number;
@@ -12,14 +15,16 @@ interface AllDuelsExhaustedProps {
 
 export function AllDuelsExhausted({ duelCount, onReset }: AllDuelsExhaustedProps) {
   const { tap, success } = useHaptics();
+  const langue = useLangue();
+  const t = useTextesJeu();
 
   const handleShare = () => {
     tap();
-    const text = `🚩 J'ai participé à ${duelCount} duels sur Red or Green !\nEt toi, tu as combien de Red Flags ? 👀`;
+    const text = t.partageEpuise(duelCount);
     if (navigator.share) {
-      navigator.share({ text, url: 'https://redorgreen.fr/jeu?ref=share' }).catch(() => {});
+      navigator.share({ text, url: `${t.urlPartage}?ref=share` }).catch(() => {});
     } else {
-      navigator.clipboard.writeText(text + '\nhttps://redorgreen.fr/jeu?ref=share').catch(() => {});
+      navigator.clipboard.writeText(text + `\n${t.urlPartage}?ref=share`).catch(() => {});
     }
   };
 
@@ -41,16 +46,16 @@ export function AllDuelsExhausted({ duelCount, onReset }: AllDuelsExhaustedProps
         </motion.span>
         
         <h1 className="text-3xl font-bold text-[#F5F5F5]">
-          Incroyable !
+          {t.incroyable}
         </h1>
         
         <p className="text-[#A3A3A3] text-lg">
-          Tu as vu tous les duels possibles ! Tu as participé à <strong className="text-[#F5F5F5]">{duelCount} duels</strong>.
+          {t.tousVusAvant}<strong className="text-[#F5F5F5]">{t.tousVusDuels(duelCount)}</strong>{t.tousVusApres}
         </p>
         
         <div className="bg-[#1A1A1A] border border-[#333] rounded-xl p-4">
           <p className="text-[#737373] text-sm">
-            Merci d&apos;avoir joué ! Reviens plus tard pour découvrir de nouveaux éléments.
+            {t.merci}
           </p>
         </div>
 
@@ -64,19 +69,19 @@ export function AllDuelsExhausted({ duelCount, onReset }: AllDuelsExhaustedProps
             size="lg"
             className="min-h-12"
           >
-            🔄 Recommencer
+            {t.recommencer}
           </Button>
           <a
-            href="/classement"
+            href={cheminLocalise(langue, '/classement')}
             className="min-h-12 px-6 py-3 rounded-xl bg-[#1A1A1A] border border-[#333] text-[#A3A3A3] font-medium hover:border-[#FCD34D] hover:text-[#FCD34D] transition-all text-center flex items-center justify-center"
           >
-            🏆 Voir le classement
+            {t.voirClassement}
           </a>
           <button
             onClick={handleShare}
             className="px-6 py-3 rounded-xl bg-[#1A1A1A] border border-[#333] text-[#A3A3A3] font-medium hover:border-[#059669] hover:text-[#059669] transition-all"
           >
-            📤 Partager mon score
+            {t.partagerScore}
           </button>
           <a
             href={DON_URL}
@@ -84,7 +89,7 @@ export function AllDuelsExhausted({ duelCount, onReset }: AllDuelsExhaustedProps
             rel="noopener noreferrer"
             className="min-h-12 px-6 py-3 rounded-xl border border-[#FFC04D]/30 bg-[#FFC04D]/8 text-[#FFC04D] font-bold transition-colors hover:bg-[#FFC04D]/15 text-center flex items-center justify-center"
           >
-            ☕ Offrir un café
+            {t.offrirCafe}
           </a>
         </div>
       </motion.div>

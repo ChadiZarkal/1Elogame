@@ -1,0 +1,456 @@
+'use client';
+
+import { useEffect, useCallback, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import dynamic from 'next/dynamic';
+import { motion } from 'framer-motion';
+import { useGameStore, type PartySize } from '@/stores/gameStore';
+import { useOnlineStatus, useHaptics } from '@/lib/hooks';
+import { DuelInterface } from '@/components/game/DuelInterface';
+import { ResultDisplay } from '@/components/game/ResultDisplay';
+import { StreakDisplay } from '@/components/game/StreakDisplay';
+import { CategorySelector } from '@/components/game/CategorySelector';
+import { FullPageLoading } from '@/components/ui/Loading';
+import { PausePubDuel } from '@/components/game/PausePubDuel';
+import { pauseJeuDue, POPUNDER_APRES } from '@/config/ads';
+import { usePopunderApres } from '@/components/ads/usePopunderApres';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { cheminLocalise } from '@/lib/i18n/langue';
+import { useTextesJeu } from '@/components/game/textes';
+
+// Lazy-load components only needed rarely
+const AllDuelsExhausted = dynamic(() => import('@/components/game/AllDuelsExhausted').then(m => m.AllDuelsExhausted), { ssr: false });
+const CompactResult = dynamic(() => import('@/components/game/CompactResult').then(m => m.CompactResult), { ssr: false });
+
+/**
+ * L'écran de partie de « Le pire des deux », commun aux deux langues :
+ * `app/jeu/jouer/page.tsx` et `app/en/jeu/jouer/page.tsx`. La langue est celle
+ * que pose `LangueFournie` (le français sans fournisseur).
+ */
+export function EcranJeu() {
+  const router = useRouter();
+  const langue = useLangue();
+  const t = useTextesJeu();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const previousOnlineRef = useRef(true);
+  const [showBackToLive, setShowBackToLive] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  /** La pause publicitaire, entre le résultat et le duel suivant. */
+  const [enPause, setEnPause] = useState(false);
+  const isOnline = useOnlineStatus();
+  const { tap, success: hapticSuccess, error: hapticError } = useHaptics();
+  
+  const {
+    hasProfile,
+    currentDuel,
+    lastResult,
+    showingResult,
+    streak,
+    streakEmoji,
+    duelCount,
+    allDuelsExhausted,
+    isLoadingDuel,
+    error,
+    duelHistory,
+    partyActive,
+    partyConfig,
+    partyComplete,
+    initializeFromStorage,
+    fetchNextDuel,
+    submitVote,
+    showNextDuel,
+    resetGame,
+    clearError,
+    startParty,
+  } = useGameStore();
+
+  // Au 10e duel de la partie, le pop-under s'arme : il s'ouvre au clic sur
+  // « Suivant » (ou vers le récap, pour une partie de dix).
+  usePopunderApres(duelCount, POPUNDER_APRES.pireDesDeux);
+  
+  // Initialize from storage
+  useEffect(() => {
+    initializeFromStorage();
+    
+    // Precache canvas-confetti during idle time to avoid micro-freeze on first confetti
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const id = requestIdleCallback(() => { import('canvas-confetti').catch(() => {}); });
+      return () => cancelIdleCallback(id);
+    }
+  }, [initializeFromStorage]);
+  
+  // Redirect if no profile
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!hasProfile) {
+        router.push(cheminLocalise(langue, '/jeu'));
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [hasProfile, router, langue]);
+  
+  // Redirect to recap when party completes
+  useEffect(() => {
+    if (partyComplete) {
+      router.push(cheminLocalise(langue, '/jeu/recap'));
+    }
+  }, [partyComplete, router, langue]);
+  
+  // Fetch first duel when profile is loaded AND party is active
+  // Guard: !error prevents infinite retry loop when API fails (429 / 500)
+  useEffect(() => {
+    if (hasProfile && partyActive && !currentDuel && !isLoadingDuel && !allDuelsExhausted && !error && isOnline) {
+      fetchNextDuel();
+    }
+  }, [hasProfile, partyActive, currentDuel, isLoadingDuel, allDuelsExhausted, error, isOnline, fetchNextDuel]);
+  
+  // Auto-scroll to bottom when new content appears
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: duelHistory.length > 0 ? 'smooth' : 'instant',
+      });
+    }
+  }, [duelHistory.length, showingResult, currentDuel]);
+
+  // Detect when user is reading history and offer quick jump back to live duel
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const onScroll = () => {
+      const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+      setShowBackToLive(distanceFromBottom > 180);
+    };
+
+    onScroll();
+    container.addEventListener('scroll', onScroll, { passive: true });
+    return () => container.removeEventListener('scroll', onScroll);
+  }, [duelHistory.length, showingResult, currentDuel]);
+
+  // Mobile resilience: clear feedback when connectivity changes and auto-resume fetch
+  useEffect(() => {
+    const wasOnline = previousOnlineRef.current;
+    if (wasOnline && !isOnline) {
+      hapticError();
+      toast(t.connexionPerdue, {
+        description: t.connexionPerdueDetail,
+        duration: 2800,
+      });
+    }
+
+    if (!wasOnline && isOnline) {
+      hapticSuccess();
+      toast(t.connexionRetablie, {
+        description: t.connexionRetablieDetail,
+        duration: 2200,
+      });
+
+      if (hasProfile && partyActive && !currentDuel && !isLoadingDuel && !allDuelsExhausted) {
+        fetchNextDuel();
+      }
+    }
+
+    previousOnlineRef.current = isOnline;
+  }, [
+    isOnline,
+    hasProfile,
+    partyActive,
+    currentDuel,
+    isLoadingDuel,
+    allDuelsExhausted,
+    fetchNextDuel,
+    hapticSuccess,
+    hapticError,
+    t,
+  ]);
+
+  // Streak milestone toasts with viral challenge CTA
+  const prevStreakRef = useRef(0);
+  useEffect(() => {
+    const prev = prevStreakRef.current;
+    prevStreakRef.current = streak;
+    if (streak > prev) {
+      if (streak === 3) toast(t.serie3, { description: t.serie3Detail, duration: 2500 });
+      else if (streak === 5) {
+        toast(t.serie5, {
+          description: t.serie5Detail,
+          duration: 2500,
+        });
+      }
+      else if (streak === 10) {
+        toast(t.serie10, {
+          description: t.serie10Detail,
+          duration: 2800,
+        });
+      }
+      else if (streak >= 15 && streak % 5 === 0) {
+        toast(t.serieN(streak), {
+          description: t.serieNDetail,
+          duration: 2800,
+        });
+      }
+    }
+  }, [streak, t]);
+
+  // Duel count milestones — viral CTA every 10 duels
+  const prevDuelCountRef = useRef(0);
+  useEffect(() => {
+    const prev = prevDuelCountRef.current;
+    prevDuelCountRef.current = duelCount;
+    if (duelCount > prev && duelCount > 0 && duelCount % 10 === 0) {
+      toast(t.duelsJouesToast(duelCount), {
+        description: t.duelsJouesToastDetail,
+        duration: 2600,
+      });
+    }
+  }, [duelCount, t]);
+  
+  const handleReset = useCallback(() => { resetGame(); router.push(cheminLocalise(langue, '/jeu')); }, [resetGame, router, langue]);
+
+  // « Suivant » sur le résultat : tous les cinq duels, la pause publicitaire
+  // s'intercale. Le duel suivant ne vient qu'au bouton de la pause.
+  const handleNext = useCallback(() => {
+    if (pauseJeuDue(duelCount, partyConfig?.size)) {
+      setEnPause(true);
+      return;
+    }
+    showNextDuel();
+  }, [duelCount, partyConfig?.size, showNextDuel]);
+
+  const finirPause = useCallback(() => {
+    tap();
+    setEnPause(false);
+    showNextDuel();
+  }, [tap, showNextDuel]);
+
+  const handleRefreshDuel = useCallback(async () => {
+    tap();
+    if (!isOnline) {
+      toast(t.connexionRequise, {
+        description: t.connexionRequiseDetail,
+        duration: 2200,
+      });
+      return;
+    }
+
+    setIsRefreshing(true);
+    setEnPause(false);
+    clearError();
+    // `fetchNextDuel` range son résultat dans `nextDuel` tant qu'un duel est
+    // affiché : appelé tel quel, le bouton faisait tourner son indicateur puis
+    // ne changeait rien à l'écran. Le joueur bloqué sur un duel qu'il ne veut
+    // pas n'avait aucune sortie. On vide donc le duel courant d'abord.
+    useGameStore.setState({
+      currentDuel: null,
+      nextDuel: null,
+      lastResult: null,
+      showingResult: false,
+    });
+    try {
+      await fetchNextDuel();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [tap, isOnline, clearError, fetchNextDuel, t]);
+
+  const handleCategoryStart = useCallback((selectedCategories: string[], partySize: PartySize) => {
+    tap();
+    localStorage.setItem('default_game_categories', JSON.stringify(selectedCategories));
+    localStorage.setItem('default_game_size', String(partySize));
+    startParty({ size: partySize, originalSize: partySize, categories: selectedCategories });
+  }, [tap, startParty]);
+  
+  if (!hasProfile) {
+    return <FullPageLoading text={t.chargement} />;
+  }
+
+  // Show category selector / party setup before starting the game
+  if (!partyActive && !partyComplete) {
+    return <CategorySelector onStart={handleCategoryStart} />;
+  }
+  
+  if (allDuelsExhausted) {
+    return <AllDuelsExhausted duelCount={duelCount} onReset={handleReset} />;
+  }
+  
+  if (isLoadingDuel && !currentDuel) {
+    return <FullPageLoading text={t.preparation} />;
+  }
+  
+  if (error && !currentDuel) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100dvh-var(--header-h,3rem))] bg-[#0D0D0D] p-6">
+        <div className="text-center space-y-4">
+          <span className="text-6xl">😕</span>
+          <h1 className="text-2xl font-bold text-[#F5F5F5]">{t.oups}</h1>
+          {/* En anglais, le message du serveur (en français) cède la place à
+              une phrase générique. */}
+          <p className="text-[#A3A3A3]">{t.erreurDuel ?? error}</p>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => { clearError(); fetchNextDuel(); }}
+              className="px-6 py-2 bg-[#DC2626] text-white rounded-lg hover:bg-[#EF4444] transition-colors"
+            >
+              {t.reessayer}
+            </button>
+            <button
+              onClick={() => { resetGame(); router.push(cheminLocalise(langue, '/jeu/jouer')); }}
+              className="px-6 py-2 bg-[#1A1A1A] text-[#E4E4E7] border border-[#333] rounded-lg hover:border-[#555] transition-colors"
+            >
+              {t.changerCategories}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!currentDuel) {
+    return <FullPageLoading text={t.chargementDuel} />;
+  }
+  
+  return (
+    <div
+      ref={scrollRef}
+      className="relative w-full overflow-y-auto overscroll-y-contain bg-[#0D0D0D]"
+      style={{ height: 'calc(100dvh - var(--header-h,3rem))' }}
+    >
+      {/* History: past duel results */}
+      {duelHistory.length > 0 && (
+        <div className="pt-4 pb-2">
+          {/* Scroll-up hint */}
+          <div className="text-center text-[#555] text-xs mb-3 flex items-center justify-center gap-2">
+            <span className="inline-block w-8 h-px bg-[#333]" />
+            <span>{t.duelsPrecedents(duelHistory.length)}</span>
+            <span className="inline-block w-8 h-px bg-[#333]" />
+          </div>
+          {duelHistory.map((entry, i) => (
+            <CompactResult
+              key={`${entry.duel.elementA.id}-${entry.duel.elementB.id}-${i}`}
+              duel={entry.duel}
+              result={entry.result}
+              index={i}
+            />
+          ))}
+        </div>
+      )}
+      
+      {/* Current active duel/result - takes full screen height */}
+      <div
+        className="w-full relative flex flex-col"
+        style={{
+          minHeight: 'calc(100dvh - var(--header-h,3rem))',
+          height: 'calc(100dvh - var(--header-h,3rem))',
+        }}
+      >
+        {/* Top bar: home + streak + party progress */}
+        {/* Plus de `env(safe-area-inset-top)` ici : l'en-tête du site est rendu
+            au-dessus de cet écran et dégage déjà l'encoche. Le cumul repoussait
+            les commandes de 47 px vers le bas sur iPhone.
+            `w-11` et `gap-3` : « retour accueil » abandonne la partie en cours
+            et touchait « rafraîchir » à 8 px près, sur des cibles de 40 px. */}
+        <div className="absolute left-4 right-4 z-30 flex items-center justify-between" style={{ top: 12 }}>
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              onClick={handleRefreshDuel}
+              disabled={isLoadingDuel || isRefreshing}
+              className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-[#333] rounded-full w-11 h-11 shrink-0 flex items-center justify-center text-[#A3A3A3] hover:text-[#F5F5F5] disabled:opacity-50 transition-colors"
+              aria-label={t.ariaRafraichir}
+            >
+              {isRefreshing ? '…' : '↻'}
+            </button>
+            {/* Streak — hidden instead of unmounted to prevent CLS.
+                `min-w-0` : sans lui, la pastille en `whitespace-nowrap` ne se
+                laisse pas comprimer, et sur 360 px de large la progression de
+                partie, à droite, sortait du cadre. */}
+            <div className="min-w-0" style={{ visibility: showingResult ? 'hidden' : 'visible' }}>
+              <StreakDisplay 
+                streak={streak} 
+                streakEmoji={streakEmoji} 
+                duelCount={duelCount} 
+              />
+            </div>
+          </div>
+          {/* Party progress */}
+          {partyConfig && (
+            <div className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-[#333] rounded-full px-3 py-1.5 flex items-center gap-2">
+              <span className="text-xs font-bold text-[#999]">
+                {duelCount >= partyConfig.size ? '✅' : `${duelCount}/${partyConfig.size}`}
+              </span>
+              <div className="w-16 h-1.5 bg-[#333] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#EF4444] rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(100, (duelCount / partyConfig.size) * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {!isOnline && (
+          <div
+            className="absolute left-1/2 z-30 -translate-x-1/2 rounded-full border border-[#7F1D1D] bg-[#1A1212]/95 px-3 py-1 text-[11px] font-semibold text-[#FCA5A5]"
+            style={{ top: 64 }}
+          >
+            {t.horsLigne}
+          </div>
+        )}
+        
+        {/* First duel hint — shows for 6s then auto-fades */}
+        {duelCount === 0 && !showingResult && currentDuel && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.92 }}
+            animate={{ opacity: [0, 1, 1, 1, 0], y: [-8, 0, 0, 0, -8], scale: [0.92, 1, 1, 1, 0.92] }}
+            transition={{ duration: 6, times: [0, 0.15, 0.4, 0.8, 1], ease: 'easeInOut' }}
+            className="absolute left-1/2 -translate-x-1/2 z-40 bg-[#DC2626] text-white text-sm font-black px-5 py-2.5 rounded-full shadow-2xl pointer-events-none"
+            style={{ top: isOnline ? 68 : 100 }}
+          >
+            {t.astuce}
+          </motion.div>
+        )}
+
+        {showBackToLive && duelHistory.length > 0 && (
+          <button
+            onClick={() => {
+              if (!scrollRef.current) return;
+              scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+            }}
+            className="absolute right-4 z-30 rounded-full border border-[#EF4444]/40 bg-[#1A1A1A]/90 px-3 py-2 text-xs font-bold text-[#FCA5A5] backdrop-blur-sm hover:bg-[#232326] transition-colors"
+            style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 90px)' }}
+          >
+            {t.duelEnCours}
+          </button>
+        )}
+        
+        {enPause ? (
+          <div className="flex-1 min-h-0 flex flex-col w-full">
+            <PausePubDuel duelsJoues={duelCount} onContinuer={finirPause} />
+          </div>
+        ) : showingResult && lastResult ? (
+          <div className="flex-1 min-h-0 flex flex-col w-full">
+            <ResultDisplay
+              duel={currentDuel}
+              result={lastResult}
+              streak={streak}
+              streakEmoji={streakEmoji}
+              onNext={handleNext}
+            />
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col w-full">
+            <DuelInterface
+              elementA={currentDuel.elementA}
+              elementB={currentDuel.elementB}
+              onVote={submitVote}
+              disabled={showingResult || isLoadingDuel || !isOnline}
+              disabledReason={!isOnline ? t.reconnexion : undefined}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

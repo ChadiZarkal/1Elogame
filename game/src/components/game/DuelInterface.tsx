@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { ElementDTO } from '@/types/game';
 import { useHaptics } from '@/lib/hooks';
-import { CategoryBadge } from '@/components/ui/CategoryBadge';
+import { BadgeCategorie } from './BadgeCategorie';
 
 interface DuelInterfaceProps {
   elementA: ElementDTO;
@@ -73,7 +73,7 @@ export function DuelInterface({ elementA, elementB, onVote, disabled, disabledRe
           <p className="text-[clamp(1rem,4.3vw,2rem)] font-bold text-[#F5F5F5] leading-tight px-4 break-words [overflow-wrap:anywhere] line-clamp-6 animate-fade-in-fast">
             {elementA.texte}
           </p>
-          <CategoryBadge categorie={elementA.categorie} />
+          <BadgeCategorie categorie={elementA.categorie} />
         </div>
       </button>
       
@@ -106,7 +106,7 @@ export function DuelInterface({ elementA, elementB, onVote, disabled, disabledRe
           <p className="text-[clamp(1rem,4.3vw,2rem)] font-bold text-[#F5F5F5] leading-tight px-4 break-words [overflow-wrap:anywhere] line-clamp-6 animate-fade-in-fast">
             {elementB.texte}
           </p>
-          <CategoryBadge categorie={elementB.categorie} />
+          <BadgeCategorie categorie={elementB.categorie} />
         </div>
       </button>
     </div>

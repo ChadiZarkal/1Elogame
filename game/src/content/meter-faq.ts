@@ -11,6 +11,7 @@
  */
 
 import type { FaqItem } from '@/content/page-notes';
+import type { Langue } from '@/lib/i18n/langue';
 
 type FaqFactory = (questionCount: number) => FaqItem[];
 
@@ -102,8 +103,100 @@ const FAQ_BY_SLUG: Record<string, FaqFactory> = {
   ],
 };
 
+/**
+ * La même FAQ en anglais (traduction du 2026-11-14). Le nom français de chaque
+ * outil est cité dans la première question, pour qu'on le reconnaisse.
+ */
+const FAQ_BY_SLUG_EN: Record<string, FaqFactory> = {
+  violentometre: (n) => [
+    {
+      question: 'What is the Violentomètre (violence meter)?',
+      answer:
+        'The Violentomètre is a self-assessment ruler that places the behaviors in a relationship on a continuum, from a healthy relationship to outright violence. It helps spot the in-between zone — control, pressure, isolation — that is often misjudged.',
+    },
+    {
+      question: 'Is the online Violentomètre free and anonymous?',
+      answer: `Yes. The ${n} questions run in your browser: no answer is sent, stored or linked to an identity. The result is immediate and disappears when you close the page.`,
+    },
+    {
+      question: 'How does the test work?',
+      answer:
+        'You answer yes or no to a series of concrete situations. At the end, a colored level sums up all your answers and points you to the matching resources.',
+    },
+    {
+      question: 'Does a reassuring result mean everything is fine?',
+      answer:
+        'No. This grid does not cover every form a difficult situation can take. A single situation that weighs on you is enough reason to talk about it with someone you trust or with a professional.',
+    },
+  ],
+  consentometre: (n) => [
+    {
+      question: 'What is the Consentomètre (consent meter)?',
+      answer:
+        'The Consentomètre helps you assess whether your consent is respected — in romantic relationships, but also in friendships, at university or at work.',
+    },
+    {
+      question: 'Is the test anonymous?',
+      answer: `Yes. The ${n} questions are processed directly on your device. No data is collected or transmitted.`,
+    },
+    {
+      question: 'Who is this test for?',
+      answer:
+        'Anyone wondering about a situation where they could not freely say no, or about the behavior of someone close to them. It requires no prior knowledge of the subject.',
+    },
+  ],
+  incestometre: (n) => [
+    {
+      question: 'What is the Incestomètre (incest meter)?',
+      answer:
+        'The Incestomètre helps identify boundary violations within the family, including those that the people around do not name as such.',
+    },
+    {
+      question: 'Is the test confidential?',
+      answer: `Yes. The ${n} questions run in your browser, with no transmission or storage of your answers.`,
+    },
+    {
+      question: 'What should I do if the result is worrying?',
+      answer:
+        'Talk about it with a trained person. In France, 119 (children in danger) can be reached free of charge and anonymously, 24 hours a day. The associations credited on our sources page also support adults. Outside France, call your local emergency number if you are in danger.',
+    },
+  ],
+  harcelometre: (n) => [
+    {
+      question: 'What is the Harcèlomètre (harassment meter)?',
+      answer:
+        'The Harcèlomètre helps identify situations of harassment — psychological, physical or online — at school, at work or in your personal life.',
+    },
+    {
+      question: 'How do I know if I am being harassed?',
+      answer: `The ${n} questions describe concrete situations rather than asking for an overall judgment. That is what makes it possible to recognize a repetition that is often minimized when taken episode by episode.`,
+    },
+    {
+      question: 'Is this test based on an official scale?',
+      answer:
+        'No. Unlike the Violentomètre or the Consentomètre, the Harcèlomètre is an adaptation we wrote. It is not based on any published institutional scale.',
+    },
+  ],
+  discriminometre: (n) => [
+    {
+      question: 'What is the Discriminomètre (discrimination meter)?',
+      answer:
+        'The Discriminomètre helps identify situations of discrimination experienced in everyday life, at school, at work or socially.',
+    },
+    {
+      question: 'Is the test free and anonymous?',
+      answer: `Yes. The ${n} questions stay on your device; no data is collected.`,
+    },
+    {
+      question: 'Is this test based on an official scale?',
+      answer:
+        'No. Like the Harcèlomètre, it is an adaptation written by us, not a validated instrument.',
+    },
+  ],
+};
+
 /** FAQ affichée *et* balisée pour un outil. Retourne un tableau vide si inconnu. */
-export function meterFaq(slug: string, questionCount: number): FaqItem[] {
-  const factory = FAQ_BY_SLUG[slug];
+export function meterFaq(slug: string, questionCount: number, langue: Langue = 'fr'): FaqItem[] {
+  const factory = (langue === 'en' ? FAQ_BY_SLUG_EN : FAQ_BY_SLUG)[slug];
   return factory ? factory(questionCount) : [];
 }
