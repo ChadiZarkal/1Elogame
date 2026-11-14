@@ -3,15 +3,17 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { FlagOrNotGender, FlagOrNotAge } from './constants';
+import { useTextesOracle } from './textes';
 
 interface ProfileSelectProps {
   onSelect: (gender: FlagOrNotGender, age: FlagOrNotAge) => void;
 }
 
+/* Les libellés viennent de `textes.ts`, dans la langue de la page. */
 const genderOptions = [
-  { value: 'homme' as const, label: 'Homme', emoji: '♂️' },
-  { value: 'femme' as const, label: 'Femme', emoji: '♀️' },
-  { value: 'autre' as const, label: 'Autre', emoji: '🤷' },
+  { value: 'homme' as const, emoji: '♂️' },
+  { value: 'femme' as const, emoji: '♀️' },
+  { value: 'autre' as const, emoji: '🤷' },
 ];
 
 const ageOptions = [
@@ -22,6 +24,7 @@ const ageOptions = [
 ];
 
 export function GenderSelect({ onSelect }: ProfileSelectProps) {
+  const t = useTextesOracle();
   const [selectedGender, setSelectedGender] = useState<FlagOrNotGender | null>(null);
   const [selectedAge, setSelectedAge] = useState<FlagOrNotAge | null>(null);
 
@@ -94,7 +97,7 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.12 }}
         >
-          L&apos;ORACLE
+          {t.titre}
         </motion.h2>
         <motion.p
           className="text-[13px] text-[#6B7280] mb-8 [@media(max-height:740px)]:mb-4 leading-relaxed"
@@ -102,7 +105,7 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          Décris un comportement — obtiens le verdict.
+          {t.profilAccroche}
         </motion.p>
 
         {/* Gender */}
@@ -113,7 +116,7 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
           transition={{ delay: 0.25 }}
         >
           <p className="text-[12px] font-black uppercase tracking-[0.14em] text-[#9CA3AF] mb-3 text-left">
-            Sexe
+            {t.sexe}
           </p>
           <div className="flex gap-2">
             {genderOptions.map((opt) => {
@@ -134,7 +137,7 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
                 >
                   <span className="text-2xl">{opt.emoji}</span>
                   <span className={`text-xs font-bold ${sel ? 'text-violet-300' : 'text-[#6B7280]'}`}>
-                    {opt.label}
+                    {t.sexes[opt.value]}
                   </span>
                 </motion.button>
               );
@@ -150,7 +153,7 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
           transition={{ delay: 0.33 }}
         >
           <p className="text-[12px] font-black uppercase tracking-[0.14em] text-[#9CA3AF] mb-3 text-left">
-            Âge
+            {t.age}
           </p>
           <div className="flex gap-1.5">
             {ageOptions.map((opt) => {
@@ -207,21 +210,24 @@ export function GenderSelect({ onSelect }: ProfileSelectProps) {
             cursor: canConfirm ? 'pointer' : 'default',
           }}
         >
-          {canConfirm ? '✨ Consulter l\'Oracle' : 'Sélectionne sexe + âge'}
+          {canConfirm ? t.consulter : t.selectionne}
         </motion.button>
 
         <p className="text-[#6B7280] text-[12px] mt-4">
-          Données anonymes — uniquement pour les stats
+          {t.donneesAnonymes}
         </p>
 
         {/* L'écran occupe exactement la fenêtre : sans ce rappel, rien
             n'indique que les explications suivent en dessous. */}
-        <a
-          href="#page-notes-title"
-          className="mt-2 inline-flex min-h-11 items-center text-[12px] font-bold uppercase tracking-[0.14em] text-white/45 transition-colors hover:text-white/75"
-        >
-          Comment ça marche ↓
-        </a>
+        {/* Pas de notes sous le jeu anglais pour l'instant : pas de lien. */}
+        {t.commentCaMarche && (
+          <a
+            href="#page-notes-title"
+            className="mt-2 inline-flex min-h-11 items-center text-[12px] font-bold uppercase tracking-[0.14em] text-white/45 transition-colors hover:text-white/75"
+          >
+            {t.commentCaMarche}
+          </a>
+        )}
       </div>
     </div>
   );

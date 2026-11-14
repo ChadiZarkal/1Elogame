@@ -9,6 +9,8 @@
 
 import { getLeaderboard } from '@/lib/repositories';
 import { CATEGORIES_HORS_VITRINE } from '@/config/categories';
+import type { Langue } from '@/lib/i18n/langue';
+import { normaliserRecherche, traduireElement, traduireTextes } from '@/lib/jeu/traduction';
 
 export const LEADERBOARD_VIEWS = [
   'global',
@@ -55,6 +57,8 @@ export interface LeaderboardPageOptions {
   tag?: string | null;
   view?: LeaderboardView;
   search?: string | null;
+  /** Langue des textes renvoyés (le français par défaut). Voir `lib/jeu/traduction`. */
+  langue?: Langue;
 }
 
 export function parseLeaderboardView(value: string | null): LeaderboardView {
@@ -103,7 +107,7 @@ export interface ObservatoryData {
 const MIN_VOTES_FOR_GAP = 40;
 
 /** Agrégats servant les pages éditoriales de l'Observatoire. */
-export async function getObservatoryData(topN = 12): Promise<ObservatoryData> {
+export async function getObservatoryData(topN = 12, langue: Langue = 'fr'): Promise<ObservatoryData> {
   const { elements, total } = await getLeaderboard({
     sort: 'desc', limit: 1000, offset: 0, excludeCategories: CATEGORIES_HORS_VITRINE,
   });
@@ -156,18 +160,18 @@ export async function getObservatoryData(topN = 12): Promise<ObservatoryData> {
   return {
     totalElements: total,
     totalVotes,
-    genderGaps: buildGaps((e) => ({
+    genderGaps: traduireTextes(buildGaps((e) => ({
       a: e.elo_homme ?? e.elo_global,
       b: e.elo_femme ?? e.elo_global,
-    })),
-    ageGaps: buildGaps((e) => ({
+    })), langue),
+    ageGaps: traduireTextes(buildGaps((e) => ({
       a: e.elo_16_18 ?? e.elo_global,
       b: e.elo_27plus ?? e.elo_global,
-    })),
+    })), langue),
     // Les deux extrémités sont prises sur la même liste triée : on borne à la
     // moitié pour qu'un même comportement ne figure jamais dans les deux.
-    mostContested: spreads.slice(0, half),
-    mostConsensual: half > 0 ? spreads.slice(-half).reverse() : [],
+    mostContested: traduireTextes(spreads.slice(0, half), langue),
+    mostConsensual: traduireTextes(half > 0 ? spreads.slice(-half).reverse() : [], langue),
   };
 }
 
@@ -178,6 +182,7 @@ export async function getLeaderboardPage(
   const limit = Math.max(1, Math.min(options.limit ?? 30, 100));
   const offset = Math.max(0, options.offset ?? 0);
   const view = options.view ?? 'global';
+  const langue = options.langue ?? 'fr';
 
   // Une catégorie hors vitrine demandée explicitement ne renvoie rien — pas
   // même son décompte.
@@ -185,20 +190,30 @@ export async function getLeaderboardPage(
     return { rankings: [], totalElements: 0, visibleElements: 0, visibleVotes: 0, limit, offset, hasMore: false };
   }
 
-  const { elements, total } = await getLeaderboard({
+  const filtres = {
     sort,
-    limit,
-    offset,
     category: options.category ?? null,
     tag: options.tag ?? null,
     view,
-    search: options.search ?? null,
     excludeCategories: CATEGORIES_HORS_VITRINE,
-  });
+  };
+
+  // En anglais, la recherche porte sur le texte traduit, que la base ne
+  // connaît pas : on lit tout le classement filtré (quelques centaines de
+  // lignes, comme l'Observatoire) et on cherche et pagine ici.
+  const rechercheEn = langue === 'en' && options.search ? normaliserRecherche(options.search) : '';
+  const { elements, total } = rechercheEn
+    ? await (async () => {
+      const tout = await getLeaderboard({ ...filtres, limit: 1000, offset: 0, search: null });
+      const trouves = tout.elements.filter((e) =>
+        normaliserRecherche(traduireElement(e.texte, 'en')).includes(rechercheEn));
+      return { elements: trouves.slice(offset, offset + limit), total: trouves.length };
+    })()
+    : await getLeaderboard({ ...filtres, limit, offset, search: options.search ?? null });
 
   const rankings: RankEntry[] = elements.map((e, i) => ({
     rank: offset + i + 1,
-    texte: e.texte,
+    texte: traduireElement(e.texte, langue),
     categorie: e.categorie,
     tags: e.tags || [],
     elo_global: Math.round(e.elo_global),

@@ -8,6 +8,9 @@ import type {
   MeterQuestion,
   SeverityLevel,
 } from '@/config/meters-data';
+import { cheminLocalise } from '@/lib/i18n/langue';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { useTextesRessources } from '../textes';
 
 interface ResultsPhaseProps {
   meter: Meter;
@@ -30,6 +33,8 @@ export function ResultsPhase({
   onRestart,
 }: ResultsPhaseProps) {
   const resultsRef = useRef<HTMLElement>(null);
+  const langue = useLangue();
+  const t = useTextesRessources();
   const levelInfo = meter.levels[resultLevel];
 
   const handleSaveResult = async () => {
@@ -44,7 +49,7 @@ export function ResultsPhase({
         logging: false,
       });
       const link = document.createElement('a');
-      link.download = `${meter.name.replace(/\s+/g, '-').toLowerCase()}-résultat.png`;
+      link.download = `${meter.name.replace(/\s+/g, '-').toLowerCase()}${t.fichierResultat}`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch {
@@ -74,7 +79,7 @@ export function ResultsPhase({
         {problemCount > 0 && (
           <div className="mb-3">
             <p className="text-[13px] font-bold mb-2" style={{ color: levelInfo.color }}>
-              {problemCount} situation{problemCount > 1 ? 's' : ''} identifiée{problemCount > 1 ? 's' : ''}
+              {t.situationsIdentifieesN(problemCount)}
             </p>
             <div className="flex h-1.5 rounded-full overflow-hidden max-w-[200px] mx-auto gap-0.5">
               {yesByLevel.red.length > 0 && (
@@ -113,7 +118,7 @@ export function ResultsPhase({
           style={{ backgroundColor: levelInfo.color }}
         />
         <p className="text-[13px] font-semibold mb-1.5 pl-2" style={{ color: levelInfo.color }}>
-          💡 Conseil
+          {t.conseil}
         </p>
         <p className="text-[13px] text-[#D1D5DB] leading-relaxed pl-2">{levelInfo.advice}</p>
       </div>
@@ -122,7 +127,7 @@ export function ResultsPhase({
       {problemCount > 0 && (
         <div className="mb-6 max-w-md mx-auto">
           <h3 className="text-[14px] font-bold text-[#9CA3AF] mb-3">
-            Situations identifiées
+            {t.situationsIdentifiees}
           </h3>
 
           {(['red', 'orange', 'yellow'] as SeverityLevel[]).map((level) => {
@@ -159,8 +164,11 @@ export function ResultsPhase({
       {/* Resources */}
       <div className="mb-6 max-w-md mx-auto">
         <h3 className="text-[14px] font-bold text-[#9CA3AF] mb-3">
-          📞 Ressources & contacts
+          {t.ressourcesContacts}
         </h3>
+        {t.horsFrance && (
+          <p className="text-[11px] text-[#6B7280] mb-3 leading-relaxed">{t.horsFrance}</p>
+        )}
 
         <div className="space-y-2 mb-3">
           {meter.resources.filter(r => r.number).map((res, i) => (
@@ -177,7 +185,7 @@ export function ResultsPhase({
                   href={`tel:${res.number!.replace(/\s/g, '')}`}
                   className="flex-shrink-0 flex items-center gap-1 text-[12px] font-bold text-[#10B981] bg-[#10B981]/10 px-3 py-1.5 rounded-lg hover:bg-[#10B981]/20 transition-colors active:scale-95"
                 >
-                  <Phone size={12} /> Appeler
+                  <Phone size={12} />{t.appeler}
                 </a>
               </div>
             </div>
@@ -187,7 +195,7 @@ export function ResultsPhase({
         {meter.resources.filter(r => !r.number && r.url).length > 0 && (
           <div className="space-y-1.5">
             <p className="text-[11px] text-[#4B5563] font-semibold uppercase tracking-wider mb-1">
-              Sites utiles
+              {t.sitesUtiles}
             </p>
             {meter.resources.filter(r => !r.number && r.url).map((res, i) => (
               <a
@@ -213,29 +221,28 @@ export function ResultsPhase({
           onClick={handleSaveResult}
           className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-all shadow-[0_0_20px_rgba(59,130,246,0.15)]"
         >
-          <Download size={16} /> Sauvegarder mon résultat
+          <Download size={16} />{t.sauvegarder}
         </button>
         <button
           onClick={onRestart}
           className="w-full py-3.5 rounded-2xl bg-[#1A1A1A] border border-[#2A2A2A] text-[#FAFAFA] font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:border-[#3A3A3A]"
         >
-          <RotateCcw size={14} /> Recommencer
+          <RotateCcw size={14} />{t.recommencer}
         </button>
         <Link
-          href="/ressources"
+          href={cheminLocalise(langue, '/ressources')}
           className="w-full py-3 rounded-2xl text-[#9CA3AF] font-medium text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:text-white"
         >
-          Essayer un autre test <ChevronRight size={14} />
+          {t.essayerAutre}<ChevronRight size={14} />
         </Link>
       </div>
 
       <p className="text-[10px] text-[#4B5563] text-center mb-2 flex items-center justify-center gap-1">
         <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#10B981]" />
-        Tes réponses restent sur ton appareil. Rien n&apos;a été envoyé.
+        {t.rienEnvoye}
       </p>
       <p className="text-[10px] text-[#4B5563] text-center mb-4 max-w-sm mx-auto leading-relaxed">
-        ⚠️ Ce test est à titre informatif uniquement. Il ne remplace pas un diagnostic professionnel.
-        Si tu es en danger, appelle le <strong className="text-[#6B7280]">17</strong> ou le <strong className="text-[#6B7280]">3919</strong>.
+        {t.avertissementResultat}
       </p>
     </main>
   );

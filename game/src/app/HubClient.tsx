@@ -47,7 +47,7 @@ import { NativeAd } from '@/components/ads/NativeAd';
 import { AFFICHER_PISSE_DEBOUT } from '@/config/affiliation';
 import { EncartPisseDebout } from '@/components/affiliation/EncartPisseDebout';
 import { BoutonLangue } from '@/components/ui/BoutonLangue';
-import type { Langue } from '@/lib/i18n/langue';
+import { cheminLocalise, type Langue } from '@/lib/i18n/langue';
 
 type Jeu = {
   id: string;
@@ -128,10 +128,10 @@ const AUTRES_JEUX: Jeu[] = [
 
 /*
  * L'ACCUEIL EN ANGLAIS (`/en`, 2026-11-14)
- *   Seul le Red Flag Test existe en anglais. Les trois autres jeux restent
- *   présentés — c'est le site —, mais leur carte dit qu'ils sont en français
- *   (« FR » dans le titre, « in French » dans l'action) : quelqu'un qui ne lit
- *   pas le français ne doit pas le découvrir après avoir tapé.
+ *   Tout le site existe en anglais, sauf « C'est un 10 mais… », laissé en
+ *   français à la demande de Chadi. Sa carte le dit (« FR » dans le titre,
+ *   « in French » dans l'action) : quelqu'un qui ne lit pas le français ne
+ *   doit pas le découvrir après avoir tapé.
  */
 const PHARES_EN: Jeu[] = [
   { ...PHARES[0], promesse: 'What other people see as a red flag in you.', action: 'Take the test', href: '/en/redflagtest' },
@@ -144,8 +144,8 @@ const PHARES_EN: Jeu[] = [
 ];
 
 const AUTRES_JEUX_EN: Jeu[] = [
-  { ...AUTRES_JEUX[0], titre: 'THE ORACLE · FR', promesse: 'You describe your situation, the AI decides.', action: 'Submit my case (in French)' },
-  { ...AUTRES_JEUX[1], titre: 'THE WORSE OF TWO · FR', promesse: 'Two behaviors, you pick the worse one.', action: 'Start a duel (in French)' },
+  { ...AUTRES_JEUX[0], titre: 'THE ORACLE', promesse: 'You describe your situation, the AI decides.', action: 'Submit my case', href: '/en/flagornot' },
+  { ...AUTRES_JEUX[1], titre: 'THE WORSE OF TWO', promesse: 'Two behaviors, you pick the worse one.', action: 'Start a duel', href: '/en/jeu' },
 ];
 
 /** Ce qu'on vient lire plutôt que jouer. */
@@ -170,8 +170,8 @@ const REPERES: { emoji: string; titre: string; sous: string; href: string; coule
 ];
 
 const REPERES_EN: typeof REPERES = [
-  { ...REPERES[0], titre: 'WHAT IS A RED FLAG?', sous: 'Green, white, orange, red, black: what each color means (in French)' },
-  { ...REPERES[1], titre: 'VIOLENCE METER & MORE', sous: 'Consent, harassment…: take stock of a real situation (in French)' },
+  { ...REPERES[0], titre: 'WHAT IS A RED FLAG?', sous: 'Green, white, orange, red, black: what each color means', href: '/en/guide' },
+  { ...REPERES[1], titre: 'VIOLENCE METER & MORE', sous: 'Consent, harassment…: take stock of a real situation', href: '/en/ressources' },
 ];
 
 /** Les textes de l'accueil. Le français est celui qui était écrit dans la page. */
@@ -191,6 +191,12 @@ const TEXTES = {
     secoursTexte: <>Certaines situations ne se règlent pas par un vote. Le violentomètre et les autres échelles sont des outils d&apos;auto-évaluation sérieux, avec les numéros vers qui se tourner.</>,
     secoursOutils: <>Violentomètre et outils d&apos;auto-évaluation</>,
     secoursAPropos: 'Qui fait ce site, et sur quelles données',
+    verdictJoueurs: 'Le verdict des joueurs',
+    plusGraves: 'Jugés les plus graves',
+    moinsGraves: 'Jugés les moins graves',
+    troisPires: 'Les trois pires',
+    classementComplet: 'Voir le classement complet',
+    classes: 'comportements classés',
   },
   en: {
     alt: 'Red or Green — the Red Flag Test and red flag games',
@@ -204,9 +210,15 @@ const TEXTES = {
     cafeTexte: <>The games are free, with no account. If one of them made you laugh or think, a coffee helps pay for hosting and the time spent writing them.</>,
     cafeBouton: 'Support us on Ko-fi',
     secoursTitre: <>If it’s not a game anymore</>,
-    secoursTexte: <>Some situations can’t be settled by a vote. The violence meter and the other scales are serious self-assessment tools, with the numbers to call — in French, for France.</>,
-    secoursOutils: <>Violence meter and self-assessment tools (in French)</>,
-    secoursAPropos: 'Who makes this site, and with what data (in French)',
+    secoursTexte: <>Some situations can’t be settled by a vote. The violence meter and the other scales are serious self-assessment tools, with the numbers to call in France.</>,
+    secoursOutils: <>Violence meter and self-assessment tools</>,
+    secoursAPropos: 'Who makes this site, and with what data',
+    verdictJoueurs: 'The players’ verdict',
+    plusGraves: 'Judged the worst',
+    moinsGraves: 'Judged the least serious',
+    troisPires: 'The top three worst',
+    classementComplet: 'See the full ranking',
+    classes: 'behaviors ranked',
   },
 } satisfies Record<Langue, Record<string, React.ReactNode>>;
 
@@ -228,7 +240,6 @@ const NOMBRES: Record<Langue, Intl.NumberFormat> = {
   fr: new Intl.NumberFormat('fr-FR'),
   en: new Intl.NumberFormat('en-US'),
 };
-const nombre = NOMBRES.fr;
 
 /**
  * Anneau de focus commun. Toute la page se parcourt au clavier ; sans lui, la
@@ -376,13 +387,13 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles,
             écrit à la main, décoratif, à 15 % d'opacité. Celui-ci est lu dans
             le classement, régénéré toutes les cinq minutes : ce qui défile est
             ce que les joueurs ont réellement tranché. */}
-        {/* Pas en anglais non plus : les comportements classés sont ceux du
-            « pire des deux », écrits en français. */}
-        {!en && pires.length >= 3 && (
+        {/* En anglais, les comportements arrivent traduits de `app/en/page.tsx`
+            (dictionnaire du « pire des deux »). */}
+        {pires.length >= 3 && (
           <section className="revele mt-10" aria-labelledby="titre-palmares">
             <TitreSection id="titre-palmares">
               <Trophy size={13} aria-hidden className="text-[#F59E0B]" />
-              Le verdict des joueurs
+              {t.verdictJoueurs}
             </TitreSection>
 
             {/* Pleine largeur : le bandeau déborde des marges de la page, ce
@@ -390,13 +401,13 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles,
             <div className="-mx-4 flex flex-col gap-2 min-[360px]:-mx-5 sm:mx-0">
               <Bandeau
                 textes={bande.rouges}
-                libelle="Jugés les plus graves"
+                libelle={t.plusGraves}
                 puce="🚩"
                 teinte="#FF6B5E"
               />
               <Bandeau
                 textes={bande.verts}
-                libelle="Jugés les moins graves"
+                libelle={t.moinsGraves}
                 puce="🟢"
                 teinte="#5FE39B"
                 inverse
@@ -404,7 +415,7 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles,
             </div>
 
             <h3 className="mt-5 mb-2 text-[12px] font-black uppercase tracking-[0.16em] text-(--text-3)">
-              Les trois pires
+              {t.troisPires}
             </h3>
             <ol className="overflow-hidden rounded-2xl border border-(--border-subtle) bg-(--surface-1)">
               {pires.map((pire) => (
@@ -427,7 +438,7 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles,
                         comme une erreur. */}
                     {pire.votes > 0 && (
                       <span className="mt-0.5 block text-[12px] font-bold uppercase tracking-wide text-(--text-3)">
-                        {nombre.format(pire.votes)} votes
+                        {NOMBRES[langue].format(pire.votes)} {t.votes}
                       </span>
                     )}
                   </span>
@@ -440,18 +451,18 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles,
                 la liste commentée (/red-flags) a été retiré de l'accueil, la
                 page existe toujours. */}
             <Link
-              href="/classement"
+              href={cheminLocalise(langue, '/classement')}
               onClick={tap}
               className={`group mt-3 flex min-h-14 items-center gap-3 rounded-2xl bg-white px-5 py-3.5 text-black shadow-[0_8px_30px_rgba(255,255,255,0.08)] transition-transform motion-safe:active:scale-[0.98] ${FOCUS}`}
             >
               <Trophy size={20} aria-hidden className="shrink-0 text-[#D97706]" />
               <span className="min-w-0 flex-1">
                 <span className="block text-[16px] font-black leading-tight">
-                  Voir le classement complet
+                  {t.classementComplet}
                 </span>
                 {comportementsClasses !== null && comportementsClasses > 0 && (
                   <span className="mt-0.5 block text-[12px] font-bold text-black/55">
-                    {nombre.format(comportementsClasses)} comportements classés
+                    {NOMBRES[langue].format(comportementsClasses)} {t.classes}
                   </span>
                 )}
               </span>
@@ -568,10 +579,10 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles,
             {t.secoursTexte}
           </p>
           <div className="mt-4 flex flex-col">
-            <LienLigne href="/ressources" onTap={tap} fleche="text-[#34D399]" vert>
+            <LienLigne href={cheminLocalise(langue, '/ressources')} onTap={tap} fleche="text-[#34D399]" vert>
               {t.secoursOutils}
             </LienLigne>
-            <LienLigne href="/a-propos" onTap={tap} fleche="text-(--text-3)">
+            <LienLigne href={cheminLocalise(langue, '/a-propos')} onTap={tap} fleche="text-(--text-3)">
               {t.secoursAPropos}
             </LienLigne>
           </div>

@@ -3,7 +3,9 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { trackAIRequest } from '@/lib/analytics';
 import type { GamePhase, JudgmentResult, HistoryItem, CommunitySubmission, FlagOrNotGender, FlagOrNotAge } from './constants';
-import { LOADING_PHRASES, PLACEHOLDERS, MIN_LOADING_MS } from './constants';
+import { MIN_LOADING_MS } from './constants';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { TEXTES_ORACLE } from './textes';
 
 /** Le serveur a refusé la demande (trop de demandes) : son message s'affiche tel quel. */
 class OracleRefus extends Error {}
@@ -13,6 +15,10 @@ class OracleRefus extends Error {}
  * Keeps the page component purely presentational.
  */
 export function useFlagOrNot() {
+  const langue = useLangue();
+  const t = TEXTES_ORACLE[langue];
+  const LOADING_PHRASES = t.phrasesChargement;
+  const PLACEHOLDERS = t.placeholders;
   const [phase, setPhase] = useState<GamePhase>('profile-select');
   const [gender, setGender] = useState<FlagOrNotGender | null>(null);
   const [age, setAge] = useState<FlagOrNotAge | null>(null);
@@ -42,6 +48,13 @@ export function useFlagOrNot() {
 
   // ── Fetch community ──
   const fetchCommunitySubmissions = useCallback(async () => {
+    /* Le fil de la communauté n'est pas affiché en anglais : ce sont les
+     * phrases tapées par les joueurs, en français pour l'essentiel, et la base
+     * ne retient pas la langue de la page d'où elles viennent — impossible de
+     * n'y garder que les soumissions faites depuis la page anglaise sans
+     * ajouter une colonne. Sans fil, l'écran de saisie anglais ne montre que
+     * l'historique du joueur. */
+    if (langue === 'en') return;
     try {
       const res = await fetch('/api/flagornot/community?limit=20');
       if (!res.ok) return;
@@ -52,7 +65,7 @@ export function useFlagOrNot() {
     } catch {
       /* silent */
     }
-  }, []);
+  }, [langue]);
 
   // ── Fetch global verdict counts ──
   const fetchGlobalCounts = useCallback(async () => {
@@ -166,7 +179,7 @@ export function useFlagOrNot() {
       setPlaceholderIdx((p) => (p + 1) % PLACEHOLDERS.length);
     }, 3500);
     return () => clearInterval(interval);
-  }, []);
+  }, [PLACEHOLDERS.length]);
 
   // ── Handlers ──
   const handleSubmit = useCallback(async () => {
@@ -204,7 +217,13 @@ export function useFlagOrNot() {
       const res = await fetch('/api/flagornot/judge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, private: privateMode, gender, age }),
+        // `langue` seulement depuis la page anglaise : l'Oracle y répond en
+        // anglais. La requête française reste celle d'avant.
+        body: JSON.stringify(
+          langue === 'en'
+            ? { text, private: privateMode, gender, age, langue }
+            : { text, private: privateMode, gender, age },
+        ),
         signal: controller.signal,
       });
       if (!res.ok) {
@@ -212,7 +231,9 @@ export function useFlagOrNot() {
         // qu'il faut afficher, pas « injoignable ».
         if (res.status === 429) {
           const json = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
-          throw new OracleRefus(json?.error?.message ?? "Doucement : l'Oracle a besoin de souffler. Réessaie dans une minute.");
+          // En anglais, toujours notre texte : le limiteur en mémoire de
+          // `withApiHandler` répond en français quelle que soit la page.
+          throw new OracleRefus(langue === 'en' ? t.refus : json?.error?.message ?? t.refus);
         }
         throw new Error('API error');
       }
@@ -242,7 +263,7 @@ export function useFlagOrNot() {
         justification:
           erreur instanceof OracleRefus
             ? erreur.message
-            : "L'Oracle est injoignable. Rien n'a été analysé — réessaie dans un instant.",
+            : t.injoignable,
         degraded: true,
       };
       await ensureMinDelay();
@@ -253,7 +274,7 @@ export function useFlagOrNot() {
       clearTimeout(timeout);
       submittingRef.current = false;
     }
-  }, [input, phase, privateMode, gender, age, fetchCommunitySubmissions, fetchGlobalCounts]);
+  }, [input, phase, privateMode, gender, age, fetchCommunitySubmissions, fetchGlobalCounts, langue, t, LOADING_PHRASES]);
 
   const handleNext = useCallback(() => {
     // Après un échec de l'Oracle, la saisie est conservée : le bouton devient
@@ -273,8 +294,8 @@ export function useFlagOrNot() {
 
   const handleShare = useCallback(async () => {
     if (!result || !submittedText) return;
-    const shareText = `${result.verdict === 'red' ? '🚩 RED FLAG' : '🟢 GREEN FLAG'}: "${submittedText}" — Teste toi aussi sur Red or Green !`;
-    const shareUrl = `https://redorgreen.fr/flagornot?ref=share`;
+    const shareText = t.partageTexte(result.verdict === 'red' ? '🚩 RED FLAG' : '🟢 GREEN FLAG', submittedText);
+    const shareUrl = t.partageUrl;
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Red or Green — Oracle', text: shareText, url: shareUrl });
@@ -284,7 +305,7 @@ export function useFlagOrNot() {
     } else {
       await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
     }
-  }, [result, submittedText]);
+  }, [result, submittedText, t]);
 
   const bgGradient = useMemo(() => {
     if (phase === 'reveal' && result) {

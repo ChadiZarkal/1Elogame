@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import type { Langue } from '@/lib/i18n/langue';
 
 /**
  * Dictée vocale, adossée à la reconnaissance du navigateur.
@@ -93,6 +94,21 @@ const MESSAGES: Record<string, string> = {
   aborted: '',
 };
 
+/** Les mêmes messages pour la page anglaise de l'Oracle (`/en/flagornot`). */
+const BLOCKED_EN =
+  'The mic is blocked for this site. Tap the icon to the left of the address, ' +
+  'allow the mic, then try again.';
+const MESSAGES_EN: Record<string, string> = {
+  'not-allowed': BLOCKED_EN,
+  'service-not-allowed': BLOCKED_EN,
+  'no-speech': 'Didn’t catch anything. Try again, a little closer to the mic.',
+  'audio-capture': 'No mic found on this device.',
+  network: 'Voice recognition needs a connection, and yours went missing.',
+  aborted: '',
+};
+const ECHEC_EN = 'Voice recognition didn’t work out.';
+const MICRO_OCCUPE_EN = 'The mic is already being used by another app.';
+
 /**
  * Demande l'accès au micro, ce qui présente la boîte d'autorisation du
  * navigateur.
@@ -103,7 +119,8 @@ const MESSAGES: Record<string, string> = {
  * flux audio obtenu est refermé aussitôt — la reconnaissance ouvre le sien,
  * on ne voulait que la boîte de dialogue.
  */
-async function requestMicrophone(): Promise<{ ok: true } | { ok: false; message: string }> {
+async function requestMicrophone(langue: Langue): Promise<{ ok: true } | { ok: false; message: string }> {
+  const en = langue === 'en';
   if (!navigator.mediaDevices?.getUserMedia) {
     /* Navigateur sans `mediaDevices` : on laisse la reconnaissance tenter sa
        chance plutôt que de refuser sur une supposition. */
@@ -116,16 +133,16 @@ async function requestMicrophone(): Promise<{ ok: true } | { ok: false; message:
   } catch (error) {
     const name = error instanceof DOMException ? error.name : '';
     if (name === 'NotFoundError' || name === 'OverconstrainedError') {
-      return { ok: false, message: 'Aucun micro détecté sur cet appareil.' };
+      return { ok: false, message: en ? MESSAGES_EN['audio-capture'] : 'Aucun micro détecté sur cet appareil.' };
     }
     if (name === 'NotReadableError') {
       return {
         ok: false,
-        message: 'Le micro est déjà utilisé par une autre application.',
+        message: en ? MICRO_OCCUPE_EN : 'Le micro est déjà utilisé par une autre application.',
       };
     }
     // `NotAllowedError`, et tout le reste : le refus est le cas courant.
-    return { ok: false, message: BLOCKED };
+    return { ok: false, message: en ? BLOCKED_EN : BLOCKED };
   }
 }
 
@@ -146,10 +163,12 @@ export interface UseSpeechRecognition {
  *   fois par segment, à charge de l'appelant de l'ajouter à sa saisie.
  * @param onError message déjà rédigé pour l'utilisateur, ou chaîne vide quand
  *   il n'y a rien à dire (interruption volontaire).
+ * @param langue langue reconnue et langue des messages ; le français par défaut.
  */
 export function useSpeechRecognition(
   onResult: (text: string) => void,
   onError?: (message: string) => void,
+  langue: Langue = 'fr',
 ): UseSpeechRecognition {
   const supported = useSyncExternalStore(
     subscribeToSupport,
@@ -183,7 +202,7 @@ export function useSpeechRecognition(
     if (!Ctor) return;
 
     setPreparing(true);
-    const permission = await requestMicrophone();
+    const permission = await requestMicrophone(langue);
     setPreparing(false);
     if (!permission.ok) {
       onError?.(permission.message);
@@ -193,7 +212,7 @@ export function useSpeechRecognition(
     if (recognitionRef.current) return;
 
     const recognition = new Ctor();
-    recognition.lang = 'fr-FR';
+    recognition.lang = langue === 'en' ? 'en-US' : 'fr-FR';
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
@@ -212,7 +231,9 @@ export function useSpeechRecognition(
     };
 
     recognition.onerror = (event) => {
-      const message = MESSAGES[event.error] ?? "La reconnaissance vocale n'a pas abouti.";
+      const message = langue === 'en'
+        ? MESSAGES_EN[event.error] ?? ECHEC_EN
+        : MESSAGES[event.error] ?? "La reconnaissance vocale n'a pas abouti.";
       if (message) onError?.(message);
     };
 
@@ -230,7 +251,7 @@ export function useSpeechRecognition(
     }
     recognitionRef.current = recognition;
     setListening(true);
-  }, [onResult, onError]);
+  }, [onResult, onError, langue]);
 
   return { supported, listening, preparing, interim, start, stop };
 }

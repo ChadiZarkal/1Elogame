@@ -2,7 +2,10 @@
 
 import Link from '@/components/ui/LienIntention';
 import { ArrowRight, Shield } from 'lucide-react';
-import { METERS } from '@/config/meters-data';
+import { metersDe, NOM_FRANCAIS } from '@/config/meters-data-en';
+import { cheminLocalise } from '@/lib/i18n/langue';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { useTextesRessources } from './textes';
 
 const METER_COLORS: Record<string, string> = {
   violentometre: '#EF4444',
@@ -13,6 +16,9 @@ const METER_COLORS: Record<string, string> = {
 };
 
 export default function RessourcesPage() {
+  const langue = useLangue();
+  const t = useTextesRessources();
+  const meters = metersDe(langue);
   return (
     <div className="min-h-[calc(100dvh-var(--header-h,3rem))] bg-[#0A0A0B] text-[#FAFAFA] flex flex-col relative overflow-hidden">
       {/* Subtle background gradient */}
@@ -26,20 +32,24 @@ export default function RessourcesPage() {
             <Shield size={24} className="text-[#EF4444]" />
           </div>
           <h1 className="text-[22px] font-black tracking-tight mb-1.5">
-            Ressources & Auto-évaluation
+            {t.titre}
           </h1>
           <p className="text-[#9CA3AF] text-[13px] max-w-sm mx-auto leading-relaxed">
-            Des outils pour t&apos;aider à identifier ce que tu vis.
-            100&nbsp;% anonyme et sur ton appareil.
+            {t.sousTitre}
           </p>
+          {t.noteFrance && (
+            <p className="text-[#6B7280] text-[12px] max-w-sm mx-auto leading-relaxed mt-2">
+              {t.noteFrance}
+            </p>
+          )}
         </div>
 
         {/* Meter cards */}
         <div className="flex flex-col gap-2.5 max-w-md mx-auto w-full" role="list">
-          {METERS.map((meter, idx) => (
+          {meters.map((meter, idx) => (
             <Link
               key={meter.slug}
-              href={`/ressources/${meter.slug}`}
+              href={cheminLocalise(langue, `/ressources/${meter.slug}`)}
               className="res-card group text-left"
               role="listitem"
               style={{
@@ -47,13 +57,16 @@ export default function RessourcesPage() {
                 borderLeftColor: METER_COLORS[meter.slug] || '#EF4444',
                 borderLeftWidth: '3px',
               }}
-              aria-label={`Faire le ${meter.name}`}
+              aria-label={t.faireLe(meter.name)}
             >
               <div className="flex items-center gap-3">
                 <span className="text-2xl flex-shrink-0">{meter.emoji}</span>
                 <div className="flex-1 min-w-0">
                   <h2 className="text-[15px] font-bold text-[#FAFAFA] group-hover:text-white transition-colors leading-tight">
                     {meter.name}
+                    {langue === 'en' && NOM_FRANCAIS[meter.slug] && (
+                      <span className="font-medium text-[#6B7280]"> ({NOM_FRANCAIS[meter.slug]})</span>
+                    )}
                   </h2>
                   <p className="text-[12px] text-[#6B7280] mt-0.5 leading-snug line-clamp-1">
                     {meter.tagline}
@@ -75,9 +88,7 @@ export default function RessourcesPage() {
         <div className="mt-5 max-w-md mx-auto w-full">
           <div className="rounded-xl border border-[#EF4444]/15 bg-[#EF4444]/5 px-4 py-3">
             <p className="text-[12px] text-[#9CA3AF] leading-relaxed">
-              🚨 <strong className="text-[#EF4444]">Urgence</strong> — Appelle le <strong className="text-[#FAFAFA]">17</strong> (police),
-              le <strong className="text-[#FAFAFA]">112</strong> (urgences) ou
-              le <strong className="text-[#FAFAFA]">3919</strong> (violences, 24h/24).
+              {t.urgence}
             </p>
           </div>
         </div>
@@ -86,18 +97,17 @@ export default function RessourcesPage() {
             comment lire un résultat. L'article renvoie à chaque outil. */}
         <div className="mt-3 max-w-md mx-auto w-full">
           <Link
-            href="/articles/violentometre-consentometre-outils-auto-evaluation"
+            href={cheminLocalise(langue, '/articles/violentometre-consentometre-outils-auto-evaluation')}
             className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[13px] font-semibold text-[#D1D5DB] transition-colors hover:bg-white/[0.06]"
           >
-            <span>🧭 À quoi servent ces outils, et comment lire un résultat</span>
+            <span>{t.lienArticle}</span>
             <span aria-hidden="true">→</span>
           </Link>
         </div>
 
         {/* Disclaimer */}
         <p className="text-[10px] text-[#4B5563] text-center mt-4 max-w-sm mx-auto leading-relaxed">
-          Ces outils ne remplacent pas un accompagnement professionnel.
-          Aucune donnée n&apos;est collectée — tout reste sur ton appareil.
+          {t.avertissementIndex}
         </p>
 
         {/* Le bloc de liens internes qui figurait ici était rendu en #3D3D3D

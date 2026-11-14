@@ -75,3 +75,70 @@ export const GUIDE_FAQ: FaqEntry[] = [
       "Le Red Flag signale un problème sérieux qui nécessite une réponse et une conversation. Le Black Flag est une limite absolue et rédhibitoire — un comportement immédiatement inacceptable comme la violence ou la manipulation grave.",
   },
 ];
+
+/**
+ * La même FAQ en anglais, pour `/en/guide` (2026-11-14), dans le même ordre.
+ * Rendue par `PageGuide` et balisée par `app/en/guide/layout.tsx`.
+ */
+export const GUIDE_FAQ_EN: FaqEntry[] = [
+  {
+    question: 'What is a Red Flag?',
+    answer:
+      'A Red Flag is genuinely problematic behavior: control, disrespect, manipulation or a toxic pattern. On its own, it can sometimes be worked on if the person truly questions themselves, but red flags that pile up do real damage.',
+  },
+  {
+    question: 'Red flag or redflag: how do you spell it?',
+    answer:
+      'Both show up. The standard English spelling is two words, red flag; the run-together form, redflag, is common on social media. The meaning is the same: a warning sign about someone’s behavior.',
+  },
+  {
+    question: 'Where does the expression “red flag” come from?',
+    answer:
+      'From the red flags that signal danger: no swimming at the beach, a race stopped on a track. Social media made it popular as a word for behavior that should worry you, most often early in a relationship.',
+  },
+  {
+    question: 'How do I know if I’m a red flag?',
+    answer:
+      'Red or Green’s Red Flag Test walks you through concrete situations and gives you a red flag score as a percentage, along with where you rank among other players. Free, anonymous, no sign-up.',
+  },
+  {
+    question: 'What are some examples of red flags?',
+    answer:
+      'In a relationship: controlling who the other person spends time with, making them feel guilty, dismissing their feelings (“you’re overreacting”), criticizing them in front of others, getting aggressive during a disagreement. Day to day, Red or Green players put more ordinary behaviors at the top — hygiene, stinginess, disrespecting others — and their ranking, kept up to date by the votes, is published on the worst red flags page.',
+  },
+  {
+    question: 'What’s a red flag in a man, or in a woman?',
+    answer:
+      'The definition doesn’t change with gender: a red flag is behavior that should worry you, whoever is doing it. What changes is how people see it. In the site’s votes, women and men don’t put the same behaviors at the top, and the gap sometimes reaches several hundred points on a single behavior — the Observatory breaks them down.',
+  },
+  {
+    question: 'What is a red flag in love?',
+    answer:
+      'It’s a warning sign in a romantic relationship: jealousy that sets in early, checking the other person’s phone, cutting them off from friends, repeated lies, outsized anger. One sign on its own calls for a conversation; several that pile up describe a relationship that does damage. The violence meter helps you place a real situation.',
+  },
+  {
+    question: 'What is a Green Flag?',
+    answer:
+      'A Green Flag is healthy, mature behavior, the sign of someone who is respectful, communicates well and is consistent. It shows the relationship rests on a balanced foundation.',
+  },
+  {
+    question: 'What is a Black Flag?',
+    answer:
+      'A Black Flag is completely unacceptable and potentially dangerous behavior. It’s an absolute line: violence, serious manipulation, total control. Safety comes first.',
+  },
+  {
+    question: 'What is an Orange Flag?',
+    answer:
+      'An Orange Flag is behavior to keep an eye on that deserves a conversation. Not necessarily a dealbreaker — context can explain it — but it shouldn’t be ignored.',
+  },
+  {
+    question: 'What is a White Flag?',
+    answer:
+      'A White Flag is neutral behavior, explainable and with no negative charge. It isn’t a bad sign: in a relationship, it usually isn’t an issue in itself.',
+  },
+  {
+    question: 'What’s the difference between a Red Flag and a Black Flag?',
+    answer:
+      'A Red Flag signals a serious problem that calls for a response and a conversation. A Black Flag is an absolute, non-negotiable line — behavior that is unacceptable right away, like violence or serious manipulation.',
+  },
+];

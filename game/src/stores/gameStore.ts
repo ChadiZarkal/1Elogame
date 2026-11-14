@@ -14,6 +14,7 @@ import {
   getElementAppearancesString,
 } from '@/lib/session';
 import { trackVote, trackProfile, trackCategoryChange } from '@/lib/analytics';
+import { langueDuChemin } from '@/lib/i18n/langue';
 
 // Types pour le mode de jeu
 export type GameMode = 'default' | 'thematique';
@@ -263,6 +264,11 @@ export const useGameStore = create<GameState>((set, get) => ({
         params.set('category', picked);
       } else if (gameMode.mode === 'thematique' && gameMode.category) {
         params.set('category', gameMode.category);
+      }
+      // Sous `/en`, les comportements arrivent traduits. La langue est celle
+      // de l'adresse : la partie (et ses votes) est la même dans les deux.
+      if (typeof window !== 'undefined' && langueDuChemin(window.location.pathname) === 'en') {
+        params.set('lang', 'en');
       }
       
       const queryString = params.toString();

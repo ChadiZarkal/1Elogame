@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { VoteResult, Duel } from '@/types/game';
+import { useTextesJeu } from './textes';
 
 interface CompactResultProps {
   duel: Duel;
@@ -10,6 +11,7 @@ interface CompactResultProps {
 }
 
 export function CompactResult({ duel, result, index }: CompactResultProps) {
+  const t = useTextesJeu();
   const userChoice = result.winner;
   const otherOption = result.loser;
   const userGuessedCorrectly = userChoice.percentage >= 50;
@@ -85,7 +87,7 @@ export function CompactResult({ duel, result, index }: CompactResultProps) {
           : 'bg-[#DC2626]/10 text-[#FCA5A5]'
       }`}>
         <span className="font-medium">
-          {userGuessedCorrectly ? '🎯 Bien deviné !' : '❌ Raté !'}
+          {userGuessedCorrectly ? t.bienDevine : t.rateCompact}
         </span>
         {result.streak.current > 0 && (
           <span className="text-[#A3A3A3]">Streak: {result.streak.current}</span>

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { withApiHandler, apiSuccess } from '@/lib/apiHelpers';
 import { getLeaderboardPage, parseLeaderboardView } from '@/lib/leaderboard';
+import { langueDe } from '@/lib/i18n/langue';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,7 @@ export const GET = withApiHandler(async (request: NextRequest) => {
     tag: searchParams.get('tag') || null,
     view: parseLeaderboardView(searchParams.get('view')),
     search: searchParams.get('search')?.trim() || null,
+    langue: langueDe(searchParams.get('lang')),
   });
 
   const response = apiSuccess(data);

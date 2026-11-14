@@ -5,6 +5,8 @@ import { getActiveElements, getStarredPairs } from '@/lib/repositories';
 import { loadAlgorithmConfig } from '@/lib/algorithmConfig';
 import { MAX_SEEN_DUELS_STRING_LENGTH } from '@/config/constants';
 import { filterAdultContent, isAdultOnlyCategory, isMinorBracket } from '@/lib/contentRating';
+import { langueDe } from '@/lib/i18n/langue';
+import { traduireElement } from '@/lib/jeu/traduction';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,5 +64,12 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   }
 
   const [elementA, elementB] = pair;
-  return apiSuccess({ elementA: toElementDTO(elementA), elementB: toElementDTO(elementB), allExhausted: false });
+  // `?lang=en` : les deux comportements en anglais. Les identifiants, donc les
+  // votes, restent ceux de la base.
+  const langue = langueDe(searchParams.get('lang'));
+  const dto = (e: typeof elementA) => {
+    const d = toElementDTO(e);
+    return { ...d, texte: traduireElement(d.texte, langue) };
+  };
+  return apiSuccess({ elementA: dto(elementA), elementB: dto(elementB), allExhausted: false });
 }, { rateLimit: true });

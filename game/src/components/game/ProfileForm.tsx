@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/stores/gameStore';
 import { SexeVotant, AgeVotant } from '@/types/database';
 import dynamic from 'next/dynamic';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { cheminLocalise } from '@/lib/i18n/langue';
+import { useTextesJeu } from './textes';
 
 // Lazy-load animated background — renders AFTER first paint to unblock FCP
 const AnimatedBackgroundCSS = dynamic(
@@ -12,10 +15,11 @@ const AnimatedBackgroundCSS = dynamic(
   { ssr: false },
 );
 
-const sexOptions: { value: SexeVotant; label: string; emoji: string }[] = [
-  { value: 'homme', label: 'Homme', emoji: '♂️' },
-  { value: 'femme', label: 'Femme', emoji: '♀️' },
-  { value: 'autre', label: 'Autre', emoji: '🤷' },
+// Les libellés viennent de `textes.ts` (`t.sexes`), selon la langue.
+const sexOptions: { value: SexeVotant; emoji: string }[] = [
+  { value: 'homme', emoji: '♂️' },
+  { value: 'femme', emoji: '♀️' },
+  { value: 'autre', emoji: '🤷' },
 ];
 
 const ageOptions: { value: AgeVotant; label: string; vibe: string }[] = [
@@ -27,6 +31,8 @@ const ageOptions: { value: AgeVotant; label: string; vibe: string }[] = [
 
 export function ProfileForm() {
   const router = useRouter();
+  const langue = useLangue();
+  const t = useTextesJeu();
   const setProfile = useGameStore((state) => state.setProfile);
   
   const [sex, setSex] = useState<SexeVotant | null>(null);
@@ -48,16 +54,16 @@ export function ProfileForm() {
   
   const handleSubmit = () => {
     if (!sex) {
-      setError('Sélectionne ton sexe');
+      setError(t.erreurSexe);
       return;
     }
     if (!age) {
-      setError('Sélectionne ton âge');
+      setError(t.erreurAge);
       return;
     }
     
     setProfile({ sex, age });
-    router.push('/jeu/jouer');
+    router.push(cheminLocalise(langue, '/jeu/jouer'));
   };
   
   return (
@@ -83,10 +89,10 @@ export function ProfileForm() {
         {/* La page n'avait aucun titre de niveau 1 : le logo est une image, et
             cette accroche était un simple paragraphe. */}
         <h1 className="text-sm font-bold" style={{ color: '#EF4444' }}>
-          🚩 Le pire des deux — votez pour le plus red flag
+          {t.profilTitre}
         </h1>
         <p className="text-xs font-medium mt-1" style={{ color: '#52525B' }}>
-          2 infos rapides avant de commencer
+          {t.profilSousTitre}
         </p>
       </div>
       
@@ -107,9 +113,9 @@ export function ProfileForm() {
         {/* Sex selection */}
         <fieldset>
           <label className="block text-xs font-black tracking-[0.14em] uppercase mb-3" style={{ color: '#6B7280' }}>
-            Sexe
+            {t.labelSexe}
           </label>
-          <div className="grid grid-cols-3 gap-2.5" role="radiogroup" aria-label="Sélection du sexe">
+          <div className="grid grid-cols-3 gap-2.5" role="radiogroup" aria-label={t.ariaSexe}>
             {sexOptions.map((opt) => {
               const selected = sex === opt.value;
               return (
@@ -118,7 +124,7 @@ export function ProfileForm() {
                   onClick={() => { setSex(opt.value); setError(null); }}
                   role="radio"
                   aria-checked={selected}
-                  aria-label={opt.label}
+                  aria-label={t.sexes[opt.value]}
                   className="flex flex-col items-center justify-center py-4 px-2 rounded-xl font-bold text-sm transition-all duration-200 active:scale-[0.94]"
                   style={{
                     background: selected ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.03)',
@@ -128,7 +134,7 @@ export function ProfileForm() {
                   }}
                 >
                   <span className="text-2xl mb-1">{opt.emoji}</span>
-                  <span className="text-xs font-bold">{opt.label}</span>
+                  <span className="text-xs font-bold">{t.sexes[opt.value]}</span>
                 </button>
               );
             })}
@@ -138,9 +144,9 @@ export function ProfileForm() {
         {/* Age selection */}
         <fieldset>
           <label className="block text-xs font-black tracking-[0.14em] uppercase mb-3" style={{ color: '#6B7280' }}>
-            Âge
+            {t.labelAge}
           </label>
-          <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Sélection de l'âge">
+          <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label={t.ariaAge}>
             {ageOptions.map((opt) => {
               const selected = age === opt.value;
               return (
@@ -149,7 +155,7 @@ export function ProfileForm() {
                   onClick={() => { setAge(opt.value); setError(null); }}
                   role="radio"
                   aria-checked={selected}
-                  aria-label={`${opt.label} ans`}
+                  aria-label={t.ariaAgeOption(opt.label)}
                   className="flex flex-col items-center justify-center py-3.5 px-1 rounded-xl font-bold transition-all duration-200 active:scale-[0.94]"
                   style={{
                     background: selected ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.03)',
@@ -185,22 +191,22 @@ export function ProfileForm() {
             cursor: sex && age ? 'pointer' : 'not-allowed',
           }}
         >
-          {sex && age ? "🚩 C'EST PARTI" : 'Sélectionne sexe + âge'}
+          {sex && age ? t.profilGo : t.profilIncomplet}
         </button>
         </div>
       </div>
 
       <p className="text-center mt-5 text-[10px]" style={{ color: '#3F3F46' }}>
-        Données 100% anonymes — juste pour les stats
+        {t.profilAnonyme}
       </p>
 
       {/* How to play — compact inline under the form */}
       <div className={`w-full max-w-sm mt-4 mb-4${mounted ? ' animate-pf-howto' : ''}`}>
         <div className="flex items-center gap-3 justify-center">
           {[
-            { emoji: '🚩', label: 'Choisis le pire' },
-            { emoji: '📊', label: 'Compare' },
-            { emoji: '🔥', label: 'Enchaîne' },
+            { emoji: '🚩', label: t.etapes[0] },
+            { emoji: '📊', label: t.etapes[1] },
+            { emoji: '🔥', label: t.etapes[2] },
           ].map((step, i) => (
             <div key={step.label} className="flex items-center gap-1.5">
               {i > 0 && <span className="text-[#333] text-xs mr-1">→</span>}

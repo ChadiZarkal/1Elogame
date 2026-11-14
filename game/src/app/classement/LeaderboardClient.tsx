@@ -5,6 +5,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Loading } from '@/components/ui/Loading';
 import type { LeaderboardData, RankEntry } from '@/lib/leaderboard';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { cheminLocalise } from '@/lib/i18n/langue';
+import { useTextesClassement, type TextesClassement } from './textes';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,8 +33,6 @@ const MODE_CONFIG: Record<
     border: string;
     shadow: string;
     glow: string;
-    headline: string;
-    sub: (n: number) => string;
   }
 > = {
   redflag: {
@@ -42,9 +43,6 @@ const MODE_CONFIG: Record<
     border: 'rgba(239,68,68,0.35)',
     shadow: '0 16px 50px rgba(239,68,68,0.25)',
     glow: 'rgba(239,68,68,0.12)',
-    headline: 'Ce que personne\nne supporte.',
-    sub: (n) =>
-      `Le verdict de la communauté. ${n} comportements jugés, classés par score collectif — sans filtre, sans diplomatie.`,
   },
   greenflag: {
     label: 'Green Flag',
@@ -54,20 +52,19 @@ const MODE_CONFIG: Record<
     border: 'rgba(16,185,129,0.35)',
     shadow: '0 16px 50px rgba(16,185,129,0.25)',
     glow: 'rgba(16,185,129,0.12)',
-    headline: 'Ce que tout\nle monde valide.',
-    sub: (n) =>
-      `Pour une fois, quelque chose d'unanime. ${n} comportements que la communauté a approuvés.`,
   },
 };
 
-const PROFILE_FILTERS: { value: ViewMode; label: string; emoji: string }[] = [
-  { value: 'global', label: 'Tous', emoji: '🌍' },
-  { value: 'homme', label: 'Hommes', emoji: '♂️' },
-  { value: 'femme', label: 'Femmes', emoji: '♀️' },
-  { value: '16-18', label: '16-18', emoji: '🎓' },
-  { value: '19-22', label: '19-22', emoji: '🎯' },
-  { value: '23-26', label: '23-26', emoji: '💼' },
-  { value: '27+', label: '27+', emoji: '🧠' },
+// Les titres, sous-titres et libellés (profils, catégories, thèmes) sont dans
+// `textes.ts`, en français et en anglais ; ces tables ne gardent que les emojis.
+const PROFILE_FILTERS: { value: ViewMode; emoji: string }[] = [
+  { value: 'global', emoji: '🌍' },
+  { value: 'homme', emoji: '♂️' },
+  { value: 'femme', emoji: '♀️' },
+  { value: '16-18', emoji: '🎓' },
+  { value: '19-22', emoji: '🎯' },
+  { value: '23-26', emoji: '💼' },
+  { value: '27+', emoji: '🧠' },
 ];
 
 // « Amour & Sexe » n'est pas publié (voir `CATEGORIES_HORS_VITRINE`) : il ne
@@ -75,33 +72,33 @@ const PROFILE_FILTERS: { value: ViewMode; label: string; emoji: string }[] = [
 const CATEGORY_FILTERS: { value: string; label: string; emoji: string }[] = [];
 
 const TAG_FILTERS = [
-  { value: 'metier', label: 'Travail', emoji: '💼' },
-  { value: 'hygiene', label: 'Hygiène', emoji: '🚿' },
-  { value: 'argent', label: 'Argent', emoji: '💰' },
-  { value: 'numerique', label: 'Numérique', emoji: '📱' },
-  { value: 'sport', label: 'Sport', emoji: '🏋️' },
-  { value: 'nourriture', label: 'Nourriture', emoji: '🍽️' },
-  { value: 'transport', label: 'Transport', emoji: '🚗' },
-  { value: 'politique', label: 'Politique', emoji: '🏛️' },
+  { value: 'metier', emoji: '💼' },
+  { value: 'hygiene', emoji: '🚿' },
+  { value: 'argent', emoji: '💰' },
+  { value: 'numerique', emoji: '📱' },
+  { value: 'sport', emoji: '🏋️' },
+  { value: 'nourriture', emoji: '🍽️' },
+  { value: 'transport', emoji: '🚗' },
+  { value: 'politique', emoji: '🏛️' },
 ];
 
-const CATEGORY_META: Record<string, { label: string; emoji: string }> = {
-  sexe: { label: 'Amour & Sexe', emoji: '❤️‍🔥' },
-  quotidien: { label: 'Quotidien', emoji: '🤷' },
+const CATEGORY_META: Record<string, { emoji: string }> = {
+  sexe: { emoji: '❤️‍🔥' },
+  quotidien: { emoji: '🤷' },
 };
 
-const TAG_META: Record<string, { label: string; emoji: string }> = {
-  metier: { label: 'Travail', emoji: '💼' },
-  couple: { label: 'Couple', emoji: '❤️' },
-  hygiene: { label: 'Hygiène', emoji: '🚿' },
-  argent: { label: 'Argent', emoji: '💰' },
-  numerique: { label: 'Numérique', emoji: '📱' },
-  sport: { label: 'Sport', emoji: '🏋️' },
-  nourriture: { label: 'Nourriture', emoji: '🍽️' },
-  emotionnel: { label: 'Émotionnel', emoji: '💔' },
-  social: { label: 'Social', emoji: '🌍' },
-  transport: { label: 'Transport', emoji: '🚗' },
-  politique: { label: 'Politique', emoji: '🏛️' },
+const TAG_META: Record<string, { emoji: string }> = {
+  metier: { emoji: '💼' },
+  couple: { emoji: '❤️' },
+  hygiene: { emoji: '🚿' },
+  argent: { emoji: '💰' },
+  numerique: { emoji: '📱' },
+  sport: { emoji: '🏋️' },
+  nourriture: { emoji: '🍽️' },
+  emotionnel: { emoji: '💔' },
+  social: { emoji: '🌍' },
+  transport: { emoji: '🚗' },
+  politique: { emoji: '🏛️' },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -125,8 +122,11 @@ function getScoreForView(r: RankEntry, view: ViewMode): number {
   }
 }
 
-function getCategoryMeta(cat: string): { label: string; emoji: string } {
-  return CATEGORY_META[cat] ?? { label: cat || 'Autre', emoji: '🏷️' };
+function getCategoryMeta(cat: string, t: TextesClassement): { label: string; emoji: string } {
+  const meta = CATEGORY_META[cat];
+  return meta && t.categories[cat]
+    ? { label: t.categories[cat], emoji: meta.emoji }
+    : { label: cat || t.autre, emoji: '🏷️' };
 }
 
 function heatPct(score: number, maxScore: number): number {
@@ -136,6 +136,10 @@ function heatPct(score: number, maxScore: number): number {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function LeaderboardClient({ initialData }: { initialData: LeaderboardData }) {
+  const langue = useLangue();
+  const t = useTextesClassement();
+  /** `/classement` ou `/en/classement` : pour les textes de partage. */
+  const cheminClassement = cheminLocalise(langue, '/classement');
   // L'état démarre avec les données rendues par le serveur : le classement est
   // présent dans le HTML dès la première réponse, sans écran de chargement.
   const [rankings, setRankings] = useState<RankEntry[]>(initialData.rankings);
@@ -194,6 +198,8 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
       if (categoryFilter) params.set('category', categoryFilter);
       if (tagFilter) params.set('tag', tagFilter);
       if (searchQuery) params.set('search', searchQuery);
+      // Les comportements, et la recherche, dans la langue de la page.
+      if (langue === 'en') params.set('lang', 'en');
 
       const isFirstPage = page === 1;
 
@@ -222,7 +228,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
       } catch (err) {
         const isAbort = err instanceof DOMException && err.name === 'AbortError';
         if (!isActive || isAbort) return;
-        setError('Impossible de charger le classement');
+        setError(t.erreur);
         if (page === 1) {
           setRankings([]);
           setHasMore(false);
@@ -241,7 +247,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
       isActive = false;
       controller.abort();
     };
-  }, [categoryFilter, tagFilter, mode, page, searchQuery, view]);
+  }, [categoryFilter, tagFilter, mode, page, searchQuery, view, langue, t]);
 
   const cfg = MODE_CONFIG[mode];
   const loadedCount = rankings.length;
@@ -328,14 +334,14 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
   const shareEntry = useCallback(
     (entry: RankEntry) => {
       const score = getScoreForView(entry, view);
-      const text = `${cfg.emoji} #${entry.rank} — "${entry.texte}"\nScore : ${score} · ${entry.nb_participations} votes\nredorgreen.fr/classement`;
+      const text = t.partageLigne(cfg.emoji, entry.rank, entry.texte, score, entry.nb_participations, cheminClassement);
       if (navigator.share) {
-        navigator.share({ text, url: 'https://redorgreen.fr/classement' }).catch(() => {});
+        navigator.share({ text, url: `https://redorgreen.fr${cheminClassement}` }).catch(() => {});
         return;
       }
       navigator.clipboard.writeText(text).catch(() => {});
     },
-    [cfg.emoji, view],
+    [cfg.emoji, view, t, cheminClassement],
   );
 
   const shareTop = useCallback(() => {
@@ -343,13 +349,13 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
       .slice(0, 5)
       .map((r) => `${r.rank}. ${r.texte}`)
       .join('\n');
-    const text = `${cfg.emoji} Top 5 ${cfg.label} :\n${lines}\nredorgreen.fr/classement`;
+    const text = t.partageTop(cfg.emoji, cfg.label, lines, cheminClassement);
     if (navigator.share) {
-      navigator.share({ text, url: 'https://redorgreen.fr/classement' }).catch(() => {});
+      navigator.share({ text, url: `https://redorgreen.fr${cheminClassement}` }).catch(() => {});
       return;
     }
     navigator.clipboard.writeText(text).catch(() => {});
-  }, [cfg, rankings]);
+  }, [cfg, rankings, t, cheminClassement]);
 
   const podium = !hasContextualFilter ? rankings.slice(0, 3) : [];
   const listItems = hasContextualFilter ? rankings : rankings.slice(3);
@@ -357,7 +363,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen" style={{ background: '#070809' }}>
-        <Loading size="lg" text="Chargement du verdict..." />
+        <Loading size="lg" text={t.chargementVerdict} />
       </div>
     );
   }
@@ -414,7 +420,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
             transition={{ duration: 0.3 }}
             className="text-[40px] sm:text-[56px] font-black tracking-tight text-white leading-[1.03] whitespace-pre-line"
           >
-            {cfg.headline}
+            {mode === 'redflag' ? t.redflagHeadline : t.greenflagHeadline}
           </motion.h1>
 
           <motion.p
@@ -424,12 +430,12 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
             transition={{ delay: 0.1, duration: 0.3 }}
             className="mt-4 text-[#6B7280] text-[15px] sm:text-[16px] leading-relaxed max-w-xl"
           >
-            {cfg.sub(totalElements)}
+            {mode === 'redflag' ? t.redflagSub(totalElements) : t.greenflagSub(totalElements)}
           </motion.p>
 
           <div className="mt-5 flex flex-wrap gap-2">
             <span className="px-3 py-1 rounded-full bg-white/[0.05] text-[#9CA3AF] text-[12px] font-semibold border border-white/[0.07]">
-              🗳️ {visibleVotes.toLocaleString('fr-FR')} votes
+              🗳️ {t.votes(visibleVotes.toLocaleString(t.locale))}
             </span>
             <span className="px-3 py-1 rounded-full bg-white/[0.05] text-[#9CA3AF] text-[12px] font-semibold border border-white/[0.07]">
               📊 {loadedCount} / {totalElements}
@@ -441,7 +447,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                 className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold"
                 style={{ background: cfg.soft, color: cfg.color, border: `1px solid ${cfg.border}` }}
               >
-                {TAG_META[tagFilter]?.emoji ?? '🏷️'} {TAG_META[tagFilter]?.label ?? tagFilter}
+                {TAG_META[tagFilter]?.emoji ?? '🏷️'} {t.tags[tagFilter] ?? tagFilter}
                 <span className="opacity-60">×</span>
               </button>
             )}
@@ -460,7 +466,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
               onClick={shareTop}
               className="px-3 py-1 rounded-full bg-white/[0.05] text-[#6B7280] text-[12px] font-semibold border border-white/[0.07] hover:text-white hover:bg-white/10 transition-colors"
             >
-              📤 Partager
+              {t.partager}
             </button>
           </div>
         </header>
@@ -472,7 +478,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
               type="search"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="🔍  Cherche un comportement..."
+              placeholder={t.chercheMobile}
               enterKeyHint="search"
               autoComplete="off"
               className="flex-1 rounded-xl border border-white/[0.09] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder:text-[#3D404A] focus:outline-none focus:border-white/20"
@@ -491,7 +497,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
               className="px-4 py-2.5 rounded-xl text-sm font-black text-white"
               style={{ background: cfg.color }}
             >
-              OK
+              {t.ok}
             </button>
           </form>
 
@@ -528,7 +534,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                     : { background: 'rgba(255,255,255,0.05)', color: '#6B7280', border: '1.5px solid #1C1D22' }
                 }
               >
-                {f.emoji} {f.label}
+                {f.emoji} {t.vues[f.value]}
               </button>
             ))}
           </div>
@@ -536,7 +542,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
           {/* Tag filter chips */}
           <div>
             <p className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider mb-2">
-              🏷️ Filtrer par thème
+              {t.filtrerTheme}
             </p>
             <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
               {TAG_FILTERS.map((tag) => (
@@ -551,7 +557,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                       : { background: 'rgba(255,255,255,0.04)', color: '#4B5563', border: '1.5px solid #1C1D22' }
                   }
                 >
-                  {tag.emoji} {tag.label}
+                  {tag.emoji} {t.tags[tag.value]}
                 </button>
               ))}
             </div>
@@ -559,7 +565,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
 
           {isFiltered && (
             <button type="button" onClick={resetAll} className="text-xs text-[#4B5563] hover:text-white transition-colors">
-              ↺ Réinitialiser les filtres
+              {t.reinitialiserFiltres}
             </button>
           )}
         </div>
@@ -573,28 +579,28 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
               style={{ background: 'rgba(11,11,15,0.92)', borderColor: '#18191F' }}
             >
               <div className="flex justify-between items-center">
-                <span className="text-[11px] font-black uppercase tracking-[0.15em] text-[#4B5563]">Filtres</span>
+                <span className="text-[11px] font-black uppercase tracking-[0.15em] text-[#4B5563]">{t.filtres}</span>
                 {isFiltered && (
                   <button type="button" onClick={resetAll} className="text-[11px] text-[#4B5563] hover:text-white transition-colors">
-                    ↺ Reset
+                    {t.resetCourt}
                   </button>
                 )}
               </div>
 
               <form onSubmit={onSearchSubmit} className="space-y-2">
-                <label className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider">Recherche</label>
+                <label className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider">{t.recherche}</label>
                 <input
                   type="search"
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="haleine, cryptobro..."
+                  placeholder={t.chercheBureau}
                   enterKeyHint="search"
                   autoComplete="off"
                   className="w-full rounded-xl border border-white/[0.07] bg-[#08090C] px-3 py-2 text-sm text-white placeholder:text-[#2D2F37] focus:outline-none focus:border-white/15"
                 />
                 <div className="flex gap-2">
                   <button type="submit" className="flex-1 py-2 rounded-xl text-[12px] font-black text-white" style={{ background: cfg.color }}>
-                    Rechercher
+                    {t.rechercher}
                   </button>
                   {searchQuery && (
                     <button type="button" onClick={clearSearch} className="px-3 py-2 rounded-xl text-sm text-[#6B7280] bg-white/[0.04] border border-white/[0.07]">
@@ -605,7 +611,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
               </form>
 
               <div className="space-y-2">
-                <label className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider">Type</label>
+                <label className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider">{t.type}</label>
                 <div className="grid grid-cols-2 gap-2">
                   {(['redflag', 'greenflag'] as const).map((m) => {
                     const c = MODE_CONFIG[m];
@@ -629,8 +635,8 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
               </div>
 
               <div className="space-y-2">
-                <label className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider">Profil</label>
-                <p className="text-[10px] text-[#2D2F37]">Un seul profil à la fois</p>
+                <label className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider">{t.profil}</label>
+                <p className="text-[10px] text-[#2D2F37]">{t.unSeulProfil}</p>
                 <div className="grid grid-cols-2 gap-1.5">
                   {PROFILE_FILTERS.map((f) => (
                     <button
@@ -644,7 +650,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                           : { color: '#4B5563', border: '1.5px solid #1A1B21', background: '#0B0C0F' }
                       }
                     >
-                      {f.emoji} {f.label}
+                      {f.emoji} {t.vues[f.value]}
                     </button>
                   ))}
                 </div>
@@ -652,7 +658,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
 
               {CATEGORY_FILTERS.length > 0 && (
               <div className="space-y-2">
-                <label className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider">Catégorie</label>
+                <label className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider">{t.categorie}</label>
                 <div className="space-y-1.5">
                   {CATEGORY_FILTERS.map((cat) => (
                     <button
@@ -674,7 +680,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
               )}
 
               <div className="space-y-2">
-                <label className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider">🏷️ Thème</label>
+                <label className="text-[11px] font-semibold text-[#3D404A] uppercase tracking-wider">{t.theme}</label>
                 <div className="flex flex-wrap gap-1.5">
                   {TAG_FILTERS.map((tag) => (
                     <button
@@ -688,7 +694,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                           : { color: '#4B5563', border: '1.5px solid #1A1B21', background: '#0B0C0F' }
                       }
                     >
-                      {tag.emoji} {tag.label}
+                      {tag.emoji} {t.tags[tag.value]}
                     </button>
                   ))}
                 </div>
@@ -709,8 +715,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
 
             {searchQuery && rankings.length > 0 && (
               <p className="text-sm text-[#6B7280] mb-4">
-                <span className="font-bold text-white">{totalElements}</span> résultat
-                {totalElements !== 1 ? 's' : ''} pour{' '}
+                <span className="font-bold text-white">{totalElements}</span>{t.resultatsPour(totalElements)}{' '}
                 <span style={{ color: cfg.color }}>&quot;{searchQuery}&quot;</span>
               </p>
             )}
@@ -718,10 +723,10 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
             {rankings.length === 0 ? (
               <div className="text-center py-24 space-y-3">
                 <span className="text-6xl block">🔎</span>
-                <p className="text-white font-black text-xl">Rien trouvé</p>
-                <p className="text-[#4B5563] text-sm">Essaie un autre mot ou change les filtres.</p>
+                <p className="text-white font-black text-xl">{t.rienTrouve}</p>
+                <p className="text-[#4B5563] text-sm">{t.essaieAutre}</p>
                 <button type="button" onClick={resetAll} className="mt-2 text-sm underline" style={{ color: cfg.color }}>
-                  Tout réinitialiser
+                  {t.toutReinitialiser}
                 </button>
               </div>
             ) : (
@@ -756,13 +761,13 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                           </p>
                           <div className="mt-2.5 flex flex-wrap gap-2 text-[12px]">
                             {(() => {
-                              const m = getCategoryMeta(podium[0].categorie);
+                              const m = getCategoryMeta(podium[0].categorie, t);
                               return (
                                 <span className="px-2.5 py-1 rounded-full bg-black/40 text-[#D1D5DB]">{m.emoji} {m.label}</span>
                               );
                             })()}
                             <span className="px-2.5 py-1 rounded-full bg-black/40 text-[#9CA3AF]">
-                              {podium[0].nb_participations} votes
+                              {t.votes(podium[0].nb_participations)}
                             </span>
                           </div>
                           <div className="mt-3.5 flex items-center gap-3">
@@ -784,7 +789,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                           type="button"
                           onClick={() => shareEntry(podium[0])}
                           className="shrink-0 p-2 rounded-xl bg-black/25 hover:bg-black/50 text-[#4B5563] hover:text-white transition-all"
-                          aria-label="Partager cette entrée"
+                          aria-label={t.ariaPartagerEntree}
                         >
                           📤
                         </button>
@@ -797,7 +802,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                         const rn = i + 2;
                         const score = getScoreForView(entry, view);
                         const hp = heatPct(score, maxScore);
-                        const meta = getCategoryMeta(entry.categorie);
+                        const meta = getCategoryMeta(entry.categorie, t);
                         return (
                           <motion.div
                             key={`p${rn}-${mode}-${view}`}
@@ -816,7 +821,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                             </span>
                             <span className="text-[30px] leading-none">{medal}</span>
                             <p className="text-[14px] font-bold text-white leading-snug">{entry.texte}</p>
-                            <p className="text-[11px] text-[#4B5563]">{meta.emoji} {meta.label} · {entry.nb_participations} votes</p>
+                            <p className="text-[11px] text-[#4B5563]">{meta.emoji} {meta.label} · {t.votes(entry.nb_participations)}</p>
                             <div className="flex items-center gap-2 mt-0.5">
                               <div className="flex-1 h-[3px] rounded-full bg-white/[0.07] overflow-hidden">
                                 <motion.div
@@ -828,7 +833,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                                 />
                               </div>
                               <span className="text-[12px] font-black shrink-0" style={{ color: cfg.color }}>{score}</span>
-                              <button type="button" onClick={() => shareEntry(entry)} className="text-[12px] text-[#3D404A] hover:text-white transition-colors" aria-label="Partager">
+                              <button type="button" onClick={() => shareEntry(entry)} className="text-[12px] text-[#3D404A] hover:text-white transition-colors" aria-label={t.ariaPartager}>
                                 📤
                               </button>
                             </div>
@@ -845,7 +850,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                     {listItems.map((entry, idx) => {
                       const score = getScoreForView(entry, view);
                       const hp = heatPct(score, maxScore);
-                      const meta = getCategoryMeta(entry.categorie);
+                      const meta = getCategoryMeta(entry.categorie, t);
                       const isTop = hasContextualFilter && entry.rank <= 3;
                       const medal = isTop
                         ? entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉'
@@ -884,12 +889,12 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                                   <>
                                     <span>·</span>
                                     <span className="text-[#2D2F37]">
-                                      {TAG_META[entry.tags[0]].emoji} {TAG_META[entry.tags[0]].label}
+                                      {TAG_META[entry.tags[0]].emoji} {t.tags[entry.tags[0]]}
                                     </span>
                                   </>
                                 )}
                                 <span>·</span>
-                                <span>{entry.nb_participations} votes</span>
+                                <span>{t.votes(entry.nb_participations)}</span>
                               </div>
                               <div className="mt-1.5 h-[2px] rounded-full bg-white/[0.05] overflow-hidden max-w-[150px]">
                                 <motion.div
@@ -910,7 +915,7 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                                 type="button"
                                 onClick={() => shareEntry(entry)}
                                 className="opacity-0 group-hover:opacity-100 ml-1 p-1.5 rounded-lg bg-white/[0.04] hover:bg-white/10 text-[#4B5563] hover:text-white transition-all text-[11px]"
-                                aria-label="Partager"
+                                aria-label={t.ariaPartager}
                               >
                                 📤
                               </button>
@@ -932,11 +937,11 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
                       style={{ color: cfg.color, borderColor: cfg.border, background: cfg.soft }}
                     >
                       {isLoadingMore
-                        ? 'Chargement...'
-                        : `Voir ${Math.min(PAGE_SIZE, Math.max(totalElements - loadedCount, 0))} de plus`}
+                        ? t.chargement
+                        : t.voirPlus(Math.min(PAGE_SIZE, Math.max(totalElements - loadedCount, 0)))}
                     </button>
                   ) : (
-                    <p className="text-[12px] text-[#2D2F37]">Tout est affiché — {totalElements} comportements</p>
+                    <p className="text-[12px] text-[#2D2F37]">{t.toutAffiche(totalElements)}</p>
                   )}
                 </div>
               </>
@@ -957,11 +962,11 @@ export function LeaderboardClient({ initialData }: { initialData: LeaderboardDat
       >
         <div className="mx-auto max-w-sm" style={{ pointerEvents: 'all' }}>
           <Link
-            href="/jeu"
+            href={cheminLocalise(langue, '/jeu')}
             className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-black text-[15px] text-white transition-transform active:scale-95"
             style={{ background: cfg.color, boxShadow: cfg.shadow }}
           >
-            {cfg.emoji} Donner mon vote
+            {cfg.emoji} {t.donnerVote}
           </Link>
         </div>
       </div>

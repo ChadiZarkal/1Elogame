@@ -45,26 +45,7 @@ export const FALLBACK_SUGGESTIONS = [
   { emoji: '💬', text: 'Elle prend de tes nouvelles' },
 ];
 
-export const LOADING_PHRASES: string[] = [
-  'Analyse en cours… 🔍',
-  'Hmm, laisse-moi réfléchir… 🤔',
-  'Consultation du tribunal des flags… ⚖️',
-  "C'est chaud là, je calcule… 🔥",
-  'Le verdict arrive… 🧠',
-  "L'Oracle délibère… ⏳",
-  'Ça sent le flag… 👃',
-  'Analyse comportementale en cours… 🔮',
-];
-
-export const PLACEHOLDERS: string[] = [
-  '"Il regarde ton téléphone…"',
-  '"Elle te dit je t\'aime en premier…"',
-  '"Il met 3 jours à répondre…"',
-  '"Elle se souvient de ton plat préféré…"',
-  '"Il parle de son ex au 1er date…"',
-  '"Elle te prépare des surprises…"',
-  '"Il te follow/unfollow sur Insta…"',
-  '"Elle rit à toutes tes blagues…"',
-];
+/* Les phrases de chargement et les exemples du champ de saisie vivent dans
+ * `textes.ts`, en français et en anglais. */
 
 export const MIN_LOADING_MS = 900;

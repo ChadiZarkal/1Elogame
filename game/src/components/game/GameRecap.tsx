@@ -5,56 +5,33 @@ import Link from '@/components/ui/LienIntention';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useGameStore, type PartyStats } from '@/stores/gameStore';
-import { CATEGORIES_CONFIG } from '@/config/categories';
+import { CATEGORIES_CONFIG, libelleCategorie } from '@/config/categories';
 import { JEU_RECAP } from '@/config/ads';
 import { NativeAd } from '@/components/ads/NativeAd';
 import { DON_URL } from '@/config/contact';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { cheminLocalise } from '@/lib/i18n/langue';
+import { TEXTES_JEU, useTextesJeu, type TextesJeu } from './textes';
 
 /* ═══════════════════════════════════════════════════════════════════════
    ARCHETYPE SYSTEM
    ═══════════════════════════════════════════════════════════════════════ */
 
-interface Archetype {
-  title: string;
-  emoji: string;
-  tagline: string;
-}
+// Les archétypes et les profils de vitesse sont écrits dans `textes.ts`, dans
+// les deux langues (`archetype`, `vitesse`).
 
-function getArchetype(accuracy: number, bestStreak: number, avgReactionMs: number): Archetype {
+function getArchetype(accuracy: number, bestStreak: number, avgReactionMs: number, t: TextesJeu = TEXTES_JEU.fr) {
   const pct = accuracy * 100;
   const fast = avgReactionMs < 3000;
   const hotStreak = bestStreak >= 5;
-
-  if (pct >= 90) {
-    if (fast) return { title: 'Sniper Absolu', emoji: '🎯', tagline: 'Je vois les red flags avant qu\'ils n\'existent.' };
-    return { title: 'Radar Absolu', emoji: '🛸', tagline: 'Personne ne peut mentir devant moi.' };
-  }
-  if (pct >= 75) {
-    if (fast && hotStreak) return { title: 'Instinct de Chasseur·se', emoji: '🦊', tagline: 'Mon intuition ne me trompe jamais.' };
-    if (hotStreak) return { title: 'Machine à Streak', emoji: '🔥', tagline: 'Rien ne m\'arrête.' };
-    return { title: 'Détecteur·rice Pro', emoji: '🔍', tagline: 'Mon instinct est redoutable.' };
-  }
-  if (pct >= 60) {
-    if (fast) return { title: 'Réflexe Instinctif', emoji: '⚡', tagline: 'Je tire d\'abord, je réfléchis après.' };
-    return { title: 'Sentinelle', emoji: '🛡️', tagline: 'Vigilant·e mais pas infaillible.' };
-  }
-  if (pct >= 45) return { title: 'Électron Libre', emoji: '🎲', tagline: 'Mes opinions divisent.' };
-  if (pct >= 30) return { title: 'Optimiste Invétéré·e', emoji: '🌈', tagline: 'Je vois du green flag partout.' };
-  return { title: 'Anti-conformiste', emoji: '🎭', tagline: 'En désaccord avec tout le monde.' };
-}
-
-function getSpeedProfile(avgMs: number): { label: string; emoji: string } {
-  if (avgMs < 2000) return { label: 'Instinctif·ve', emoji: '⚡' };
-  if (avgMs < 4000) return { label: 'Décidé·e', emoji: '🎯' };
-  if (avgMs < 7000) return { label: 'Réfléchi·e', emoji: '🤔' };
-  return { label: 'Philosophe', emoji: '🧠' };
+  return t.archetype(pct, fast, hotStreak);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
    STATS COMPUTATION
    ═══════════════════════════════════════════════════════════════════════ */
 
-function computeDetailedStats(stats: PartyStats) {
+function computeDetailedStats(stats: PartyStats, t: TextesJeu = TEXTES_JEU.fr) {
   const totalDuels = stats.results.length;
 
   let correctGuesses = 0;
@@ -92,7 +69,7 @@ function computeDetailedStats(stats: PartyStats) {
   if (popular) {
     keyDuels.push({
       entry: popular,
-      label: `💡 D'accord avec ${popular.result.winner.percentage}% des joueurs`,
+      label: t.dAccordAvec(popular.result.winner.percentage),
       accent: '#10B981',
     });
   }
@@ -103,7 +80,7 @@ function computeDetailedStats(stats: PartyStats) {
   if (minority) {
     keyDuels.push({
       entry: minority,
-      label: `😈 Seulement ${minority.result.winner.percentage}% pensent comme toi`,
+      label: t.seulement(minority.result.winner.percentage),
       accent: '#EF4444',
     });
   }
@@ -115,7 +92,7 @@ function computeDetailedStats(stats: PartyStats) {
     const cp = closest.result.winner.percentage;
     keyDuels.push({
       entry: closest,
-      label: `⚖️ Le plus indécis : ${cp}% – ${100 - cp}%`,
+      label: t.indecis(cp, 100 - cp),
       accent: '#F59E0B',
     });
   }
@@ -132,6 +109,8 @@ function computeDetailedStats(stats: PartyStats) {
 
 export function GameRecap() {
   const router = useRouter();
+  const langue = useLangue();
+  const t = useTextesJeu();
   const { partyStats, partyConfig, resetGame, continueParty, profile } = useGameStore();
   const [mounted, setMounted] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -153,30 +132,30 @@ export function GameRecap() {
   }, []);
 
   useEffect(() => {
-    if (!partyStats) router.push('/jeu/jouer');
-  }, [partyStats, router]);
+    if (!partyStats) router.push(cheminLocalise(langue, '/jeu/jouer'));
+  }, [partyStats, router, langue]);
 
-  const stats = useMemo(() => partyStats ? computeDetailedStats(partyStats) : null, [partyStats]);
+  const stats = useMemo(() => partyStats ? computeDetailedStats(partyStats, t) : null, [partyStats, t]);
 
   if (!partyStats || !stats) return null;
 
-  const archetype = getArchetype(stats.accuracy, stats.bestStreak, stats.avgReactionMs);
-  const speedProfile = getSpeedProfile(stats.avgReactionMs);
+  const archetype = getArchetype(stats.accuracy, stats.bestStreak, stats.avgReactionMs, t);
+  const speedProfile = t.vitesse(stats.avgReactionMs);
   const categoryLabel = partyStats.categories.length > 0
-    ? partyStats.categories.map(c => CATEGORIES_CONFIG[c]?.labelFr || c).join(', ')
-    : 'Toutes';
+    ? partyStats.categories.map(c => (langue === 'fr' ? CATEGORIES_CONFIG[c]?.labelFr || c : libelleCategorie(c, langue))).join(', ')
+    : t.toutes;
 
   const shareText = [
     `🚩 Red or Green`,
     `${archetype.emoji} ${archetype.title}`,
     `📊 ${stats.accuracyPct}% · 🔥 ${stats.bestStreak} streak · ${speedProfile.emoji} ${(stats.avgReactionMs / 1000).toFixed(1)}s`,
-    `« ${archetype.tagline} »`,
-    `Et toi ? 👀 → redorgreen.fr/jeu`,
+    t.citation(archetype.tagline),
+    t.etToi,
   ].join('\n');
 
   const handleShare = async () => {
     if (navigator.share) {
-      try { await navigator.share({ text: shareText, url: 'https://redorgreen.fr/jeu?ref=recap' }); } catch {}
+      try { await navigator.share({ text: shareText, url: t.urlRecap }); } catch {}
     } else {
       await navigator.clipboard.writeText(shareText).catch(() => {});
       setCopied(true);
@@ -184,11 +163,11 @@ export function GameRecap() {
     }
   };
 
-  const handleContinue = () => { continueParty(partyConfig?.originalSize ?? 15); router.push('/jeu/jouer'); };
+  const handleContinue = () => { continueParty(partyConfig?.originalSize ?? 15); router.push(cheminLocalise(langue, '/jeu/jouer')); };
   const handleNewParty = () => {
     resetGame();
     if (profile) useGameStore.getState().setProfile(profile);
-    router.push('/jeu/jouer');
+    router.push(cheminLocalise(langue, '/jeu/jouer'));
   };
 
   return (
@@ -238,14 +217,14 @@ export function GameRecap() {
               fontSize: '0.8125rem', color: '#ccc', fontWeight: 700, fontStyle: 'italic',
               margin: 0, lineHeight: 1.35,
             }}>
-              « {archetype.tagline} »
+              {t.citation(archetype.tagline)}
             </p>
           </div>
 
           {/* 3 stat pills */}
           <div style={{ display: 'flex', gap: '0.3rem', padding: '0 0.6rem 0.4rem', justifyContent: 'center' }}>
-            <StatPill value={`${stats.accuracyPct}%`} label="Précision" color={stats.accuracyPct >= 60 ? '#10B981' : '#FF6B6B'} />
-            <StatPill value={`${stats.bestStreak}`} label="Streak 🔥" color="#FF6B6B" />
+            <StatPill value={`${stats.accuracyPct}%`} label={t.precision} color={stats.accuracyPct >= 60 ? '#10B981' : '#FF6B6B'} />
+            <StatPill value={`${stats.bestStreak}`} label={t.serie} color="#FF6B6B" />
             <StatPill value={`${(stats.avgReactionMs / 1000).toFixed(1)}s`} label={speedProfile.label} color="#3B82F6" />
           </div>
 
@@ -281,7 +260,7 @@ export function GameRecap() {
               : '0 4px 20px rgba(255,45,45,0.3)',
           }}
         >
-          {copied ? '✅ Copié !' : '📤 PARTAGER MON RÉSULTAT'}
+          {copied ? t.copie : t.partagerResultat}
         </button>
 
         {/* Publicité : le carré, une fois la partie finie. */}
@@ -290,7 +269,7 @@ export function GameRecap() {
         {/* KEY MOMENTS */}
         {stats.keyDuels.length > 0 && (
           <div style={{ marginTop: '0.7rem' }}>
-            <SectionLabel text="Tes moments clés" />
+            <SectionLabel text={t.momentsCles} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
               {stats.keyDuels.map((kd, i) => {
                 const isA = kd.entry.result.winner.id === kd.entry.duel.elementA.id;
@@ -318,7 +297,7 @@ export function GameRecap() {
                     <DuelBar percentage={pct} isCorrect={isCorrect} />
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', marginTop: '0.2rem' }}>
                       <span style={{ fontSize: '0.75rem', color: '#9A9AA0', flex: 1, lineHeight: 1.3 }}>
-                        vs {loserText}
+                        {t.vs(loserText)}
                       </span>
                       <span style={{ fontSize: '0.75rem', color: '#8A8A8E', flexShrink: 0 }}>
                         {100 - pct}%
@@ -343,7 +322,7 @@ export function GameRecap() {
           }}
         >
           <span>{showAllDuels ? '▲' : '▼'}</span>
-          <span>{showAllDuels ? 'Masquer les duels' : `Voir les ${stats.totalDuels} duels`}</span>
+          <span>{showAllDuels ? t.masquerDuels : t.voirDuels(stats.totalDuels)}</span>
         </button>
 
         {showAllDuels && (
@@ -383,7 +362,7 @@ export function GameRecap() {
                     </div>
                   )}
                   <p style={{ fontSize: '0.6875rem', color: '#8A8A8E', margin: '0.1rem 0 0', marginLeft: 20, lineHeight: 1.25 }}>
-                    vs {loserText}
+                    {t.vs(loserText)}
                   </p>
                 </div>
               );
@@ -395,23 +374,23 @@ export function GameRecap() {
         <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem' }}>
             <button onClick={handleNewParty} style={btnSecondary}>
-              🎯 Rejouer
+              {t.rejouer}
             </button>
             <button onClick={handleContinue} style={btnSecondary}>
-              🔄 +{partyConfig?.originalSize || 15} duels
+              {t.plusDuels(partyConfig?.originalSize || 15)}
             </button>
           </div>
 
           <a href={DON_URL} target="_blank" rel="noopener noreferrer" style={btnCafe}>
-            ☕ Offrir un café
+            {t.offrirCafe}
           </a>
 
           <div style={{
             display: 'flex', justifyContent: 'center', gap: '0.8rem',
             padding: '0.3rem 0',
           }}>
-            <Link href="/classement" style={linkStyle}>🏆 Classements</Link>
-            <Link href="/" style={linkStyle}>🏠 Accueil</Link>
+            <Link href={cheminLocalise(langue, '/classement')} style={linkStyle}>{t.classements}</Link>
+            <Link href={cheminLocalise(langue, '/')} style={linkStyle}>{t.accueil}</Link>
           </div>
         </div>
       </main>

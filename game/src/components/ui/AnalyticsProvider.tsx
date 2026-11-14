@@ -15,10 +15,12 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     trackPageView(pathname);
     
-    // Track game entries based on path
-    if (pathname === '/jeu' || pathname === '/jeu/jouer') {
+    // Track game entries based on path — la version anglaise (`/en/…`) compte
+    // comme la française : c'est le même jeu.
+    const chemin = pathname?.replace(/^\/en(?=\/)/, '') ?? pathname;
+    if (chemin === '/jeu' || chemin === '/jeu/jouer') {
       trackGameEntry('redflag');
-    } else if (pathname === '/flagornot') {
+    } else if (chemin === '/flagornot') {
       trackGameEntry('flagornot');
     }
   }, [pathname]);

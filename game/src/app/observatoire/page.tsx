@@ -1,13 +1,6 @@
 import type { Metadata } from 'next';
 import Link from '@/components/ui/LienIntention';
-import { withPrerenderTimeout } from '@/lib/prerenderTimeout';
-import { getPublicStats } from '@/lib/repositories';
-import {
-  getObservatoryData,
-  type GapEntry,
-  type ObservatoryData,
-  type SpreadEntry,
-} from '@/lib/leaderboard';
+import { chargerObservatoire, formatNumber, GapTable, SpreadList } from './tableaux';
 
 export const metadata: Metadata = {
   title: "L'Observatoire des red flags — ce sur quoi on n'est pas d'accord",
@@ -18,105 +11,11 @@ export const metadata: Metadata = {
 
 export const revalidate = 3600;
 
-const EMPTY: ObservatoryData = {
-  totalElements: 0,
-  totalVotes: 0,
-  genderGaps: [],
-  ageGaps: [],
-  mostContested: [],
-  mostConsensual: [],
-};
-
-function formatNumber(value: number): string {
-  return value.toLocaleString('fr-FR');
-}
-
-function GapTable({
-  entries,
-  labelA,
-  labelB,
-}: {
-  entries: GapEntry[];
-  labelA: string;
-  labelB: string;
-}) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
-      {entries.map((entry) => {
-        const harsherA = entry.gap > 0;
-        return (
-          <div
-            key={entry.texte}
-            style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.07)',
-              borderRadius: 12,
-              padding: '14px 18px',
-            }}
-          >
-            <p style={{ color: '#E5E7EB', fontSize: 14, fontWeight: 700, margin: '0 0 8px' }}>
-              {entry.texte}
-            </p>
-            <p style={{ color: '#9CA3AF', fontSize: 12, margin: 0, lineHeight: 1.6 }}>
-              {labelA} : <strong style={{ color: '#D1D5DB' }}>{entry.scoreA}</strong> ·{' '}
-              {labelB} : <strong style={{ color: '#D1D5DB' }}>{entry.scoreB}</strong> ·{' '}
-              écart de <strong style={{ color: '#F59E0B' }}>{Math.abs(entry.gap)} points</strong>{' '}
-              en faveur de {harsherA ? labelA.toLowerCase() : labelB.toLowerCase()}
-            </p>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function SpreadList({ entries, kind }: { entries: SpreadEntry[]; kind: 'contested' | 'consensual' }) {
-  const accent = kind === 'contested' ? '#F59E0B' : '#10B981';
-
-  return (
-    <ol style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16, padding: 0, listStyle: 'none' }}>
-      {entries.map((entry) => (
-        <li
-          key={entry.texte}
-          style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.07)',
-            borderLeft: `3px solid ${accent}`,
-            borderRadius: 12,
-            padding: '14px 18px',
-          }}
-        >
-          <p style={{ color: '#E5E7EB', fontSize: 14, fontWeight: 700, margin: '0 0 6px' }}>
-            {entry.texte}
-          </p>
-          <p style={{ color: '#9CA3AF', fontSize: 12, margin: 0, lineHeight: 1.6 }}>
-            Amplitude entre groupes :{' '}
-            <strong style={{ color: accent }}>{entry.spread} points</strong> · score général{' '}
-            {entry.eloGlobal}
-          </p>
-        </li>
-      ))}
-    </ol>
-  );
-}
+// Les tableaux (`GapTable`, `SpreadList`) et le chargement des données sont
+// dans `tableaux.tsx`, partagés avec `/en/observatoire`.
 
 export default async function ObservatoirePage() {
-  let data = EMPTY;
-  let votes: number | null = null;
-
-  try {
-    data = await withPrerenderTimeout(getObservatoryData(12));
-  } catch {
-    // Base indisponible : la page reste lisible, sans les tableaux.
-  }
-  try {
-    // Le nombre de votes vient de la table des votes. `data.totalVotes` est la
-    // somme des participations, qui compte chaque duel deux fois — une par
-    // comportement —, et la page annonçait donc le double du réel.
-    votes = (await withPrerenderTimeout(getPublicStats())).totalVotes;
-  } catch {
-    votes = null;
-  }
+  const { data, votes } = await chargerObservatoire('fr');
 
   const hasData = data.genderGaps.length > 0 || data.ageGaps.length > 0;
 

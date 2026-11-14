@@ -7,6 +7,9 @@ import { LoadingPhase } from './LoadingPhase';
 import { RevealPhase } from './RevealPhase';
 import { IdlePhase } from './IdlePhase';
 import { GenderSelect } from './GenderSelect';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { cheminLocalise } from '@/lib/i18n/langue';
+import { TEXTES_ORACLE } from './textes';
 import { POPUNDER_APRES } from '@/config/ads';
 import { usePopunderApres } from '@/components/ads/usePopunderApres';
 
@@ -39,6 +42,9 @@ export default function FlagOrNotPage() {
     setPrivateMode,
     verdictsDeLaVisite,
   } = useFlagOrNot();
+  const langue = useLangue();
+  const t = TEXTES_ORACLE[langue];
+  const lienStats = cheminLocalise(langue, '/flagornot/stats');
 
   // Au 4e verdict de la visite, le pop-under s'arme : il s'ouvre au clic suivant.
   usePopunderApres(verdictsDeLaVisite, POPUNDER_APRES.oracle);
@@ -87,7 +93,7 @@ export default function FlagOrNotPage() {
           <h1
             className="text-[14px] font-black tracking-widest oracle-gradient-text"
           >
-            L&apos;ORACLE
+            {t.titre}
           </h1>
         </div>
 
@@ -95,12 +101,12 @@ export default function FlagOrNotPage() {
         {(redCount > 0 || greenCount > 0) ? (
           <div className="flex items-center gap-2 min-w-20 justify-end">
             <Link
-              href="/flagornot/stats"
+              href={lienStats}
               /* La surface cliquable se reduisait au SVG de 15 px, soit un
                  tiers du minimum de 44. Les marges negatives elargissent la
                  cible sans deplacer l'icone. */
               className="-m-2 flex min-h-11 min-w-11 items-center justify-center text-[#4B5563] hover:text-white transition-colors"
-              aria-label="Voir les statistiques"
+              aria-label={t.voirStats}
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="20" x2="18" y2="10"/>
@@ -108,18 +114,18 @@ export default function FlagOrNotPage() {
                 <line x1="6" y1="20" x2="6" y2="14"/>
               </svg>
             </Link>
-            <span className="text-[11px] font-bold text-red-400">🚩 {redCount.toLocaleString('fr-FR')}</span>
-            <span className="text-[11px] font-bold text-emerald-400">✅ {greenCount.toLocaleString('fr-FR')}</span>
+            <span className="text-[11px] font-bold text-red-400">🚩 {redCount.toLocaleString(t.locale)}</span>
+            <span className="text-[11px] font-bold text-emerald-400">✅ {greenCount.toLocaleString(t.locale)}</span>
           </div>
         ) : (
           <div className="min-w-11 flex justify-end">
             <Link
-              href="/flagornot/stats"
+              href={lienStats}
               /* La surface cliquable se reduisait au SVG de 15 px, soit un
                  tiers du minimum de 44. Les marges negatives elargissent la
                  cible sans deplacer l'icone. */
               className="-m-2 flex min-h-11 min-w-11 items-center justify-center text-[#4B5563] hover:text-white transition-colors"
-              aria-label="Voir les statistiques"
+              aria-label={t.voirStats}
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="20" x2="18" y2="10"/>

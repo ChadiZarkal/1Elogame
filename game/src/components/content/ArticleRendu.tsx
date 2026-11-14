@@ -3,21 +3,26 @@
  * La mise en page unique des articles (voir `content/articles/types.ts`).
  *
  * Composant serveur : tout le texte est dans le HTML initial.
+ *
+ * Les articles écrivent leurs liens internes avec l'adresse française
+ * (`/guide`) dans les deux langues ; le rendu anglais les fait pointer vers
+ * `/en/guide` (`cheminLocalise`), sauf les pages restées en français.
  */
 
 import Link from '@/components/ui/LienIntention';
 import type { ReactNode } from 'react';
 import type { Bloc } from '@/content/articles';
+import { cheminLocalise, type Langue } from '@/lib/i18n/langue';
 
 /** `[libellé](/adresse)` et `**gras**`, rien d'autre. */
-export function Enrichi({ texte }: { texte: string }): ReactNode {
+export function Enrichi({ texte, langue = 'fr' }: { texte: string; langue?: Langue }): ReactNode {
   const morceaux = texte.split(/(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*)/g);
   return morceaux.map((m, i) => {
     const lien = m.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
     if (lien) {
       const [, libelle, href] = lien;
       return href.startsWith('/') ? (
-        <Link key={i} href={href}>
+        <Link key={i} href={cheminLocalise(langue, href)}>
           {libelle}
         </Link>
       ) : (
@@ -32,24 +37,24 @@ export function Enrichi({ texte }: { texte: string }): ReactNode {
   });
 }
 
-function RenduBloc({ bloc }: { bloc: Bloc }) {
+function RenduBloc({ bloc, langue }: { bloc: Bloc; langue: Langue }) {
   switch (bloc.type) {
     case 'p':
       return (
         <p>
-          <Enrichi texte={bloc.texte} />
+          <Enrichi texte={bloc.texte} langue={langue} />
         </p>
       );
     case 'h2':
-      return <h2><Enrichi texte={bloc.texte} /></h2>;
+      return <h2><Enrichi texte={bloc.texte} langue={langue} /></h2>;
     case 'h3':
-      return <h3><Enrichi texte={bloc.texte} /></h3>;
+      return <h3><Enrichi texte={bloc.texte} langue={langue} /></h3>;
     case 'liste':
       return (
         <ul>
           {bloc.items.map((item) => (
             <li key={item}>
-              <Enrichi texte={item} />
+              <Enrichi texte={item} langue={langue} />
             </li>
           ))}
         </ul>
@@ -84,7 +89,7 @@ function RenduBloc({ bloc }: { bloc: Bloc }) {
           <p className="article-encadre__titre">{bloc.titre}</p>
           {bloc.paragraphes.map((p) => (
             <p key={p}>
-              <Enrichi texte={p} />
+              <Enrichi texte={p} langue={langue} />
             </p>
           ))}
         </aside>
@@ -92,11 +97,11 @@ function RenduBloc({ bloc }: { bloc: Bloc }) {
   }
 }
 
-export function ArticleRendu({ blocs }: { blocs: Bloc[] }) {
+export function ArticleRendu({ blocs, langue = 'fr' }: { blocs: Bloc[]; langue?: Langue }) {
   return (
     <div className="legal-page__section article-corps">
       {blocs.map((bloc, i) => (
-        <RenduBloc key={i} bloc={bloc} />
+        <RenduBloc key={i} bloc={bloc} langue={langue} />
       ))}
     </div>
   );

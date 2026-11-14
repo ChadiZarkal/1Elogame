@@ -14,8 +14,10 @@
 import { motion } from 'framer-motion';
 import { JEU_PAUSE } from '@/config/ads';
 import { CadreRegie } from '@/components/ads/CadreRegie';
+import { useTextesJeu } from './textes';
 
 export function PausePubDuel({ duelsJoues, onContinuer }: { duelsJoues: number; onContinuer: () => void }) {
+  const t = useTextesJeu();
   return (
     <motion.div
       key="pause-pub-duel"
@@ -27,18 +29,18 @@ export function PausePubDuel({ duelsJoues, onContinuer }: { duelsJoues: number; 
     >
       <div className="text-center">
         <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-[#737373]">
-          {duelsJoues} duels joués
+          {t.pauseDuelsJoues(duelsJoues)}
         </p>
-        <p className="mt-1.5 text-[22px] font-black leading-tight text-[#F5F5F5]">Petite pause</p>
-        <p className="mt-1 text-[14px] text-[#A3A3A3]">Le duel suivant arrive juste après.</p>
+        <p className="mt-1.5 text-[22px] font-black leading-tight text-[#F5F5F5]">{t.pauseTitre}</p>
+        <p className="mt-1 text-[14px] text-[#A3A3A3]">{t.pauseSousTitre}</p>
       </div>
 
-      <aside aria-label="Publicité" className="mx-auto mt-5 w-full max-w-sm">
+      <aside aria-label={t.publicite} className="mx-auto mt-5 w-full max-w-sm">
         <p
           aria-hidden
           className="mb-2 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#5C5C5F]"
         >
-          Publicité
+          {t.publicite}
         </p>
         <CadreRegie unit={JEU_PAUSE} />
       </aside>
@@ -54,7 +56,7 @@ export function PausePubDuel({ duelsJoues, onContinuer }: { duelsJoues: number; 
           onClick={onContinuer}
           className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#DC2626] px-5 text-[16px] font-black uppercase tracking-[0.08em] text-white shadow-[0_10px_34px_rgba(220,38,38,0.35)] transition-colors hover:bg-[#EF4444] active:scale-[0.98]"
         >
-          Duel suivant
+          {t.duelSuivant}
           <span aria-hidden>→</span>
         </button>
       </div>

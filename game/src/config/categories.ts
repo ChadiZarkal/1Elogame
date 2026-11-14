@@ -142,3 +142,37 @@ export function getCategoryClasses(id: string): string {
   if (!category) return 'bg-gray-500/20 text-gray-400';
   return `${category.color} ${category.textColor}`;
 }
+
+// ---------------------------------------------------------------------------
+// Libellés anglais (« Le pire des deux » sous `/en`, traduction du 2026-11-14)
+// ---------------------------------------------------------------------------
+
+/**
+ * Les catégories et les tags en anglais. Les libellés français restent ceux
+ * de `CATEGORIES_CONFIG` et `TAGS_CONFIG`, que l'admin peut surcharger : ces
+ * tables-ci ne servent qu'aux pages anglaises.
+ */
+export const CATEGORY_LABELS_EN: Record<string, string> = {
+  sexe: 'Love & Sex',
+  quotidien: 'Everyday Life',
+};
+
+export const TAG_LABELS_EN: Record<string, string> = {
+  metier: 'Work',
+  couple: 'Relationships',
+  hygiene: 'Hygiene',
+  argent: 'Money',
+  numerique: 'Online',
+  social: 'Social',
+  sport: 'Fitness',
+  nourriture: 'Food',
+  emotionnel: 'Emotional',
+  transport: 'On the Road',
+  politique: 'Politics',
+};
+
+/** Le libellé d'une catégorie dans la langue voulue ; l'identifiant s'il est inconnu. */
+export function libelleCategorie(id: string, langue: 'fr' | 'en'): string {
+  if (langue === 'en') return CATEGORY_LABELS_EN[id] ?? id;
+  return CATEGORIES_CONFIG[id]?.labelFr ?? id;
+}

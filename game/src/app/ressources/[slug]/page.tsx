@@ -5,11 +5,14 @@ import { useRouter, useParams } from 'next/navigation';
 import { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import {
-  getMeterBySlug,
   getHighestSeverity,
   getYesAnswersByLevel,
 } from '@/config/meters-data';
+import { meterDe } from '@/config/meters-data-en';
+import { cheminLocalise } from '@/lib/i18n/langue';
+import { useLangue } from '@/lib/i18n/LangueContexte';
 import { IntroPhase } from './IntroPhase';
+import { useTextesRessources } from '../textes';
 
 // Lazy-load heavier phases — only downloaded when the user reaches them
 const QuizPhase = lazy(() => import('./QuizPhase').then(m => ({ default: m.QuizPhase })));
@@ -18,18 +21,25 @@ const ResultsPhase = lazy(() => import('./ResultsPhase').then(m => ({ default: m
 type Phase = 'intro' | 'quiz' | 'results';
 
 function PhaseFallback() {
+  const t = useTextesRessources();
   return (
     <div className="flex-1 flex items-center justify-center">
-      <p className="text-[#6B7280] animate-pulse">Chargement…</p>
+      <p className="text-[#6B7280] animate-pulse">{t.chargement}</p>
     </div>
   );
 }
 
+/**
+ * La page d'un outil. Partagée telle quelle par `/en/ressources/[slug]` : la
+ * langue vient de `LangueFournie`, posé par le gabarit `/en`.
+ */
 export default function MeterQuizPage() {
   const router = useRouter();
   const params = useParams();
   const slug = params.slug as string;
-  const meter = useMemo(() => getMeterBySlug(slug), [slug]);
+  const langue = useLangue();
+  const t = useTextesRessources();
+  const meter = useMemo(() => meterDe(langue, slug), [langue, slug]);
 
   const [phase, setPhase] = useState<Phase>('intro');
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -38,13 +48,13 @@ export default function MeterQuizPage() {
 
   // ── Redirect if unknown slug ──
   useEffect(() => {
-    if (!meter) router.replace('/ressources');
-  }, [meter, router]);
+    if (!meter) router.replace(cheminLocalise(langue, '/ressources'));
+  }, [meter, router, langue]);
 
   if (!meter) {
     return (
       <div className="min-h-[calc(100dvh-var(--header-h,3rem))] bg-[#0A0A0B] flex items-center justify-center">
-        <p className="text-[#6B7280]">Chargement…</p>
+        <p className="text-[#6B7280]">{t.chargement}</p>
       </div>
     );
   }
@@ -104,13 +114,13 @@ export default function MeterQuizPage() {
             } else if (phase === 'results') {
               setPhase('intro');
             } else {
-              window.location.href = '/ressources';
+              window.location.href = cheminLocalise(langue, '/ressources');
             }
           }}
           className="text-[#6B7280] hover:text-white transition-colors text-sm flex items-center gap-1 min-w-[48px] min-h-[48px] justify-start active:scale-95"
-          aria-label="Retour"
+          aria-label={t.retour}
         >
-          <ArrowLeft size={16} /> {phase === 'intro' ? 'Ressources' : 'Retour'}
+          <ArrowLeft size={16} /> {phase === 'intro' ? t.ressources : t.retour}
         </button>
 
         <h1 className="text-sm font-bold text-[#FAFAFA] tracking-tight absolute left-1/2 -translate-x-1/2">
@@ -119,12 +129,12 @@ export default function MeterQuizPage() {
 
         {/* Quick exit button */}
         <Link
-          href="/"
+          href={cheminLocalise(langue, '/')}
           className="text-[10px] text-[#4B5563] hover:text-[#EF4444] transition-colors min-w-[48px] min-h-[48px] flex items-center justify-end active:scale-95"
-          aria-label="Quitter rapidement"
-          title="Quitter rapidement"
+          aria-label={t.quitterRapidement}
+          title={t.quitterRapidement}
         >
-          ✕ Quitter
+          {t.quitter}
         </Link>
       </div>
 
@@ -140,8 +150,8 @@ export default function MeterQuizPage() {
               répond. Seulement avant de commencer : pendant le questionnaire,
               rien ne doit distraire. */}
           <p className="mx-auto mt-2 max-w-md px-5 pb-6 text-center text-[12px] text-[#9CA3AF]">
-            <Link href="/articles/violentometre-consentometre-outils-auto-evaluation" className="underline underline-offset-2 hover:text-[#D1D5DB]">
-              D&apos;où vient cet outil, et comment lire son résultat
+            <Link href={cheminLocalise(langue, '/articles/violentometre-consentometre-outils-auto-evaluation')} className="underline underline-offset-2 hover:text-[#D1D5DB]">
+              {t.lienArticleOutil}
             </Link>
           </p>
         </>

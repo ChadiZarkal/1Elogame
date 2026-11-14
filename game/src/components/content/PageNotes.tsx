@@ -24,6 +24,13 @@
 import Link from '@/components/ui/LienIntention';
 import { NativeAd } from '@/components/ads/NativeAd';
 import type { FaqItem, PageNotes as PageNotesData } from '@/content/page-notes';
+import type { Langue } from '@/lib/i18n/langue';
+
+/** Les libellés fixes du bloc. Le texte des notes, lui, vient de `notes`. */
+const LIBELLES = {
+  fr: { faq: 'Questions fréquentes', liees: 'Pages liées' },
+  en: { faq: 'Frequently asked questions', liees: 'Related pages' },
+} satisfies Record<Langue, Record<string, string>>;
 
 export function faqPageJsonLd(faq: FaqItem[]) {
   return {
@@ -41,9 +48,16 @@ interface Props {
   notes: PageNotesData;
   /** Passer à false si la route émet déjà un balisage FAQPage par ailleurs. */
   withFaqJsonLd?: boolean;
+  /**
+   * La langue des libellés fixes. Composant serveur : pas de `useLangue()`
+   * ici, la page anglaise passe `langue="en"` avec les notes anglaises
+   * (`content/page-notes-en`).
+   */
+  langue?: Langue;
 }
 
-export function PageNotes({ notes, withFaqJsonLd = true }: Props) {
+export function PageNotes({ notes, withFaqJsonLd = true, langue = 'fr' }: Props) {
+  const l = LIBELLES[langue];
   return (
     <>
       {withFaqJsonLd && notes.faq.length > 0 && (
@@ -96,7 +110,7 @@ export function PageNotes({ notes, withFaqJsonLd = true }: Props) {
 
           {notes.faq.length > 0 && (
             <>
-              <h3 className="page-notes__faq-title">Questions fréquentes</h3>
+              <h3 className="page-notes__faq-title">{l.faq}</h3>
               {notes.faq.map((item) => (
                 <details className="page-notes__item" key={item.question}>
                   <summary className="page-notes__summary">
@@ -119,7 +133,7 @@ export function PageNotes({ notes, withFaqJsonLd = true }: Props) {
           <NativeAd />
 
           {notes.related.length > 0 && (
-            <nav className="page-notes__related" aria-label="Pages liées">
+            <nav className="page-notes__related" aria-label={l.liees}>
               {notes.related.map((link) => (
                 <Link key={link.href} href={link.href}>
                   {link.label}

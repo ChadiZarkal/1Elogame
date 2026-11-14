@@ -24,15 +24,18 @@ describe('langues — adresses', () => {
     expect(cheminLocalise('en', '/')).toBe('/en');
     expect(cheminLocalise('en', '/redflagtest')).toBe('/en/redflagtest');
     expect(cheminLocalise('en', '/redflagtest/stats')).toBe('/en/redflagtest/stats');
-    expect(cheminLocalise('en', '/guide')).toBe('/guide');
+    expect(cheminLocalise('en', '/guide')).toBe('/en/guide');
+    // « C'est un 10 mais… » reste en français.
+    expect(cheminLocalise('en', '/dixmais')).toBe('/dixmais');
     expect(cheminLocalise('fr', '/redflagtest')).toBe('/redflagtest');
   });
 
   it('mène le bouton de langue à la bonne page', () => {
     expect(cheminAutreLangue('/')).toBe('/en');
     expect(cheminAutreLangue('/redflagtest/r/abc')).toBe('/en/redflagtest/r/abc');
-    // Une page sans traduction : l'accueil anglais, pas un /en/jeu introuvable.
-    expect(cheminAutreLangue('/jeu')).toBe('/en');
+    // Une page sans traduction : l'accueil anglais, pas un /en/dixmais introuvable.
+    expect(cheminAutreLangue('/dixmais')).toBe('/en');
+    expect(cheminAutreLangue('/jeu')).toBe('/en/jeu');
     expect(cheminAutreLangue('/en')).toBe('/');
     expect(cheminAutreLangue('/en/redflagtest/stats')).toBe('/redflagtest/stats');
   });
@@ -41,5 +44,6 @@ describe('langues — adresses', () => {
     expect(cheminFrancais('/en/redflagtest')).toBe('/redflagtest');
     expect(cheminFrancais('/en')).toBe('/');
     expect(cheminFrancais('/guide')).toBe('/guide');
+    expect(cheminFrancais('/en/guide')).toBe('/guide');
   });
 });
