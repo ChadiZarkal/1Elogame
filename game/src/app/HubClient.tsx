@@ -46,6 +46,8 @@ import { ACCUEIL_NATIVE } from '@/config/ads';
 import { NativeAd } from '@/components/ads/NativeAd';
 import { AFFICHER_PISSE_DEBOUT } from '@/config/affiliation';
 import { EncartPisseDebout } from '@/components/affiliation/EncartPisseDebout';
+import { BoutonLangue } from '@/components/ui/BoutonLangue';
+import type { Langue } from '@/lib/i18n/langue';
 
 type Jeu = {
   id: string;
@@ -124,6 +126,28 @@ const AUTRES_JEUX: Jeu[] = [
   },
 ];
 
+/*
+ * L'ACCUEIL EN ANGLAIS (`/en`, 2026-11-14)
+ *   Seul le Red Flag Test existe en anglais. Les trois autres jeux restent
+ *   présentés — c'est le site —, mais leur carte dit qu'ils sont en français
+ *   (« FR » dans le titre, « in French » dans l'action) : quelqu'un qui ne lit
+ *   pas le français ne doit pas le découvrir après avoir tapé.
+ */
+const PHARES_EN: Jeu[] = [
+  { ...PHARES[0], promesse: 'What other people see as a red flag in you.', action: 'Take the test', href: '/en/redflagtest' },
+  {
+    ...PHARES[1],
+    titre: "IT'S A 10 BUT… · FR",
+    promesse: 'Red flags, green flags: rate them up to 15/10. Their score is your average.',
+    action: 'Rate a profile (in French)',
+  },
+];
+
+const AUTRES_JEUX_EN: Jeu[] = [
+  { ...AUTRES_JEUX[0], titre: 'THE ORACLE · FR', promesse: 'You describe your situation, the AI decides.', action: 'Submit my case (in French)' },
+  { ...AUTRES_JEUX[1], titre: 'THE WORSE OF TWO · FR', promesse: 'Two behaviors, you pick the worse one.', action: 'Start a duel (in French)' },
+];
+
 /** Ce qu'on vient lire plutôt que jouer. */
 const REPERES: { emoji: string; titre: string; sous: string; href: string; couleur: string }[] = [
   {
@@ -145,6 +169,47 @@ const REPERES: { emoji: string; titre: string; sous: string; href: string; coule
   },
 ];
 
+const REPERES_EN: typeof REPERES = [
+  { ...REPERES[0], titre: 'WHAT IS A RED FLAG?', sous: 'Green, white, orange, red, black: what each color means (in French)' },
+  { ...REPERES[1], titre: 'VIOLENCE METER & MORE', sous: 'Consent, harassment…: take stock of a real situation (in French)' },
+];
+
+/** Les textes de l'accueil. Le français est celui qui était écrit dans la page. */
+const TEXTES = {
+  fr: {
+    alt: 'Red or Green — le Red Flag Test et les jeux de red flags',
+    accroche: <>« Red flag » désigne tout et n&apos;importe quoi. Ici, les joueurs tranchent.</>,
+    votes: 'votes',
+    garanties: 'Sans compte · anonyme',
+    phares: 'Les deux jeux phares',
+    etAussi: 'Et aussi',
+    comprendre: 'Comprendre',
+    cafeTitre: '☕ Offrir un café',
+    cafeTexte: <>Les jeux sont gratuits, sans compte. Si l&apos;un d&apos;eux t&apos;a fait rire ou réfléchir, un café aide à payer l&apos;hébergement et le temps passé à les écrire.</>,
+    cafeBouton: 'Soutenir sur Ko-fi',
+    secoursTitre: <>Si ce n&apos;est plus un jeu</>,
+    secoursTexte: <>Certaines situations ne se règlent pas par un vote. Le violentomètre et les autres échelles sont des outils d&apos;auto-évaluation sérieux, avec les numéros vers qui se tourner.</>,
+    secoursOutils: <>Violentomètre et outils d&apos;auto-évaluation</>,
+    secoursAPropos: 'Qui fait ce site, et sur quelles données',
+  },
+  en: {
+    alt: 'Red or Green — the Red Flag Test and red flag games',
+    accroche: <>“Red flag” gets used for anything and everything. Here, the players decide.</>,
+    votes: 'votes',
+    garanties: 'No account · anonymous',
+    phares: 'The two main games',
+    etAussi: 'Also on the site',
+    comprendre: 'Understand',
+    cafeTitre: '☕ Buy us a coffee',
+    cafeTexte: <>The games are free, with no account. If one of them made you laugh or think, a coffee helps pay for hosting and the time spent writing them.</>,
+    cafeBouton: 'Support us on Ko-fi',
+    secoursTitre: <>If it’s not a game anymore</>,
+    secoursTexte: <>Some situations can’t be settled by a vote. The violence meter and the other scales are serious self-assessment tools, with the numbers to call — in French, for France.</>,
+    secoursOutils: <>Violence meter and self-assessment tools (in French)</>,
+    secoursAPropos: 'Who makes this site, and with what data (in French)',
+  },
+} satisfies Record<Langue, Record<string, React.ReactNode>>;
+
 /** Ce que `page.tsx` a pu lire. `null` et liste vide = base muette. */
 export type DonneesHub = {
   votes: number | null;
@@ -154,10 +219,16 @@ export type DonneesHub = {
   bande: { rouges: string[]; verts: string[] };
   /** Les derniers articles. */
   articles: { slug: string; titre: string; emoji: string }[];
+  /** `/en` : l'accueil en anglais. Le français par défaut. */
+  langue?: Langue;
 };
 
-/** Séparateur de milliers français, pour que 128394 se lise. */
-const nombre = new Intl.NumberFormat('fr-FR');
+/** Séparateur de milliers, pour que 128394 se lise : « 128 394 », « 128,394 ». */
+const NOMBRES: Record<Langue, Intl.NumberFormat> = {
+  fr: new Intl.NumberFormat('fr-FR'),
+  en: new Intl.NumberFormat('en-US'),
+};
+const nombre = NOMBRES.fr;
 
 /**
  * Anneau de focus commun. Toute la page se parcourt au clavier ; sans lui, la
@@ -186,8 +257,13 @@ function TitreSection({ id, children }: { id: string; children: React.ReactNode 
  */
 const AFFICHER_A_LIRE = false;
 
-export function HubClient({ votes, comportementsClasses, pires, bande, articles }: DonneesHub) {
+export function HubClient({ votes, comportementsClasses, pires, bande, articles, langue = 'fr' }: DonneesHub) {
   const { tap } = useHaptics();
+  const en = langue === 'en';
+  const t = TEXTES[langue];
+  const phares = en ? PHARES_EN : PHARES;
+  const autresJeux = en ? AUTRES_JEUX_EN : AUTRES_JEUX;
+  const reperes = en ? REPERES_EN : REPERES;
 
   return (
     <div className="relative min-h-svh text-(--text-1) selection:bg-[#FF3B30]/30 selection:text-white">
@@ -208,6 +284,16 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
         className="relative z-10 mx-auto w-full max-w-110 px-4 pb-16 min-[360px]:px-5 sm:max-w-2xl sm:px-8"
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
       >
+        {/* ── 0. La langue ─────────────────────────────────────────────────── */}
+        {/* L'accueil n'a pas la barre du site : c'est ici, en haut à droite,
+            qu'on passe à l'anglais. Demandé « évident » (2026-11-14). */}
+        <div className="flex justify-end">
+          <BoutonLangue
+            long
+            className={`inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 text-[13px] font-black tracking-wide text-white transition-colors hover:bg-white/10 ${FOCUS}`}
+          />
+        </div>
+
         {/* ── 1. C'est quoi ? ────────────────────────────────────────────── */}
         <header className="flex flex-col items-center text-center">
           <h1>
@@ -215,7 +301,7 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
               src="/logo-rog-new.svg"
               /* Le nom accessible du h1 : Google le lit comme le titre de la
                  page. */
-              alt="Red or Green — le Red Flag Test et les jeux de red flags"
+              alt={t.alt}
               /* 192 × 86 : les dimensions réelles du fichier. */
               width={192}
               height={86}
@@ -230,8 +316,7 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
           </h1>
 
           <p className="mt-2 max-w-[30ch] text-[16px] font-semibold leading-snug text-(--text-1)">
-            « Red flag » désigne tout et n&apos;importe quoi. Ici, les joueurs
-            tranchent.
+            {t.accroche}
           </p>
           {/* Le chiffre remplace un adjectif : « les joueurs tranchent » ne
               veut rien dire tant qu'on ne sait pas combien ils sont. S'il
@@ -241,22 +326,22 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
           <p className="mt-1.5 text-[12px] font-black uppercase tracking-[0.14em] text-(--text-3)">
             {votes !== null && votes > 0 && (
               <>
-                <span className="text-(--text-2)">{nombre.format(votes)} votes</span>
+                <span className="text-(--text-2)">{NOMBRES[langue].format(votes)} {t.votes}</span>
                 {' · '}
               </>
             )}
-            Sans compte · anonyme
+            {t.garanties}
           </p>
         </header>
 
         {/* ── 2. Je fais quoi ? ──────────────────────────────────────────── */}
         <section className="mt-4" aria-labelledby="titre-phares">
-          <TitreSection id="titre-phares">Les deux jeux phares</TitreSection>
+          <TitreSection id="titre-phares">{t.phares}</TitreSection>
           {/* Côte à côte dès qu'il y a la place : deux cartes de même poids
               disent « l'un ou l'autre », là où deux cartes empilées se lisent
               comme un premier et un second. */}
           <ul className="grid gap-3 sm:grid-cols-2">
-            {PHARES.map((jeu, i) => (
+            {phares.map((jeu, i) => (
               <li key={jeu.id} className="entree" style={{ ['--rang' as string]: i }}>
                 <CartePhare jeu={jeu} onTap={tap} />
               </li>
@@ -266,9 +351,9 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
 
         {/* ── 3. Il y a quoi d'autre ? ───────────────────────────────────── */}
         <section className="mt-5" aria-labelledby="titre-jeux">
-          <TitreSection id="titre-jeux">Et aussi</TitreSection>
+          <TitreSection id="titre-jeux">{t.etAussi}</TitreSection>
           <ul className="grid gap-2 sm:grid-cols-2">
-            {AUTRES_JEUX.map((jeu) => (
+            {autresJeux.map((jeu) => (
               <li key={jeu.id}>
                 <CarteJeu jeu={jeu} onTap={tap} />
               </li>
@@ -279,7 +364,8 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
         {/* ── 3b. Spécial festival (lien affilié) ────────────────────────── */}
         {/* Juste sous les jeux, au deuxième écran : plus bas, sous le
             palmarès, presque personne ne le verrait. */}
-        {AFFICHER_PISSE_DEBOUT && <EncartPisseDebout className="revele mt-8" />}
+        {/* Pas en anglais : le lien mène à amazon.fr. */}
+        {AFFICHER_PISSE_DEBOUT && !en && <EncartPisseDebout className="revele mt-8" />}
 
         {/* ── 4. C'est sérieux ? ─────────────────────────────────────────── */}
         {/* Rendu seulement s'il y a de quoi le remplir : un podium vide, ou à
@@ -290,7 +376,9 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
             écrit à la main, décoratif, à 15 % d'opacité. Celui-ci est lu dans
             le classement, régénéré toutes les cinq minutes : ce qui défile est
             ce que les joueurs ont réellement tranché. */}
-        {pires.length >= 3 && (
+        {/* Pas en anglais non plus : les comportements classés sont ceux du
+            « pire des deux », écrits en français. */}
+        {!en && pires.length >= 3 && (
           <section className="revele mt-10" aria-labelledby="titre-palmares">
             <TitreSection id="titre-palmares">
               <Trophy size={13} aria-hidden className="text-[#F59E0B]" />
@@ -378,9 +466,9 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
 
         {/* ── 5a. Comprendre ─────────────────────────────────────────────── */}
         <section className="revele mt-10" aria-labelledby="titre-reperes">
-          <TitreSection id="titre-reperes">Comprendre</TitreSection>
+          <TitreSection id="titre-reperes">{t.comprendre}</TitreSection>
           <ul className="grid grid-cols-2 gap-3">
-            {REPERES.map((repere) => (
+            {reperes.map((repere) => (
               <li key={repere.href}>
                 <Link
                   href={repere.href}
@@ -408,7 +496,7 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
         {/* ── 5b. À lire ─────────────────────────────────────────────────── */}
         {/* L'accueil n'a pas de barre de menu (retirée pour laisser la place
             aux jeux) : sans cette section, rien n'y menait aux articles. */}
-        {AFFICHER_A_LIRE && articles.length > 0 && (
+        {AFFICHER_A_LIRE && !en && articles.length > 0 && (
           <section className="revele mt-10" aria-labelledby="titre-articles">
             <TitreSection id="titre-articles">À lire</TitreSection>
             <ul className="flex flex-col gap-2">
@@ -446,11 +534,10 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
           aria-labelledby="titre-cafe"
         >
           <h2 id="titre-cafe" className="text-[12px] font-black uppercase tracking-[0.18em] text-[#FFC04D]">
-            ☕ Offrir un café
+            {t.cafeTitre}
           </h2>
           <p className="mt-2 text-[15px] font-medium leading-relaxed text-[#D9C9A8]">
-            Les jeux sont gratuits, sans compte. Si l&apos;un d&apos;eux t&apos;a fait rire ou
-            réfléchir, un café aide à payer l&apos;hébergement et le temps passé à les écrire.
+            {t.cafeTexte}
           </p>
           <a
             href={DON_URL}
@@ -458,7 +545,7 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
             rel="noopener noreferrer"
             className={`mt-4 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#FFC04D] px-4 text-[14px] font-black text-black transition-opacity hover:opacity-90 ${FOCUS}`}
           >
-            Soutenir sur Ko-fi
+            {t.cafeBouton}
           </a>
         </section>
 
@@ -475,19 +562,17 @@ export function HubClient({ votes, comportementsClasses, pires, bande, articles 
         >
           <div className="flex items-center gap-2 text-[12px] font-black uppercase tracking-[0.18em] text-[#34D399]">
             <Shield size={14} aria-hidden />
-            <h2 id="titre-safe">Si ce n&apos;est plus un jeu</h2>
+            <h2 id="titre-safe">{t.secoursTitre}</h2>
           </div>
           <p className="mt-2 text-[15px] font-medium leading-relaxed text-[#A7C9B8]">
-            Certaines situations ne se règlent pas par un vote. Le violentomètre
-            et les autres échelles sont des outils d&apos;auto-évaluation
-            sérieux, avec les numéros vers qui se tourner.
+            {t.secoursTexte}
           </p>
           <div className="mt-4 flex flex-col">
             <LienLigne href="/ressources" onTap={tap} fleche="text-[#34D399]" vert>
-              Violentomètre et outils d&apos;auto-évaluation
+              {t.secoursOutils}
             </LienLigne>
             <LienLigne href="/a-propos" onTap={tap} fleche="text-(--text-3)">
-              Qui fait ce site, et sur quelles données
+              {t.secoursAPropos}
             </LienLigne>
           </div>
         </section>

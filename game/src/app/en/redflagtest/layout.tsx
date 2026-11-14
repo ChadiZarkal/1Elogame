@@ -10,9 +10,8 @@ import { LangueFournie } from '@/lib/i18n/LangueContexte';
  * serveur (`lib/rft/traduction`).
  *
  * FERMÉ AUX MOTEURS POUR L'INSTANT
- *   La barre du site, le menu et le pied de page sont encore en français, et
- *   les pages vers lesquelles le test renvoie (guide, ressources,
- *   confidentialité) aussi. Ouvrir l'indexation et déclarer le lien entre les
+ *   Les pages vers lesquelles le test renvoie (guide, ressources,
+ *   confidentialité, les autres jeux) sont en français. Ouvrir l'indexation et déclarer le lien entre les
  *   deux versions (`hreflang`) se fera quand l'anglais sera relu et l'entourage
  *   traduit : il suffira de retirer `robots` ici et d'ajouter
  *   `alternates.languages` des deux côtés.

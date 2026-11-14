@@ -5,6 +5,8 @@ import Link from '@/components/ui/LienIntention';
 import { usePathname } from 'next/navigation';
 import { CONTACT_EMAIL, INSTAGRAM_HANDLE, INSTAGRAM_URL } from '@/config/contact';
 import { LienCafe } from './LienCafe';
+import { BoutonLangue } from './BoutonLangue';
+import { cheminLocalise, estTraduit, langueDuChemin } from '@/lib/i18n/langue';
 
 /**
  * Pied de page présent sur toutes les routes publiques.
@@ -67,6 +69,40 @@ const LEGAL_LINKS = [
   { href: '/cgu', label: 'CGU' },
 ];
 
+/*
+ * LE PIED DE PAGE EN ANGLAIS (2026-11-14), sur les pages sous `/en` : mêmes
+ * liens, libellés anglais, et « FR » sur ceux qui mènent à une page française.
+ */
+const LIBELLES_EN: Record<string, string> = {
+  'Les jeux': 'The games',
+  'Comprendre': 'Understand',
+  'Le site': 'About the site',
+  "C'est un 10 mais…": "It's a 10 but…",
+  "L'Oracle": 'The Oracle',
+  'Le pire des deux': 'The worse of two',
+  'Guide des flags': 'Flag guide',
+  'Les pires red flags': 'The worst red flags',
+  'Articles': 'Articles',
+  'Classement des red flags': 'Red flag ranking',
+  "L'Observatoire": 'The Observatory',
+  "Outils d'auto-évaluation": 'Self-assessment tools',
+  'Violentomètre': 'Violence meter',
+  'À propos': 'About',
+  'Méthodologie': 'Methodology',
+  'Sources': 'Sources',
+  'Mentions légales': 'Legal notice',
+  'Confidentialité': 'Privacy',
+  'CGU': 'Terms of use',
+};
+
+function lienLocalise(enAnglais: boolean, l: { href: string; label: string }) {
+  if (!enAnglais) return l;
+  const label = LIBELLES_EN[l.label] ?? l.label;
+  return estTraduit(l.href)
+    ? { href: cheminLocalise('en', l.href), label }
+    : { href: l.href, label: `${label} · FR` };
+}
+
 export function SiteFooter() {
   const pathname = usePathname() ?? '';
   /* Replié sur mobile, toujours ouvert dès la tablette. Les liens restent dans
@@ -75,6 +111,8 @@ export function SiteFooter() {
   const [navOpen, setNavOpen] = useState(false);
 
   if (HIDDEN_PATHS.some((re) => re.test(pathname))) return null;
+
+  const enAnglais = langueDuChemin(pathname) === 'en';
 
   return (
     <footer
@@ -97,7 +135,7 @@ export function SiteFooter() {
           >
             ›
           </span>
-          Plan du site
+          {enAnglais ? 'Site map' : 'Plan du site'}
         </button>
 
         {/* Intitulés en `p` et non en `h2` : le pied de page est rendu sur
@@ -106,16 +144,16 @@ export function SiteFooter() {
             diffusé. Le `nav` et son `aria-label` suffisent au repérage. */}
         <nav
           id="site-footer-nav"
-          aria-label="Navigation du site"
+          aria-label={enAnglais ? 'Site navigation' : 'Navigation du site'}
           className={`grid-cols-2 gap-8 sm:grid sm:grid-cols-3 ${navOpen ? 'grid' : 'hidden'}`}
         >
           {NAV_GROUPS.map((group) => (
             <div key={group.title}>
               <p className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#5C5C5F]">
-                {group.title}
+                {enAnglais ? LIBELLES_EN[group.title] ?? group.title : group.title}
               </p>
               <ul className="space-y-2">
-                {group.links.map((link) => (
+                {group.links.map((brut) => lienLocalise(enAnglais, brut)).map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
@@ -131,10 +169,10 @@ export function SiteFooter() {
 
           <div>
             <p className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#5C5C5F]">
-              Le site
+              {enAnglais ? 'About the site' : 'Le site'}
             </p>
             <ul className="space-y-2">
-              {LEGAL_LINKS.map((link) => (
+              {LEGAL_LINKS.map((brut) => lienLocalise(enAnglais, brut)).map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
@@ -167,7 +205,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <LienCafe className="text-[12px] font-semibold text-[#A6A6A6] transition-colors hover:text-white">
-                  Soutenir le site
+                  {enAnglais ? 'Support the site' : 'Soutenir le site'}
                 </LienCafe>
               </li>
             </ul>
@@ -177,11 +215,22 @@ export function SiteFooter() {
         {/* Hors du plan du site replié : visible sur mobile sans rien ouvrir.
             Sur sa propre ligne : glissé dans la ligne de contact, il passait à
             la ligne en y laissant une puce orpheline. */}
-        <LienCafe className="mt-8 inline-flex min-h-11 items-center text-[12px] font-semibold text-[#A6A6A6] transition-colors hover:text-white" />
+        <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-1">
+          <LienCafe className="inline-flex min-h-11 items-center text-[12px] font-semibold text-[#A6A6A6] transition-colors hover:text-white">
+            {enAnglais ? '☕ Buy us a coffee' : undefined}
+          </LienCafe>
+          {/* La langue, ici aussi : c'est en bas de page qu'on la cherche souvent. */}
+          <BoutonLangue
+            long
+            className="inline-flex min-h-11 items-center gap-1.5 text-[12px] font-semibold text-[#A6A6A6] transition-colors hover:text-white"
+          />
+        </div>
 
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
           <p className="text-[10px] text-[#5C5C5F]">
-            RED OR GREEN © 2026 • POUR REPÉRER LES TOXICITÉS ORDINAIRES
+            {enAnglais
+              ? 'RED OR GREEN © 2026 • FOR SPOTTING EVERYDAY TOXICITY'
+              : 'RED OR GREEN © 2026 • POUR REPÉRER LES TOXICITÉS ORDINAIRES'}
           </p>
           <span aria-hidden className="text-[10px] text-[#3A3A3D]">•</span>
           <a
