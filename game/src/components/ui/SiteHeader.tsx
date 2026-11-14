@@ -23,6 +23,8 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
 import { DON_URL } from '@/config/contact';
+import { cheminLocalise, estTraduit, langueDuChemin } from '@/lib/i18n/langue';
+import { BoutonLangue } from './BoutonLangue';
 
 /**
  * L'accueil est exclu : il porte déjà le logo en grand, la rangée d'onglets
@@ -35,7 +37,7 @@ import { DON_URL } from '@/config/contact';
    parce que les deux en-têtes s'appelaient `.site-header` — celui de la barre,
    et celui du front-end de référence, que `flac.css` habille. Les classes de la
    barre s'appellent désormais `barre-site` : plus aucun nom en commun. */
-const HIDDEN_PATHS = [/^\/$/, /^\/admin(\/|$)/, /^\/dixmais\/admin(\/|$)/];
+const HIDDEN_PATHS = [/^\/$/, /^\/en$/, /^\/admin(\/|$)/, /^\/dixmais\/admin(\/|$)/];
 
 /*
  * Les jeux, les outils et les pages de lecture portent tous cette même barre.
@@ -103,6 +105,49 @@ const INLINE = [
   { href: '/ressources', label: 'Outils' },
 ];
 
+/*
+ * LA BARRE EN ANGLAIS (2026-11-14)
+ *   Sur une page sous `/en`, les libellés passent en anglais et les liens vont
+ *   à la version anglaise quand elle existe. Une page qui n'existe qu'en
+ *   français le dit (« FR ») : on n'y envoie personne par surprise.
+ */
+const LIBELLES_EN: Record<string, string> = {
+  'Jouer': 'Play',
+  "C'est un 10 mais…": "It's a 10 but…",
+  "L'Oracle": 'The Oracle',
+  'Le pire des deux': 'The worse of two',
+  'Comprendre': 'Understand',
+  "S'évaluer": 'Self-check',
+  'Le site': 'About the site',
+  'Guide des flags': 'Flag guide',
+  'Les pires red flags': 'The worst red flags',
+  'Articles': 'Articles',
+  'Classement': 'Ranking',
+  'Observatoire': 'Observatory',
+  'Méthodologie': 'Methodology',
+  'Tous les outils': 'All the tools',
+  'Violentomètre': 'Violence meter',
+  'Consentomètre': 'Consent meter',
+  'Incestomètre': 'Incest meter',
+  'Harcèlomètre': 'Harassment meter',
+  'Discriminomètre': 'Discrimination meter',
+  'À propos': 'About',
+  'Sources': 'Sources',
+  'Mentions légales': 'Legal notice',
+  'Confidentialité': 'Privacy',
+  'Guide': 'Guide',
+  'Outils': 'Tools',
+};
+
+/** Un lien de la barre, dans la langue de la page. */
+function lienLocalise(enAnglais: boolean, l: { href: string; label: string }) {
+  if (!enAnglais) return l;
+  const label = LIBELLES_EN[l.label] ?? l.label;
+  return estTraduit(l.href)
+    ? { href: cheminLocalise('en', l.href), label }
+    : { href: l.href, label: `${label} · FR` };
+}
+
 /**
  * L'adresse de la page, l'accueil ramené à « / ».
  *
@@ -131,6 +176,8 @@ export function SiteHeader() {
 
   if (HIDDEN_PATHS.some((re) => re.test(pathname))) return null;
 
+  const enAnglais = langueDuChemin(pathname) === 'en';
+
   const isCurrent = (href: string) =>
     href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/');
 
@@ -140,12 +187,18 @@ export function SiteHeader() {
         {/* Le logo plutôt que le nom en texte : c'est la marque telle qu'on la
             voit partout ailleurs sur le site. Image décorative dans un lien
             nommé — le nom accessible est porté par le lien. */}
-        <Link href="/" className="barre-site__brand" aria-label="Red or Green — accueil">
+        <Link
+          href={enAnglais ? '/en' : '/'}
+          className="barre-site__brand"
+          aria-label={enAnglais ? 'Red or Green — home' : 'Red or Green — accueil'}
+        >
           <Image src="/logo-rog-new.svg" alt="" width={192} height={86} priority />
         </Link>
 
-        <nav className="barre-site__inline" aria-label="Navigation principale">
-          {INLINE.map((l) => (
+        <nav className="barre-site__inline" aria-label={enAnglais ? 'Main navigation' : 'Navigation principale'}>
+          {/* En anglais, « Jouer » mènerait à un jeu français : le Red Flag Test le remplace. */}
+          {(enAnglais ? [{ href: '/redflagtest', label: 'Red Flag Test' }, ...INLINE.slice(1)] : INLINE)
+            .map((brut) => lienLocalise(enAnglais, brut)).map((l) => (
             <Link
               key={l.href}
               href={l.href}
@@ -156,6 +209,9 @@ export function SiteHeader() {
           ))}
         </nav>
 
+        {/* La langue, en vue sur toutes les pages qui portent la barre. */}
+        <BoutonLangue className="barre-site__langue" />
+
         {/* Toujours visible, à côté du menu : replié dans le panneau, le don
             n'était vu que de ceux qui ouvraient le menu. */}
         <a
@@ -163,14 +219,14 @@ export function SiteHeader() {
           target="_blank"
           rel="noopener noreferrer"
           className="barre-site__cafe"
-          aria-label="Offrir un café (Ko-fi, nouvel onglet)"
+          aria-label={enAnglais ? 'Buy us a coffee (Ko-fi, new tab)' : 'Offrir un café (Ko-fi, nouvel onglet)'}
         >
           <span aria-hidden>☕</span>
-          <span>Café</span>
+          <span>{enAnglais ? 'Coffee' : 'Café'}</span>
         </a>
 
         <details className="barre-site__menu" ref={panelRef}>
-          <summary aria-label="Ouvrir le menu de navigation">
+          <summary aria-label={enAnglais ? 'Open the navigation menu' : 'Ouvrir le menu de navigation'}>
             <Menu size={16} aria-hidden />
             <span>Menu</span>
           </summary>
@@ -181,9 +237,9 @@ export function SiteHeader() {
                     toutes les pages, avant leur titre de niveau 1. Quatre `h2`
                     en tete de document inverseraient la hierarchie partout. Le
                     `nav` et son `aria-label` portent deja le reperage. */}
-                <p>{section.title}</p>
+                <p>{enAnglais ? LIBELLES_EN[section.title] ?? section.title : section.title}</p>
                 <ul>
-                  {section.links.map((l) => (
+                  {section.links.map((brut) => lienLocalise(enAnglais, brut)).map((l) => (
                     <li key={l.href}>
                       <Link href={l.href} aria-current={isCurrent(l.href) ? 'page' : undefined}>
                         {l.label}
@@ -194,7 +250,7 @@ export function SiteHeader() {
               </div>
             ))}
             <a href={DON_URL} target="_blank" rel="noopener noreferrer" className="barre-site__panel-cafe">
-              ☕ Offrir un café au site
+              {enAnglais ? '☕ Buy the site a coffee' : '☕ Offrir un café au site'}
             </a>
           </div>
         </details>

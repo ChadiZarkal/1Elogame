@@ -1,5 +1,7 @@
 import { withApiHandler, apiSuccess } from '@/lib/apiHelpers';
 import { lireStatsPubliques } from '@/lib/rft/repository';
+import { traduireStats } from '@/lib/rft/traduction';
+import { langueDe } from '@/lib/i18n/langue';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +13,7 @@ export const dynamic = 'force-dynamic';
  * figurer le barème le rendrait consultable par tout le monde, et le test
  * truquable en une requête.
  */
-export const GET = withApiHandler(async () => {
-  return apiSuccess({ questions: await lireStatsPubliques() });
+export const GET = withApiHandler(async (req: Request) => {
+  const langue = langueDe(new URL(req.url).searchParams.get('lang'));
+  return apiSuccess({ questions: traduireStats(await lireStatsPubliques(), langue) });
 }, { rateLimit: 'public' });

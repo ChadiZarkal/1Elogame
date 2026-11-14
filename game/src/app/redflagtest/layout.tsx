@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { FeuillesRft } from './FeuillesRft';
 
 /**
  * Le front-end de référence, chargé tel quel.
@@ -26,11 +27,6 @@ import type { Metadata } from 'next';
  *   site. L'adresse porte désormais l'empreinte de leur contenu : elle change
  *   dès qu'une feuille change, et un cache périmé ne peut plus la servir.
  */
-
-/** L'empreinte du contenu des trois feuilles, calculée au build (`next.config.ts`). */
-const VERSION_FEUILLES = process.env.RFT_VERSION_FEUILLES ?? 'dev';
-
-const feuille = (chemin: string) => `${chemin}?v=${VERSION_FEUILLES}`;
 
 export const metadata: Metadata = {
   // « red flag test » est la requête visée : en tête, tel qu'on le tape.
@@ -62,14 +58,7 @@ export const metadata: Metadata = {
 export default function RedflagtestLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      {/* Des <link> et non des imports, délibérément : un import ferait
-          réécrire les URL d'assets par Next, or tout l'intérêt est que la
-          feuille de référence reste identique à l'octet près. */}
-      <link rel="stylesheet" href={feuille('/rft/css/reset.css')} />
-      <link rel="stylesheet" href={feuille('/rft/css/flac.css')} />
-      {/* La nôtre : elle répare ce que l'application hôte casse. Voir l'en-tête
-          du fichier. */}
-      <link rel="stylesheet" href={feuille('/rft/adapter.css')} />
+      <FeuillesRft />
       {children}
     </>
   );

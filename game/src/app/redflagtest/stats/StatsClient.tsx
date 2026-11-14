@@ -23,6 +23,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/ui/LienIntention';
 import type { StatQuestion } from '@/lib/rft/types';
+import { useTextesRft } from '../textes';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { cheminLocalise } from '@/lib/i18n/langue';
 
 /**
  * En dessous de ce nombre de réponses, la question n'est pas montrée.
@@ -55,24 +58,27 @@ export function StatsClient() {
   const [questions, setQuestions] = useState<StatQuestion[] | null>(null);
   const [erreur, setErreur] = useState('');
   const [tri, setTri] = useState<Tri>('ecart');
+  const t = useTextesRft();
+  const langue = useLangue();
+  const test = cheminLocalise(langue, '/redflagtest');
 
   useEffect(() => {
     let vivant = true;
     (async () => {
       try {
-        const json = await fetch('/api/redflagtest/stats').then((r) => r.json());
+        const json = await fetch(`/api/redflagtest/stats?lang=${langue}`).then((r) => r.json());
         if (!vivant) return;
         if (!json.success) {
-          setErreur(json.error?.message ?? 'Chargement impossible.');
+          setErreur(json.error?.message ?? t.statsErreur);
           return;
         }
         setQuestions(json.data.questions);
       } catch {
-        if (vivant) setErreur('Connexion perdue.');
+        if (vivant) setErreur(t.erreurConnexion);
       }
     })();
     return () => { vivant = false; };
-  }, []);
+  }, [langue, t]);
 
   const visibles = useMemo(() => {
     if (!questions) return [];
@@ -86,21 +92,18 @@ export function StatsClient() {
     return (
       <div className="error-message">
         <p>{erreur}</p>
-        <Link href="/redflagtest">Revenir au test</Link>
+        <Link href={test}>{t.revenirAuTest}</Link>
       </div>
     );
   }
 
-  if (!questions) return <p className="loading-message">Chargement…</p>;
+  if (!questions) return <p className="loading-message">{t.chargement}</p>;
 
   if (visibles.length === 0) {
     return (
       <div className="error-message">
-        <p>
-          Pas encore assez de parties pour dire quoi que ce soit. Il en faut au moins{' '}
-          {MINIMUM} par question.
-        </p>
-        <Link href="/redflagtest">Faire le test</Link>
+        <p>{t.statsPasAssez(MINIMUM)}</p>
+        <Link href={test}>{t.faireLeTest}</Link>
       </div>
     );
   }
@@ -113,14 +116,14 @@ export function StatsClient() {
           className={tri === 'ecart' ? 'stats-tri-actif' : ''}
           onClick={() => setTri('ecart')}
         >
-          Ce qui divise le plus
+          {t.statsDivise}
         </button>
         <button
           type="button"
           className={tri === 'ordre' ? 'stats-tri-actif' : ''}
           onClick={() => setTri('ordre')}
         >
-          Dans l’ordre du test
+          {t.statsOrdre}
         </button>
       </div>
 
@@ -128,11 +131,7 @@ export function StatsClient() {
         <Question key={q.questionId} q={q} />
       ))}
 
-      <p className="intro-note">
-        Seules les questions ayant reçu au moins {MINIMUM} réponses sont affichées. La
-        répartition hommes / femmes n’apparaît qu’à partir de {MINIMUM_PAR_SEXE} de chaque
-        côté — en dessous, un pourcentage ne dirait rien.
-      </p>
+      <p className="intro-note">{t.statsNote(MINIMUM, MINIMUM_PAR_SEXE)}</p>
     </section>
   );
 }
@@ -140,15 +139,16 @@ export function StatsClient() {
 function Question({ q }: { q: StatQuestion }) {
   const ecart = ecartMaximal(q);
   const comparable = ecart !== null;
+  const t = useTextesRft();
 
   return (
     <article className="stats-question">
       <h3>{q.texte}</h3>
       <p className="stats-question-base">
-        {q.total} réponse{q.total > 1 ? 's' : ''}
-        {comparable && ` · ${q.totalH} hommes, ${q.totalF} femmes`}
+        {t.statsReponses(q.total)}
+        {comparable && t.statsHF(q.totalH, q.totalF)}
         {comparable && ecart >= 15 && (
-          <span className="stats-question-divise"> · {ecart} points d’écart</span>
+          <span className="stats-question-divise">{t.statsEcart(ecart)}</span>
         )}
       </p>
 
@@ -164,13 +164,13 @@ function Question({ q }: { q: StatQuestion }) {
 
               <div className="stats-barre">
                 <span className="stats-barre-fond" style={{ width: `${tous}%` }} />
-                <span className="stats-barre-valeur">{tous} %</span>
+                <span className="stats-barre-valeur">{t.pct(tous)}</span>
               </div>
 
               {comparable && (
                 <p className="stats-barre-sexes">
-                  <span className="stats-sexe-h">{h} % des hommes</span>
-                  <span className="stats-sexe-f">{f} % des femmes</span>
+                  <span className="stats-sexe-h">{t.statsHommes(h)}</span>
+                  <span className="stats-sexe-f">{t.statsFemmes(f)}</span>
                 </p>
               )}
             </li>

@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { isAdFreePath, NATIVE_BANNER, type NativeAdUnit } from '@/config/ads';
 import { CadreRegie } from './CadreRegie';
+import { useLangue } from '@/lib/i18n/LangueContexte';
 
 /**
  * @module components/ads/NativeAd
@@ -39,14 +40,15 @@ export function NativeAd({
   unit?: NativeAdUnit;
 }) {
   const pathname = usePathname() ?? '';
+  const mention = useLangue() === 'en' ? 'Advertisement' : 'Publicité';
 
   if (!unit.enabled) return null;
   if (isAdFreePath(pathname)) return null;
 
   return (
-    <aside className={`native-ad ${className}`.trim()} aria-label="Publicité">
+    <aside className={`native-ad ${className}`.trim()} aria-label={mention}>
       <p className="native-ad__label" aria-hidden>
-        Publicité
+        {mention}
       </p>
       {/* Dans son propre document : la régie ne remplit qu'un conteneur par
           page, et le site ne recharge jamais la sienne (voir CadreRegie). */}

@@ -20,6 +20,9 @@ import Link from '@/components/ui/LienIntention';
 import type { Resultat } from '@/lib/rft/types';
 import { ParisDesAutres, Stories } from './Stories';
 import { DON_URL } from '@/config/contact';
+import { useTextesRft } from './textes';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { cheminLocalise } from '@/lib/i18n/langue';
 
 /*
  * LE RÉCAP N'A PAS BESOIN DU PROFIL DU JOUEUR.
@@ -38,6 +41,8 @@ export function Recap({
   pari?: number | null;
 }) {
   const [ouvert, setOuvert] = useState(true);
+  const t = useTextesRft();
+  const langue = useLangue();
 
   const fermer = () => {
     setOuvert(false);
@@ -51,11 +56,11 @@ export function Recap({
       {ouvert && <Stories resultat={resultat} onRecommencer={onRecommencer} onFermer={fermer} pari={pari} />}
 
       <button type="button" className="stories-rouvrir" onClick={() => setOuvert(true)}>
-        <span>▶</span> Revoir le résultat en stories
+        <span>▶</span> {t.revoirStories}
       </button>
 
       {/* Sous les stories : tout ce qui se lit mais ne se raconte pas. */}
-      <p className="detail-titre">Le détail</p>
+      <p className="detail-titre">{t.detail}</p>
 
       {resultat.axes.length >= 3 && (
         <section className="stats-subscores">
@@ -78,7 +83,7 @@ export function Recap({
                     style={{ width: `${axe.valeur}%`, backgroundColor: axe.color ?? 'var(--red)' }}
                   />
                 </span>
-                <span className="subscore-value">{axe.valeur} %</span>
+                <span className="subscore-value">{t.pct(axe.valeur)}</span>
               </li>
             ))}
           </ul>
@@ -89,26 +94,26 @@ export function Recap({
         <section className="stats-rare-section">
           <h3>Highlights</h3>
           <hr />
-          <p className="subtitle">Les réponses qui te distinguent le plus de la masse</p>
+          <p className="subtitle">{t.highlightsSousTitre}</p>
           <ul className="stats-rare">
             {resultat.highlights.map((item, i) => (
               <li key={i}>
                 <div className="question-answer">
                   <p className="question">{item.question}</p>
                   <p className="answer">
-                    <em>&laquo;&nbsp;{item.reponse}&nbsp;&raquo;</em>
+                    <em>{t.cite(item.reponse)}</em>
                   </p>
                   <p className="humor-message">{item.pique}</p>
                 </div>
                 <p className="rarity-pct">
-                  <strong>{item.part} %</strong>
+                  <strong>{t.pct(item.part)}</strong>
                 </p>
               </li>
             ))}
           </ul>
           <p className="sample-size">
-            Basé sur {resultat.participants.toLocaleString('fr-FR')} partie
-            {resultat.participants > 1 ? 's' : ''}
+            {t.basePartiesAvant}{resultat.participants.toLocaleString(t.locale)}
+            {t.partie(resultat.participants)}
           </p>
         </section>
       )}
@@ -126,18 +131,18 @@ export function Recap({
           <p>{r.texte}</p>
           {r.lien && (
             <Link href={r.lien} className="stats-ressource-lien">
-              Voir la ressource →
+              {t.voirRessource}
             </Link>
           )}
         </aside>
       ))}
 
-      <Link href="/redflagtest/stats" className="stats-public-link">
-        Voir ce que les autres ont répondu
+      <Link href={cheminLocalise(langue, '/redflagtest/stats')} className="stats-public-link">
+        {t.voirAutres}
       </Link>
 
       <a href={DON_URL} target="_blank" rel="noopener noreferrer" className="rft-cafe">
-        ☕ Offrir un café
+        {t.cafe}
       </a>
     </>
   );
@@ -168,6 +173,7 @@ function point(index: number, total: number, ratio: number): [number, number] {
 }
 
 function Radar({ axes }: { axes: Resultat['axes'] }) {
+  const t = useTextesRft();
   const total = axes.length;
   const contour = axes.map((_, i) => point(i, total, 1).join(',')).join(' ');
   const forme = axes
@@ -180,7 +186,7 @@ function Radar({ axes }: { axes: Resultat['axes'] }) {
         viewBox={CADRE}
         width="100%"
         role="img"
-        aria-label={axes.map((a) => `${a.label} ${a.valeur} %`).join(', ')}
+        aria-label={axes.map((a) => `${a.label} ${t.pct(a.valeur)}`).join(', ')}
       >
         {/* Les anneaux, pour qu'une forme se lise contre une échelle plutôt que
             s'admire dans l'abstrait. */}

@@ -16,16 +16,12 @@
  */
 
 import { useState } from 'react';
+import { useTextesRft } from '../../textes';
 
 /** À moins de cet écart, on considère que c'était vu. */
 const TRES_PROCHE = 5;
 const PROCHE = 15;
 
-function verdict(ecart: number): string {
-  if (ecart <= TRES_PROCHE) return 'Tu le connais bien. Trop bien, peut-être.';
-  if (ecart <= PROCHE) return 'Pas loin. Tu as des soupçons fondés.';
-  return 'Complètement à côté. Ça en dit long sur l’un de vous deux.';
-}
 
 export function Devinette({
   score,
@@ -36,17 +32,18 @@ export function Devinette({
 }) {
   const [pari, setPari] = useState(50);
   const [joue, setJoue] = useState(false);
+  const t = useTextesRft();
 
   const ecart = Math.abs(pari - score);
 
   return (
     <section className="intro-wrapper">
-      <h2>Devine son score</h2>
+      <h2>{t.devineSonScore}</h2>
 
       <div className="intro-form">
         {!joue ? (
           <>
-            <p className="guess-value">{pari} %</p>
+            <p className="guess-value">{t.pct(pari)}</p>
             <input
               className="guess-slider"
               type="range"
@@ -54,28 +51,27 @@ export function Devinette({
               max={120}
               value={pari}
               onChange={(e) => setPari(Number(e.target.value))}
-              aria-label="Ton estimation de son score"
+              aria-label={t.devineCurseur}
             />
             <p className="intro-note">
-              À combien de pourcents de red flag tu l’estimes&nbsp;? Le curseur va au-delà de
-              100 — le test aussi.
+              {t.devineNote}
             </p>
             <button type="button" className="button-start" onClick={() => setJoue(true)}>
-              Je parie
+              {t.jeParieSeul}
             </button>
             <button type="button" className="guess-skip" onClick={onReveler}>
-              Montre-moi directement
+              {t.montreMoi}
             </button>
           </>
         ) : (
           <>
             <p className="guess-verdict">
-              Tu as dit <strong>{pari} %</strong>. Il est à <strong>{score} %</strong>.
+              {t.tuAsDit}<strong>{t.pct(pari)}</strong>{t.ilEstA}<strong>{t.pct(score)}</strong>.
               <br />
-              {verdict(ecart)}
+              {t.devineVerdict(ecart, TRES_PROCHE, PROCHE)}
             </p>
             <button type="button" className="button-start" onClick={onReveler}>
-              Voir son profil
+              {t.voirSonProfil}
             </button>
           </>
         )}

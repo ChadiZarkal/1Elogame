@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { withApiHandler, apiSuccess, validateBody } from '@/lib/apiHelpers';
 import { enregistrerPartie } from '@/lib/rft/repository';
+import { traduireResultat } from '@/lib/rft/traduction';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,11 +32,14 @@ const schema = z.object({
   test: z.boolean().default(false),
   /** Le score deviné avant la partie (voir `Pari`) ; `null` si le joueur a passé. */
   pari: z.number().int().min(0).max(120).nullable().default(null),
+  /** La langue du résultat renvoyé. La partie enregistrée, elle, n'en a pas. */
+  langue: z.enum(['fr', 'en']).default('fr'),
 });
 
 export const POST = withApiHandler(async (req: NextRequest) => {
   const { data, error } = validateBody(await req.json(), schema);
   if (error) return error;
 
-  return apiSuccess(await enregistrerPartie(data));
+  const { langue, ...partie } = data;
+  return apiSuccess(traduireResultat(await enregistrerPartie(partie), langue));
 }, { rateLimit: 'public' });

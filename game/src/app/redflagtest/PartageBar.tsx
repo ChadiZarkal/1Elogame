@@ -18,6 +18,9 @@
  */
 
 import { useState } from 'react';
+import { useTextesRft } from './textes';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { cheminLocalise } from '@/lib/i18n/langue';
 
 /** Le temps que dure la confirmation « copié ». */
 const CONFIRMATION_MS = 2200;
@@ -36,18 +39,18 @@ export function PartageBar({
   pari?: number | null;
 }) {
   const [copie, setCopie] = useState(false);
+  const t = useTextesRft();
+  const langue = useLangue();
 
   // Construite au clic et non au rendu : le serveur ne connaît pas le domaine
   // depuis lequel la page a été servie, et une URL figée à la compilation
   // enverrait les liens de la préversion vers la production.
-  const lien = () => `${window.location.origin}/redflagtest/r/${code}`;
+  const lien = () => `${window.location.origin}${cheminLocalise(langue, `/redflagtest/r/${code}`)}`;
 
-  const constat = pari !== null
-    ? `J’avais parié ${pari} %, je suis à ${score} % red flag`
-    : `Je suis ${score} % red flag`;
+  const constat = t.partageConstat(score, pari);
   const texte = archetype
-    ? `${constat} — ${archetype}. Devine ton score.`
-    : `${constat}. Devine ton score.`;
+    ? `${constat} — ${archetype}. ${t.partageInvite}`
+    : `${constat}. ${t.partageInvite}`;
 
   const copier = async () => {
     try {
@@ -79,20 +82,20 @@ export function PartageBar({
         {/* eslint-disable-next-line @next/next/no-img-element -- markup de
             référence ; `flac.css` dimensionne l'icône via .share-icon. */}
         <img className="share-icon" src="/rft/img/symbol-share.svg" alt="" />
-        <p>Défie un pote</p>
+        <p>{t.defieUnPote}</p>
       </button>
 
       <button type="button" className="partage-copier" onClick={copier}>
-        {copie ? '✓ Lien copié' : 'Copier le lien'}
+        {copie ? t.lienCopie : t.copierLien}
       </button>
 
       <p className="partage-note">
-        Celui qui l’ouvre devra deviner ton score avant de le voir.
+        {t.partageNote1}
         {/* Chaque écran des stories est dessiné pour être capturé : borné à la
             hauteur du téléphone, et signé. Le dire évite que le lien soit le
             seul chemin de sortie. */}
         <br />
-        Ou fais une capture d’un écran, chacun porte l’adresse.
+        {t.partageNote2}
       </p>
     </div>
   );

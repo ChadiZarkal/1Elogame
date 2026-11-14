@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
 import { withApiHandler, apiSuccess, apiError } from '@/lib/apiHelpers';
 import { lireResultatParCode } from '@/lib/rft/repository';
+import { traduireResultat } from '@/lib/rft/traduction';
+import { langueDe } from '@/lib/i18n/langue';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +14,7 @@ export const dynamic = 'force-dynamic';
  * celui du jour de la partie — un barème modifié depuis ne doit pas réécrire
  * après coup le résultat de quelqu'un.
  */
-export const GET = withApiHandler(async (_req: NextRequest, ctx) => {
+export const GET = withApiHandler(async (req: NextRequest, ctx) => {
   const params = await (ctx as { params?: Promise<{ code?: string }> } | undefined)?.params;
   const code = params?.code;
   if (!code) return apiError('BAD_REQUEST', 'Code manquant', 400);
@@ -20,5 +22,5 @@ export const GET = withApiHandler(async (_req: NextRequest, ctx) => {
   const resultat = await lireResultatParCode(code);
   if (!resultat) return apiError('NOT_FOUND', 'Ce résultat n’existe pas ou plus.', 404);
 
-  return apiSuccess(resultat);
+  return apiSuccess(traduireResultat(resultat, langueDe(req.nextUrl.searchParams.get('lang'))));
 }, { rateLimit: 'public' });

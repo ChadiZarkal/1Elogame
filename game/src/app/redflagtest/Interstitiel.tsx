@@ -22,6 +22,7 @@ import { RFT_INTERSTITIEL, RFT_INTERSTITIEL_DUREE_S, RFT_POPUNDER } from '@/conf
 import { useAdsterraScript } from '@/components/ads/useAdsterraScript';
 import { CadreRegie } from '@/components/ads/CadreRegie';
 import { armerPopunder, desarmerPopunder, installerGardePopunder } from '@/components/ads/gardePopunder';
+import { useTextesRft } from './textes';
 
 export function Interstitiel({
   pret,
@@ -32,6 +33,7 @@ export function Interstitiel({
   onContinuer: () => void;
 }) {
   const [reste, setReste] = useState(RFT_INTERSTITIEL_DUREE_S);
+  const t = useTextesRft();
 
   // La garde avant le script, fermée : un tap pendant le compte à rebours ne
   // doit pas consommer le pop-under (voir `gardePopunder`).
@@ -67,8 +69,8 @@ export function Interstitiel({
 
   return (
     <section className="intro-wrapper interstitiel">
-      <h2>Ton résultat arrive</h2>
-      <p className="interstitiel-texte">On compte les dégâts…</p>
+      <h2>{t.pauseTitre}</h2>
+      <p className="interstitiel-texte">{t.pauseTexte}</p>
 
       <div className="intro-form interstitiel-actions">
         <button
@@ -78,12 +80,12 @@ export function Interstitiel({
           disabled={!accessible}
           aria-live="polite"
         >
-          {reste > 0 ? `Ton résultat dans ${reste}…` : pret ? 'Voir mon résultat' : 'Encore un instant…'}
+          {reste > 0 ? t.pauseDans(reste) : pret ? t.pauseVoir : t.pauseEncore}
         </button>
       </div>
 
-      <aside className="interstitiel-pub" aria-label="Publicité">
-        <p className="interstitiel-etiquette" aria-hidden="true">Publicité</p>
+      <aside className="interstitiel-pub" aria-label={t.publicite}>
+        <p className="interstitiel-etiquette" aria-hidden="true">{t.publicite}</p>
         {RFT_INTERSTITIEL.enabled && <CadreRegie unit={RFT_INTERSTITIEL} />}
       </aside>
     </section>

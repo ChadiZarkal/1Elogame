@@ -6,6 +6,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AdOverlays } from "@/components/ads/AdOverlays";
 import { SiteFooter } from "@/components/ui/SiteFooter";
 import { SiteHeader } from "@/components/ui/SiteHeader";
+import { SuggestionLangue } from "@/components/ui/BoutonLangue";
 import { CONTACT_EMAIL, INSTAGRAM_URL } from "@/config/contact";
 
 import "./globals.css";
@@ -225,6 +226,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <AnalyticsProvider>
             <MotionPreferences>
+              <SuggestionLangue />
               <SiteHeader />
               {children}
               <SiteFooter />
