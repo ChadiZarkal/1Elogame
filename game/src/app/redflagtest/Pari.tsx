@@ -25,6 +25,7 @@ import { useState } from 'react';
 import { useGesteModeTest } from './modeTest';
 import { RFT_DEPART } from '@/config/ads';
 import { NativeAd } from '@/components/ads/NativeAd';
+import { useTextesRft } from './textes';
 
 /** Le curseur va au-delà de 100, comme le score. */
 export const PARI_MAX = 120;
@@ -76,16 +77,17 @@ export function Pari({
   // écran est le premier de chaque partie.
   const taperTitre = useGesteModeTest();
   const couleur = couleurPari(pari);
+  const t = useTextesRft();
 
   return (
     <section
       className={`intro-wrapper pari${pari > SEUIL_HORS_BAREME ? ' is-hors-bareme' : ''}`}
       style={{ '--pari-couleur': couleur } as React.CSSProperties}
     >
-      <h2 onClick={taperTitre}>Devine ton score</h2>
+      <h2 onClick={taperTitre}>{t.pariTitre}</h2>
 
       <p className="pari-question">
-        À combien de pourcents de red flag tu t’estimes&nbsp;?
+        {t.pariQuestion}
       </p>
 
       {/* Le drapeau du test, teint par le pari. Il flotte un peu : c'est le
@@ -110,8 +112,8 @@ export function Pari({
           max={PARI_MAX}
           value={pari}
           onChange={(e) => setPari(Number(e.target.value))}
-          aria-label="Ton estimation de ton score de red flag"
-          aria-valuetext={`${pari} %`}
+          aria-label={t.pariCurseur}
+          aria-valuetext={t.pct(pari)}
         />
         <div className="pari-graduations" aria-hidden="true">
           {GRADUATIONS.map((g) => (
@@ -128,12 +130,12 @@ export function Pari({
           `.button-start`. */}
       <div className="intro-form pari-actions">
         <button type="button" className="button-start" onClick={() => onParier(pari)}>
-          Je parie {pari} %
+          {t.jeParie(pari)}
         </button>
         <button type="button" className="guess-skip" onClick={onPasser}>
-          Passer
+          {t.passer}
         </button>
-        <p className="intro-note pari-note">Réponse à la fin du test.</p>
+        <p className="intro-note pari-note">{t.pariNote}</p>
       </div>
 
       {/* Sous « Je parie » et « Passer » : le départ de la partie reste en haut. */}

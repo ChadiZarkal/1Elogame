@@ -1,56 +1,17 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import { lireResultatParCode } from '@/lib/rft/repository';
-import { ResultatPartage } from './ResultatPartage';
+import { metadataPartage, PagePartage } from './PagePartage';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * La page d'un résultat partagé.
- *
- * Rendue sur le serveur pour une raison précise : c'est la seule façon que
- * l'aperçu du lien — celui qui s'affiche dans une conversation — porte le score
- * et l'archétype. Une page client afficherait le titre générique du site, et
- * personne ne cliquerait.
- */
+/** La page d'un résultat partagé, en français. Voir `PagePartage`. */
 export async function generateMetadata(
   { params }: { params: Promise<{ code: string }> },
 ): Promise<Metadata> {
   const { code } = await params;
-  const resultat = await lireResultatParCode(code).catch(() => null);
-
-  if (!resultat) return { title: 'Résultat introuvable', robots: { index: false } };
-
-  const titre = resultat.archetype
-    ? `${resultat.score} % red flag — ${resultat.archetype.titre}`
-    : `${resultat.score} % red flag`;
-
-  return {
-    title: titre,
-    description: 'Devine son score avant de le voir, puis fais le test.',
-    // Un résultat individuel n'a rien à faire dans un index : il n'apporte rien
-    // à quelqu'un qui cherche le jeu, et il expose une partie sans que son
-    // auteur l'ait demandé.
-    robots: { index: false, follow: false },
-    openGraph: { title: titre, description: 'Devine son score avant de le voir.' },
-    twitter: { card: 'summary_large_image', title: titre },
-  };
+  return metadataPartage(code, 'fr');
 }
 
-export default async function PagePartage({ params }: { params: Promise<{ code: string }> }) {
+export default async function Page({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
-  const resultat = await lireResultatParCode(code).catch(() => null);
-  if (!resultat) notFound();
-
-  return (
-    <main className="main-container redflagtest" id="main-content">
-      <div className="client-container">
-        <header className="site-header">
-          {/* Pas de logo : la barre du site le porte déjà (voir page.tsx). */}
-          <h1 className="site-tagline">Quelqu’un t’a envoyé son résultat.</h1>
-        </header>
-        <ResultatPartage resultat={resultat} />
-      </div>
-    </main>
-  );
+  return <PagePartage code={code} langue="fr" />;
 }

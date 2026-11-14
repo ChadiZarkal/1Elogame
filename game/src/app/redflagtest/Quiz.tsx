@@ -41,6 +41,8 @@ import { Recap } from './Recap';
 import { BanniereRegie } from '@/components/ads/BanniereRegie';
 import { RFT_BANNIERE, banniereActive } from '@/config/ads';
 import { modeTestActif, useGesteModeTest } from './modeTest';
+import { useTextesRft } from './textes';
+import { useLangue } from '@/lib/i18n/LangueContexte';
 import {
   enregistrer,
   oublier,
@@ -105,6 +107,8 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
   const [pari, setPari] = useState<number | null>(null);
   /** Cinq taps sur « Question X sur Y » : le mode test (voir `modeTest`). */
   const gesteModeTest = useGesteModeTest();
+  const langue = useLangue();
+  const t = useTextesRft();
 
   // Pousser un état dans le DOM est la seule chose pour laquelle un effet est
   // réellement fait.
@@ -138,17 +142,18 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
 
     (async () => {
       try {
-        const reponse = await fetch('/api/redflagtest/quiz');
+        // La langue dans l'adresse : le CDN garde une copie par langue.
+        const reponse = await fetch(`/api/redflagtest/quiz?lang=${langue}`);
         const json = await reponse.json();
         if (!vivant) return;
 
         if (!json.success) {
-          setMessage(json.error?.message ?? 'Le test n’a pas pu être chargé.');
+          setMessage(json.error?.message ?? t.erreurChargement);
           setPhase('erreur');
           return;
         }
         if (json.data.questions.length === 0) {
-          setMessage('Le test n’a pas encore de questions.');
+          setMessage(t.erreurVide);
           setPhase('erreur');
           return;
         }
@@ -165,13 +170,13 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
         }
       } catch {
         if (!vivant) return;
-        setMessage('Connexion perdue.');
+        setMessage(t.erreurConnexion);
         setPhase('erreur');
       }
     })();
 
     return () => { vivant = false; };
-  }, [entrer]);
+  }, [entrer, langue, t]);
 
   const demarrer = (choisi: PlayerProfile) => {
     setProfil(choisi);
@@ -221,11 +226,12 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
             // Relu à l'envoi et non au début : le mode a pu changer en route.
             test: modeTestActif(),
             pari,
+            langue,
           }),
         });
         const json = await reponse.json();
         if (!json.success) {
-          setMessage(json.error?.message ?? 'Ton résultat n’a pas pu être calculé.');
+          setMessage(json.error?.message ?? t.erreurCalcul);
           setPhase('erreur');
           return;
         }
@@ -233,11 +239,11 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
         // la pause, une fois le compte à rebours écoulé.
         setResultat(json.data);
       } catch {
-        setMessage('Connexion perdue. Ton résultat n’a pas pu être calculé.');
+        setMessage(t.erreurConnexionCalcul);
         setPhase('erreur');
       }
     },
-    [pari],
+    [pari, langue, t],
   );
 
   const repondre = useCallback(
@@ -305,7 +311,7 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
   if (phase === 'chargement') {
     return (
       <>
-        <p className="loading-message">Chargement…</p>
+        <p className="loading-message">{t.chargement}</p>
         {presentation}
       </>
     );
@@ -315,7 +321,7 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
     return (
       <div className="error-message">
         <p>{message}</p>
-        <Link href="/">Revenir à l’accueil</Link>
+        <Link href="/">{t.retourAccueil}</Link>
       </div>
     );
   }
@@ -366,7 +372,7 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
 
         {phase === 'jeu' && quiz && (
           <p className="progress-count" onClick={gesteModeTest}>
-            Question <strong>{index + 1}</strong> sur {quiz.questions.length}
+            {t.questionAvant}<strong>{index + 1}</strong>{t.questionSur}{quiz.questions.length}
           </p>
         )}
 
@@ -415,9 +421,9 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
                   type="button"
                   className="button-back"
                   onClick={retour}
-                  aria-label="Revenir à la question précédente"
+                  aria-label={t.retourAria}
                 >
-                  ← Retour
+                  {t.retour}
                 </button>
               )}
             </div>
@@ -429,8 +435,8 @@ export function Quiz({ presentation }: { presentation?: React.ReactNode } = {}) 
           Tant que l'emplacement n'a pas de clé, le compteur reste. */}
       {banniereActive(RFT_BANNIERE) ? (
         phase === 'jeu' && (
-          <aside className="rft-banniere" aria-label="Publicité">
-            <p className="rft-banniere__label" aria-hidden>Publicité</p>
+          <aside className="rft-banniere" aria-label={t.publicite}>
+            <p className="rft-banniere__label" aria-hidden>{t.publicite}</p>
             <BanniereRegie unit={RFT_BANNIERE} />
           </aside>
         )
@@ -457,18 +463,19 @@ function Reprise({
   onReprendre: () => void;
   onRecommencer: () => void;
 }) {
+  const t = useTextesRft();
   return (
     <section className="intro-wrapper">
-      <h2>Tu avais commencé</h2>
+      <h2>{t.repriseTitre}</h2>
       <div className="intro-form">
         <p className="intro-note">
-          Tu en étais à <strong>{repondues} / {total}</strong>. On reprend où tu t’es arrêté ?
+          {t.repriseAvant}<strong>{repondues} / {total}</strong>{t.repriseApres}
         </p>
         <button type="button" className="button-start" onClick={onReprendre}>
-          Reprendre
+          {t.reprendre}
         </button>
         <button type="button" className="button-back" onClick={onRecommencer}>
-          Recommencer depuis le début
+          {t.recommencerDebut}
         </button>
       </div>
     </section>

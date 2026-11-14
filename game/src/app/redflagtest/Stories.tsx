@@ -43,6 +43,9 @@ import Link from '@/components/ui/LienIntention';
 import type { Axe, Classement, ParisMoyens, Resultat } from '@/lib/rft/types';
 import { PartageBar } from './PartageBar';
 import { DON_URL } from '@/config/contact';
+import { TEXTES_RFT, useTextesRft, type TextesRft } from './textes';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { cheminLocalise } from '@/lib/i18n/langue';
 
 /**
  * Fait défiler le nombre jusqu'à sa valeur, pour qu'il atterrisse au lieu
@@ -114,8 +117,10 @@ export function Stories({
   const [sens, setSens] = useState<1 | -1>(1);
   const depart = useRef<{ x: number; y: number } | null>(null);
   const cadre = useRef<HTMLDivElement>(null);
+  const t = useTextesRft();
+  const langue = useLangue();
 
-  const ecrans = construireEcrans(resultat, { onRecommencer, onFermer, pari });
+  const ecrans = construireEcrans(resultat, { onRecommencer, onFermer, pari }, t);
   const total = ecrans.length;
   const dernier = index === total - 1;
 
@@ -208,7 +213,7 @@ export function Stories({
       role="dialog"
       aria-modal="true"
       aria-roledescription="carrousel"
-      aria-label="Ton résultat"
+      aria-label={t.storiesAria}
     >
       <div
         ref={cadre}
@@ -223,7 +228,7 @@ export function Stories({
               key={e.cle}
               type="button"
               className={`stories-segment${i <= index ? ' is-vu' : ''}`}
-              aria-label={`Écran ${i + 1} sur ${total} : ${e.titre}`}
+              aria-label={t.ecranAria(i + 1, total, e.titre)}
               aria-current={i === index ? 'step' : undefined}
               onClick={() => aller(i)}
             />
@@ -235,7 +240,7 @@ export function Stories({
               référence, déjà servi tel quel par le reste du test. */}
           <img className="stories-logo" src="/rft/img/logo-rog.svg" alt="Red or Green" />
           <span className="stories-compte">{index + 1} / {total}</span>
-          <button type="button" className="stories-fermer" onClick={onFermer} aria-label="Fermer et voir le détail">
+          <button type="button" className="stories-fermer" onClick={onFermer} aria-label={t.fermerAria}>
             ✕
           </button>
         </div>
@@ -253,8 +258,8 @@ export function Stories({
             key={ecran.cle}
             className={`story ${sens > 0 ? 'vient-de-droite' : 'vient-de-gauche'}`}
             role="group"
-            aria-roledescription="écran"
-            aria-label={`${index + 1} sur ${total} : ${ecran.titre}`}
+            aria-roledescription={t.ecranRole}
+            aria-label={t.ecranGroupeAria(index + 1, total, ecran.titre)}
           >
             {ecran.contenu}
           </div>
@@ -263,16 +268,16 @@ export function Stories({
         <div className="stories-pied">
           {dernier ? (
             <button type="button" className="stories-continuer" onClick={() => aller(0)}>
-              ‹ Revoir depuis le début
+              {t.revoirDebut}
             </button>
           ) : (
             <button type="button" className="stories-continuer" onClick={suivant}>
-              Touche pour continuer ›
+              {t.continuer}
             </button>
           )}
           {/* Sans elle, une capture d'écran est un rectangle anonyme : personne
               ne sait d'où elle vient ni où aller la refaire. */}
-          <p className="stories-signature">redorgreen.fr/redflagtest</p>
+          <p className="stories-signature">redorgreen.fr{cheminLocalise(langue, '/redflagtest')}</p>
         </div>
       </div>
     </div>
@@ -299,50 +304,54 @@ interface Cohorte {
   c: Classement;
 }
 
-/** Les cohortes classées, de la plus large à la plus précise. */
-function cohortes(r: Resultat): Cohorte[] {
+/**
+ * Les cohortes classées, de la plus large à la plus précise.
+ *
+ * « Sur 100 autre » ne se lit pas : la cohorte « autre » garde son nom, entre
+ * guillemets, derrière « joueurs ». « Sur 100 23-26 ans » non plus : la
+ * tranche d'âge a besoin d'un nom. Les tournures sont dans `textes`.
+ */
+function cohortes(r: Resultat, t: TextesRft): Cohorte[] {
   const { tous, sexe, age } = r.classements;
   const liste: Cohorte[] = [];
-  if (tous) liste.push({ cle: 'tous', nom: 'joueurs', court: 'Tous', c: tous });
-  // « Sur 100 autre » ne se lit pas non plus : la cohorte « autre » garde son
-  // nom, entre guillemets, derrière « joueurs ».
-  if (sexe) {
-    const nom = sexe.legende === 'autre' ? 'joueurs « autre »' : sexe.legende;
-    liste.push({ cle: 'sexe', nom, court: majuscule(sexe.legende), c: sexe });
-  }
-  // « Sur 100 23-26 ans » ne se lit pas : la tranche d'âge a besoin d'un nom.
-  if (age) liste.push({ cle: 'age', nom: `joueurs de ${age.legende}`, court: majuscule(age.legende), c: age });
+  const ajouter = (cle: CleCohorte, c: Classement | null) => {
+    if (c) liste.push({ cle, nom: t.cohorteNom(cle, c.legende), court: t.cohorteCourt(cle, c.legende), c });
+  };
+  ajouter('tous', tous);
+  ajouter('sexe', sexe);
+  ajouter('age', age);
   return liste;
 }
 
 function construireEcrans(
   r: Resultat,
   actions: { onRecommencer?: () => void; onFermer: () => void; pari: number | null },
+  t: TextesRft,
 ): Ecran[] {
   const ecrans: Ecran[] = [
-    { cle: 'verdict', titre: 'Ton verdict', contenu: <EcranVerdict resultat={r} /> },
+    { cle: 'verdict', titre: t.tVerdict, contenu: <EcranVerdict resultat={r} /> },
   ];
 
   // Juste après le verdict : c'est la première question qu'on se pose en
   // découvrant son score quand on avait parié.
   if (actions.pari !== null) {
-    ecrans.push({ cle: 'pari', titre: 'Ton pari', contenu: <EcranPari score={r.score} pari={actions.pari} paris={r.paris ?? null} /> });
+    ecrans.push({ cle: 'pari', titre: t.tPari, contenu: <EcranPari score={r.score} pari={actions.pari} paris={r.paris ?? null} /> });
   }
 
-  const groupes = cohortes(r);
+  const groupes = cohortes(r, t);
 
   if (groupes.some((g) => g.c.moyenne !== null)) {
-    ecrans.push({ cle: 'moyennes', titre: 'Toi face aux autres', contenu: <EcranMoyennes resultat={r} /> });
+    ecrans.push({ cle: 'moyennes', titre: t.tMoyennes, contenu: <EcranMoyennes resultat={r} /> });
   }
 
   if (groupes.length > 0) {
-    ecrans.push({ cle: 'classement', titre: 'Ton classement', contenu: <EcranClassement resultat={r} /> });
+    ecrans.push({ cle: 'classement', titre: t.tClassement, contenu: <EcranClassement resultat={r} /> });
   }
 
   if (r.axes.length > 0) {
     ecrans.push({
       cle: 'axes',
-      titre: r.pointNoir ? 'Ton point noir' : 'Catégorie par catégorie',
+      titre: r.pointNoir ? t.tPointNoir : t.tCategories,
       contenu: <EcranAxes axes={r.axes} pointNoir={r.pointNoir} />,
     });
   }
@@ -350,7 +359,7 @@ function construireEcrans(
   if (r.reponseDecisive || r.highlights.length > 0) {
     ecrans.push({
       cle: 'reponse',
-      titre: r.reponseDecisive ? 'La réponse qui t’a coûté le plus' : 'Ta réponse la plus rare',
+      titre: r.reponseDecisive ? t.tReponseChere : t.tReponseRare,
       contenu: <EcranReponse resultat={r} />,
     });
   }
@@ -359,16 +368,17 @@ function construireEcrans(
   // texte a son propre écran, AVANT le partage : glissé sous des boutons, il
   // serait le bas de page qu'on ne lit pas.
   if (r.ressources.length > 0) {
-    ecrans.push({ cle: 'ressource', titre: 'Plus sérieusement', contenu: <EcranRessources resultat={r} /> });
+    ecrans.push({ cle: 'ressource', titre: t.tRessource, contenu: <EcranRessources resultat={r} /> });
   }
 
-  ecrans.push({ cle: 'fin', titre: 'À toi de jouer', contenu: <EcranFin resultat={r} {...actions} /> });
+  ecrans.push({ cle: 'fin', titre: t.tFin, contenu: <EcranFin resultat={r} {...actions} /> });
 
   return ecrans;
 }
 
 function EcranVerdict({ resultat }: { resultat: Resultat }) {
   const affiche = useCompteur(resultat.score);
+  const t = useTextesRft();
   const { archetype, verdict } = resultat;
 
   // Le nom du profil décrit une personne, le verdict décrit un score : c'est le
@@ -376,7 +386,7 @@ function EcranVerdict({ resultat }: { resultat: Resultat }) {
   const titre = archetype?.titre ?? verdict?.titre ?? null;
   const emoji = archetype?.emoji ?? verdict?.emoji ?? null;
   const soustitre = archetype ? archetype.soustitre : verdict?.soustitre ?? null;
-  const surtitre = archetype && verdict ? verdict.titre : 'Ton résultat';
+  const surtitre = archetype && verdict ? verdict.titre : t.tonResultat;
 
   return (
     <>
@@ -404,13 +414,8 @@ function EcranVerdict({ resultat }: { resultat: Resultat }) {
 export const PARI_REUSSI = 5;
 
 /** La phrase qui commente l'écart entre le score et le pari. */
-export function commentairePari(score: number, pari: number): string {
-  const ecart = score - pari;
-  if (Math.abs(ecart) <= PARI_REUSSI) return 'Dans le mille. Tu te connais par cœur — c’est presque inquiétant.';
-  if (ecart > 20) return 'Tu t’es largement sous-estimé·e. Les autres, eux, s’en doutaient.';
-  if (ecart > 0) return 'Un peu plus red flag que tu ne le pensais. Rien qu’un peu.';
-  if (ecart < -20) return 'Tu t’es beaucoup trop accablé·e. Tu es bien plus fréquentable que tu ne le crois.';
-  return 'Plus green flag que tu ne le croyais. Bonne nouvelle, non ?';
+export function commentairePari(score: number, pari: number, t: TextesRft = TEXTES_RFT.fr): string {
+  return t.commentairePari(score, pari, PARI_REUSSI);
 }
 
 /**
@@ -421,6 +426,7 @@ export function commentairePari(score: number, pari: number): string {
  * pour ne jamais se chevaucher même quand les deux valeurs se touchent.
  */
 function EcranPari({ score, pari, paris }: { score: number; pari: number; paris: ParisMoyens | null }) {
+  const t = useTextesRft();
   const ecart = score - pari;
   const reussi = Math.abs(ecart) <= PARI_REUSSI;
   const plafond = Math.max(100, score, pari);
@@ -433,25 +439,25 @@ function EcranPari({ score, pari, paris }: { score: number; pari: number; paris:
 
   return (
     <>
-      <p className="story-surtitre">Ton pari</p>
-      <p className="story-texte-fort">Tu pensais être à <strong>{pari} %</strong></p>
+      <p className="story-surtitre">{t.tPari}</p>
+      <p className="story-texte-fort">{t.tuPensais}<strong>{t.pct(pari)}</strong></p>
       <p className={`story-geant ${reussi ? 'jaune' : ecart > 0 ? 'rouge' : 'vert'}`}>
-        {reussi ? 'Bingo' : <>{ecart > 0 ? '+' : '−'}{Math.abs(ecart)}<span> pts</span></>}
+        {reussi ? t.bingo : <>{ecart > 0 ? '+' : '−'}{Math.abs(ecart)}<span>{t.pts}</span></>}
       </p>
       <p className="story-texte-fort">
-        {reussi ? `Tu es à ${score} %.` : `Tu es à ${score} %, ${ecart > 0 ? 'au-dessus' : 'en dessous'} de ton pari.`}
+        {reussi ? t.tuEsA(score) : t.tuEsAEcart(score, ecart > 0)}
       </p>
 
       <div className="story-duel" aria-hidden="true">
         <span className={`story-duel-marque is-score${cale(score)}`} style={{ left: gauche(score) }}>
-          <em>Ton score · {score} %</em>
+          <em>{t.tonScoreMarque(score)}</em>
         </span>
         <span className={`story-duel-marque is-pari${cale(pari)}`} style={{ left: gauche(pari) }}>
-          <em>Ton pari · {pari} %</em>
+          <em>{t.tonPariMarque(pari)}</em>
         </span>
       </div>
 
-      <p className="story-texte">{commentairePari(score, pari)}</p>
+      <p className="story-texte">{commentairePari(score, pari, t)}</p>
 
       {paris && <ParisDesAutres paris={paris} />}
     </>
@@ -465,19 +471,20 @@ function EcranPari({ score, pari, paris }: { score: number; pari: number; paris:
  * joueurs, il dit si l'on se sous-estime, et qui le fait le plus.
  */
 export function ParisDesAutres({ paris, className = 'story-encart story-paris' }: { paris: ParisMoyens; className?: string }) {
+  const t = useTextesRft();
   const lignes = [
-    { nom: 'Les hommes', p: paris.homme },
-    { nom: 'Les femmes', p: paris.femme },
+    { nom: t.parisHommes, p: paris.homme },
+    { nom: t.parisFemmes, p: paris.femme },
   ].filter((l): l is { nom: string; p: NonNullable<typeof l.p> } => l.p !== null);
 
   return (
     <div className={className}>
-      <p className="story-encart-titre">Ce que les autres parient</p>
+      <p className="story-encart-titre">{t.parisTitre}</p>
       {lignes.map(({ nom, p }) => (
         <p key={nom} className="paris-ligne">
-          <span>{nom} parient</span>
-          <strong>{p.pari} %</strong>
-          <em>et finissent à {p.score} %</em>
+          <span>{t.parient(nom)}</span>
+          <strong>{t.pct(p.pari)}</strong>
+          <em>{t.finissent(p.score)}</em>
         </p>
       ))}
     </div>
@@ -523,6 +530,7 @@ export function placerEtiquettes(vrais: number[], ecart: number): number[] {
 function EcranMoyennes({ resultat }: { resultat: Resultat }) {
   const echelle = useRef<HTMLDivElement>(null);
   const [hauteur, setHauteur] = useState(400);
+  const t = useTextesRft();
 
   // Les étiquettes s'écartent d'un nombre de PIXELS, que l'échelle — dont la
   // hauteur dépend de l'écran — doit traduire en pourcentage.
@@ -538,13 +546,13 @@ function EcranMoyennes({ resultat }: { resultat: Resultat }) {
   }, []);
 
   const reperes: Repere[] = [
-    { cle: 'moi', valeur: resultat.score, libelle: 'Toi', moi: true },
-    ...cohortes(resultat)
+    { cle: 'moi', valeur: resultat.score, libelle: t.toi, moi: true },
+    ...cohortes(resultat, t)
       .filter((g) => g.c.moyenne !== null)
       .map((g) => ({
         cle: g.cle,
         valeur: g.c.moyenne as number,
-        libelle: g.cle === 'tous' ? 'Moyenne de tous' : `Moyenne des ${g.cle === 'sexe' ? g.nom : g.court}`,
+        libelle: t.moyenneDe(g.cle, g.nom, g.court),
       })),
   ];
 
@@ -561,18 +569,18 @@ function EcranMoyennes({ resultat }: { resultat: Resultat }) {
 
   return (
     <>
-      <p className="story-surtitre">Toi face aux autres</p>
+      <p className="story-surtitre">{t.tMoyennes}</p>
       {c && c.ecart !== 0 ? (
         <p className="story-phrase">
           <strong className={c.ecart > 0 ? 'rouge' : 'vert'}>
-            {c.ecart > 0 ? '+' : '−'}{Math.abs(c.ecart)} points
-          </strong>{' '}
-          {c.ecart > 0 ? 'au-dessus' : 'en dessous'} de la moyenne {c.legende}
+            {c.ecart > 0 ? '+' : '−'}{t.ecartPoints(Math.abs(c.ecart))}
+          </strong>
+          {t.ecartSens(c.ecart > 0, c.legende)}
         </p>
       ) : c ? (
-        <p className="story-phrase">Pile dans la moyenne {c.legende}</p>
+        <p className="story-phrase">{t.pileMoyenne(c.legende)}</p>
       ) : (
-        <p className="story-phrase">Ton score, à côté des moyennes</p>
+        <p className="story-phrase">{t.scoreMoyennes}</p>
       )}
 
       <div className="story-echelle" ref={echelle} aria-hidden="true">
@@ -607,24 +615,20 @@ function EcranMoyennes({ resultat }: { resultat: Resultat }) {
             className={`story-etiquette${r.moi ? ' is-moi' : ''}`}
             style={{ top: `${places[i]}%` }}
           >
-            <strong>{Math.round(r.valeur)} %</strong>
+            <strong>{t.pct(Math.round(r.valeur))}</strong>
             <span>{r.libelle}</span>
           </div>
         ))}
       </div>
       {/* Pour les lecteurs d'écran, l'échelle en clair. */}
       <ul className="sr-only">
-        {reperes.map((r) => <li key={r.cle}>{r.libelle} : {Math.round(r.valeur)} %</li>)}
+        {reperes.map((r) => <li key={r.cle}>{r.libelle} : {t.pct(Math.round(r.valeur))}</li>)}
       </ul>
     </>
   );
 }
 
 // --- Ton classement ---------------------------------------------------------
-
-function ordinal(n: number): string {
-  return n === 1 ? '1er' : `${n}e`;
-}
 
 const DRAPEAU: Record<CleCohorte, string> = { tous: 'region', sexe: 'gender', age: 'age' };
 
@@ -637,22 +641,23 @@ const DRAPEAU: Record<CleCohorte, string> = { tous: 'region', sexe: 'gender', ag
  * « autant ou moins », et ne sont jamais comptés comme battus.
  */
 function EcranClassement({ resultat }: { resultat: Resultat }) {
-  const groupes = cohortes(resultat);
+  const t = useTextesRft();
+  const groupes = cohortes(resultat, t);
   const [choisi, setChoisi] = useState<CleCohorte>(groupes[0].cle);
   const g = groupes.find((x) => x.cle === choisi) ?? groupes[0];
   const devant = Math.min(99, Math.round(((g.c.position - 1) / g.c.effectif) * 100));
 
   return (
     <>
-      <p className="story-surtitre">Ton classement</p>
+      <p className="story-surtitre">{t.tClassement}</p>
       <p className="story-place">
-        <strong>{ordinal(g.c.position)}</strong>
-        <span>sur {g.c.effectif.toLocaleString('fr-FR')} {g.nom}</span>
+        <strong>{t.ordinal(g.c.position)}</strong>
+        <span>{t.surEffectif(g.c.effectif.toLocaleString(t.locale), g.nom)}</span>
       </p>
-      <p className="story-note story-note-place">Le 1er est le plus red flag de tous</p>
+      <p className="story-note story-note-place">{t.premierPlusRed}</p>
 
       {groupes.length > 1 && (
-        <div className="story-onglets" role="tablist" aria-label="Se comparer aux">
+        <div className="story-onglets" role="tablist" aria-label={t.ongletsAria}>
           {groupes.map((x) => (
             <button
               key={x.cle}
@@ -672,14 +677,11 @@ function EcranClassement({ resultat }: { resultat: Resultat }) {
       )}
 
       <p className="story-phrase">
-        {devant === 0 ? (
-          <>Sur 100 {g.nom}, <strong className="rouge">aucun</strong> ne fait plus red flag que toi</>
-        ) : (
-          <>
-            Sur 100 {g.nom}, <strong className={devant <= 50 ? 'rouge' : 'vert'}>{devant}</strong>{' '}
-            {devant === 1 ? 'fait' : 'font'} plus red flag que toi
-          </>
-        )}
+        {(() => {
+          const phrase = devant === 0 ? t.surCentAucun(g.nom) : t.surCent(g.nom, devant);
+          const classe = devant === 0 || devant <= 50 ? 'rouge' : 'vert';
+          return <>{phrase.avant}<strong className={classe}>{phrase.fort}</strong>{phrase.apres}</>;
+        })()}
       </p>
 
       <div className="story-foule" key={g.cle} aria-hidden="true">
@@ -692,12 +694,12 @@ function EcranClassement({ resultat }: { resultat: Resultat }) {
         ))}
       </div>
       <div className="story-legende" aria-hidden="true">
-        <span className="l-devant">Plus red flag</span>
-        <span className="l-moi">Toi</span>
-        <span className="l-derriere">Autant ou moins</span>
+        <span className="l-devant">{t.plusRed}</span>
+        <span className="l-moi">{t.toi}</span>
+        <span className="l-derriere">{t.autantOuMoins}</span>
       </div>
       {g.c.avertissement && (
-        <p className="story-note">* Encore peu de parties dans ce groupe : {g.c.avertissement}</p>
+        <p className="story-note">{t.peuDeParties(g.c.avertissement)}</p>
       )}
     </>
   );
@@ -714,6 +716,7 @@ function teinte(valeur: number): string {
 }
 
 function EcranAxes({ axes, pointNoir }: { axes: Axe[]; pointNoir: Axe | null }) {
+  const t = useTextesRft();
   // Du pire au meilleur : la première barre est celle qu'on vient lire.
   const tries = [...axes]
     .filter((a) => a.tagId !== pointNoir?.tagId)
@@ -723,16 +726,16 @@ function EcranAxes({ axes, pointNoir }: { axes: Axe[]; pointNoir: Axe | null }) 
     <>
       {pointNoir ? (
         <>
-          <p className="story-surtitre">Ton point noir</p>
+          <p className="story-surtitre">{t.tPointNoir}</p>
           <p className="story-titre rouge story-majuscules">{pointNoir.label}</p>
           <p className="story-geant">{pointNoir.valeur}<span>%</span></p>
-          <p className="story-texte">des points red flag possibles dans cette catégorie</p>
+          <p className="story-texte">{t.pointNoirTexte}</p>
         </>
       ) : (
         <>
-          <p className="story-surtitre">Ton profil</p>
-          <p className="story-titre">Catégorie par catégorie</p>
-          <p className="story-texte">De la plus red flag à la plus green flag</p>
+          <p className="story-surtitre">{t.tonProfil}</p>
+          <p className="story-titre">{t.tCategories}</p>
+          <p className="story-texte">{t.categoriesTexte}</p>
         </>
       )}
 
@@ -741,7 +744,7 @@ function EcranAxes({ axes, pointNoir }: { axes: Axe[]; pointNoir: Axe | null }) 
           <li key={axe.tagId}>
             <span className="story-axe-tete">
               <span>{axe.label}</span>
-              <strong style={{ color: teinte(axe.valeur) }}>{axe.valeur} %</strong>
+              <strong style={{ color: teinte(axe.valeur) }}>{t.pct(axe.valeur)}</strong>
             </span>
             <span className="story-axe-piste">
               <span
@@ -759,6 +762,7 @@ function EcranAxes({ axes, pointNoir }: { axes: Axe[]; pointNoir: Axe | null }) 
 // --- La réponse -------------------------------------------------------------
 
 function EcranReponse({ resultat }: { resultat: Resultat }) {
+  const t = useTextesRft();
   const decisive = resultat.reponseDecisive;
   // La plus rare d'abord : c'est elle qui distingue. Une réponse choisie par
   // la moitié des joueurs n'apprend rien sur personne.
@@ -772,28 +776,28 @@ function EcranReponse({ resultat }: { resultat: Resultat }) {
   const question = (texte: string) => (
     <p className={`story-question-forte${texte.length > 70 ? ' is-longue' : ''}`}>{texte}</p>
   );
-  const citation = (texte: string) => <p className="story-reponse">Ta réponse : « {texte} »</p>;
+  const citation = (texte: string) => <p className="story-reponse">{t.taReponse(texte)}</p>;
 
   return (
     <>
       {decisive ? (
         <>
-          <p className="story-surtitre">La réponse qui t’a coûté le plus</p>
+          <p className="story-surtitre">{t.tReponseChere}</p>
           {question(decisive.question)}
           {citation(decisive.reponse)}
           <p className="story-cout">
             <strong>{decisive.points}</strong>
-            <span>points sur tes {resultat.score}</span>
+            <span>{t.pointsSurTes(resultat.score)}</span>
           </p>
         </>
       ) : (
         rare && (
           <>
-            <p className="story-surtitre">Ta réponse la plus rare</p>
+            <p className="story-surtitre">{t.tReponseRare}</p>
             {question(rare.question)}
             {citation(rare.reponse)}
             <p className="story-geant jaune">{rare.part}<span>%</span></p>
-            <p className="story-texte">des joueurs ont répondu comme toi</p>
+            <p className="story-texte">{t.ontReponduCommeToi}</p>
             <p className="story-texte-fort">{rare.pique}</p>
           </>
         )
@@ -803,13 +807,13 @@ function EcranReponse({ resultat }: { resultat: Resultat }) {
         <div className="story-encart">
           {memeReponse ? (
             <p>
-              Seuls <strong className="jaune">{rare.part} %</strong> des joueurs ont répondu ça.
+              {t.seulsAvant}<strong className="jaune">{t.pct(rare.part)}</strong>{t.seulsApres}
             </p>
           ) : (
             <>
-              <p className="story-encart-titre">Ta réponse la plus rare</p>
+              <p className="story-encart-titre">{t.tReponseRare}</p>
               <p>
-                « {rare.reponse} » : <strong className="jaune">{rare.part} %</strong> des joueurs
+                {t.rareCitation(rare.reponse)}<strong className="jaune">{t.pct(rare.part)}</strong>{t.desJoueurs}
               </p>
             </>
           )}
@@ -821,16 +825,17 @@ function EcranReponse({ resultat }: { resultat: Resultat }) {
 }
 
 function EcranRessources({ resultat }: { resultat: Resultat }) {
+  const t = useTextesRft();
   return (
     <>
-      <p className="story-surtitre">Plus sérieusement</p>
+      <p className="story-surtitre">{t.tRessource}</p>
       {resultat.ressources.map((r) => (
         <aside key={r.label} className="story-ressource">
           <p className="story-ressource-cat">{r.label}</p>
           <p>{r.texte}</p>
           {r.lien && (
             <Link href={r.lien} className="story-ressource-lien">
-              Voir la ressource →
+              {t.voirRessource}
             </Link>
           )}
         </aside>
@@ -847,11 +852,13 @@ function EcranFin({
   onFermer: () => void;
   pari: number | null;
 }) {
+  const t = useTextesRft();
+  const langue = useLangue();
   return (
     <>
-      <p className="story-surtitre">À toi de jouer</p>
+      <p className="story-surtitre">{t.tFin}</p>
       <p className="story-titre">
-        {onRecommencer ? 'Défie tes potes' : 'Et toi, tu ferais mieux ?'}
+        {onRecommencer ? t.defieTesPotes : t.etToi}
       </p>
 
       {resultat.codePartage && (
@@ -866,22 +873,22 @@ function EcranFin({
       <div className="story-actions">
         {onRecommencer ? (
           <button type="button" className="partage-copier" onClick={onRecommencer}>
-            Refaire le test
+            {t.refaire}
           </button>
         ) : (
-          <Link href="/redflagtest" className="share-btn">
-            <p>Faire le test</p>
+          <Link href={cheminLocalise(langue, '/redflagtest')} className="share-btn">
+            <p>{t.faireLeTest}</p>
           </Link>
         )}
         {/* Les stories recouvrent la barre du site, et son bouton café avec. */}
         <a href={DON_URL} target="_blank" rel="noopener noreferrer" className="rft-cafe">
-          ☕ Offrir un café
+          {t.cafe}
         </a>
         <button type="button" className="story-lien" onClick={onFermer}>
-          Voir tout le détail
+          {t.voirToutDetail}
         </button>
-        <Link href="/redflagtest/stats" className="story-lien">
-          Ce que les autres ont répondu
+        <Link href={cheminLocalise(langue, '/redflagtest/stats')} className="story-lien">
+          {t.autresOntRepondu}
         </Link>
       </div>
     </>
@@ -905,8 +912,4 @@ function Curseur({ valeur }: { valeur: number }) {
   }, [valeur]);
 
   return <span className="story-jauge-curseur" style={{ left: `${pose}%` }} />;
-}
-
-function majuscule(texte: string): string {
-  return texte.charAt(0).toUpperCase() + texte.slice(1);
 }

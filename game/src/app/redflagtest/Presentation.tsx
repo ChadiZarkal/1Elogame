@@ -17,8 +17,10 @@
  */
 
 import Link from '@/components/ui/LienIntention';
+import type { Langue } from '@/lib/i18n/langue';
 
-export function Presentation() {
+export function Presentation({ langue = 'fr' }: { langue?: Langue } = {}) {
+  if (langue === 'en') return <PresentationEn />;
   return (
     <section className="rft-presentation" aria-labelledby="rft-presentation-titre">
       <h2 id="rft-presentation-titre">Le Red Flag Test, c&apos;est quoi ?</h2>
@@ -65,6 +67,58 @@ export function Presentation() {
         ailleurs que mêlées à celles des autres, dans les statistiques publiées
         pour chaque question. Le détail est dans la{' '}
         <Link href="/confidentialite">politique de confidentialité</Link>.
+      </p>
+    </section>
+  );
+}
+
+/*
+ * La version anglaise. Le guide des flags et la politique de confidentialité
+ * n'existent qu'en français : leurs liens le disent.
+ */
+function PresentationEn() {
+  return (
+    <section className="rft-presentation" aria-labelledby="rft-presentation-titre">
+      <h2 id="rft-presentation-titre">What is the Red Flag Test?</h2>
+      <p>
+        A free, solo and anonymous test to find out how much of a red flag you
+        are. You answer real-life situations, and each answer weighs more or
+        less depending on what it says about you.
+      </p>
+      <p>
+        At the end, you get your red flag score as a percentage, your profile,
+        and where you rank among all players, among players of your gender and
+        among players your age. No account, no email.
+      </p>
+      <p>
+        You can share your result with a link: whoever opens it has to guess
+        your score before seeing it.{' '}
+        <Link href="/en/redflagtest/stats">Everyone’s answers</Link>{' '}
+        are published question by question, with the gap between men and
+        women.
+      </p>
+
+      <h3>So what exactly is a red flag?</h3>
+      <p>
+        A red flag is a warning sign: a behavior that should set off alarms
+        about someone, in a relationship, a friendship or at work. Not
+        everything is one — and that’s the whole point of the test.{' '}
+        <Link href="/guide">Definition and examples in our flag guide (in French)</Link>.
+      </p>
+
+      <h3>Is the test really anonymous?</h3>
+      <p>
+        Yes. It doesn’t ask for your name, your email or an account: only your
+        gender and age range, to compare you with players like you. The game
+        is saved with those two pieces of information, your score and your
+        answers, nothing else.
+      </p>
+      <h3>Who can see my result?</h3>
+      <p>
+        Nobody, unless you share its link. Your answers only appear mixed in
+        with everyone else’s, in the statistics published for each question.
+        The details are in our{' '}
+        <Link href="/confidentialite">privacy policy (in French)</Link>.
       </p>
     </section>
   );

@@ -29,12 +29,9 @@ import { RFT_DEPART } from '@/config/ads';
 import { NativeAd } from '@/components/ads/NativeAd';
 import type { AgeVotant, SexeVotant } from '@/types/database';
 import type { PlayerProfile } from '@/types/game';
+import { useTextesRft } from './textes';
 
-const SEXES: Array<{ value: SexeVotant; label: string }> = [
-  { value: 'homme', label: 'Homme' },
-  { value: 'femme', label: 'Femme' },
-  { value: 'autre', label: 'Autre' },
-];
+const SEXES: SexeVotant[] = ['homme', 'femme', 'autre'];
 
 const AGES: AgeVotant[] = ['16-18', '19-22', '23-26', '27+'];
 
@@ -43,13 +40,14 @@ export function ProfilStep({ onDemarrer }: { onDemarrer: (profil: PlayerProfile)
   const [age, setAge] = useState<AgeVotant | ''>('');
 
   const pret = sexe !== '' && age !== '';
+  const t = useTextesRft();
 
   // Le geste caché du mode test : cinq taps rapides sur le titre.
   const taperTitre = useGesteModeTest();
 
   return (
     <section className="intro-wrapper">
-      <h2 onClick={taperTitre}>Avant de commencer</h2>
+      <h2 onClick={taperTitre}>{t.profilTitre}</h2>
 
       <form
         className="intro-form"
@@ -65,16 +63,16 @@ export function ProfilStep({ onDemarrer }: { onDemarrer: (profil: PlayerProfile)
             <img className="label-symbol" src="/rft/img/symbol-gender.svg" alt="" />
           </span>
           <span className="label-info">
-            <span className="label-text">Tu es…</span>
+            <span className="label-text">{t.profilTuEs}</span>
             <select
               id="rft-sexe"
               required
               value={sexe}
               onChange={(e) => setSexe(e.target.value as SexeVotant)}
             >
-              <option value="" hidden disabled>Sélectionne</option>
+              <option value="" hidden disabled>{t.profilSelectionne}</option>
               {SEXES.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
+                <option key={s} value={s}>{t.sexes[s]}</option>
               ))}
             </select>
           </span>
@@ -86,17 +84,17 @@ export function ProfilStep({ onDemarrer }: { onDemarrer: (profil: PlayerProfile)
             <img className="label-symbol" src="/rft/img/symbol-age.svg" alt="" />
           </span>
           <span className="label-info">
-            <span className="label-text">Tu as…</span>
+            <span className="label-text">{t.profilTuAs}</span>
             <select
               id="rft-age"
               required
               value={age}
               onChange={(e) => setAge(e.target.value as AgeVotant)}
             >
-              <option value="" hidden disabled>Sélectionne</option>
+              <option value="" hidden disabled>{t.profilSelectionne}</option>
               {AGES.map((a) => (
                 <option key={a} value={a}>
-                  {a === '27+' ? '27 ans et plus' : `${a} ans`}
+                  {t.age(a)}
                 </option>
               ))}
             </select>
@@ -104,11 +102,11 @@ export function ProfilStep({ onDemarrer }: { onDemarrer: (profil: PlayerProfile)
         </label>
 
         <button type="submit" className="button-start" disabled={!pret}>
-          Commencer
+          {t.commencer}
         </button>
 
         <p className="intro-note">
-          Deux réponses, anonymes. Elles servent à te comparer aux autres à la fin.
+          {t.profilNote}
         </p>
       </form>
 
