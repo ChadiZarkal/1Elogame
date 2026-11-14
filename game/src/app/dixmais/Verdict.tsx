@@ -12,13 +12,14 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Share2, Check, BarChart3 } from 'lucide-react';
-import { START_SCORE, scoreColor, scoreInk, scoreLabel, withAlpha } from './scale';
-import { formatNote, poidsDansLaMoyenne, type ProfilJuge } from './moyenne';
+import { START_SCORE, scoreColor, scoreInk, withAlpha } from './scale';
+import { poidsDansLaMoyenne, type ProfilJuge } from './moyenne';
 import { BoutonDiscret, BoutonPrincipal, Pastille, Pied, Section, TEINTES } from './ui';
 import { NativeAd } from '@/components/ads/NativeAd';
 import { DIXMAIS_VERDICT } from '@/config/ads';
-
-const SHARE_URL = 'https://redorgreen.fr/dixmais';
+import { useTextesDixmais } from './textes';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { cheminLocalise } from '@/lib/i18n/langue';
 
 /** Délai avant que la moyenne n'apparaisse : le temps de voir les sept notes. */
 const DELAI_MOYENNE = 0.75;
@@ -33,11 +34,9 @@ interface Props {
   loadFailed: boolean;
 }
 
-function points(n: number): string {
-  return `${formatNote(n)} point${n >= 2 ? 's' : ''}`;
-}
-
 export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: Props) {
+  const t = useTextesDixmais();
+  const langue = useLangue();
   const [copied, setCopied] = useState(false);
   const { notes, propositions, communaute, moyenne, moyenneCommunaute, fin } = profil;
   const tint = scoreColor(moyenne);
@@ -75,13 +74,13 @@ export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: 
   }, [copied]);
 
   const share = async () => {
-    const text = `${profil.nom}, ${profil.age} : ${profil.notes.length} révélations, ${formatNote(moyenne)}/10 de moyenne — « ${fin.title} ». Et toi, tu lui mets combien ?`;
+    const text = t.partageVerdict(profil.nom, profil.age, profil.notes.length, t.note(moyenne), fin.title);
     try {
       if (navigator.share) {
-        await navigator.share({ title: "C'est un 10 mais…", text, url: SHARE_URL });
+        await navigator.share({ title: t.nomJeu, text, url: t.urlPartage });
         return;
       }
-      await navigator.clipboard.writeText(`${text} ${SHARE_URL}`);
+      await navigator.clipboard.writeText(`${text} ${t.urlPartage}`);
       setCopied(true);
     } catch {
       /* partage annulé ou presse-papiers indisponible */
@@ -143,18 +142,18 @@ export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: 
             x: { type: 'tween', duration: 0.4, ease: 'easeInOut', delay: DELAI_MOYENNE + 0.15 },
           }}
           className="mt-2 flex items-baseline"
-          aria-label={`Moyenne ${formatNote(moyenne)} sur 10`}
+          aria-label={t.moyenneSur10(t.note(moyenne))}
         >
           <span
             className="font-black leading-none tabular-nums"
             style={{ fontSize: 'clamp(4.5rem, 24vw, 7rem)', color: tint, letterSpacing: '-0.05em' }}
           >
-            {formatNote(moyenne)}
+            {t.note(moyenne)}
           </span>
           <span className="ml-1 text-xl font-bold" style={{ color: TEINTES.discret }}>/10</span>
         </motion.div>
         <p className="mt-1 text-[12px] font-bold uppercase tracking-[0.14em]" style={{ color: withAlpha(tint, 0.8) }}>
-          {scoreLabel(moyenne)}
+          {t.label(moyenne)}
         </p>
 
         {/* ── La fin ────────────────────────────────────────────────────── */}
@@ -180,16 +179,16 @@ export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: 
             className="mt-4 text-[13px]"
             style={{ color: TEINTES.secondaire }}
           >
-            Les autres lui mettent{' '}
+            {t.lesAutresLuiMettent}{' '}
             <span className="font-black tabular-nums" style={{ color: scoreColor(moyenneCommunaute) }}>
-              {formatNote(moyenneCommunaute)}
+              {t.note(moyenneCommunaute)}
             </span>
             {' · '}
             {Math.abs(ecart) < 0.5
-              ? 'comme toi.'
+              ? t.commeToi
               : ecart < 0
-                ? `tu es ${points(-ecart)} plus dur que les autres avec ${profil.nom}.`
-                : `tu es ${points(ecart)} plus indulgent que les autres avec ${profil.nom}.`}
+                ? t.plusDur(t.points(-ecart), profil.nom)
+                : t.plusIndulgent(t.points(ecart), profil.nom)}
           </motion.p>
         )}
       </div>
@@ -202,7 +201,7 @@ export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: 
 
       {/* ── Le détail ───────────────────────────────────────────────────── */}
       <div className="mt-7">
-        <Section titre={`Tes ${profil.notes.length} notes`}>
+        <Section titre={t.tesNotes(profil.notes.length)}>
           <ul>
             {propositions.map((p, i) => {
               const autres = communaute[i];
@@ -220,9 +219,9 @@ export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: 
                     {(autres !== null || coute || rapporte) && (
                       <p className="mt-0.5 text-[12px]" style={{ color: TEINTES.discret }}>
                         {[
-                          autres !== null && `Les autres : ${formatNote(autres)}`,
-                          rapporte && `lui rapporte ${points(apport)} de moyenne`,
-                          coute && `lui coûte ${points(poids)} de moyenne`,
+                          autres !== null && t.lesAutres(t.note(autres)),
+                          rapporte && t.rapporte(t.points(apport)),
+                          coute && t.coute(t.points(poids)),
                         ].filter(Boolean).join(' · ')}
                       </p>
                     )}
@@ -239,27 +238,27 @@ export function Verdict({ profil, sessionCount, onNext, onReport, loadFailed }: 
       <Pied>
         {loadFailed && (
           <p className="pb-2 text-center text-xs font-bold text-red-400">
-            Impossible de charger le profil suivant. Réessaie.
+            {t.echecSuivant}
           </p>
         )}
-        <BoutonPrincipal onClick={onNext}>Profil suivant →</BoutonPrincipal>
+        <BoutonPrincipal onClick={onNext}>{t.profilSuivant}</BoutonPrincipal>
         <div className="flex">
           {/* Le bilan n'apparaît qu'à partir du deuxième profil : sur un seul,
               il ne dirait rien de plus que cet écran. */}
           {sessionCount >= 2 && (
             <BoutonDiscret onClick={onReport}>
-              <BarChart3 size={15} /> Mon bilan · {sessionCount} profils
+              <BarChart3 size={15} />{t.monBilan[0]}{sessionCount}{t.monBilan[1]}
             </BoutonDiscret>
           )}
           <BoutonDiscret onClick={share}>
             {copied ? <Check size={15} /> : <Share2 size={15} />}
-            {copied ? 'Copié' : 'Partager'}
+            {copied ? t.copie : t.partager}
           </BoutonDiscret>
           {/* À côté du bilan, le classement se réduit à son icône : trois
               libellés ne tiennent pas sur 320 px. */}
-          <BoutonDiscret href="/dixmais/leaderboard">
+          <BoutonDiscret href={cheminLocalise(langue, '/dixmais/leaderboard')}>
             <Trophy size={15} />
-            <span className={sessionCount >= 2 ? 'sr-only' : ''}>Classement</span>
+            <span className={sessionCount >= 2 ? 'sr-only' : ''}>{t.classement}</span>
           </BoutonDiscret>
         </div>
       </Pied>

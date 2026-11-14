@@ -27,12 +27,9 @@ import { motion } from 'framer-motion';
 import type { AgeVotant, SexeVotant } from '@/types/database';
 import type { PlayerProfile } from '@/types/game';
 import { TEINTES } from './ui';
+import { useTextesDixmais } from './textes';
 
-const SEXES: { value: SexeVotant; label: string }[] = [
-  { value: 'homme', label: 'Homme' },
-  { value: 'femme', label: 'Femme' },
-  { value: 'autre', label: 'Autre' },
-];
+const SEXES: SexeVotant[] = ['homme', 'femme', 'autre'];
 
 const AGES: AgeVotant[] = ['16-18', '19-22', '23-26', '27+'];
 
@@ -41,6 +38,7 @@ const AGES: AgeVotant[] = ['16-18', '19-22', '23-26', '27+'];
  * choix se signale en blanc ; l'or reste au seul bouton qui fait avancer.
  */
 export function ProfileStep({ onSubmit }: { onSubmit: (profile: PlayerProfile) => void }) {
+  const t = useTextesDixmais();
   const [sex, setSex] = useState<SexeVotant | null>(null);
   const [age, setAge] = useState<AgeVotant | null>(null);
   const ready = sex !== null && age !== null;
@@ -59,23 +57,23 @@ export function ProfileStep({ onSubmit }: { onSubmit: (profile: PlayerProfile) =
             className="font-black uppercase leading-none tracking-tight text-white"
             style={{ fontSize: 'min(2.6rem, 10vw, 6vh)' }}
           >
-            Tu es qui&nbsp;?
+            {t.tuEsQui}
           </h2>
           <p className="mt-3 mb-8 max-w-[32ch] text-[15px] leading-snug" style={{ color: TEINTES.secondaire }}>
-            Deux réponses, et on pourra te dire si tu notes plus dur que les gens comme toi.
+            {t.profilIntro}
           </p>
 
-          <Question label="Tu es…">
+          <Question label={t.tuEs}>
             <div className="grid grid-cols-3 gap-2">
               {SEXES.map((option) => (
-                <Choix key={option.value} active={sex === option.value} onClick={() => setSex(option.value)}>
-                  {option.label}
+                <Choix key={option} active={sex === option} onClick={() => setSex(option)}>
+                  {t.sexes[option]}
                 </Choix>
               ))}
             </div>
           </Question>
 
-          <Question label="Tu as…">
+          <Question label={t.tuAs}>
             <div className="grid grid-cols-4 gap-2">
               {AGES.map((option) => (
                 <Choix key={option} active={age === option} onClick={() => setAge(option)}>
@@ -102,7 +100,7 @@ export function ProfileStep({ onSubmit }: { onSubmit: (profile: PlayerProfile) =
             cursor: ready ? 'pointer' : 'not-allowed',
           }}
         >
-          {ready ? "C'est parti →" : 'Choisis les deux'}
+          {ready ? t.cEstParti : t.choisisLesDeux}
         </motion.button>
       </div>
     </motion.div>

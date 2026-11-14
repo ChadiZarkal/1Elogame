@@ -27,6 +27,9 @@ import {
 } from './moyenne';
 import { getProfile, saveProfile } from '@/lib/session';
 import type { PlayerProfile } from '@/types/game';
+import type { Langue } from '@/lib/i18n/langue';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { TEXTES_DIXMAIS } from './textes';
 
 /**
  * Chaque note part au serveur, qui l'enregistre dans sa propre table
@@ -61,11 +64,14 @@ export interface Flash {
   moyenne: number;
 }
 
-async function fetchStatements(count: number, excludeIds: string[]): Promise<DixMaisStatement[]> {
+async function fetchStatements(count: number, excludeIds: string[], langue: Langue): Promise<DixMaisStatement[]> {
   // Cinq red flags, deux green flags : la jauge va jusqu'à 15, une qualité
   // peut donc rapporter plus que le 10 de départ.
   const params = new URLSearchParams({ count: String(count), verts: String(GREEN_FLAGS_PAR_PROFIL) });
   if (excludeIds.length) params.set('exclude', excludeIds.join(','));
+  // La page anglaise reçoit les énoncés traduits ; les identifiants, donc les
+  // notes envoyées, sont les mêmes. Le français garde son adresse d'origine.
+  if (langue === 'en') params.set('lang', 'en');
   const res = await fetch(`/api/dixmais/statements?${params.toString()}`, { cache: 'no-store' });
   if (!res.ok) throw new Error('fetch failed');
   return ((await res.json()).data ?? []) as DixMaisStatement[];
@@ -92,12 +98,13 @@ function sendNote(statementId: string, sessionId: string, note: number, profile:
 }
 
 /** Fige un profil jugé : ses sept notes, sa moyenne, ce qu'en pensent les
- * autres, et la fin retenue. */
+ * autres, et la fin retenue — écrite dans la langue de la page. */
 export function closeRound(
   round: Round,
   notes: number[],
   numero: number,
   recentEndings: string[],
+  langue: Langue = 'fr',
 ): ProfilJuge {
   const jouees = round.statements.slice(0, notes.length);
   const propositions = jouees.map((s) => ({
@@ -109,6 +116,7 @@ export function closeRound(
   const communaute = jouees.map(noteDesAutres);
   const moyenne = moyenneDe(notes);
   const moyenneCommunaute = moyenneDesAutres(communaute);
+  const contexte = { propositions, notes, moyenne, moyenneCommunaute, pronom: round.identity.pronoun };
 
   return {
     numero,
@@ -121,15 +129,13 @@ export function closeRound(
     communaute,
     moyenne,
     moyenneCommunaute,
-    fin: choisirFin(
-      { propositions, notes, moyenne, moyenneCommunaute, pronom: round.identity.pronoun },
-      recentEndings,
-    ),
+    fin: TEXTES_DIXMAIS[langue].fin(choisirFin(contexte, recentEndings), contexte),
   };
 }
 
 export function useDixMais() {
   const haptics = useHaptics();
+  const langue = useLangue();
 
   const [phase, setPhase] = useState<Phase>('intro');
   const [round, setRound] = useState<Round | null>(null);
@@ -228,7 +234,7 @@ export function useDixMais() {
     const begin = (statements: DixMaisStatement[]) => {
       setRound({
         statements,
-        identity: generateIdentity(statements.map((s) => s.text)),
+        identity: generateIdentity(statements.map((s) => s.text), langue),
         notes: [],
         index: 0,
       });
@@ -239,13 +245,13 @@ export function useDixMais() {
     };
 
     try {
-      let statements = await fetchStatements(PROPOSITIONS_PAR_PROFIL, seenIds.current);
+      let statements = await fetchStatements(PROPOSITIONS_PAR_PROFIL, seenIds.current, langue);
       if (runId.current !== myRun) return;
 
       // Catalogue épuisé : un tour complet, pas une panne. On repart du début.
       if (!statements.length && seenIds.current.length) {
         seenIds.current = [];
-        statements = await fetchStatements(PROPOSITIONS_PAR_PROFIL, []);
+        statements = await fetchStatements(PROPOSITIONS_PAR_PROFIL, [], langue);
         if (runId.current !== myRun) return;
       }
 
@@ -256,7 +262,7 @@ export function useDixMais() {
       setLoadFailed(true);
       setPhase(fromVerdict ? 'verdict' : 'error');
     }
-  }, [applyDraft]);
+  }, [applyDraft, langue]);
 
   const commit = useCallback(() => {
     if (locked.current || !round) return;
@@ -287,7 +293,7 @@ export function useDixMais() {
       if (isLast) {
         // Calculé hors d'une fonction de mise à jour : choisir la fin met à
         // jour `recentEndings`, et le mode strict rejoue ces fonctions.
-        const juge = closeRound(round, notes, profileNumberRef.current, recentEndings.current);
+        const juge = closeRound(round, notes, profileNumberRef.current, recentEndings.current, langue);
         recentEndings.current = [...recentEndings.current, juge.fin.key].slice(-RECENT_ENDINGS);
 
         setRound((r) => (r ? { ...r, notes } : r));
@@ -299,7 +305,7 @@ export function useDixMais() {
         applyDraft(START_SCORE);
       }
     }, COMMIT_MS);
-  }, [round, haptics, dismissCoach, applyDraft]);
+  }, [round, haptics, dismissCoach, applyDraft, langue]);
 
   const restart = useCallback(() => {
     runId.current += 1;

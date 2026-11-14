@@ -21,8 +21,10 @@ import { ArrowLeft, RotateCcw } from 'lucide-react';
 import type { DixMaisStatement } from '@/types/database';
 import { NOTES_MIN_COMPARAISON, type NoteMesuree } from '@/lib/dixmaisNote';
 import { scoreInk } from '../scale';
-import { formatNote } from '../moyenne';
 import { TEINTES } from '../ui';
+import { useTextesDixmais, type TextesDixmais } from '../textes';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { cheminLocalise } from '@/lib/i18n/langue';
 
 export interface LeaderboardEntry extends DixMaisStatement {
   avg_delta: number;
@@ -32,12 +34,17 @@ export interface LeaderboardEntry extends DixMaisStatement {
 
 type Onglet = 'negative' | 'positive';
 
-const ONGLETS: { cle: Onglet; libelle: string; sousTitre: string }[] = [
-  { cle: 'negative', libelle: '🚩 Red flags', sousTitre: 'Ce qui fait le plus chuter la note' },
-  { cle: 'positive', libelle: '🟢 Green flags', sousTitre: 'Ce qui la fait le plus monter' },
-];
+function onglets(t: TextesDixmais): { cle: Onglet; libelle: string; sousTitre: string }[] {
+  return [
+    { cle: 'negative', libelle: t.ongletRouge, sousTitre: t.ongletRougeSous },
+    { cle: 'positive', libelle: t.ongletVert, sousTitre: t.ongletVertSous },
+  ];
+}
 
 export default function LeaderboardClient({ initialData }: { initialData: LeaderboardEntry[] }) {
+  const t = useTextesDixmais();
+  const langue = useLangue();
+  const ONGLETS = onglets(t);
   const [data, setData] = useState<LeaderboardEntry[]>(initialData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -47,15 +54,16 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/dixmais/leaderboard?limit=100', { cache: 'no-store' });
+      // La page anglaise demande les énoncés traduits ; le français garde son adresse.
+      const res = await fetch(`/api/dixmais/leaderboard?limit=100${langue === 'en' ? '&lang=en' : ''}`, { cache: 'no-store' });
       const json = await res.json();
       setData(json.data ?? []);
     } catch {
-      setError('Le classement ne répond pas. Réessaie dans un instant.');
+      setError(t.classementErreur);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [langue, t]);
 
   // Le serveur a déjà fourni une liste : on ne refait la requête au montage que
   // si elle est vide (base indisponible à la régénération).
@@ -73,12 +81,12 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
     <div className="relative min-h-[calc(100dvh-var(--header-h,3rem))] pb-10 text-white" style={{ background: TEINTES.fond }}>
       <div className="mx-auto max-w-lg px-5">
         <div className="flex h-12 items-center justify-between">
-          <Link href="/dixmais" className="-ml-2 flex min-h-11 items-center gap-1.5 px-2 text-[13px] font-semibold" style={{ color: TEINTES.secondaire }}>
-            <ArrowLeft size={15} /> Jeu
+          <Link href={cheminLocalise(langue, '/dixmais')} className="-ml-2 flex min-h-11 items-center gap-1.5 px-2 text-[13px] font-semibold" style={{ color: TEINTES.secondaire }}>
+            <ArrowLeft size={15} />{` ${t.jeu}`}
           </Link>
           <button
             onClick={load}
-            aria-label="Actualiser le classement"
+            aria-label={t.actualiser}
             className="-mr-2.5 flex h-11 w-11 cursor-pointer items-center justify-center text-white/30 transition-colors hover:text-white/60 active:scale-90"
           >
             <RotateCcw size={15} className={loading ? 'animate-spin' : ''} />
@@ -86,9 +94,9 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
         </div>
 
         <header className="pt-4 pb-6">
-          <h1 className="text-[clamp(1.9rem,9vw,2.6rem)] font-black uppercase leading-none tracking-tight">Le classement</h1>
+          <h1 className="text-[clamp(1.9rem,9vw,2.6rem)] font-black uppercase leading-none tracking-tight">{t.leClassement}</h1>
           <p className="mt-3 text-[15px] leading-snug" style={{ color: TEINTES.secondaire }}>
-            La note moyenne que les joueurs donnent à chaque info, notée seule, en partant de 10.
+            {t.classementIntro}
           </p>
         </header>
 
@@ -116,9 +124,9 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
           <p className="py-12 text-center text-sm font-semibold text-red-400">{error}</p>
         ) : liste.length === 0 ? (
           <div className="py-14 text-center">
-            <p className="text-[15px] font-semibold" style={{ color: TEINTES.secondaire }}>Pas encore assez de notes.</p>
+            <p className="text-[15px] font-semibold" style={{ color: TEINTES.secondaire }}>{t.pasAssez}</p>
             <p className="mt-1 text-[13px]" style={{ color: TEINTES.discret }}>
-              Une info entre au classement à {NOTES_MIN_COMPARAISON} notes. Joue quelques profils pour le remplir.
+              {t.seuil[0]}{NOTES_MIN_COMPARAISON}{t.seuil[1]}
             </p>
           </div>
         ) : (
@@ -140,11 +148,11 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
                     {s.text}
                   </p>
                   <p className="mt-0.5 text-[12px]" style={{ color: TEINTES.discret }}>
-                    {s.note!.echantillon.toLocaleString('fr-FR')} notes
+                    {s.note!.echantillon.toLocaleString(t.locale)}{t.nbNotes}
                   </p>
                 </div>
                 <span className="shrink-0 text-[20px] font-black tabular-nums" style={{ color: scoreInk(s.note!.note) }}>
-                  {formatNote(s.note!.note)}
+                  {t.note(s.note!.note)}
                 </span>
               </motion.li>
             ))}
@@ -155,17 +163,17 @@ export default function LeaderboardClient({ initialData }: { initialData: Leader
             sous ce seuil, sa moyenne serait celle d'un ou deux joueurs. */}
         {liste.length > 0 && (
           <p className="mt-4 text-[12px] leading-snug" style={{ color: TEINTES.discret }}>
-            Une info apparaît ici dès qu&apos;elle a reçu {NOTES_MIN_COMPARAISON} notes.
+            {t.seuilPied[0]}{NOTES_MIN_COMPARAISON}{t.seuilPied[1]}
           </p>
         )}
 
         <div className="mt-8">
           <Link
-            href="/dixmais"
+            href={cheminLocalise(langue, '/dixmais')}
             className="block w-full rounded-2xl py-4 text-center text-[15px] font-black uppercase tracking-wider text-black"
             style={{ background: TEINTES.or }}
           >
-            Jouer
+            {t.jouer}
           </Link>
         </div>
       </div>

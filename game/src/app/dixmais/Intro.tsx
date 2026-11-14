@@ -17,19 +17,21 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy } from 'lucide-react';
 import { scoreColor } from './scale';
-import { formatNote, moyenneDe } from './moyenne';
+import { moyenneDe } from './moyenne';
 import { BoutonDiscret, BoutonPrincipal, TEINTES } from './ui';
+import { useTextesDixmais, type TextesDixmais } from './textes';
+import { useLangue } from '@/lib/i18n/LangueContexte';
+import { cheminLocalise } from '@/lib/i18n/langue';
 
-/** Deux red flags, un green flag qui dépasse le 10, une moyenne. */
-const DEMO = [
-  { text: 'Il est jaloux maladif', score: 3, vert: false },
-  { text: 'Il cuisine comme un chef', score: 14, vert: true },
-  { text: 'Il parle de son ex non-stop', score: 7, vert: false },
-] as const;
-
-const DEMO_MOYENNE = moyenneDe(DEMO.map((d) => d.score));
+/** Deux red flags, un green flag qui dépasse le 10, une moyenne. Les
+ * phrases sont dans `textes` ; les notes sont les mêmes dans les deux langues. */
+function moyenneDemo(demo: TextesDixmais['demo']): number {
+  return moyenneDe(demo.map((d) => d.score));
+}
 
 export function Intro({ onStart, failed }: { onStart: () => void; failed: boolean }) {
+  const t = useTextesDixmais();
+  const langue = useLangue();
   return (
     <motion.div
       key="intro"
@@ -46,7 +48,7 @@ export function Intro({ onStart, failed }: { onStart: () => void; failed: boolea
               className="block font-black uppercase leading-none tracking-tight text-white"
               style={{ fontSize: 'min(3rem, 10vw, 5.5vh)' }}
             >
-              C&apos;est un
+              {t.titreHaut}
             </span>
             <span
               className="block font-black leading-[0.82]"
@@ -63,31 +65,31 @@ export function Intro({ onStart, failed }: { onStart: () => void; failed: boolea
               className="block font-black uppercase leading-none tracking-tight text-white/90"
               style={{ fontSize: 'min(3rem, 10vw, 5.5vh)' }}
             >
-              mais…
+              {t.titreBas}
             </span>
           </h1>
 
           <Demonstration />
 
           <p className="mt-6 max-w-[28ch] text-[15px] leading-snug" style={{ color: TEINTES.secondaire }}>
-            Sept infos sur quelqu&apos;un, notées une par une de 0 à 15.{' '}
-            <span className="text-white">Sa note, c&apos;est ta moyenne.</span>
+            {t.accroche}{' '}
+            <span className="text-white">{t.accrocheFort}</span>
           </p>
         </div>
       </div>
 
       <div className="shrink-0 px-6 pt-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}>
         {failed && (
-          <p className="mb-2 text-center text-xs font-bold text-red-400">Connexion impossible. Réessaie.</p>
+          <p className="mb-2 text-center text-xs font-bold text-red-400">{t.connexionImpossible}</p>
         )}
-        <BoutonPrincipal onClick={onStart}>{failed ? 'Réessayer' : 'Jouer'}</BoutonPrincipal>
+        <BoutonPrincipal onClick={onStart}>{failed ? t.reessayer : t.jouer}</BoutonPrincipal>
         <div className="mt-1 flex">
-          <BoutonDiscret href="/dixmais/leaderboard">
-            <Trophy size={14} /> Classement
+          <BoutonDiscret href={cheminLocalise(langue, '/dixmais/leaderboard')}>
+            <Trophy size={14} />{` ${t.classement}`}
           </BoutonDiscret>
           {/* L'écran de jeu occupe toute la hauteur : rien n'indique que des
               explications suivent. Ce lien ne coûte qu'une ligne. */}
-          <BoutonDiscret href="#page-notes-title">Comment ça marche ↓</BoutonDiscret>
+          <BoutonDiscret href="#page-notes-title">{t.commentCaMarche}</BoutonDiscret>
         </div>
       </div>
     </motion.div>
@@ -96,16 +98,18 @@ export function Intro({ onStart, failed }: { onStart: () => void; failed: boolea
 
 /** Une phrase, sa note ; puis la moyenne. En boucle. */
 function Demonstration() {
+  const t = useTextesDixmais();
+  const DEMO = t.demo;
   const [step, setStep] = useState(0);
 
   useEffect(() => {
     const id = setInterval(() => setStep((s) => (s + 1) % (DEMO.length + 1)), 1600);
     return () => clearInterval(id);
-  }, []);
+  }, [DEMO.length]);
 
   const finale = step === DEMO.length;
   const courant = finale ? null : DEMO[step];
-  const affiche = finale ? DEMO_MOYENNE : (courant?.score ?? 10);
+  const affiche = finale ? moyenneDemo(DEMO) : (courant?.score ?? 10);
 
   return (
     <div className="mt-8 w-full max-w-[19rem]">
@@ -120,12 +124,12 @@ function Demonstration() {
           {courant ? (
             <>
               <p className="text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: courant.vert ? TEINTES.vert : TEINTES.ambre }}>
-                {courant.vert ? 'Et en plus…' : 'Mais…'}
+                {courant.vert ? t.demoEtEnPlus : t.demoMais}
               </p>
               <p className="text-[15px] font-semibold leading-tight text-white">{courant.text}</p>
             </>
           ) : (
-            <p className="text-[15px] font-semibold text-white">Sa note : la moyenne</p>
+            <p className="text-[15px] font-semibold text-white">{t.demoMoyenne}</p>
           )}
         </motion.div>
         <motion.span
@@ -135,7 +139,7 @@ function Demonstration() {
           className="shrink-0 text-[34px] font-black leading-none tabular-nums"
           style={{ color: scoreColor(affiche) }}
         >
-          {formatNote(affiche)}
+          {t.note(affiche)}
         </motion.span>
       </div>
 

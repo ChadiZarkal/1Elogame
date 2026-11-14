@@ -3,14 +3,14 @@
  * Les notes éditoriales de `content/page-notes.ts`, en anglais, pour les pages
  * sous `/en` (traduction du 2026-11-14).
  *
- * Une constante `*_EN` par constante française, de même type, sauf
- * `DIXMAIS_NOTES` : « C'est un 10 mais… » reste en français.
+ * Une constante `*_EN` par constante française, de même type.
+ * `DIXMAIS_NOTES_EN` a suivi le 2026-11-14, avec la traduction du jeu.
  *
  * BRANCHER UNE PAGE ANGLAISE
  *   <PageNotes notes={notesPour('en', JEU_NOTES)} langue="en" />
  *   ou directement `notes={JEU_NOTES_EN}`. `notesPour` rend le français tel
- *   quel pour `'fr'`, et aussi pour des notes sans version anglaise (celles de
- *   `/dixmais`, celles que `/classement` assemble à la volée).
+ *   quel pour `'fr'`, et aussi pour des notes sans version anglaise (celles
+ *   que `/classement` assemble à la volée).
  *   Le `langue="en"` de `PageNotes` traduit ses libellés fixes (« Frequently
  *   asked questions », « Related pages »).
  *
@@ -22,6 +22,7 @@
 import { CONTACT_EMAIL, INSTAGRAM_HANDLE } from '@/config/contact';
 import { cheminLocalise, type Langue } from '@/lib/i18n/langue';
 import {
+  DIXMAIS_NOTES,
   HOME_NOTES,
   JEU_NOTES,
   ORACLE_NOTES,
@@ -54,7 +55,7 @@ export const HOME_NOTES_EN: PageNotes = {
       heading: 'Which game does what',
       bullets: [
         'The Worse of Two — two behaviors, you pick the worse one. This is the game that feeds the rankings.',
-        'It’s a 10, but… (in French) — one profile, seven facts rated one at a time: red flags push the score below 10, green flags can lift it as high as 15. The final score is the average of the seven.',
+        'It’s a 10, but… — one profile, seven facts rated one at a time: red flags push the score below 10, green flags can lift it as high as 15. The final score is the average of the seven.',
         'The Oracle — you describe a situation, a generative AI model gives a blunt verdict. Take it for what it is: a conversation starter, not expert advice.',
       ],
     },
@@ -357,15 +358,102 @@ export const RESSOURCES_NOTES_EN: PageNotes = {
 };
 
 // ---------------------------------------------------------------------------
+// C'est un 10 mais… — « It's a 10 but… »
+// ---------------------------------------------------------------------------
+
+export const DIXMAIS_NOTES_EN: PageNotes = {
+  title: 'How this game works',
+  lede:
+    'One profile, seven reveals: red flags and green flags. You rate each one on its own, from 0 to 15, and the person gets the average of all seven. The game doesn’t ask whether a behavior is serious in the abstract — it asks what it costs them in your eyes, or what it earns them.',
+  blocks: [
+    {
+      heading: 'The rule',
+      body: [
+        'Each reveal comes as a sentence: “It’s a 10, but…” for a red flag, “It’s a 10, and on top of that…” for a green flag. You say what the person is worth based on that alone, starting from 10. Then the next reveal arrives, and the slider resets to 10.',
+        'A red flag pulls the score down. A green flag can push it above 10, all the way to 15: a 14/10 is a quality that truly won you over. After the seventh reveal, the seven scores merge into one: the average, which becomes the person’s score. A 0 weighs heavily, but it doesn’t end the round.',
+      ],
+    },
+    {
+      heading: 'Why rate each reveal on its own',
+      body: [
+        'Judging a single flaw is simpler and more honest: you’re not asking what the other six are worth, you’re asking what this one is worth. Every score becomes comparable from one player to the next.',
+        'The average does the rest. It shows what a single sentence can do to a profile — and how many good qualities it takes to make up for it. That’s why the score can go above 10: on a scale that stops at 10, a quality rated on its own could never earn anything.',
+      ],
+    },
+    {
+      heading: 'What your final score says',
+      body: [
+        'Two players can land on the same average by opposite routes: one gave 6 across the board, the other gave six 7s and a 0. The number doesn’t tell them apart — the seven scores do.',
+        'That’s why the game shows the math rather than just the result, and points out the reveal that cost the average the most — and the one that added the most.',
+      ],
+    },
+    {
+      heading: 'What this game isn’t',
+      bullets: [
+        'It’s not a compatibility test: the profiles are fictional, pieced together at random from a catalog of statements.',
+        'It’s not an opinion about a real person. The reveals are deliberately over the top; that’s what makes the trade-offs playable.',
+        'The aggregate scores describe the players on this site, not public opinion at large. The sample is self-selected.',
+      ],
+    },
+    {
+      heading: 'When the game touches on serious subjects',
+      body: [
+        'Some reveals describe behaviors that, outside the game, amount to violence or coercive control. The playful format doesn’t make them any less serious. If one of them echoes what you’re going through, the self-assessment tools in our resources section are designed to help you see things more clearly.',
+        EMERGENCY_EN,
+      ],
+    },
+  ],
+  faq: [
+    {
+      question: 'How many reveals per profile?',
+      answer:
+        'Seven: five red flags and two green flags. Enough for the average to mean something, few enough to move quickly from one profile to the next.',
+    },
+    {
+      question: 'Why can you go above 10?',
+      answer:
+        'Because green flags need to be able to earn something. Every profile starts at 10: a flaw pulls it down, a good quality can push it up to 15. So a profile can end up at 12/10.',
+    },
+    {
+      question: 'What happens if I give a 0?',
+      answer:
+        'Nothing stops: the 0 counts toward the average like any other score. It just weighs a lot — next to a 10, it takes nearly a point and a half off an average of seven scores.',
+    },
+    {
+      question: 'Are the profiles real people?',
+      answer:
+        'No. The first name, the age and the reveals are pieced together at random from a catalog of statements written in advance. No profile matches anyone.',
+    },
+    {
+      question: 'Will I see the same reveals again?',
+      answer:
+        'Not within the same session: reveals you’ve already rated are left out of the next draws until the catalog runs out.',
+    },
+    {
+      question: 'Do I need an account?',
+      answer:
+        'No. The game asks for no account and no email address. Scores are sent anonymously to feed the leaderboard of reveals.',
+    },
+  ],
+  related: [
+    { href: en('/dixmais/leaderboard'), label: 'Leaderboard of reveals' },
+    { href: en('/guide'), label: 'Flag guide' },
+    { href: en('/jeu'), label: 'The Worse of Two — the duel' },
+    { href: en('/ressources'), label: 'Self-assessment tools' },
+  ],
+};
+
+// ---------------------------------------------------------------------------
 // Correspondance
 // ---------------------------------------------------------------------------
 
-/** Chaque note française et sa version anglaise. `DIXMAIS_NOTES` n'y est pas, exprès. */
+/** Chaque note française et sa version anglaise. */
 export const NOTES_TRADUITES: ReadonlyMap<PageNotes, PageNotes> = new Map<PageNotes, PageNotes>([
   [HOME_NOTES, HOME_NOTES_EN],
   [JEU_NOTES, JEU_NOTES_EN],
   [ORACLE_NOTES, ORACLE_NOTES_EN],
   [RESSOURCES_NOTES, RESSOURCES_NOTES_EN],
+  [DIXMAIS_NOTES, DIXMAIS_NOTES_EN],
 ]);
 
 /**
