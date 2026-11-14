@@ -14,9 +14,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import type { DixMaisStatement } from '@/types/database';
 import type { ProfileIdentity } from './profile';
 import { scoreColor, scoreInk } from './scale';
-import { formatNote } from './moyenne';
 import { TEINTES } from './ui';
 import type { Flash } from './useDixMais';
+import { useTextesDixmais } from './textes';
 
 interface Props {
   identity: ProfileIdentity;
@@ -30,6 +30,7 @@ interface Props {
 const COURT = '[@media(max-height:620px)]:';
 
 export function ProfileCard({ identity, statements, index, moyenne, flash }: Props) {
+  const t = useTextesDixmais();
   const current = statements[index];
   const moyenneAffichee = flash ? flash.moyenne : moyenne;
   const vert = current?.type === 'positive';
@@ -54,19 +55,19 @@ export function ProfileCard({ identity, statements, index, moyenne, flash }: Pro
         {/* La moyenne vit sur la personne : c'est elle qui deviendra sa note. */}
         <div
           className="shrink-0 text-right"
-          aria-label={moyenneAffichee === null ? 'Pas encore de moyenne' : `Moyenne ${formatNote(moyenneAffichee)} sur 10`}
+          aria-label={moyenneAffichee === null ? t.pasDeMoyenne : t.moyenneSur10(t.note(moyenneAffichee))}
         >
           <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: TEINTES.discret }}>
-            Moyenne
+            {t.moyenne}
           </p>
           <motion.p
-            key={moyenneAffichee === null ? 'vide' : formatNote(moyenneAffichee)}
+            key={moyenneAffichee === null ? 'vide' : t.note(moyenneAffichee)}
             initial={{ opacity: 0.4, y: 3 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-lg font-black leading-tight tabular-nums"
             style={{ color: moyenneAffichee === null ? TEINTES.discret : scoreColor(moyenneAffichee) }}
           >
-            {moyenneAffichee === null ? '—' : formatNote(moyenneAffichee)}
+            {moyenneAffichee === null ? '—' : t.note(moyenneAffichee)}
           </motion.p>
         </div>
       </div>
@@ -90,7 +91,7 @@ export function ProfileCard({ identity, statements, index, moyenne, flash }: Pro
               className="mb-3 text-[13px] font-bold uppercase tracking-[0.12em]"
               style={{ color: vert ? TEINTES.vert : TEINTES.ambre }}
             >
-              {vert ? '🟢 C’est un 10, et en plus…' : '🚩 C’est un 10, mais…'}
+              {vert ? t.etEnPlus : t.mais}
             </p>
             <p
               className={`mx-auto max-w-[22ch] text-[clamp(1.45rem,7.2vw,2rem)] font-black leading-[1.15] text-white [overflow-wrap:anywhere] ${COURT}text-[1.25rem]`}
@@ -120,9 +121,9 @@ export function ProfileCard({ identity, statements, index, moyenne, flash }: Pro
                 {flash.note}
               </motion.span>
               <span className="mt-2 text-[13px] font-semibold" style={{ color: TEINTES.secondaire }}>
-                Moyenne{' '}
+                {t.moyenne}{' '}
                 <span className="font-black tabular-nums" style={{ color: scoreColor(flash.moyenne) }}>
-                  {formatNote(flash.moyenne)}
+                  {t.note(flash.moyenne)}
                 </span>
               </span>
             </motion.div>

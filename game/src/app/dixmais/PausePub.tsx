@@ -18,8 +18,10 @@ import { motion } from 'framer-motion';
 import { DIXMAIS_PAUSE, DIXMAIS_PAUSE_DUREE_S } from '@/config/ads';
 import { CadreRegie } from '@/components/ads/CadreRegie';
 import { Pied, TEINTES } from './ui';
+import { useTextesDixmais } from './textes';
 
 export function PausePub({ profilsJuges, onContinuer }: { profilsJuges: number; onContinuer: () => void }) {
+  const t = useTextesDixmais();
   const [reste, setReste] = useState(DIXMAIS_PAUSE_DUREE_S);
 
   // Recalculé depuis l'heure de départ : un onglet en arrière-plan ralentit
@@ -46,21 +48,21 @@ export function PausePub({ profilsJuges, onContinuer }: { profilsJuges: number; 
     >
       <div className="pt-6 text-center">
         <p className="text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: TEINTES.discret }}>
-          {profilsJuges} profils jugés
+          {profilsJuges}{t.profilsJuges}
         </p>
-        <p className="mt-2 text-[22px] font-black leading-tight text-white">Petite pause</p>
+        <p className="mt-2 text-[22px] font-black leading-tight text-white">{t.petitePause}</p>
         <p className="mt-1 text-[13px]" style={{ color: TEINTES.secondaire }}>
-          Le prochain profil arrive juste après.
+          {t.prochainProfil}
         </p>
       </div>
 
-      <aside aria-label="Publicité" className="mx-auto mt-6 w-full max-w-sm flex-1">
+      <aside aria-label={t.publicite} className="mx-auto mt-6 w-full max-w-sm flex-1">
         <p
           aria-hidden
           className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.18em]"
           style={{ color: TEINTES.discret }}
         >
-          Publicité
+          {t.publicite}
         </p>
         {DIXMAIS_PAUSE.enabled && <CadreRegie unit={DIXMAIS_PAUSE} />}
       </aside>
@@ -74,7 +76,7 @@ export function PausePub({ profilsJuges, onContinuer }: { profilsJuges: number; 
           className="w-full rounded-2xl py-4 text-[15px] font-black uppercase tracking-wider transition-colors enabled:cursor-pointer"
           style={pret ? { background: TEINTES.or, color: '#000' } : { background: 'rgba(255,255,255,0.08)', color: TEINTES.discret }}
         >
-          {pret ? 'Profil suivant →' : `Profil suivant dans ${reste}…`}
+          {pret ? t.profilSuivant : t.profilSuivantDans(reste)}
         </button>
       </Pied>
     </motion.div>

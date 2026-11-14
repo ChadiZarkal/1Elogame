@@ -25,16 +25,18 @@ describe('langues — adresses', () => {
     expect(cheminLocalise('en', '/redflagtest')).toBe('/en/redflagtest');
     expect(cheminLocalise('en', '/redflagtest/stats')).toBe('/en/redflagtest/stats');
     expect(cheminLocalise('en', '/guide')).toBe('/en/guide');
-    // « C'est un 10 mais… » reste en français.
-    expect(cheminLocalise('en', '/dixmais')).toBe('/dixmais');
+    expect(cheminLocalise('en', '/dixmais')).toBe('/en/dixmais');
+    // L'administration reste en français.
+    expect(cheminLocalise('en', '/dixmais/admin')).toBe('/dixmais/admin');
     expect(cheminLocalise('fr', '/redflagtest')).toBe('/redflagtest');
   });
 
   it('mène le bouton de langue à la bonne page', () => {
     expect(cheminAutreLangue('/')).toBe('/en');
     expect(cheminAutreLangue('/redflagtest/r/abc')).toBe('/en/redflagtest/r/abc');
-    // Une page sans traduction : l'accueil anglais, pas un /en/dixmais introuvable.
-    expect(cheminAutreLangue('/dixmais')).toBe('/en');
+    // Une page sans traduction : l'accueil anglais, pas un /en/admin introuvable.
+    expect(cheminAutreLangue('/dixmais/admin')).toBe('/en');
+    expect(cheminAutreLangue('/dixmais')).toBe('/en/dixmais');
     expect(cheminAutreLangue('/jeu')).toBe('/en/jeu');
     expect(cheminAutreLangue('/en')).toBe('/');
     expect(cheminAutreLangue('/en/redflagtest/stats')).toBe('/redflagtest/stats');

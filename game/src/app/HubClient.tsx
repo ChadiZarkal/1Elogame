@@ -127,19 +127,17 @@ const AUTRES_JEUX: Jeu[] = [
 ];
 
 /*
- * L'ACCUEIL EN ANGLAIS (`/en`, 2026-11-14)
- *   Tout le site existe en anglais, sauf « C'est un 10 mais… », laissé en
- *   français à la demande de Chadi. Sa carte le dit (« FR » dans le titre,
- *   « in French » dans l'action) : quelqu'un qui ne lit pas le français ne
- *   doit pas le découvrir après avoir tapé.
+ * L'ACCUEIL EN ANGLAIS (`/en`, 2026-11-14) : tout le site existe en anglais,
+ * chaque carte mène à la version anglaise de son jeu.
  */
 const PHARES_EN: Jeu[] = [
   { ...PHARES[0], promesse: 'What other people see as a red flag in you.', action: 'Take the test', href: '/en/redflagtest' },
   {
     ...PHARES[1],
-    titre: "IT'S A 10 BUT… · FR",
+    titre: "IT'S A 10 BUT…",
     promesse: 'Red flags, green flags: rate them up to 15/10. Their score is your average.',
-    action: 'Rate a profile (in French)',
+    action: 'Rate a profile',
+    href: '/en/dixmais',
   },
 ];
 

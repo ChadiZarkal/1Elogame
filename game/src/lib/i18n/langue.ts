@@ -20,19 +20,20 @@ export type Langue = 'fr' | 'en';
 export const LANGUE_PAR_DEFAUT: Langue = 'fr';
 
 /**
- * Les chemins qui existent en anglais, sous `/en`. Tout le site public sauf
- * « C'est un 10 mais… » (`/dixmais`), laissé en français à la demande de
- * Chadi (2026-11-14).
+ * Les chemins qui existent en anglais, sous `/en`. Tout le site public ;
+ * « C'est un 10 mais… » (`/dixmais`) a suivi une fois sa base connectée
+ * (2026-11-14). Les pages d'administration restent en français.
  */
 const SECTIONS_TRADUITES = [
   'redflagtest', 'flagornot', 'jeu', 'guide', 'red-flags', 'articles', 'classement',
   'observatoire', 'methodologie', 'ressources', 'a-propos', 'sources',
-  'mentions-legales', 'confidentialite', 'cgu', 'hors-ligne',
+  'mentions-legales', 'confidentialite', 'cgu', 'hors-ligne', 'dixmais',
 ];
 const TRADUITS = [/^\/$/, new RegExp(`^\\/(?:${SECTIONS_TRADUITES.join('|')})(?:\\/|$)`)];
 
 /** La page existe-t-elle en anglais ? (chemin français) */
 export function estTraduit(chemin: string): boolean {
+  if (/^\/(?:dixmais\/)?admin(?:\/|$)/.test(chemin)) return false;
   return TRADUITS.some((re) => re.test(chemin));
 }
 

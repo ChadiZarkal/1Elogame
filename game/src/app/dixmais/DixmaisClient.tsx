@@ -24,9 +24,11 @@ import { PausePub } from './PausePub';
 import { DIXMAIS_POPUNDER_TOUS_LES, pauseDixmaisDue } from '@/config/ads';
 import { usePopunderTousLes } from '@/components/ads/usePopunderApres';
 import { scoreColor } from './scale';
+import { useTextesDixmais } from './textes';
 
 export default function DixMaisPage() {
   const game = useDixMais();
+  const t = useTextesDixmais();
   const { phase, round } = game;
 
   // Au verdict du 2e profil, du 4e, du 6e… le pop-under s'arme : il s'ouvre
@@ -128,7 +130,7 @@ export default function DixMaisPage() {
         {phase !== 'intro' && (
           <button
             onClick={game.restart}
-            aria-label="Recommencer"
+            aria-label={t.recommencer}
             className="-m-2.5 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center text-white/30 transition-colors hover:text-white/60 active:scale-90"
           >
             <RotateCcw size={16} />
@@ -177,9 +179,9 @@ export default function DixMaisPage() {
                     ce cap, la phrase et la jauge se suffisent. */}
                 {game.showCoach && round.index === 0 && (
                   <p className="mb-3 text-center text-[13px] font-medium leading-snug text-white/55">
-                    Note chaque info seule, en partant de 10.
+                    {t.coachLigne1}
                     <br />
-                    Une qualité peut <span className="text-emerald-400">dépasser 10</span>.
+                    {t.coachAvant}<span className="text-emerald-400">{t.coachVert}</span>{t.coachApres}
                   </p>
                 )}
 
@@ -225,6 +227,7 @@ export default function DixMaisPage() {
 }
 
 function Loading() {
+  const t = useTextesDixmais();
   return (
     <motion.div
       key="loading"
@@ -240,7 +243,7 @@ function Loading() {
         style={{ borderTopColor: '#FFD700', borderRightColor: 'rgba(245,158,11,0.3)' }}
       />
       <p className="text-sm font-bold uppercase tracking-wider text-white/30">
-        On te trouve quelqu&apos;un…
+        {t.chargement}
       </p>
     </motion.div>
   );

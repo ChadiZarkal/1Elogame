@@ -19,8 +19,9 @@
 
 import { useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { MAX_SCORE, START_SCORE, isBonus, scoreColor, scoreLabel, withAlpha } from './scale';
+import { MAX_SCORE, START_SCORE, isBonus, scoreColor, withAlpha } from './scale';
 import { TEINTES } from './ui';
+import { useTextesDixmais } from './textes';
 
 const STEPS = Array.from({ length: MAX_SCORE + 1 }, (_, i) => i);
 const REPERES = [0, 5, 10, 15];
@@ -33,6 +34,7 @@ interface Props {
 }
 
 export function ScoreDial({ value, onChange, onCommit, disabled }: Props) {
+  const t = useTextesDixmais();
   const trackRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
 
@@ -98,7 +100,7 @@ export function ScoreDial({ value, onChange, onCommit, disabled }: Props) {
         className="mt-1 mb-3 text-center text-[12px] font-bold uppercase tracking-[0.14em]"
         style={{ color: withAlpha(tint, 0.8) }}
       >
-        {scoreLabel(value)}
+        {t.label(value)}
       </p>
 
       {/* ── La piste ────────────────────────────────────────────────────── */}
@@ -106,11 +108,11 @@ export function ScoreDial({ value, onChange, onCommit, disabled }: Props) {
         ref={trackRef}
         role="slider"
         tabIndex={disabled ? -1 : 0}
-        aria-label="Note de cette révélation, de 0 à 15"
+        aria-label={t.jaugeAria}
         aria-valuemin={0}
         aria-valuemax={MAX_SCORE}
         aria-valuenow={value}
-        aria-valuetext={`${value} sur 10, ${scoreLabel(value)}`}
+        aria-valuetext={t.jaugeValeur(value, t.label(value))}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={stopDragging}
@@ -179,13 +181,13 @@ export function ScoreDial({ value, onChange, onCommit, disabled }: Props) {
         }}
       >
         {value === 0
-          ? '0 · Rédhibitoire'
+          ? t.redhibitoire
           : untouched
             // Garder 10 est un choix valide : l'info ne change rien.
-            ? 'Toujours un 10'
+            ? t.toujoursUn10
             : isBonus(value)
               ? `✨ ${value}/10`
-              : `Valider ${value}`}
+              : t.valider(value)}
       </motion.button>
     </div>
   );

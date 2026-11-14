@@ -17,14 +17,10 @@ import type { PlayerProfile } from '@/types/game';
 import { MAX_SCORE, scoreColor, scoreInk } from './scale';
 import {
   construireBilan,
-  formatNote,
-  libelleCategorie,
-  phraseSeverite,
   type Jugement,
   type ProfilJuge,
 } from './moyenne';
 import {
-  cohortSentence,
   compareToCohort,
   fetchCohortStats,
   statementIdsOf,
@@ -32,13 +28,7 @@ import {
 } from './cohort';
 import { BoutonDiscret, BoutonPrincipal, Pastille, Pied, Section, TEINTES } from './ui';
 import { LienCafe } from '@/components/ui/LienCafe';
-
-const SHARE_URL = 'https://redorgreen.fr/dixmais';
-
-/** « 1 profil », « 3 profils ». */
-function plural(n: number, mot: string): string {
-  return `${n} ${mot}${n >= 2 ? 's' : ''}`;
-}
+import { useTextesDixmais } from './textes';
 
 interface Props {
   rounds: ProfilJuge[];
@@ -51,6 +41,7 @@ interface Props {
 }
 
 export function ReportScreen({ rounds, profile, getSessionId, onBack, onNext }: Props) {
+  const t = useTextesDixmais();
   const [copied, setCopied] = useState(false);
   const [cohort, setCohort] = useState<CohortComparison | null>(null);
   const bilan = useMemo(() => construireBilan(rounds), [rounds]);
@@ -72,18 +63,20 @@ export function ReportScreen({ rounds, profile, getSessionId, onBack, onNext }: 
     return () => clearTimeout(id);
   }, [copied]);
 
-  const severite = phraseSeverite(bilan.severite);
+  const severite = t.severite(bilan.severite);
   const premier = bilan.classement[0];
+  /** Le portrait dans la langue de la page : seuls le titre et la phrase changent. */
+  const archetype = t.archetype(bilan.archetype);
 
   const share = async () => {
-    const top = premier ? ` Mon préféré : ${premier.nom}, ${formatNote(premier.moyenne)}/10.` : '';
-    const text = `${bilan.profils} profils jugés, ${formatNote(bilan.noteMoyenne)}/10 en moyenne par révélation. Verdict : ${bilan.archetype.title} ${bilan.archetype.emoji}.${top} Et toi, tu vaux quoi comme juré ?`;
+    const top = premier ? t.partageBilanTop(premier.nom, t.note(premier.moyenne)) : '';
+    const text = t.partageBilan(bilan.profils, t.note(bilan.noteMoyenne), archetype.title, archetype.emoji, top);
     try {
       if (navigator.share) {
-        await navigator.share({ title: "C'est un 10 mais…", text, url: SHARE_URL });
+        await navigator.share({ title: t.nomJeu, text, url: t.urlPartage });
         return;
       }
-      await navigator.clipboard.writeText(`${text} ${SHARE_URL}`);
+      await navigator.clipboard.writeText(`${text} ${t.urlPartage}`);
       setCopied(true);
     } catch {
       /* partage annulé ou presse-papiers indisponible */
@@ -103,7 +96,7 @@ export function ReportScreen({ rounds, profile, getSessionId, onBack, onNext }: 
       {/* ── Le portrait ─────────────────────────────────────────────────── */}
       <div className="pt-2 pb-6 text-center">
         <p className="text-[12px] font-semibold" style={{ color: TEINTES.discret }}>
-          Ta soirée · {plural(bilan.profils, 'profil')} · {plural(bilan.jugements, 'révélation')}
+          {t.taSoiree}{t.pluriel(bilan.profils, t.motProfil)}{' · '}{t.pluriel(bilan.jugements, t.motRevelation)}
         </p>
         <motion.p
           initial={{ scale: 0.6, opacity: 0 }}
@@ -111,30 +104,30 @@ export function ReportScreen({ rounds, profile, getSessionId, onBack, onNext }: 
           transition={{ type: 'spring', stiffness: 220, damping: 16 }}
           className="mt-5 text-[44px] leading-none"
         >
-          {bilan.archetype.emoji}
+          {archetype.emoji}
         </motion.p>
         <p className="mt-3 text-[clamp(1.6rem,8vw,2.2rem)] font-black uppercase leading-none tracking-tight text-white">
-          {bilan.archetype.title}
+          {archetype.title}
         </p>
         <p className="mx-auto mt-3 max-w-[32ch] text-[14px] leading-snug" style={{ color: TEINTES.secondaire }}>
-          {bilan.archetype.tagline}
+          {archetype.tagline}
         </p>
       </div>
 
       {/* ── Les chiffres ────────────────────────────────────────────────── */}
       <div className="grid grid-cols-3 border-t py-4 text-center" style={{ borderColor: TEINTES.filet }}>
-        <Chiffre valeur={String(bilan.profils)} label="Profils" />
+        <Chiffre valeur={String(bilan.profils)} label={t.chiffreProfils} />
         <Chiffre
-          valeur={formatNote(bilan.noteMoyenne)}
-          label="Note moyenne"
+          valeur={t.note(bilan.noteMoyenne)}
+          label={t.chiffreNoteMoyenne}
           couleur={scoreColor(bilan.noteMoyenne)}
           separe
         />
-        <Chiffre valeur={`${Math.round(bilan.zeros)} %`} label="De zéros" separe />
+        <Chiffre valeur={t.pct(Math.round(bilan.zeros))} label={t.chiffreZeros} separe />
       </div>
 
       {/* ── Le classement ───────────────────────────────────────────────── */}
-      <Section titre="Ton classement">
+      <Section titre={t.tonClassement}>
         <ol className="space-y-3">
           {bilan.classement.map((p, rang) => (
             <li key={p.numero} className="flex items-center gap-3">
@@ -150,7 +143,7 @@ export function ReportScreen({ rounds, profile, getSessionId, onBack, onNext }: 
                 </p>
               </div>
               <span className="shrink-0 text-[17px] font-black tabular-nums" style={{ color: scoreColor(p.moyenne) }}>
-                {formatNote(p.moyenne)}
+                {t.note(p.moyenne)}
               </span>
             </li>
           ))}
@@ -159,52 +152,52 @@ export function ReportScreen({ rounds, profile, getSessionId, onBack, onNext }: 
 
       {/* ── Face aux autres ─────────────────────────────────────────────── */}
       {faceAuxAutres && (
-        <Section titre="Face aux autres">
+        <Section titre={t.faceAuxAutres}>
           <div className="space-y-2.5">
-            <Barre label="Toi" valeur={bilan.severite?.moi ?? cohort?.mine ?? 0} couleur={scoreColor(bilan.severite?.moi ?? cohort?.mine ?? 0)} fort />
-            {bilan.severite && <Barre label="Tout le monde" valeur={bilan.severite.autres} />}
-            {profile && cohort && <Barre label="Ta cohorte" valeur={cohort.theirs} />}
+            <Barre label={t.toi} valeur={bilan.severite?.moi ?? cohort?.mine ?? 0} couleur={scoreColor(bilan.severite?.moi ?? cohort?.mine ?? 0)} fort />
+            {bilan.severite && <Barre label={t.toutLeMonde} valeur={bilan.severite.autres} />}
+            {profile && cohort && <Barre label={t.taCohorte} valeur={cohort.theirs} />}
           </div>
           <div className="mt-3 space-y-1.5 text-[14px] leading-snug" style={{ color: TEINTES.secondaire }}>
             {severite && <p>{severite}</p>}
-            {profile && cohort && <p>{cohortSentence(cohort, profile)}</p>}
+            {profile && cohort && <p>{t.cohorte(cohort, profile)}</p>}
           </div>
         </Section>
       )}
 
       {/* ── Red contre green ────────────────────────────────────────────── */}
       {bilan.moyenneVerte !== null && bilan.moyenneRouge !== null && (
-        <Section titre="Red flags contre green flags">
+        <Section titre={t.rougeContreVert}>
           <div className="space-y-2.5">
             <Barre label="🚩 Red" valeur={bilan.moyenneRouge} couleur={scoreColor(bilan.moyenneRouge)} fort />
             <Barre label="🟢 Green" valeur={bilan.moyenneVerte} couleur={scoreColor(bilan.moyenneVerte)} fort />
           </div>
           <p className="mt-3 text-[14px] leading-snug" style={{ color: TEINTES.secondaire }}>
             {bilan.moyenneVerte <= 10.3
-              ? 'Une qualité ne rapporte presque rien : chez toi, être bien, c’est le minimum.'
-              : `Une qualité rapporte ${formatNote(bilan.moyenneVerte - 10)} au-dessus du 10 ; un défaut coûte ${formatNote(10 - bilan.moyenneRouge)}.`}
+              ? t.qualiteMinimum
+              : t.qualiteRapporte(t.note(bilan.moyenneVerte - 10), t.note(10 - bilan.moyenneRouge))}
           </p>
         </Section>
       )}
 
       {/* ── Les extrêmes ────────────────────────────────────────────────── */}
       {bilan.coupsDeCoeur.length > 0 && (
-        <Section titre="Tes coups de cœur">
+        <Section titre={t.coupsDeCoeur}>
           <Liste jugements={bilan.coupsDeCoeur.slice(0, 3)} />
         </Section>
       )}
       {bilan.redhibitoires.length > 0 && (
-        <Section titre="Tes rédhibitoires">
+        <Section titre={t.redhibitoires}>
           <Liste jugements={bilan.redhibitoires.slice(0, 3)} />
         </Section>
       )}
 
       {/* ── Par catégorie ───────────────────────────────────────────────── */}
       {bilan.categories.length >= 2 && (
-        <Section titre="Ce qui te fait décrocher">
+        <Section titre={t.decrocher}>
           <div className="space-y-2.5">
             {bilan.categories.slice(0, 4).map((c) => (
-              <Barre key={c.category} label={libelleCategorie(c.category)} valeur={c.moi} couleur={scoreColor(c.moi)} fort large />
+              <Barre key={c.category} label={t.categorie(c.category)} valeur={c.moi} couleur={scoreColor(c.moi)} fort large />
             ))}
           </div>
         </Section>
@@ -212,20 +205,20 @@ export function ReportScreen({ rounds, profile, getSessionId, onBack, onNext }: 
 
       {/* ── Les écarts ──────────────────────────────────────────────────── */}
       {(bilan.intransigeance || bilan.angleMort) && (
-        <Section titre="Là où tu te démarques">
+        <Section titre={t.demarques}>
           <div className="space-y-4">
             {bilan.intransigeance && (
               <Ecart
-                titre="Ton intransigeance"
+                titre={t.intransigeance}
                 texte={bilan.intransigeance.text}
-                detail={`Tu mets ${bilan.intransigeance.note}, les autres ${formatNote(bilan.intransigeance.autres ?? 0)}.`}
+                detail={t.intransigeanceDetail(bilan.intransigeance.note, t.note(bilan.intransigeance.autres ?? 0))}
               />
             )}
             {bilan.angleMort && (
               <Ecart
-                titre="Ton angle mort"
+                titre={t.angleMort}
                 texte={bilan.angleMort.text}
-                detail={`Les autres mettent ${formatNote(bilan.angleMort.autres ?? 0)}, toi ${bilan.angleMort.note}.`}
+                detail={t.angleMortDetail(bilan.angleMort.note, t.note(bilan.angleMort.autres ?? 0))}
               />
             )}
           </div>
@@ -238,25 +231,25 @@ export function ReportScreen({ rounds, profile, getSessionId, onBack, onNext }: 
         className="my-3 rounded-2xl border p-4"
         style={{ borderColor: 'rgba(255,192,77,0.3)', background: 'rgba(255,192,77,0.06)' }}
       >
-        <p className="text-[14px] font-bold text-white">☕ Ça t’a plu ?</p>
+        <p className="text-[14px] font-bold text-white">{t.cafeTitre}</p>
         <p className="mt-1 text-[13px] leading-snug" style={{ color: TEINTES.secondaire }}>
-          Le jeu est gratuit. Un café aide à payer le site et à écrire de nouveaux profils.
+          {t.cafeTexte}
         </p>
         <LienCafe className="mt-3 flex min-h-11 items-center justify-center rounded-xl bg-[#FFC04D] px-4 text-[14px] font-black text-black transition-opacity hover:opacity-90">
-          Offrir un café
+          {t.cafeBouton}
         </LienCafe>
       </section>
 
       {/* ── Suite ───────────────────────────────────────────────────────── */}
       <Pied>
-        <BoutonPrincipal onClick={onNext}>Profil suivant →</BoutonPrincipal>
+        <BoutonPrincipal onClick={onNext}>{t.profilSuivant}</BoutonPrincipal>
         <div className="flex">
           <BoutonDiscret onClick={onBack}>
-            <ArrowLeft size={15} /> Verdict
+            <ArrowLeft size={15} />{` ${t.verdict}`}
           </BoutonDiscret>
           <BoutonDiscret onClick={share}>
             {copied ? <Check size={15} /> : <Share2 size={15} />}
-            {copied ? 'Copié' : 'Partager'}
+            {copied ? t.copie : t.partager}
           </BoutonDiscret>
         </div>
       </Pied>
@@ -285,6 +278,7 @@ function Chiffre({ valeur, label, couleur, separe }: { valeur: string; label: st
 function Barre({
   label, valeur, couleur, fort, large,
 }: { label: string; valeur: number; couleur?: string; fort?: boolean; large?: boolean }) {
+  const t = useTextesDixmais();
   const teinte = couleur ?? 'rgba(255,255,255,0.3)';
   return (
     <div className="flex items-center gap-3">
@@ -304,7 +298,7 @@ function Barre({
         />
       </div>
       <span className="w-9 shrink-0 text-right text-[14px] font-black tabular-nums" style={{ color: fort ? teinte : TEINTES.secondaire }}>
-        {formatNote(valeur)}
+        {t.note(valeur)}
       </span>
     </div>
   );
@@ -324,10 +318,11 @@ function Liste({ jugements }: { jugements: Jugement[] }) {
 }
 
 function Ecart({ titre, texte, detail }: { titre: string; texte: string; detail: string }) {
+  const t = useTextesDixmais();
   return (
     <div>
       <p className="text-[12px] font-semibold" style={{ color: TEINTES.discret }}>{titre}</p>
-      <p className="mt-0.5 text-[15px] font-semibold leading-snug" style={{ color: TEINTES.texte }}>« {texte} »</p>
+      <p className="mt-0.5 text-[15px] font-semibold leading-snug" style={{ color: TEINTES.texte }}>{t.guillemets[0]}{texte}{t.guillemets[1]}</p>
       <p className="mt-0.5 text-[13px]" style={{ color: TEINTES.secondaire }}>{detail}</p>
     </div>
   );

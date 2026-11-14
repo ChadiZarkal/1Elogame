@@ -167,7 +167,7 @@ function CorpsEn() {
           <p>
             <strong>Games.</strong> The <Link href={en('/jeu')}>Red or Green duel</Link> puts
             two behaviors side by side and asks you to pick.{' '}
-            <Link href="/dixmais">“It’s a 10, but…”</Link> (in French) has you rate red
+            <Link href={en('/dixmais')}>“It’s a 10, but…”</Link> has you rate red
             flags and green flags one at a time, up to 15/10, and gives the profile the
             average. The <Link href={en('/flagornot')}>Oracle</Link> weighs in on a
             situation you describe in your own words. All of them are free and need no

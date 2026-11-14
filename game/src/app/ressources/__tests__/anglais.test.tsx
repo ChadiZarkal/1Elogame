@@ -140,8 +140,11 @@ describe('ressources en anglais', () => {
     expect(container.textContent).toMatch(/17.*112.*3919/);
   });
 
-  it('chaque outil est en anglais, de l’accueil au résultat', () => {
-    for (const meter of METERS_EN) {
+  // Un test par outil, avec un délai à sa mesure : chacun rend une
+  // cinquantaine d'écrans, et la suite complète, chargée, dépassait les
+  // 5 secondes par défaut (relevé le 2026-11-14).
+  it.each(METERS_EN.map((m) => [m.slug, m] as const))('%s est en anglais, de l’accueil au résultat', (_, meter) => {
+    {
       slugCourant = meter.slug;
       const page = enAnglais(<MeterQuizPage />);
       attendSansFrancais(texteComplet(page.container));
@@ -183,7 +186,7 @@ describe('ressources en anglais', () => {
       attendSansFrancais(`${String(meta.title)} ${meta.description}`);
       expect(meta.alternates?.canonical).toBe(`/en/ressources/${meter.slug}`);
     }
-  });
+  }, 30_000);
 });
 
 describe('pages légales en anglais', () => {

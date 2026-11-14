@@ -58,11 +58,11 @@ function francaisRestant(el: Element): string[] {
   });
 }
 
-/** Les liens internes d'une page anglaise restent sous `/en`, sauf `/dixmais`. */
+/** Les liens internes d'une page anglaise restent sous `/en` (« C'est un 10 mais… » compris, depuis le 2026-11-14). */
 function liensHorsAnglais(): string[] {
   return Array.from(document.querySelectorAll('a'))
     .map((a) => a.getAttribute('href') ?? '')
-    .filter((h) => h.startsWith('/') && !/^\/en(\/|$)/.test(h) && !h.startsWith('/dixmais'));
+    .filter((h) => h.startsWith('/') && !/^\/en(\/|$)/.test(h));
 }
 
 describe('le détecteur de français', () => {
@@ -184,10 +184,10 @@ describe('méthodologie, à propos, sources en anglais', () => {
     expect(liensHorsAnglais()).toEqual([]);
   });
 
-  it('à propos signale le jeu resté en français', () => {
+  it('à propos mène à la version anglaise de « C’est un 10 mais… »', () => {
     render(<AProposEnPage />);
-    const lien = Array.from(document.querySelectorAll('a')).find((a) => a.getAttribute('href') === '/dixmais');
-    expect(lien?.parentElement?.textContent).toMatch(/\(in French\)/);
+    const lien = Array.from(document.querySelectorAll('a')).find((a) => a.getAttribute('href') === '/en/dixmais');
+    expect(lien?.parentElement?.textContent).not.toMatch(/\(in French\)/);
   });
 });
 
@@ -196,15 +196,10 @@ describe('notes en anglais', () => {
     ([nom, valeur]) => nom.endsWith('_NOTES') && typeof valeur === 'object',
   ) as [string, NOTES_FR.PageNotes][];
 
-  it('existent pour chaque constante française, sauf celles de /dixmais', () => {
+  it('existent pour chaque constante française', () => {
     expect(constantes.length).toBeGreaterThan(0);
     for (const [nom, notes] of constantes) {
-      if (nom === 'DIXMAIS_NOTES') {
-        expect(NOTES_TRADUITES.has(notes)).toBe(false);
-        expect(notesPour('en', notes)).toBe(notes);
-      } else {
-        expect(NOTES_TRADUITES.get(notes), nom).toBeDefined();
-      }
+      expect(NOTES_TRADUITES.get(notes), nom).toBeDefined();
     }
   });
 
