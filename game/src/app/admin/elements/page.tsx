@@ -9,6 +9,7 @@ import { CategoryBadge } from '@/components/ui/CategoryBadge';
 import { AdminNav } from '@/components/admin/AdminNav';
 import { CATEGORIES_LIST, TAGS_LIST } from '@/config/categories';
 import { Categorie, Element } from '@/types';
+import { ZoneTraduction } from '@/components/admin/ZoneTraduction';
 
 type AdminElement = Element & { is_starred?: boolean };
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -120,6 +121,8 @@ export default function AdminElementsPage() {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingElement, setEditingElement] = useState<AdminElement | null>(null);
+  // La zone « Traduction » (2026-11-15) : repliée par défaut, la liste reste l'outil principal.
+  const [traductionOuverte, setTraductionOuverte] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const categoryMap = useMemo(() => {
@@ -626,6 +629,14 @@ export default function AdminElementsPage() {
               >
                 {isRefreshing ? 'Actualisation...' : 'Actualiser'}
               </Button>
+              <Button
+                variant={traductionOuverte ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => setTraductionOuverte((o) => !o)}
+                aria-expanded={traductionOuverte}
+              >
+                🇬🇧 Traduction
+              </Button>
               <Button variant="primary" size="sm" onClick={() => setIsAddModalOpen(true)}>
                 + Ajouter un element
               </Button>
@@ -641,6 +652,15 @@ export default function AdminElementsPage() {
           <SummaryCard label="Sans tags" value={totalWithoutTags} accent="text-[#60A5FA]" />
           <SummaryCard label="ELO moyen" value={totalEloAverage} accent="text-[#DC2626]" />
         </section>
+
+        {traductionOuverte && (
+          <div className="max-w-350 mx-auto mb-6">
+            <ZoneTraduction
+              source="jeu"
+              entrees={elements.map((e) => ({ fr: e.texte, type: e.categorie, inactif: !e.actif }))}
+            />
+          </div>
+        )}
 
         {feedback && (
           <div className="max-w-350 mx-auto mb-6">

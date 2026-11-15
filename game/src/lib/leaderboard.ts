@@ -11,6 +11,7 @@ import { getLeaderboard } from '@/lib/repositories';
 import { CATEGORIES_HORS_VITRINE } from '@/config/categories';
 import type { Langue } from '@/lib/i18n/langue';
 import { normaliserRecherche, traduireElement, traduireTextes } from '@/lib/jeu/traduction';
+import { chargerSiAnglais } from '@/lib/i18n/traductionsBase';
 
 export const LEADERBOARD_VIEWS = [
   'global',
@@ -108,6 +109,7 @@ const MIN_VOTES_FOR_GAP = 40;
 
 /** Agrégats servant les pages éditoriales de l'Observatoire. */
 export async function getObservatoryData(topN = 12, langue: Langue = 'fr'): Promise<ObservatoryData> {
+  await chargerSiAnglais('jeu', langue);
   const { elements, total } = await getLeaderboard({
     sort: 'desc', limit: 1000, offset: 0, excludeCategories: CATEGORIES_HORS_VITRINE,
   });
@@ -183,6 +185,7 @@ export async function getLeaderboardPage(
   const offset = Math.max(0, options.offset ?? 0);
   const view = options.view ?? 'global';
   const langue = options.langue ?? 'fr';
+  await chargerSiAnglais('jeu', langue);
 
   // Une catégorie hors vitrine demandée explicitement ne renvoie rien — pas
   // même son décompte.

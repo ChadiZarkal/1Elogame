@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { PageRedFlags } from '@/app/red-flags/PageRedFlags';
 import { traduireElement } from '@/lib/jeu/traduction';
 import { alternances } from '@/lib/i18n/alternances';
+import { chargerTraductions } from '@/lib/i18n/traductionsBase';
 
 /**
  * Les pires red flags en anglais. Voir `app/red-flags/page.tsx`.
@@ -29,5 +30,6 @@ export const metadata: Metadata = {
 };
 
 export default async function RedFlagsEnPage() {
+  await chargerTraductions('jeu');
   return PageRedFlags({ langue: 'en', traduire: (texte) => traduireElement(texte, 'en') });
 }

@@ -6,8 +6,9 @@ import Link from '@/components/ui/LienIntention';
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff, CheckCircle, XCircle, Trophy, BarChart2, RefreshCw, Check, AlertCircle, Pencil, X } from 'lucide-react';
 import type { DixMaisStatement } from '@/types/database';
 import { NOTES_MIN_COMPARAISON, type NoteMesuree } from '@/lib/dixmaisNote';
+import { ZoneTraduction } from '@/components/admin/ZoneTraduction';
 
-type Tab = 'statements' | 'leaderboard';
+type Tab = 'statements' | 'leaderboard' | 'traduction';
 
 interface AdminStatement extends DixMaisStatement {
   avg_delta: number;
@@ -212,6 +213,7 @@ function Dashboard() {
           {[
             { key: 'statements', label: 'Affirmations', icon: <BarChart2 size={12} /> },
             { key: 'leaderboard', label: 'Red Flags', icon: <Trophy size={12} /> },
+            { key: 'traduction', label: 'Anglais', icon: <span aria-hidden="true">🇬🇧</span> },
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key as Tab)}
               className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-black uppercase tracking-wide transition-all cursor-pointer"
@@ -268,6 +270,20 @@ function Dashboard() {
                   )}
                 </div>
               )}
+            </motion.div>
+          )}
+
+          {tab === 'traduction' && (
+            <motion.div key="trad" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <ZoneTraduction
+                source="dixmais"
+                accent="#F59E0B"
+                entrees={statements.map(s => ({
+                  fr: s.text,
+                  type: s.type === 'positive' ? '🟢 Green' : '🚩 Red',
+                  inactif: !s.is_active,
+                }))}
+              />
             </motion.div>
           )}
 

@@ -2,6 +2,7 @@ import { withApiHandler, apiSuccess, apiError } from '@/lib/apiHelpers';
 import { getRandomStatements } from '@/lib/repositories/dixmais';
 import { langueDe } from '@/lib/i18n/langue';
 import { traduireEnonces } from '@/lib/dixmais/traduction';
+import { chargerSiAnglais } from '@/lib/i18n/traductionsBase';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,5 +23,7 @@ export const GET = withApiHandler(async (req) => {
   const statements = await getRandomStatements(count, excludeIds, { redFlagsSeulement, verts });
   // `?lang=en` : les énoncés en anglais. Les identifiants, donc les notes,
   // restent ceux de la base.
-  return apiSuccess(traduireEnonces(statements, langueDe(searchParams.get('lang'))));
+  const langue = langueDe(searchParams.get('lang'));
+  await chargerSiAnglais('dixmais', langue);
+  return apiSuccess(traduireEnonces(statements, langue));
 }, { rateLimit: 'public' });

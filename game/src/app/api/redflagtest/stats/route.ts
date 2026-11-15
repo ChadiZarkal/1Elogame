@@ -2,6 +2,7 @@ import { withApiHandler, apiSuccess } from '@/lib/apiHelpers';
 import { lireStatsPubliques } from '@/lib/rft/repository';
 import { traduireStats } from '@/lib/rft/traduction';
 import { langueDe } from '@/lib/i18n/langue';
+import { chargerSiAnglais } from '@/lib/i18n/traductionsBase';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,5 +16,6 @@ export const dynamic = 'force-dynamic';
  */
 export const GET = withApiHandler(async (req: Request) => {
   const langue = langueDe(new URL(req.url).searchParams.get('lang'));
+  await chargerSiAnglais('rft', langue);
   return apiSuccess({ questions: traduireStats(await lireStatsPubliques(), langue) });
 }, { rateLimit: 'public' });

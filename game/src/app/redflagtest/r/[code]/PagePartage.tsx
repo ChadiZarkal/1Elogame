@@ -19,6 +19,7 @@ import { traduireResultat } from '@/lib/rft/traduction';
 import type { Langue } from '@/lib/i18n/langue';
 import { TEXTES_RFT } from '../../textes';
 import { ResultatPartage } from './ResultatPartage';
+import { chargerSiAnglais } from '@/lib/i18n/traductionsBase';
 
 const META = {
   fr: {
@@ -34,7 +35,7 @@ const META = {
 } satisfies Record<Langue, Record<string, string>>;
 
 export async function metadataPartage(code: string, langue: Langue): Promise<Metadata> {
-  const brut = await lireResultatParCode(code).catch(() => null);
+  const [brut] = await Promise.all([lireResultatParCode(code).catch(() => null), chargerSiAnglais('rft', langue)]);
   const m = META[langue];
 
   if (!brut) return { title: m.introuvable, robots: { index: false } };
@@ -58,7 +59,7 @@ export async function metadataPartage(code: string, langue: Langue): Promise<Met
 }
 
 export async function PagePartage({ code, langue }: { code: string; langue: Langue }) {
-  const brut = await lireResultatParCode(code).catch(() => null);
+  const [brut] = await Promise.all([lireResultatParCode(code).catch(() => null), chargerSiAnglais('rft', langue)]);
   if (!brut) notFound();
   const resultat = traduireResultat(brut, langue);
 

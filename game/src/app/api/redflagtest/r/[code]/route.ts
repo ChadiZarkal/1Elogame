@@ -3,6 +3,7 @@ import { withApiHandler, apiSuccess, apiError } from '@/lib/apiHelpers';
 import { lireResultatParCode } from '@/lib/rft/repository';
 import { traduireResultat } from '@/lib/rft/traduction';
 import { langueDe } from '@/lib/i18n/langue';
+import { chargerSiAnglais } from '@/lib/i18n/traductionsBase';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,5 +23,7 @@ export const GET = withApiHandler(async (req: NextRequest, ctx) => {
   const resultat = await lireResultatParCode(code);
   if (!resultat) return apiError('NOT_FOUND', 'Ce résultat n’existe pas ou plus.', 404);
 
-  return apiSuccess(traduireResultat(resultat, langueDe(req.nextUrl.searchParams.get('lang'))));
+  const langue = langueDe(req.nextUrl.searchParams.get('lang'));
+  await chargerSiAnglais('rft', langue);
+  return apiSuccess(traduireResultat(resultat, langue));
 }, { rateLimit: 'public' });

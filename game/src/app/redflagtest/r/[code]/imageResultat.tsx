@@ -3,6 +3,7 @@ import { lireResultatParCode } from '@/lib/rft/repository';
 import { LogoOg, policesOg, ressourcesOg } from '@/lib/carteOg';
 import { traduireResultat } from '@/lib/rft/traduction';
 import type { Langue } from '@/lib/i18n/langue';
+import { chargerSiAnglais } from '@/lib/i18n/traductionsBase';
 
 /**
  * @module redflagtest/r/[code]/imageResultat
@@ -33,7 +34,11 @@ const GRIS = '#9c9c9c';
 
 /** L'image d'un résultat, dans la langue de la page qui la déclare. */
 export async function imageResultat(code: string, langue: Langue) {
-  const [brut, r] = await Promise.all([lireResultatParCode(code).catch(() => null), ressourcesOg()]);
+  const [brut, r] = await Promise.all([
+    lireResultatParCode(code).catch(() => null),
+    ressourcesOg(),
+    chargerSiAnglais('rft', langue),
+  ]);
   const resultat = brut && traduireResultat(brut, langue);
 
   const score = resultat?.score ?? 0;

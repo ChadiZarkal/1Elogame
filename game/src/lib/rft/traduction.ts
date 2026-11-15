@@ -18,10 +18,15 @@
  * La traduction est faite à la sortie du serveur, sur ce qu'il renvoie déjà en
  * français : le calcul du score, les classements et les écritures en base ne
  * savent rien de la langue.
+ *
+ *   Depuis le 2026-11-15, ce que l'admin saisit dans sa zone « Traduction »
+ *   (table `traductions`, `lib/i18n/traductionsBase`) passe avant le
+ *   dictionnaire. La route appelle `chargerTraductions('rft')` avant de traduire.
  */
 
 import type { Langue } from '@/lib/i18n/langue';
 import type { Classement, QuestionPublique, Resultat, StatQuestion, Verdict } from './types';
+import { traductionSaisie } from '@/lib/i18n/traductionsBase';
 
 
 const CONTENU_EN: Record<string, string> = {
@@ -321,10 +326,15 @@ export function traduire(texte: string, langue: Langue): string;
 export function traduire(texte: string | null, langue: Langue): string | null;
 export function traduire(texte: string | null, langue: Langue): string | null {
   if (texte === null || langue === 'fr') return texte;
-  return TABLE.get(cle(texte)) ?? texte;
+  return traductionSaisie('rft', texte) ?? TABLE.get(cle(texte)) ?? texte;
 }
 
-/** Les textes qui n'ont pas de traduction : pour le test, et pour l'admin plus tard. */
+/** La traduction écrite dans le code, pour que l'admin la montre. */
+export function traductionDuCode(texte: string): string | undefined {
+  return TABLE.get(cle(texte));
+}
+
+/** Les textes absents du dictionnaire du code : pour le test de couverture. */
 export function nonTraduits(textes: Array<string | null>): string[] {
   return textes.filter((t): t is string => t !== null && !TABLE.has(cle(t)));
 }
