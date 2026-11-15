@@ -23,8 +23,38 @@ import { QuestionsPanel } from './QuestionsPanel';
 import { TagsPanel } from './TagsPanel';
 import { VerdictsPanel } from './VerdictsPanel';
 import { ArchetypesPanel } from './ArchetypesPanel';
+import { ZoneTraduction, type EntreeTraduction } from '@/components/admin/ZoneTraduction';
 
-type Onglet = 'questions' | 'tags' | 'verdicts' | 'archetypes';
+/** Tout ce que le Red Flag Test montre au joueur et que le site anglais traduit. */
+function textesATraduire(c: ContenuAdmin): EntreeTraduction[] {
+  const e: EntreeTraduction[] = [];
+  const ajouter = (fr: string | null, type: string, inactif?: boolean) => {
+    if (fr?.trim()) e.push({ fr, type, inactif });
+  };
+  for (const q of c.questions) {
+    ajouter(q.texte, 'Question', !q.active);
+    ajouter(q.precision, 'Précision', !q.active);
+    for (const r of q.reponses) {
+      ajouter(r.texte, 'Réponse', !q.active);
+      ajouter(r.pique, 'Pique', !q.active);
+    }
+  }
+  for (const v of c.verdicts) {
+    ajouter(v.titre, 'Verdict');
+    ajouter(v.soustitre, 'Verdict · sous-titre');
+  }
+  for (const a of c.archetypes) {
+    ajouter(a.titre, 'Archétype');
+    ajouter(a.soustitre, 'Archétype · sous-titre');
+  }
+  for (const t of c.tags) {
+    ajouter(t.label, 'Tag', !t.isActive);
+    ajouter(t.ressourceTexte, 'Tag · ressource', !t.isActive);
+  }
+  return e;
+}
+
+type Onglet = 'questions' | 'tags' | 'verdicts' | 'archetypes' | 'traduction';
 
 export default function AdminRedflagtestPage() {
   const router = useRouter();
@@ -71,6 +101,7 @@ export default function AdminRedflagtestPage() {
     { cle: 'verdicts', label: 'Verdicts', compte: contenu?.verdicts.length ?? 0 },
     { cle: 'archetypes', label: 'Archétypes', compte: contenu?.archetypes.length ?? 0 },
   ];
+  const aTraduire = contenu ? textesATraduire(contenu) : [];
 
   return (
     <div className="flex min-h-screen flex-col bg-[#0D0D0D]">
@@ -95,7 +126,7 @@ export default function AdminRedflagtestPage() {
             </Link>
           </div>
 
-          <div className="mb-5 flex gap-1.5">
+          <div className="mb-5 flex flex-wrap gap-1.5">
             {onglets.map((o) => (
               <button
                 key={o.cle}
@@ -110,6 +141,16 @@ export default function AdminRedflagtestPage() {
                 <span className="ml-1.5 opacity-60">{o.compte}</span>
               </button>
             ))}
+            <button
+              onClick={() => setOnglet('traduction')}
+              className="cursor-pointer rounded-lg px-3 py-1.5 text-xs font-bold transition-colors"
+              style={{
+                background: onglet === 'traduction' ? '#DC2626' : 'rgba(255,255,255,0.05)',
+                color: onglet === 'traduction' ? '#fff' : '#A3A3A3',
+              }}
+            >
+              🇬🇧 Traduction
+            </button>
           </div>
 
           {erreur && (
@@ -145,6 +186,8 @@ export default function AdminRedflagtestPage() {
               onErreur={setErreur}
             />
           )}
+
+          {contenu && onglet === 'traduction' && <ZoneTraduction source="rft" entrees={aTraduire} />}
 
           {contenu && onglet === 'archetypes' && (
             <ArchetypesPanel

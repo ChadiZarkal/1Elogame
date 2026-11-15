@@ -7,6 +7,7 @@ import { getLeaderboardPage } from '@/lib/leaderboard';
 import { withPrerenderTimeout } from '@/lib/prerenderTimeout';
 import { traduireElement } from '@/lib/jeu/traduction';
 import { alternances } from '@/lib/i18n/alternances';
+import { chargerTraductions } from '@/lib/i18n/traductionsBase';
 
 export const revalidate = 300;
 
@@ -30,6 +31,7 @@ export default async function HomeEnPage() {
     withPrerenderTimeout(getPublicStats()),
     withPrerenderTimeout(getLeaderboardPage({ sort: 'desc', limit: BANDE, offset: 0 })),
     withPrerenderTimeout(getLeaderboardPage({ sort: 'asc', limit: BANDE, offset: 0 })),
+    chargerTraductions('jeu'),
   ]);
 
   const en = (texte: string) => traduireElement(texte, 'en');

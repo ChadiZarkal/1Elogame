@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { withApiHandler, apiSuccess, validateBody } from '@/lib/apiHelpers';
 import { enregistrerPartie } from '@/lib/rft/repository';
 import { traduireResultat } from '@/lib/rft/traduction';
+import { chargerSiAnglais } from '@/lib/i18n/traductionsBase';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,5 +42,6 @@ export const POST = withApiHandler(async (req: NextRequest) => {
   if (error) return error;
 
   const { langue, ...partie } = data;
-  return apiSuccess(traduireResultat(await enregistrerPartie(partie), langue));
+  const [resultat] = await Promise.all([enregistrerPartie(partie), chargerSiAnglais('rft', langue)]);
+  return apiSuccess(traduireResultat(resultat, langue));
 }, { rateLimit: 'public' });

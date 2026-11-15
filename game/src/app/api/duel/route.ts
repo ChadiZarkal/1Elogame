@@ -7,6 +7,7 @@ import { MAX_SEEN_DUELS_STRING_LENGTH } from '@/config/constants';
 import { filterAdultContent, isAdultOnlyCategory, isMinorBracket } from '@/lib/contentRating';
 import { langueDe } from '@/lib/i18n/langue';
 import { traduireElement } from '@/lib/jeu/traduction';
+import { chargerSiAnglais } from '@/lib/i18n/traductionsBase';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,6 +68,7 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   // `?lang=en` : les deux comportements en anglais. Les identifiants, donc les
   // votes, restent ceux de la base.
   const langue = langueDe(searchParams.get('lang'));
+  await chargerSiAnglais('jeu', langue);
   const dto = (e: typeof elementA) => {
     const d = toElementDTO(e);
     return { ...d, texte: traduireElement(d.texte, langue) };
