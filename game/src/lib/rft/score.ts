@@ -93,7 +93,7 @@ export function verdictPour(score: number, verdicts: Verdict[]): Verdict | null 
 export function calculerAxes(
   choix: ChoixResolu[],
   maxima: MaximumQuestion[],
-  tags: Array<{ id: string; label: string; color: string | null }>,
+  tags: Array<{ id: string; label: string; color: string | null; description?: string | null }>,
 ): Axe[] {
   const pris = new Map<string, number>();
   const possible = new Map<string, number>();
@@ -116,6 +116,7 @@ export function calculerAxes(
       return {
         tagId: tag.id,
         label: tag.label,
+        description: tag.description ?? null,
         color: tag.color,
         valeur: maximum > 0 ? borne(Math.round((points / maximum) * 100), 0, 100) : 0,
         points,

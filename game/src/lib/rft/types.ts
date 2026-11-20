@@ -184,6 +184,8 @@ export interface Classement {
 export interface Axe {
   tagId: string;
   label: string;
+  /** Ce que couvre le thème (« Jalousie, surveillance… »), pour l'expliquer au joueur. */
+  description?: string | null;
   color: string | null;
   /** 0 à 100 : part des points de cet axe réellement pris. */
   valeur: number;

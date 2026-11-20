@@ -708,7 +708,8 @@ function EcranClassement({ resultat }: { resultat: Resultat }) {
 // --- Les catégories ---------------------------------------------------------
 
 /** La teinte d'une barre, du vert au rouge selon la part des points prise. */
-function teinte(valeur: number): string {
+/** Les mêmes seuils que `niveauCategorie` (textes.ts) : la couleur et le mot disent la même chose. */
+export function teinte(valeur: number): string {
   if (valeur >= 70) return 'var(--light-red)';
   if (valeur >= 50) return 'var(--orange)';
   if (valeur >= 30) return 'var(--yellow)';
@@ -744,7 +745,9 @@ function EcranAxes({ axes, pointNoir }: { axes: Axe[]; pointNoir: Axe | null }) 
           <li key={axe.tagId}>
             <span className="story-axe-tete">
               <span>{axe.label}</span>
-              <strong style={{ color: teinte(axe.valeur) }}>{t.pct(axe.valeur)}</strong>
+              <strong style={{ color: teinte(axe.valeur) }}>
+                <small>{t.niveauCategorie(axe.valeur)}</small> {t.pct(axe.valeur)}
+              </strong>
             </span>
             <span className="story-axe-piste">
               <span
@@ -755,6 +758,9 @@ function EcranAxes({ axes, pointNoir }: { axes: Axe[]; pointNoir: Axe | null }) 
           </li>
         ))}
       </ul>
+      {/* Sans cette ligne, « 55 % » ne disait pas de quoi : 55 % de quoi, et
+          est-ce beaucoup ? (2026-11-21) */}
+      <p className="story-axes-legende">{t.echelleCategories}</p>
     </>
   );
 }
