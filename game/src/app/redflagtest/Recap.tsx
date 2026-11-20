@@ -18,7 +18,7 @@
 import { useState } from 'react';
 import Link from '@/components/ui/LienIntention';
 import type { Resultat } from '@/lib/rft/types';
-import { ParisDesAutres, Stories } from './Stories';
+import { ParisDesAutres, Stories, teinte } from './Stories';
 import { DON_URL } from '@/config/contact';
 import { useTextesRft } from './textes';
 import { useLangue } from '@/lib/i18n/LangueContexte';
@@ -68,27 +68,11 @@ export function Recap({
         </section>
       )}
 
-      {/* Moins de trois axes ne fait pas un radar : deux points ne forment pas
-          un polygone, et un seul encore moins. Des barres disent la même chose
-          sans prétendre à une forme. */}
-      {resultat.axes.length > 0 && resultat.axes.length < 3 && (
-        <section className="stats-subscores">
-          <ul className="subscore-bars">
-            {resultat.axes.map((axe) => (
-              <li key={axe.tagId}>
-                <span className="subscore-label">{axe.label}</span>
-                <span className="subscore-track">
-                  <span
-                    className="subscore-fill"
-                    style={{ width: `${axe.valeur}%`, backgroundColor: axe.color ?? 'var(--red)' }}
-                  />
-                </span>
-                <span className="subscore-value">{t.pct(axe.valeur)}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {/* Le radar donne la forme ; seul, il ne disait ni les chiffres ni ce
+          qu'ils mesurent (« difficilement compréhensible », Chadi, 2026-11-21).
+          La liste le dit en clair, thème par thème, du plus red flag au moins
+          red flag. Sous trois axes, il n'y a pas de radar : elle suffit. */}
+      {resultat.axes.length > 0 && <ListeCategories axes={resultat.axes} />}
 
       {resultat.highlights.length > 0 && (
         <section className="stats-rare-section">
@@ -235,5 +219,42 @@ function Radar({ axes }: { axes: Resultat['axes'] }) {
         })}
       </svg>
     </div>
+  );
+}
+
+/* ---------------------------------------------------------------------------
+ * Les catégories en clair (2026-11-21)
+ *
+ * Pour chaque thème : son nom, ce qu'il couvre, un mot (« Red flag »,
+ * « Limite »…), le pourcentage et sa barre. Le pourcentage est la part du pire
+ * possible sur les questions du thème, et la légende le dit : sans elle,
+ * « 55 % » ne voulait rien dire.
+ * ------------------------------------------------------------------------- */
+
+function ListeCategories({ axes }: { axes: Resultat['axes'] }) {
+  const t = useTextesRft();
+  const tries = [...axes].sort((a, b) => b.valeur - a.valeur);
+  return (
+    <section className="categories-detail" aria-labelledby="categories-detail-titre">
+      <h3 id="categories-detail-titre">{t.titreCategories}</h3>
+      <p className="categories-detail-intro">{t.categoriesTexte}</p>
+      <ul>
+        {tries.map((axe) => (
+          <li key={axe.tagId}>
+            <p className="categories-detail-tete">
+              <span className="categories-detail-nom">{axe.label}</span>
+              <strong style={{ color: teinte(axe.valeur) }}>
+                <small>{t.niveauCategorie(axe.valeur)}</small> {t.pct(axe.valeur)}
+              </strong>
+            </p>
+            <span className="categories-detail-piste" aria-hidden="true">
+              <span style={{ width: `${axe.valeur}%`, backgroundColor: teinte(axe.valeur) }} />
+            </span>
+            {axe.description && <p className="categories-detail-desc">{axe.description}</p>}
+          </li>
+        ))}
+      </ul>
+      <p className="categories-detail-echelle">{t.echelleCategories}</p>
+    </section>
   );
 }

@@ -164,9 +164,16 @@ const fr = {
   peuDeParties: (avertissement: string) => `* Encore peu de parties dans ce groupe : ${avertissement}`,
 
   // Catégories
-  pointNoirTexte: 'des points red flag possibles dans cette catégorie',
+  // Chadi, 2026-11-21 : « difficilement compréhensible par les gens ». Le
+  // pourcentage d'une catégorie est la part du pire possible sur ses
+  // questions ; on le dit tel quel, avec ce que valent 0 et 100.
+  pointNoirTexte: 'du pire possible sur les questions de cette catégorie : c’est là que tes réponses sont le plus red flag.',
   tonProfil: 'Ton profil',
-  categoriesTexte: 'De la plus red flag à la plus green flag',
+  categoriesTexte: 'Les questions sont rangées par thème. Pour chacun : jusqu’où tes réponses vont vers le red flag.',
+  echelleCategories: '0 % : que des réponses green flag. 100 % : la pire réponse à chaque question.',
+  niveauCategorie: (valeur: number): string =>
+    valeur >= 70 ? 'Très red flag' : valeur >= 50 ? 'Red flag' : valeur >= 30 ? 'Limite' : 'Green flag',
+  titreCategories: 'Tes réponses, thème par thème',
 
   // Réponse
   taReponse: (t: string) => `Ta réponse : « ${t} »`,
@@ -361,9 +368,13 @@ const en: TextesRft = {
   autantOuMoins: 'Same or less',
   peuDeParties: (avertissement: string) => `* Not many games in this group yet: ${avertissement}`,
 
-  pointNoirTexte: 'of the possible red flag points in this category',
+  pointNoirTexte: 'of the worst possible on this category’s questions: that’s where your answers are the most red flag.',
   tonProfil: 'Your profile',
-  categoriesTexte: 'From most red flag to most green flag',
+  categoriesTexte: 'The questions are grouped by theme. For each one: how far your answers go toward red flag.',
+  echelleCategories: '0%: only green flag answers. 100%: the worst answer to every question.',
+  niveauCategorie: (valeur: number): string =>
+    valeur >= 70 ? 'Major red flag' : valeur >= 50 ? 'Red flag' : valeur >= 30 ? 'Borderline' : 'Green flag',
+  titreCategories: 'Your answers, theme by theme',
 
   taReponse: (t: string) => `Your answer: “${t}”`,
   pointsSurTes: (score: number) => `points out of your ${score}`,

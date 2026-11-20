@@ -440,7 +440,11 @@ function traduireClassement(c: Classement | null): Classement | null {
 
 export function traduireResultat(r: Resultat, langue: Langue): Resultat {
   if (langue === 'fr') return r;
-  const axe = <A extends { label: string }>(a: A): A => ({ ...a, label: traduire(a.label, langue) });
+  const axe = <A extends { label: string; description?: string | null }>(a: A): A => ({
+    ...a,
+    label: traduire(a.label, langue),
+    ...(a.description !== undefined ? { description: traduire(a.description, langue) } : {}),
+  });
   return {
     ...r,
     verdict: r.verdict && traduireVerdict(r.verdict, langue),

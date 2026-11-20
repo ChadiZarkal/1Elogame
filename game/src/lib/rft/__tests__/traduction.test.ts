@@ -100,7 +100,7 @@ describe('Red Flag Test — traduction du contenu', () => {
         sexe: classement(4, 1, legendeSexeCourte('homme'), 47),
         age: classement(80, 11, legendeAgeCourte('23-26'), 36),
       },
-      axes: [{ tagId: 'a', label: 'Emprise', color: null, valeur: 82, points: 41, maximum: 50 }],
+      axes: [{ tagId: 'a', label: 'Emprise', description: "Jalousie, surveillance, besoin de décider pour l'autre", color: null, valeur: 82, points: 41, maximum: 50 }],
       pointNoir: { tagId: 'a', label: 'Emprise', color: null, valeur: 82, points: 41, maximum: 50 },
       comparaison: { cohorte: 'sexe_age' as const, legende: legendeCohorte('sexe_age', { sexe: 'homme', age: '23-26' }), ecart: 18, moyenne: 50, effectif: 40 },
       archetype: { id: 'x', tagA: 'a', tagB: null, emoji: '🔑', titre: 'LE PROPRIÉTAIRE', soustitre: 'Tu appelles ça de l’attention. Personne d’autre ne l’appelle comme ça.' },
@@ -124,6 +124,8 @@ describe('Red Flag Test — traduction du contenu', () => {
     expect(en.classements.age?.legende).toBe('23-26');
     expect(en.comparaison?.legende).toBe('men aged 23-26');
     expect(en.pointNoir?.label).toBe('Control');
+    // La description du thème, affichée dans le récap depuis le 2026-11-21.
+    expect(en.axes[0].description).toBe('Jealousy, monitoring, needing to decide for the other person');
     expect(en.reponseDecisive).toEqual({ question: 'Have you ever cheated on your partner?', reponse: 'Yes', points: 9 });
     expect(en.highlights[0].pique).toBe('Someone’s cooking. The question is who.');
     // La ressource mène à la page anglaise du violentomètre (2026-11-20) ; un lien externe ne bouge pas.
