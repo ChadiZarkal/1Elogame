@@ -17,7 +17,11 @@ export const metadata: Metadata = {
   },
   description:
     'Red or Green: the free, anonymous Red Flag Test — your red flag score as a percentage and where you rank — plus red flag games.',
-  openGraph: { locale: 'en_US', siteName: 'Red or Green' },
+  keywords: [
+    'red flag test', 'am I a red flag', 'red flag quiz', 'red flags', 'green flag',
+    'red flag or green flag', "he's a 10 but", 'red flag game',
+  ],
+  openGraph: { locale: 'en_US', alternateLocale: ['fr_FR'], siteName: 'Red or Green' },
 };
 
 export default function EnLayout({ children }: { children: React.ReactNode }) {

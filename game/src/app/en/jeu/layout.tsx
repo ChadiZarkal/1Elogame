@@ -8,25 +8,27 @@ import { alternances } from '@/lib/i18n/alternances';
  * serveur (`lib/jeu/traduction`) ; les votes sont communs aux deux langues.
  */
 export const metadata: Metadata = {
-  title: 'The Worse of Two — which one is the bigger red flag?',
-  description: 'Play The Worse of Two by Red or Green: two behaviors, you pick the worse one. Vote, see how everyone else voted and argue about it with your friends. Live rankings.',
+  title: 'Which Is the Bigger Red Flag? The Worse of Two',
+  description: 'Would you rather, red flag edition: two behaviors, you pick the worse one, then see how everyone else voted. A free red flag party game with live rankings.',
   keywords: [
     'red or green',
     'red flag game',
+    'would you rather red flag',
+    'which is the bigger red flag',
     'which is worse game',
     'free online game',
     'party game',
     'red flag or green flag',
   ],
   openGraph: {
-    title: 'The Worse of Two — which one is the bigger red flag?',
+    title: 'Which is the bigger red flag? The Worse of Two',
     description: 'Two behaviors: which one is the bigger red flag? An addictive, free party game.',
     url: '/en/jeu',
     locale: 'en_US',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'The Worse of Two — which one is the bigger red flag?',
+    title: 'Which is the bigger red flag? The Worse of Two',
     description: 'Two behaviors: which one is the bigger red flag? An addictive, free party game.',
   },
   alternates: alternances('en', '/jeu'),

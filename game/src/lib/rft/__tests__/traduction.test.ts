@@ -105,7 +105,10 @@ describe('Red Flag Test — traduction du contenu', () => {
       comparaison: { cohorte: 'sexe_age' as const, legende: legendeCohorte('sexe_age', { sexe: 'homme', age: '23-26' }), ecart: 18, moyenne: 50, effectif: 40 },
       archetype: { id: 'x', tagA: 'a', tagB: null, emoji: '🔑', titre: 'LE PROPRIÉTAIRE', soustitre: 'Tu appelles ça de l’attention. Personne d’autre ne l’appelle comme ça.' },
       reponseDecisive: { question: 'Tu as déjà trompé ton ou ta partenaire ?', reponse: 'Oui', points: 9 },
-      ressources: [],
+      ressources: [
+        { tagId: 'a', label: 'Emprise', texte: "Surveiller, fouiller, décider pour l'autre : ce sont des comportements qui ont un nom, et une échelle. Le violentomètre la donne.", lien: '/ressources/violentometre' },
+        { tagId: 'b', label: 'Emprise', texte: 'x', lien: 'https://exemple.org' },
+      ],
       highlights: [{ question: 'Tu cuisines ?', reponse: 'Non', pique: 'Quelqu’un cuisine. La question est de savoir qui.', part: 12 }],
       participants: 512,
       codePartage: 'abc',
@@ -123,6 +126,11 @@ describe('Red Flag Test — traduction du contenu', () => {
     expect(en.pointNoir?.label).toBe('Control');
     expect(en.reponseDecisive).toEqual({ question: 'Have you ever cheated on your partner?', reponse: 'Yes', points: 9 });
     expect(en.highlights[0].pique).toBe('Someone’s cooking. The question is who.');
+    // La ressource mène à la page anglaise du violentomètre (2026-11-20) ; un lien externe ne bouge pas.
+    expect(en.ressources[0]).toMatchObject({ label: 'Control', lien: '/en/ressources/violentometre' });
+    expect(en.ressources[0].texte).not.toMatch(/in French/);
+    expect(en.ressources[1].lien).toBe('https://exemple.org');
+    expect(fr.ressources[0].lien).toBe('/ressources/violentometre');
     // Rien du calcul ne change.
     expect(en.score).toBe(68);
     expect(en.classements.tous?.position).toBe(fr.classements.tous?.position);

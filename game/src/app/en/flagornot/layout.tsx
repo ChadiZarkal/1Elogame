@@ -10,11 +10,14 @@ import { alternances } from '@/lib/i18n/alternances';
  * `/api/flagornot/judge`.
  */
 export const metadata: Metadata = {
-  title: 'The Oracle — Red Flag or Green Flag?',
+  title: 'Is It a Red Flag? Ask the Oracle',
   description:
-    'Type a behavior, a situation or literally anything and get the verdict: Red Flag or Green Flag? Free and anonymous.',
+    'Is it a red flag or a green flag? Type any behavior, text or situation and the Oracle gives its verdict, with its reason. Free, anonymous, no sign-up.',
   keywords: [
+    'is it a red flag',
     'red flag or green flag',
+    'red flag checker',
+    'is this a red flag',
     'red flag oracle',
     'is it a red flag',
     'flag or not',
@@ -23,14 +26,14 @@ export const metadata: Metadata = {
     'green flag test',
   ],
   openGraph: {
-    title: 'The Oracle — Red Flag or Green Flag?',
+    title: 'Is it a red flag? Ask the Oracle',
     description: 'Submit anything and find out if it’s a Red Flag or a Green Flag. The AI doesn’t do maybe.',
     url: '/en/flagornot',
     locale: 'en_US',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'The Oracle — Red Flag or Green Flag?',
+    title: 'Is it a red flag? Ask the Oracle',
     description: 'Submit anything and find out if it’s a Red Flag or a Green Flag. The AI doesn’t do maybe.',
   },
   alternates: alternances('en', '/flagornot'),

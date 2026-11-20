@@ -6,7 +6,7 @@
 
 import { Quiz } from './Quiz';
 import { BadgeModeTest } from './BadgeModeTest';
-import { Presentation } from './Presentation';
+import { FAQ_RFT_EN, Presentation } from './Presentation';
 import type { Langue } from '@/lib/i18n/langue';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://redorgreen.fr';
@@ -26,13 +26,25 @@ function RedflagtestJsonLd({ langue }: { langue: Langue }) {
         name: 'Red Flag Test',
         about: { '@type': 'Thing', name: 'Red flag' },
         description: en
-          ? 'A free, anonymous test to find out how much of a red flag you are: score as a percentage, profile and ranking among other players.'
+          ? 'Am I a red flag? A free, anonymous red flag quiz: your score as a percentage, your profile and your ranking among other players.'
           : 'Test gratuit et anonyme pour savoir à quel point tu es un red flag : score en pourcentage, profil et classement parmi les autres joueurs.',
         url,
         inLanguage: en ? 'en-US' : 'fr-FR',
         isAccessibleForFree: true,
         publisher: { '@type': 'Organization', name: 'Red or Green', url: SITE_URL },
       },
+      // En anglais, les questions-réponses que `Presentation` affiche (2026-11-20).
+      ...(en
+        ? [{
+            '@type': 'FAQPage',
+            inLanguage: 'en-US',
+            mainEntity: FAQ_RFT_EN.map((f) => ({
+              '@type': 'Question',
+              name: f.question,
+              acceptedAnswer: { '@type': 'Answer', text: f.reponse },
+            })),
+          }]
+        : []),
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
@@ -65,7 +77,9 @@ export function PageTest({ langue }: { langue: Langue }) {
               écran et mange de la hauteur à chaque question. Le titre reste dans
               le document — une page a besoin d'un h1, et un lecteur d'écran
               aussi — mais il quitte l'écran. */}
-          <h1 className="visually-hidden">Red Flag Test</h1>
+          <h1 className="visually-hidden">
+            {langue === 'en' ? 'Red Flag Test: am I a red flag?' : 'Red Flag Test'}
+          </h1>
         </header>
         <Quiz presentation={<Presentation langue={langue} />} />
         <BadgeModeTest />

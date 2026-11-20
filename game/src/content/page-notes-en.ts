@@ -362,9 +362,9 @@ export const RESSOURCES_NOTES_EN: PageNotes = {
 // ---------------------------------------------------------------------------
 
 export const DIXMAIS_NOTES_EN: PageNotes = {
-  title: 'How this game works',
+  title: 'How the “He’s a 10 but…” game works',
   lede:
-    'One profile, seven reveals: red flags and green flags. You rate each one on its own, from 0 to 15, and the person gets the average of all seven. The game doesn’t ask whether a behavior is serious in the abstract — it asks what it costs them in your eyes, or what it earns them.',
+    'It’s the “He’s a 10 but…” trend, also played as “She’s a 10 but…”: someone is a perfect 10, but there’s a catch. One profile, seven reveals: red flags and green flags. You rate each one on its own, from 0 to 15, and the person gets the average of all seven. The game doesn’t ask whether a behavior is serious in the abstract — it asks what it costs them in your eyes, or what it earns them.',
   blocks: [
     {
       heading: 'The rule',

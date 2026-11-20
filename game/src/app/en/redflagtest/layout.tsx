@@ -11,12 +11,12 @@ import { alternances } from '@/lib/i18n/alternances';
  * serveur (`lib/rft/traduction`).
  */
 export const metadata: Metadata = {
-  title: 'Free Red Flag Test: are you a red flag?',
+  title: 'Red Flag Test: Am I a Red Flag? Free Quiz',
   description:
-    'Take the Red Flag Test, free and anonymous: find out your red flag score as a percentage, your profile and where you rank among other players. No sign-up.',
-  keywords: ['red flag test', 'are you a red flag', 'red flag quiz', 'red flag'],
+    'Am I a red flag? Take the free Red Flag Test quiz: real-life situations, your red flag score as a percentage, your profile and where you rank. Anonymous, no sign-up.',
+  keywords: ['red flag test', 'am I a red flag', 'am I a red flag quiz', 'are you a red flag', 'red flag quiz', 'am I toxic quiz', 'red flag'],
   openGraph: {
-    title: 'Red Flag Test: are you a red flag?',
+    title: 'Am I a red flag? Take the Red Flag Test',
     description: 'The free, anonymous test: your red flag score as a percentage, and where you rank among everyone else.',
     url: '/en/redflagtest',
     locale: 'en_US',
