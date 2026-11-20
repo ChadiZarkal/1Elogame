@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Space_Grotesk } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AdOverlays } from "@/components/ads/AdOverlays";
 import { SiteFooter } from "@/components/ui/SiteFooter";
 import { SiteHeader } from "@/components/ui/SiteHeader";
@@ -247,8 +245,11 @@ export default function RootLayout({
             de chacun est dans `config/ads.ts`. */}
         <AdOverlays />
         <ServiceWorker />
-        <Analytics />
-        <SpeedInsights />
+        {/* Vercel Web Analytics et Speed Insights retirés le 2026-11-20, à la
+            demande de Chadi : facturés à l'événement (355 000 par mois pour
+            50 000 inclus en Hobby) et deux requêtes CDN de plus par page vue.
+            Les visites restent comptées par Google Analytics et par nos
+            propres sessions (`/api/analytics/session`). */}
         {/* Data layer for manual events (optional) */}
         <script
           dangerouslySetInnerHTML={{
