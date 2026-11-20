@@ -329,7 +329,7 @@ describe('It’s a 10 but… — les pages /en/dixmais', () => {
   it('la page du jeu : le châssis et les notes éditoriales en anglais', async () => {
     const { default: Page } = await import('@/app/en/dixmais/page');
     const { container } = render(enAnglais(<Page />));
-    expect(screen.getByRole('heading', { level: 2, name: 'How this game works' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'How the “He’s a 10 but…” game works' })).toBeInTheDocument();
     expect(francaisDans(container)).toEqual([]);
     for (const lien of container.querySelectorAll('a')) {
       const href = lien.getAttribute('href') ?? '';

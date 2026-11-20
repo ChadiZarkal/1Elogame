@@ -16,10 +16,10 @@ import { chargerTraductions } from '@/lib/i18n/traductionsBase';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'The worst red flags: the list ranked by players’ votes',
+  title: 'Red Flags List: the Worst Red Flags, Ranked by Votes',
   description:
-    'A list of everyday red flags ranked by thousands of duels: the worst, the least serious, by theme, and what women and men put at the top. Updated every hour.',
-  keywords: ['red flag list', 'red flag examples', 'worst red flags', 'red flags', 'redflag', 'red flag ranking'],
+    'A list of red flags in relationships and everyday life, ranked by thousands of votes: the worst, the least serious, by theme, and what women and men rank highest. Updated every hour.',
+  keywords: ['red flags list', 'list of red flags', 'red flags in a relationship', 'red flag examples', 'worst red flags', 'dating red flags', 'red flag ranking'],
   alternates: alternances('en', '/red-flags'),
   openGraph: {
     title: 'The worst red flags, according to the votes',

@@ -50,6 +50,10 @@ export function Intro({ onStart, failed }: { onStart: () => void; failed: boolea
             >
               {t.titreHaut}
             </span>
+            {/* Les espaces entre les blocs ne se voient pas, mais le titre lu par
+                Google et par les lecteurs d'écran devient « It’s a 10 but… » et
+                non « It’s a10but… » (2026-11-20). */}
+            {' '}
             <span
               className="block font-black leading-[0.82]"
               style={{
@@ -61,6 +65,7 @@ export function Intro({ onStart, failed }: { onStart: () => void; failed: boolea
             >
               10
             </span>
+            {' '}
             <span
               className="block font-black uppercase leading-none tracking-tight text-white/90"
               style={{ fontSize: 'min(3rem, 10vw, 5.5vh)' }}

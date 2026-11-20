@@ -73,17 +73,50 @@ export function Presentation({ langue = 'fr' }: { langue?: Langue } = {}) {
 }
 
 /*
- * La version anglaise. Le guide des flags et la politique de confidentialité
- * n'existent qu'en français : leurs liens le disent.
+ * La version anglaise, réécrite le 2026-11-20 pour les recherches anglaises
+ * (« am I a red flag », « red flag quiz ») : plus de questions-réponses, et
+ * les liens vers le guide et la confidentialité, traduits depuis, vont à leur
+ * version anglaise. Les questions-réponses sont aussi déclarées en `FAQPage`
+ * (`FAQ_RFT_EN`, voir `PageTest`) : le balisage doit dire exactement ce que la
+ * page affiche, d'où une seule source pour les deux.
  */
+export const FAQ_RFT_EN: Array<{ question: string; reponse: string }> = [
+  {
+    question: 'Am I a red flag?',
+    reponse:
+      'That’s what the test is for. Instead of asking you to judge yourself, it asks blunt questions about real life — have you ever gone through a partner’s phone? does one of your exes hate you? — and scores your answers.',
+  },
+  {
+    question: 'How is my red flag score calculated?',
+    reponse:
+      'Each answer adds percentage points to your score, more or less depending on what it reveals; an answer can even take points away. Your score is the sum. The test then breaks it down by theme, such as control, loyalty or anger and excess, to show where your points come from.',
+  },
+  {
+    question: 'What’s the difference between a red flag and a green flag?',
+    reponse:
+      'A red flag is a warning sign: a behavior that should set off alarms about someone, in a relationship, a friendship or at work. A green flag is the opposite: a sign that someone is safe, respectful and worth keeping around.',
+  },
+  {
+    question: 'Is the test really anonymous?',
+    reponse:
+      'Yes. It doesn’t ask for your name, your email or an account: only your gender and age range, to compare you with players like you. The game is saved with those two pieces of information, your score and your answers, nothing else.',
+  },
+  {
+    question: 'Who can see my result?',
+    reponse:
+      'Nobody, unless you share its link. Your answers only appear mixed in with everyone else’s, in the statistics published for each question.',
+  },
+];
+
 function PresentationEn() {
+  const [suis, calcul, difference, anonyme, visible] = FAQ_RFT_EN;
   return (
     <section className="rft-presentation" aria-labelledby="rft-presentation-titre">
       <h2 id="rft-presentation-titre">What is the Red Flag Test?</h2>
       <p>
-        A free, solo and anonymous test to find out how much of a red flag you
-        are. You answer real-life situations, and each answer weighs more or
-        less depending on what it says about you.
+        A free, solo and anonymous red flag quiz to find out how much of a red
+        flag you are. You answer real-life situations, and each answer weighs
+        more or less depending on what it says about you.
       </p>
       <p>
         At the end, you get your red flag score as a percentage, your profile,
@@ -98,27 +131,25 @@ function PresentationEn() {
         women.
       </p>
 
-      <h3>So what exactly is a red flag?</h3>
+      <h3>{suis.question}</h3>
+      <p>{suis.reponse}</p>
+
+      <h3>{calcul.question}</h3>
+      <p>{calcul.reponse}</p>
+
+      <h3>{difference.question}</h3>
       <p>
-        A red flag is a warning sign: a behavior that should set off alarms
-        about someone, in a relationship, a friendship or at work. Not
-        everything is one — and that’s the whole point of the test.{' '}
-        <Link href="/guide">Definition and examples in our flag guide (in French)</Link>.
+        {difference.reponse}{' '}
+        <Link href="/en/guide">Definition and examples in our red flag guide</Link>.
       </p>
 
-      <h3>Is the test really anonymous?</h3>
+      <h3>{anonyme.question}</h3>
+      <p>{anonyme.reponse}</p>
+
+      <h3>{visible.question}</h3>
       <p>
-        Yes. It doesn’t ask for your name, your email or an account: only your
-        gender and age range, to compare you with players like you. The game
-        is saved with those two pieces of information, your score and your
-        answers, nothing else.
-      </p>
-      <h3>Who can see my result?</h3>
-      <p>
-        Nobody, unless you share its link. Your answers only appear mixed in
-        with everyone else’s, in the statistics published for each question.
-        The details are in our{' '}
-        <Link href="/confidentialite">privacy policy (in French)</Link>.
+        {visible.reponse} The details are in our{' '}
+        <Link href="/en/confidentialite">privacy policy</Link>.
       </p>
     </section>
   );

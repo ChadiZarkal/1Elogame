@@ -3,17 +3,17 @@ import { alternances } from '@/lib/i18n/alternances';
 
 /** Le classement de « It's a 10 but… », comme `app/dixmais/leaderboard/layout.tsx`. */
 export const metadata: Metadata = {
-  title: "Leaderboard — It's a 10 But...",
-  description: "The leaderboard for “It's a 10 But...”: the average score players give each red flag and each green flag, rated one by one.",
+  title: "He's a 10 But… Leaderboard: the Red Flags That Cost the Most",
+  description: "The “He's a 10 but…” leaderboard: the average score players give each red flag and each green flag, from the deal-breakers that tank a 10 to the green flags that push it to 15/10.",
   openGraph: {
-    title: "Leaderboard — It's a 10 But...",
+    title: "He's a 10 But… — the leaderboard",
     description: 'The red flags that tank the score the most, and the green flags that push it all the way to 15/10.',
     url: '/en/dixmais/leaderboard',
     locale: 'en_US',
   },
   twitter: {
     card: 'summary_large_image',
-    title: "Leaderboard — It's a 10 But...",
+    title: "He's a 10 But… — the leaderboard",
     description: 'The red flags that tank the score the most, and the green flags that push it all the way to 15/10.',
   },
   alternates: alternances('en', '/dixmais/leaderboard'),

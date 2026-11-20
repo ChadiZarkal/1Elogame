@@ -9,10 +9,14 @@ import { alternances } from '@/lib/i18n/alternances';
  * langues. La console d'administration reste en français, sous `/dixmais/admin`.
  */
 export const metadata: Metadata = {
-  title: "It's a 10 But... — The red flag rating game",
-  description: "It's a 10, but… Red flags and green flags rated one by one, from 0 to 15/10: their final score is your average. A free, anonymous rating game.",
+  title: "He's a 10 But… Game: Rate the Red Flags",
+  description: "The “He's a 10 but…” game, also played as “She's a 10 but…”: start at 10, then rate each red flag and green flag from 0 to 15/10. Their final score is your average. Free and anonymous.",
   keywords: [
+    "he's a 10 but",
+    "she's a 10 but",
     "it's a 10 but",
+    "he's a 10 but game",
+    'rate the red flags',
     'rating game',
     'red flag',
     'red flag game',
@@ -21,15 +25,15 @@ export const metadata: Metadata = {
     'free online game',
   ],
   openGraph: {
-    title: "It's a 10 But... — The red flag rating game",
-    description: 'Red flags and green flags, rated one by one up to 15/10. Their final score is your average. What would you give them?',
+    title: "He's a 10 But… Game: Rate the Red Flags",
+    description: "He's a 10 but… he chews with his mouth open. Rate red flags and green flags from 0 to 15/10: what would you give them?",
     url: '/en/dixmais',
     locale: 'en_US',
   },
   twitter: {
     card: 'summary_large_image',
-    title: "It's a 10 But... — The red flag rating game",
-    description: 'Red flags and green flags, rated one by one up to 15/10. Their final score is your average. What would you give them?',
+    title: "He's a 10 But… Game: Rate the Red Flags",
+    description: "He's a 10 but… he chews with his mouth open. Rate red flags and green flags from 0 to 15/10: what would you give them?",
   },
   alternates: alternances('en', '/dixmais'),
 };

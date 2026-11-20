@@ -24,7 +24,7 @@
  *   dictionnaire. La route appelle `chargerTraductions('rft')` avant de traduire.
  */
 
-import type { Langue } from '@/lib/i18n/langue';
+import { cheminLocalise, type Langue } from '@/lib/i18n/langue';
 import type { Classement, QuestionPublique, Resultat, StatQuestion, Verdict } from './types';
 import { traductionSaisie } from '@/lib/i18n/traductionsBase';
 
@@ -245,13 +245,13 @@ const CONTENU_EN: Record<string, string> = {
   'Emprise': 'Control',
   "Jalousie, surveillance, besoin de décider pour l'autre": 'Jealousy, monitoring, needing to decide for the other person',
   "Surveiller, fouiller, décider pour l'autre : ce sont des comportements qui ont un nom, et une échelle. Le violentomètre la donne.":
-    'Monitoring, snooping, deciding for the other person: these behaviors have a name, and a scale. The violence meter (in French) lays it out.',
+    'Monitoring, snooping, deciding for the other person: these behaviors have a name, and a scale. The violence meter lays it out.',
   'Loyauté': 'Loyalty',
   "Trahisons, mensonges, ce qu'on fait dans le dos des gens": 'Betrayals, lies, what you do behind people’s backs',
   'Colère & excès': 'Anger & excess',
   "Violence, alcool, ce qu'on fait subir aux autres": 'Violence, alcohol, what you put others through',
   "Certaines de tes réponses décrivent des situations qui font du mal, même quand elles paraissent banales de l'intérieur. Le violentomètre situe précisément où passe la limite.":
-    'Some of your answers describe situations that hurt people, even when they feel ordinary from the inside. The violence meter (in French) shows exactly where the line is.',
+    'Some of your answers describe situations that hurt people, even when they feel ordinary from the inside. The violence meter shows exactly where the line is.',
   'Rapport aux femmes': 'Attitude toward women',
   'Positionnement, exigences, sexisme ordinaire': 'Stance, demands, everyday sexism',
   'Rapport à soi': 'Relationship with yourself',
@@ -458,7 +458,13 @@ export function traduireResultat(r: Resultat, langue: Langue): Resultat {
       question: traduire(r.reponseDecisive.question, langue),
       reponse: traduire(r.reponseDecisive.reponse, langue),
     },
-    ressources: r.ressources.map((x) => ({ ...x, label: traduire(x.label, langue), texte: traduire(x.texte, langue) })),
+    // Le lien de la ressource (le violentomètre…) mène à sa page anglaise.
+    ressources: r.ressources.map((x) => ({
+      ...x,
+      label: traduire(x.label, langue),
+      texte: traduire(x.texte, langue),
+      lien: x.lien?.startsWith('/') ? cheminLocalise(langue, x.lien) : x.lien,
+    })),
     highlights: r.highlights.map((h) => ({
       ...h,
       question: traduire(h.question, langue),

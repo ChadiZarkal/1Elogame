@@ -144,7 +144,8 @@ function JsonLd() {
           price: '0',
           priceCurrency: 'EUR',
         },
-        inLanguage: 'fr-FR',
+        // Le site existe en français et, sous /en, en anglais (2026-11-14).
+        inLanguage: ['fr-FR', 'en-US'],
         browserRequirements: 'Requires JavaScript',
         softwareVersion: '4.0',
         author: {
@@ -158,7 +159,7 @@ function JsonLd() {
         name: SITE_NAME,
         alternateName: ['RedOrGreen', 'redorgreen.fr', 'Red Flag Games'],
         url: SITE_URL,
-        inLanguage: 'fr-FR',
+        inLanguage: ['fr-FR', 'en-US'],
       },
       {
         '@type': 'Organization',

@@ -12,7 +12,16 @@ import { chargerTraductions } from '@/lib/i18n/traductionsBase';
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: { absolute: 'Red or Green — free Red Flag Test and red flag games' },
+  // Formulé sur ce que cherchent les anglophones (« am I a red flag »), 2026-11-20.
+  title: { absolute: 'Am I a Red Flag? Free Red Flag Test & Games | Red or Green' },
+  description:
+    'Am I a red flag? Take the free, anonymous Red Flag Test: your score as a percentage and where you rank. Plus red flag games: which is worse, rate the red flags, ask the Oracle.',
+  openGraph: {
+    title: 'Am I a red flag? The free Red Flag Test',
+    description: 'Your red flag score as a percentage, and where you rank among everyone else. Plus red flag games.',
+    url: '/en',
+    locale: 'en_US',
+  },
   alternates: alternances('en', '/'),
 };
 
